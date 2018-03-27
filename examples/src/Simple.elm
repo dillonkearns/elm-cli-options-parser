@@ -1,6 +1,8 @@
 port module Simple exposing (main)
 
+import Command
 import Json.Decode exposing (..)
+import Task
 
 
 type alias Flags =
@@ -14,11 +16,18 @@ type alias Model =
 type Msg
     = PrintVersion
     | PrintHelp
+    | NoOp
 
 
 init : Flags -> ( Model, Cmd Msg )
 init flags =
-    ( (), print "init" )
+    let
+        msg =
+            flags
+                |> List.drop 2
+                |> Command.tryMatch (Command.command PrintVersion (Command.LongOnly "version"))
+    in
+    update (msg |> Maybe.withDefault NoOp) ()
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -31,6 +40,9 @@ update msg model =
 
                 PrintHelp ->
                     "asdf"
+
+                NoOp ->
+                    ""
     in
     ( (), print toPrint )
 
