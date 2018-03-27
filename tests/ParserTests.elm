@@ -9,6 +9,7 @@ type Msg
     = Help
     | Version
     | OpenUrl String
+    | OpenUrlWithFlag String Bool
 
 
 tryMatch : Command msg -> List String -> Maybe msg
@@ -38,6 +39,21 @@ command msg format =
 commandWithArg : (String -> msg) -> Command msg
 commandWithArg msg =
     Command (Decode.map msg (Decode.index 0 Decode.string)) OperandOnly
+
+
+withFlag : String -> Command (Bool -> msg) -> Command msg
+withFlag flag (Command msgConstructor format) =
+    Command
+        (Decode.list Decode.string
+            |> Decode.andThen
+                (\list ->
+                    if List.member ("-" ++ flag) list then
+                        Decode.map (\constructor -> constructor True) msgConstructor
+                    else
+                        Decode.map (\constructor -> constructor False) msgConstructor
+                )
+        )
+        format
 
 
 type Format
@@ -72,6 +88,16 @@ all =
                 [ "http://my-domain.com" ]
                     |> tryMatch (commandWithArg OpenUrl)
                     |> Expect.equal (Just (OpenUrl "http://my-domain.com"))
+        , test "detects that optional flag is absent" <|
+            \() ->
+                [ "http://my-domain.com" ]
+                    |> tryMatch (commandWithArg OpenUrlWithFlag |> withFlag "p")
+                    |> Expect.equal (Just (OpenUrlWithFlag "http://my-domain.com" False))
+        , test "detects that optional flag is present" <|
+            \() ->
+                [ "http://my-domain.com", "-p" ]
+                    |> tryMatch (commandWithArg OpenUrlWithFlag |> withFlag "p")
+                    |> Expect.equal (Just (OpenUrlWithFlag "http://my-domain.com" True))
         , test "non-matching option" <|
             \() ->
                 [ "--version" ]
