@@ -11,8 +11,6 @@ type Msg
 
 parse : Parser Msg -> List String -> Result ParserError Msg
 parse parser argv =
-    -- case parser of
-    --   LongOnly longOption ->
     if argv == [ "--help" ] then
         Ok Help
     else
@@ -21,7 +19,12 @@ parse parser argv =
 
 tryMatch : Command msg -> List String -> Maybe msg
 tryMatch (Command msg format) argv =
-    Just msg
+    case format of
+        LongOnly longOption ->
+            if argv == [ "--" ++ longOption ] then
+                Just msg
+            else
+                Nothing
 
 
 parser : List (Command msg) -> Parser msg
@@ -56,16 +59,16 @@ all =
         [ test "help command" <|
             \() ->
                 [ "--help" ]
-                    |> parse (parser [ command Help (LongOnly "help") ])
-                    |> Expect.equal (Ok Help)
+                    |> tryMatch (command Help (LongOnly "help"))
+                    |> Expect.equal (Just Help)
         , test "version command" <|
             \() ->
                 [ "--version" ]
                     |> tryMatch (command Version (LongOnly "version"))
                     |> Expect.equal (Just Version)
-        , test "unknown option" <|
+        , test "non-matching option" <|
             \() ->
-                [ "--unknown" ]
-                    |> parse (parser [ command Help (LongOnly "help") ])
-                    |> Expect.equal (Err (UnknownOption "--unknown"))
+                [ "--version" ]
+                    |> tryMatch (command Help (LongOnly "help"))
+                    |> Expect.equal Nothing
         ]
