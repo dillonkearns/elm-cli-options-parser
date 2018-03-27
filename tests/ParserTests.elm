@@ -66,6 +66,11 @@ all =
                 [ "--version" ]
                     |> tryMatch (command Version (LongOnly "version"))
                     |> Expect.equal (Just Version)
+        , test "matching non-first element in list" <|
+            \() ->
+                [ "unused", "--version" ]
+                    |> tryMatch (command Version (LongOnly "version"))
+                    |> Expect.equal Nothing
         , test "non-matching option" <|
             \() ->
                 [ "--version" ]
