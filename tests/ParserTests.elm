@@ -1,52 +1,48 @@
 module ParserTests exposing (all)
 
 import Expect exposing (Expectation)
+import Json.Decode as Decode
 import Test exposing (..)
 
 
 type Msg
     = Help
     | Version
-
-
-parse : Parser Msg -> List String -> Result ParserError Msg
-parse parser argv =
-    if argv == [ "--help" ] then
-        Ok Help
-    else
-        Err (UnknownOption "--unknown")
+    | OpenUrl String
 
 
 tryMatch : Command msg -> List String -> Maybe msg
-tryMatch (Command msg format) argv =
+tryMatch (Command decoder format) argv =
     case format of
         LongOnly longOption ->
             if argv == [ "--" ++ longOption ] then
-                Just msg
+                Decode.decodeString decoder (argv |> toString)
+                    |> Result.toMaybe
             else
                 Nothing
 
-
-parser : List (Command msg) -> Parser msg
-parser commands =
-    Parser commands
-
-
-type Parser msg
-    = Parser (List (Command msg))
+        OperandOnly ->
+            Decode.decodeString decoder (argv |> toString)
+                |> Result.toMaybe
 
 
 type Command msg
-    = Command msg Format
+    = Command (Decode.Decoder msg) Format
 
 
 command : msg -> Format -> Command msg
 command msg format =
-    Command msg format
+    Command (Decode.succeed msg) format
+
+
+commandWithArg : (String -> msg) -> Command msg
+commandWithArg msg =
+    Command (Decode.map msg (Decode.index 0 Decode.string)) OperandOnly
 
 
 type Format
     = LongOnly String
+    | OperandOnly
 
 
 type ParserError
@@ -71,6 +67,11 @@ all =
                 [ "unused", "--version" ]
                     |> tryMatch (command Version (LongOnly "version"))
                     |> Expect.equal Nothing
+        , test "command with args" <|
+            \() ->
+                [ "http://my-domain.com" ]
+                    |> tryMatch (commandWithArg OpenUrl)
+                    |> Expect.equal (Just (OpenUrl "http://my-domain.com"))
         , test "non-matching option" <|
             \() ->
                 [ "--version" ]
