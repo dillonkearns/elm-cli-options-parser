@@ -6,14 +6,22 @@ import Test exposing (..)
 
 type Msg
     = Help
+    | Version
 
 
 parse : Parser Msg -> List String -> Result ParserError Msg
 parse parser argv =
+    -- case parser of
+    --   LongOnly longOption ->
     if argv == [ "--help" ] then
         Ok Help
     else
         Err (UnknownOption "--unknown")
+
+
+tryMatch : Command msg -> List String -> Maybe msg
+tryMatch (Command msg format) argv =
+    Just msg
 
 
 parser : List (Command msg) -> Parser msg
@@ -26,12 +34,12 @@ type Parser msg
 
 
 type Command msg
-    = Command msg
+    = Command msg Format
 
 
 command : msg -> Format -> Command msg
 command msg format =
-    Command msg
+    Command msg format
 
 
 type Format
@@ -45,11 +53,16 @@ type ParserError
 all : Test
 all =
     describe "CLI options parser"
-        [ test "help option" <|
+        [ test "help command" <|
             \() ->
                 [ "--help" ]
                     |> parse (parser [ command Help (LongOnly "help") ])
                     |> Expect.equal (Ok Help)
+        , test "version command" <|
+            \() ->
+                [ "--version" ]
+                    |> tryMatch (command Version (LongOnly "version"))
+                    |> Expect.equal (Just Version)
         , test "unknown option" <|
             \() ->
                 [ "--unknown" ]
