@@ -1,8 +1,13 @@
 port module Simple exposing (main)
 
+import Cli
 import Command
 import Json.Decode exposing (..)
-import Task
+
+
+dummy : Decoder String
+dummy =
+    Json.Decode.string
 
 
 type alias Flags =
@@ -25,7 +30,10 @@ init flags =
         msg =
             flags
                 |> List.drop 2
-                |> Command.tryMatch (Command.command PrintVersion (Command.LongOnly "version"))
+                |> Cli.try
+                    [ Command.command PrintVersion (Command.LongOnly "version")
+                    , Command.command PrintHelp (Command.LongOnly "help")
+                    ]
     in
     update (msg |> Maybe.withDefault NoOp) ()
 
@@ -39,10 +47,10 @@ update msg model =
                     "You are on version 3.1.4"
 
                 PrintHelp ->
-                    "asdf"
+                    "Help text here..."
 
                 NoOp ->
-                    ""
+                    "No matching command"
     in
     ( (), print toPrint )
 

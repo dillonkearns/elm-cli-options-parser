@@ -1,10 +1,10 @@
-module Command exposing (Command, Format(..), ParserError(..), command, commandWithArg, tryMatch, withFlag)
+module Command exposing (Command, Format(..), ParserError(..), command, commandWithArg, synopsis, tryMatch, withFlag)
 
 import Json.Decode as Decode
 
 
-tryMatch : Command msg -> List String -> Maybe msg
-tryMatch (Command decoder format) argv =
+tryMatch : List String -> Command msg -> Maybe msg
+tryMatch argv (Command decoder format) =
     case format of
         LongOnly longOption ->
             if argv == [ "--" ++ longOption ] then
@@ -30,6 +30,11 @@ command msg format =
 commandWithArg : (String -> msg) -> Command msg
 commandWithArg msg =
     Command (Decode.map msg (Decode.index 0 Decode.string)) OperandOnly
+
+
+synopsis : a -> String
+synopsis command =
+    "greet --version"
 
 
 withFlag : String -> Command (Bool -> msg) -> Command msg
