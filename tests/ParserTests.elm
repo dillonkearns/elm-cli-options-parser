@@ -11,6 +11,7 @@ type Msg
     | OpenUrl String
     | OpenUrlWithFlag String Bool
     | Name String
+    | FullName String String
 
 
 all : Test
@@ -48,6 +49,19 @@ all =
             \() ->
                 Command.tryMatch [ "--name", "Deanna" ] (Command.empty Name |> Command.optionWithStringArg "name")
                     |> Expect.equal (Just (Name "Deanna"))
+        , test "option with multiple required string arguments" <|
+            \() ->
+                Command.tryMatch
+                    [ "--last-name"
+                    , "Troi"
+                    , "--first-name"
+                    , "Deanna"
+                    ]
+                    (Command.empty FullName
+                        |> Command.optionWithStringArg "first-name"
+                        |> Command.optionWithStringArg "last-name"
+                    )
+                    |> Expect.equal (Just (FullName "Deanna" "Troi"))
         , test "print synopsis with required flag" <|
             \() ->
                 Command.command Version (Command.LongOnly "version")
