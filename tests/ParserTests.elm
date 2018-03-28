@@ -46,7 +46,7 @@ all =
         , test "print synopsis with required flag" <|
             \() ->
                 Command.command Version (Command.LongOnly "version")
-                    |> Command.synopsis
+                    |> Command.synopsis "greet"
                     |> Expect.equal "greet --version"
 
         -- |> Expect.equal "greet -n <name> [-l][-a][-c option_argument][operand...]"

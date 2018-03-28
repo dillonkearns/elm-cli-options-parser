@@ -32,9 +32,14 @@ commandWithArg msg =
     Command (Decode.map msg (Decode.index 0 Decode.string)) OperandOnly
 
 
-synopsis : a -> String
-synopsis command =
-    "greet --version"
+synopsis : String -> Command msg -> String
+synopsis programName (Command decoder format) =
+    case format of
+        LongOnly longOption ->
+            programName ++ " --" ++ longOption
+
+        OperandOnly ->
+            ""
 
 
 withFlag : String -> Command (Bool -> msg) -> Command msg
