@@ -43,4 +43,11 @@ all =
             \() ->
                 Command.tryMatch [ "--version" ] (Command.command Help (Command.LongOnly "help"))
                     |> Expect.equal Nothing
+        , test "print synopsis with required flag" <|
+            \() ->
+                Command.command Version (Command.LongOnly "version")
+                    |> Command.synopsis
+                    |> Expect.equal "greet --version"
+
+        -- |> Expect.equal "greet -n <name> [-l][-a][-c option_argument][operand...]"
         ]
