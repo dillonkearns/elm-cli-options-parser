@@ -10,6 +10,7 @@ type Msg
     | Version
     | OpenUrl String
     | OpenUrlWithFlag String Bool
+    | Name String
 
 
 all : Test
@@ -43,6 +44,10 @@ all =
             \() ->
                 Command.tryMatch [ "--version" ] (Command.command Help (Command.LongOnly "help"))
                     |> Expect.equal Nothing
+        , test "option with argument" <|
+            \() ->
+                Command.tryMatch [ "--name", "Deanna" ] (Command.empty Name |> Command.optionWithStringArg "name")
+                    |> Expect.equal (Just (Name "Deanna"))
         , test "print synopsis with required flag" <|
             \() ->
                 Command.command Version (Command.LongOnly "version")
