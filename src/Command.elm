@@ -125,7 +125,7 @@ synopsis programName (Command decoder format options) =
                                 optionSynopsis occurences option
 
                             Operand operandName ->
-                                operandName
+                                "<" ++ operandName ++ ">"
                     )
                 |> String.join " "
            )

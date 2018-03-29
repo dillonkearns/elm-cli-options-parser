@@ -217,7 +217,7 @@ all =
                     Command.build identity
                         |> Command.expectOperand "MyApp.elm"
                         |> Command.synopsis "elm-interop"
-                        |> Expect.equal "elm-interop MyApp.elm"
+                        |> Expect.equal "elm-interop <MyApp.elm>"
             ]
         ]
 
