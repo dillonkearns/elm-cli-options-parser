@@ -43,7 +43,7 @@ all =
                     |> Expect.equal (Just (OpenUrlWithFlag "http://my-domain.com" True))
         , test "non-matching option" <|
             \() ->
-                Command.tryMatch [ "--version" ] (Command.command Help (Command.LongOnly "help"))
+                Command.tryMatch [ "--version" ] (Command.build Help |> Command.expectFlag "help")
                     |> Expect.equal Nothing
         , test "option with argument" <|
             \() ->
@@ -72,7 +72,8 @@ all =
                     |> Expect.equal "greet --first-name <first-name> --last-name <last-name>"
         , test "print synopsis with required flag" <|
             \() ->
-                Command.command Version (Command.LongOnly "version")
+                Command.build Version
+                    |> Command.expectFlag "version"
                     |> Command.synopsis "greet"
                     |> Expect.equal "greet --version"
 

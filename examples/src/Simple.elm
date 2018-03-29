@@ -39,8 +39,8 @@ init flags =
 
 cli : List (Command.Command Msg)
 cli =
-    [ Command.command PrintVersion (Command.LongOnly "version")
-    , Command.command PrintHelp (Command.LongOnly "help")
+    [ Command.build PrintVersion |> Command.expectFlag "version"
+    , Command.build PrintHelp |> Command.expectFlag "help"
     , Command.build Greet |> Command.optionWithStringArg "name"
     ]
 

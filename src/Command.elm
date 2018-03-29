@@ -1,4 +1,4 @@
-module Command exposing (Command, Format(..), ParserError(..), build, command, commandWithArg, expectFlag, optionWithStringArg, synopsis, tryMatch, withFlag)
+module Command exposing (Command, Format(..), ParserError(..), build, commandWithArg, expectFlag, optionWithStringArg, synopsis, tryMatch, withFlag)
 
 import Json.Decode as Decode
 import List.Extra
@@ -27,11 +27,6 @@ type Command msg
     = Command (Decode.Decoder msg) Format (List Option)
 
 
-command : msg -> Format -> Command msg
-command msg format =
-    Command (Decode.succeed msg) format []
-
-
 build : msg -> Command msg
 build msgConstructor =
     Command (Decode.succeed msgConstructor) Empty []
@@ -57,15 +52,11 @@ synopsis programName (Command decoder format options) =
                 ++ (options |> List.map optionSynopsis |> String.join " ")
 
 
-
--- " --first-name <first-name> --last-name <last-name>"
-
-
 optionSynopsis : Option -> String
 optionSynopsis option =
     case option of
-        Flag string ->
-            ""
+        Flag flagName ->
+            "--" ++ flagName
 
         OptionWithStringArg optionName ->
             "--" ++ optionName ++ " <" ++ optionName ++ ">"
