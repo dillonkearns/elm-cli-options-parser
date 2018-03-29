@@ -51,17 +51,15 @@ synopsis programName (Command decoder format options) =
             programName
                 ++ " "
                 ++ (options
-                        |> List.filterMap
+                        |> List.map
                             (\spec ->
                                 case spec of
                                     Option option ->
-                                        Just option
+                                        optionSynopsis option
 
-                                    Operand _ ->
-                                        -- TODO
-                                        Nothing
+                                    Operand operandName ->
+                                        operandName
                             )
-                        |> List.map optionSynopsis
                         |> String.join " "
                    )
 

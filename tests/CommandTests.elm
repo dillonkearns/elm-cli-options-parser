@@ -76,6 +76,12 @@ all =
                     |> Command.expectFlag "version"
                     |> Command.synopsis "greet"
                     |> Expect.equal "greet --version"
+        , test "print synopsis with required operand" <|
+            \() ->
+                Command.build identity
+                    |> Command.expectOperand "MyApp.elm"
+                    |> Command.synopsis "elm-interop"
+                    |> Expect.equal "elm-interop MyApp.elm"
         , test "recognizes empty operands and flags" <|
             \() ->
                 []
