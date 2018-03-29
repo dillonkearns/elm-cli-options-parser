@@ -19,11 +19,11 @@ all =
     describe "CLI options parser"
         [ test "help command" <|
             \() ->
-                Command.tryMatch [ "--help" ] (Command.command Help (Command.LongOnly "help"))
+                Command.tryMatch [ "--help" ] (Command.build Help |> Command.expectFlag "help")
                     |> Expect.equal (Just Help)
         , test "version command" <|
             \() ->
-                Command.tryMatch [ "--version" ] (Command.command Version (Command.LongOnly "version"))
+                Command.tryMatch [ "--version" ] (Command.build Version |> Command.expectFlag "version")
                     |> Expect.equal (Just Version)
         , test "matching non-first element in list" <|
             \() ->

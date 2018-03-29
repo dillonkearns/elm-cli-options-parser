@@ -1,4 +1,4 @@
-module Command exposing (Command, Format(..), ParserError(..), build, command, commandWithArg, optionWithStringArg, synopsis, tryMatch, withFlag)
+module Command exposing (Command, Format(..), ParserError(..), build, command, commandWithArg, expectFlag, optionWithStringArg, synopsis, tryMatch, withFlag)
 
 import Json.Decode as Decode
 import List.Extra
@@ -32,7 +32,7 @@ command msg format =
     Command (Decode.succeed msg) format []
 
 
-build : (a -> msg) -> Command (a -> msg)
+build : msg -> Command msg
 build msgConstructor =
     Command (Decode.succeed msgConstructor) Empty []
 
@@ -85,6 +85,27 @@ withFlag flag (Command msgConstructor format options) =
         )
         format
         options
+
+
+expectFlag : String -> Command msg -> Command msg
+expectFlag flagName (Command decoder format options) =
+    let
+        formattedFlag =
+            "--" ++ flagName
+    in
+    Command
+        (Decode.list Decode.string
+            |> Decode.andThen
+                (\list ->
+                    if List.member formattedFlag list then
+                        decoder
+                    else
+                        ("Expect flag " ++ formattedFlag)
+                            |> Decode.fail
+                )
+        )
+        format
+        (options ++ [ Flag flagName ])
 
 
 optionWithStringArg : String -> Command (String -> msg) -> Command msg
