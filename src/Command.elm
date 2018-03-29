@@ -1,4 +1,4 @@
-module Command exposing (Command, Format(..), ParserError(..), build, expectFlag, expectOperand, flagsAndOperands, optionWithStringArg, synopsis, tryMatch, withFlag)
+module Command exposing (Command, Format(..), ParserError(..), build, expectFlag, expectOperand, flagsAndOperands, optionWithStringArg, optionalOptionWithStringArg, synopsis, tryMatch, withFlag)
 
 import Json.Decode as Decode exposing (Decoder)
 import List.Extra
@@ -20,7 +20,7 @@ tryMatch argv ((Command decoder format options) as command) =
                                                 Operand operand ->
                                                     Just operand
 
-                                                Option _ ->
+                                                Option _ _ ->
                                                     Nothing
                                         )
                                     |> List.length
@@ -54,8 +54,8 @@ synopsis programName (Command decoder format options) =
                         |> List.map
                             (\spec ->
                                 case spec of
-                                    Option option ->
-                                        optionSynopsis option
+                                    Option option occurences ->
+                                        optionSynopsis occurences option
 
                                     Operand operandName ->
                                         operandName
@@ -64,14 +64,26 @@ synopsis programName (Command decoder format options) =
                    )
 
 
-optionSynopsis : Option -> String
-optionSynopsis option =
-    case option of
+optionSynopsis : Occurences -> Option -> String
+optionSynopsis occurences option =
+    (case option of
         Flag flagName ->
             "--" ++ flagName
 
         OptionWithStringArg optionName ->
             "--" ++ optionName ++ " <" ++ optionName ++ ">"
+    )
+        |> notateOccurences occurences
+
+
+notateOccurences : Occurences -> String -> String
+notateOccurences occurences rawSynopsis =
+    case occurences of
+        Optional ->
+            "[" ++ rawSynopsis ++ "]"
+
+        Required ->
+            rawSynopsis
 
 
 withFlag : String -> Command (Bool -> msg) -> Command msg
@@ -110,7 +122,7 @@ expectFlag flagName (Command decoder format options) =
             )
         )
         format
-        (options ++ [ Flag flagName |> Option ])
+        (options ++ [ Option (Flag flagName) Required ])
 
 
 expectOperand : String -> Command (String -> msg) -> Command msg
@@ -124,7 +136,7 @@ expectOperand operandName ((Command decoder format options) as command) =
                             |> List.filterMap
                                 (\spec ->
                                     case spec of
-                                        Option _ ->
+                                        Option _ _ ->
                                             Nothing
 
                                         Operand operandName ->
@@ -191,7 +203,30 @@ optionWithStringArg flag (Command msgConstructor format options) =
                 )
         )
         format
-        (options ++ [ OptionWithStringArg flag |> Option ])
+        (options ++ [ Option (OptionWithStringArg flag) Required ])
+
+
+optionalOptionWithStringArg : String -> Command (Maybe String -> msg) -> Command msg
+optionalOptionWithStringArg flag (Command msgConstructor format options) =
+    Command
+        (Decode.list Decode.string
+            |> Decode.andThen
+                (\list ->
+                    case list |> List.Extra.elemIndex ("--" ++ flag) of
+                        Nothing ->
+                            Decode.map (\constructor -> constructor Nothing) msgConstructor
+
+                        Just flagIndex ->
+                            case list |> List.Extra.getAt (flagIndex + 1) of
+                                Nothing ->
+                                    Decode.fail ("Found --" ++ flag ++ " flag but expected an argument")
+
+                                Just argValue ->
+                                    Decode.map (\constructor -> constructor (Just argValue)) msgConstructor
+                )
+        )
+        format
+        (options ++ [ Option (OptionWithStringArg flag) Optional ])
 
 
 flagsAndOperandsAndThen : Command msg -> ({ flags : List String, operands : List String } -> Decoder decodesTo) -> Decoder decodesTo
@@ -212,7 +247,7 @@ optionHasArg options optionNameToCheck =
             |> List.filterMap
                 (\spec ->
                     case spec of
-                        Option option ->
+                        Option option occurences ->
                             Just option
 
                         Operand _ ->
@@ -297,8 +332,13 @@ type Option
     | OptionWithStringArg String
 
 
+type Occurences
+    = Optional
+    | Required
+
+
 type UsageSpec
-    = Option Option
+    = Option Option Occurences
     | Operand String
 
 

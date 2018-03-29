@@ -56,6 +56,14 @@ all =
                         |> Expect.equal Nothing
             , test "option with argument" <|
                 \() ->
+                    Command.tryMatch [ "--name", "Deanna", "--prefix", "Hello" ]
+                        (Command.build (,)
+                            |> Command.optionWithStringArg "name"
+                            |> Command.optionalOptionWithStringArg "prefix"
+                        )
+                        |> Expect.equal (Just ( "Deanna", Just "Hello" ))
+            , test "optional option with argument" <|
+                \() ->
                     Command.tryMatch [ "--name", "Deanna" ] (Command.build Name |> Command.optionWithStringArg "name")
                         |> Expect.equal (Just (Name "Deanna"))
             , test "option with multiple required string arguments" <|
@@ -171,6 +179,14 @@ all =
                         |> Command.expectFlag "version"
                         |> Command.synopsis "greet"
                         |> Expect.equal "greet --version"
+            , test "print synopsis with optional arg" <|
+                \() ->
+                    (Command.build (,)
+                        |> Command.optionWithStringArg "name"
+                        |> Command.optionalOptionWithStringArg "prefix"
+                    )
+                        |> Command.synopsis "greet"
+                        |> Expect.equal "greet --name <name> [--prefix <prefix>]"
             , test "print synopsis with required operand" <|
                 \() ->
                     Command.build identity
