@@ -1,4 +1,4 @@
-module Command exposing (Command, Format(..), ParserError(..), build, commandWithArg, expectFlag, flagsAndOperands, optionWithStringArg, synopsis, tryMatch, withFlag)
+module Command exposing (Command, Format(..), ParserError(..), build, expectFlag, expectOperand, flagsAndOperands, optionWithStringArg, synopsis, tryMatch, withFlag)
 
 import Json.Decode as Decode exposing (Decoder)
 import List.Extra
@@ -24,7 +24,21 @@ tryMatch argv ((Command decoder format options) as command) =
             Decode.decodeString
                 (flagsAndOperandsAndThen command
                     (\{ operands } ->
-                        if List.length operands > 0 then
+                        if
+                            (operands |> List.length)
+                                > (options
+                                    |> List.filterMap
+                                        (\option ->
+                                            case option of
+                                                Operand operand ->
+                                                    Just operand
+
+                                                Option _ ->
+                                                    Nothing
+                                        )
+                                    |> List.length
+                                  )
+                        then
                             Decode.fail "More operands than expected"
                         else
                             decoder
@@ -43,11 +57,6 @@ build msgConstructor =
     Command (Decode.succeed msgConstructor) Empty []
 
 
-commandWithArg : (String -> msg) -> Command msg
-commandWithArg msg =
-    Command (Decode.map msg (Decode.index 0 Decode.string)) OperandOnly []
-
-
 synopsis : String -> Command msg -> String
 synopsis programName (Command decoder format options) =
     case format of
@@ -63,6 +72,10 @@ synopsis programName (Command decoder format options) =
                                 case spec of
                                     Option option ->
                                         Just option
+
+                                    Operand _ ->
+                                        -- TODO
+                                        Nothing
                             )
                         |> List.map optionSynopsis
                         |> String.join " "
@@ -85,7 +98,7 @@ withFlag flag (Command msgConstructor format options) =
         (Decode.list Decode.string
             |> Decode.andThen
                 (\list ->
-                    if List.member ("-" ++ flag) list then
+                    if List.member ("--" ++ flag) list then
                         Decode.map (\constructor -> constructor True) msgConstructor
                     else
                         Decode.map (\constructor -> constructor False) msgConstructor
@@ -116,6 +129,29 @@ expectFlag flagName (Command decoder format options) =
         )
         format
         (options ++ [ Flag flagName |> Option ])
+
+
+expectOperand : String -> Command (String -> msg) -> Command msg
+expectOperand operandName ((Command decoder format options) as command) =
+    Command
+        (flagsAndOperandsAndThen command
+            (\{ operands } ->
+                case
+                    operands
+                        |> List.Extra.getAt 0
+                of
+                    Just operandValue ->
+                        Decode.map
+                            (\constructor -> constructor operandValue)
+                            decoder
+
+                    Nothing ->
+                        ("Expect operand " ++ operandName)
+                            |> Decode.fail
+            )
+        )
+        format
+        (options ++ [ Operand operandName ])
 
 
 flagsAndThen : (List String -> Decode.Decoder a) -> Decode.Decoder a
@@ -182,6 +218,9 @@ optionHasArg options optionNameToCheck =
                     case spec of
                         Option option ->
                             Just option
+
+                        Operand _ ->
+                            Nothing
                 )
             |> List.Extra.find
                 (\spec -> optionName spec == optionNameToCheck)
@@ -204,43 +243,48 @@ flagsAndOperands (Command msgConstructor format options) argv =
         firstOptionIndex =
             argv
                 |> List.Extra.findIndex isFlag
-                |> Maybe.withDefault 0
-
-        lastOptionIndex =
-            List.Extra.indexedFoldl
-                (\index element lastIndexSoFar ->
-                    let
-                        hasArg =
-                            optionHasArg options (String.dropLeft 2 element)
-                    in
-                    if index < firstOptionIndex then
-                        lastIndexSoFar
-                    else if isFlag element then
-                        if hasArg then
-                            index + 1
-                        else
-                            index
-                    else
-                        lastIndexSoFar
-                )
-                firstOptionIndex
-                argv
-
-        frontOperands =
-            argv
-                |> List.Extra.splitAt firstOptionIndex
-                |> Tuple.first
-
-        withoutFrontOperands =
-            argv
-                |> List.Extra.splitAt firstOptionIndex
-                |> Tuple.second
-
-        ( flags, backOperands ) =
-            withoutFrontOperands
-                |> List.Extra.splitAt (lastOptionIndex + 1 - (List.length argv - List.length withoutFrontOperands))
     in
-    { flags = flags, operands = frontOperands ++ backOperands }
+    case firstOptionIndex of
+        Just firstIndex ->
+            let
+                lastOptionIndex =
+                    List.Extra.indexedFoldl
+                        (\index element lastIndexSoFar ->
+                            let
+                                hasArg =
+                                    optionHasArg options (String.dropLeft 2 element)
+                            in
+                            if index < firstIndex then
+                                lastIndexSoFar
+                            else if isFlag element then
+                                if hasArg then
+                                    index + 1
+                                else
+                                    index
+                            else
+                                lastIndexSoFar
+                        )
+                        firstIndex
+                        argv
+
+                frontOperands =
+                    argv
+                        |> List.Extra.splitAt firstIndex
+                        |> Tuple.first
+
+                withoutFrontOperands =
+                    argv
+                        |> List.Extra.splitAt firstIndex
+                        |> Tuple.second
+
+                ( flags, backOperands ) =
+                    withoutFrontOperands
+                        |> List.Extra.splitAt (lastOptionIndex + 1 - (List.length argv - List.length withoutFrontOperands))
+            in
+            { flags = flags, operands = frontOperands ++ backOperands }
+
+        Nothing ->
+            { flags = [], operands = argv }
 
 
 type Format
@@ -260,6 +304,7 @@ type Option
 
 type UsageSpec
     = Option Option
+    | Operand String
 
 
 optionName : Option -> String
