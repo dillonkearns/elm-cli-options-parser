@@ -18,7 +18,7 @@ tryMatch argv command =
 
 
 expectedOperandCountOrFail : Command msg -> Command msg
-expectedOperandCountOrFail ((Command decoder format options) as command) =
+expectedOperandCountOrFail ((Command decoder options) as command) =
     Command
         (flagsAndOperandsAndThen command
             (\{ operands } ->
@@ -42,17 +42,16 @@ expectedOperandCountOrFail ((Command decoder format options) as command) =
                     decoder
             )
         )
-        format
         options
 
 
 decoder : Command msg -> Decoder msg
-decoder (Command decoder format options) =
+decoder (Command decoder options) =
     decoder
 
 
 failIfUnexpectedOptions : Command msg -> Command msg
-failIfUnexpectedOptions ((Command decoder format options) as command) =
+failIfUnexpectedOptions ((Command decoder options) as command) =
     Command
         (flagsAndOperandsAndThen command
             (\{ flags } ->
@@ -84,7 +83,6 @@ failIfUnexpectedOptions ((Command decoder format options) as command) =
                     Decode.fail "Found unexpected options."
             )
         )
-        format
         options
 
 
@@ -105,16 +103,16 @@ optionExists usageSpecs thisOptionName =
 
 
 type Command msg
-    = Command (Decode.Decoder msg) Format (List UsageSpec)
+    = Command (Decode.Decoder msg) (List UsageSpec)
 
 
 build : msg -> Command msg
 build msgConstructor =
-    Command (Decode.succeed msgConstructor) Empty []
+    Command (Decode.succeed msgConstructor) []
 
 
 synopsis : String -> Command msg -> String
-synopsis programName (Command decoder format options) =
+synopsis programName (Command decoder options) =
     programName
         ++ " "
         ++ (options
@@ -144,7 +142,7 @@ optionSynopsis occurences option =
 
 
 withFlag : String -> Command (Bool -> msg) -> Command msg
-withFlag flagName (Command msgConstructor format options) =
+withFlag flagName (Command msgConstructor options) =
     Command
         (Decode.list Decode.string
             |> Decode.andThen
@@ -155,12 +153,11 @@ withFlag flagName (Command msgConstructor format options) =
                         Decode.map (\constructor -> constructor False) msgConstructor
                 )
         )
-        format
         (options ++ [ Option (Flag flagName) Optional ])
 
 
 expectFlag : String -> Command msg -> Command msg
-expectFlag flagName (Command decoder format options) =
+expectFlag flagName (Command decoder options) =
     let
         formattedFlag =
             "--" ++ flagName
@@ -178,12 +175,11 @@ expectFlag flagName (Command decoder format options) =
                         |> Decode.fail
             )
         )
-        format
         (options ++ [ Option (Flag flagName) Required ])
 
 
 expectOperand : String -> Command (String -> msg) -> Command msg
-expectOperand operandName ((Command decoder format options) as command) =
+expectOperand operandName ((Command decoder options) as command) =
     Command
         (flagsAndOperandsAndThen command
             (\{ operands } ->
@@ -215,7 +211,6 @@ expectOperand operandName ((Command decoder format options) as command) =
                             |> Decode.fail
             )
         )
-        format
         (options ++ [ Operand operandName ])
 
 
@@ -241,7 +236,7 @@ isFlag string =
 
 
 optionWithStringArg : String -> Command (String -> msg) -> Command msg
-optionWithStringArg flag (Command msgConstructor format options) =
+optionWithStringArg flag (Command msgConstructor options) =
     Command
         (Decode.list Decode.string
             |> Decode.andThen
@@ -259,12 +254,11 @@ optionWithStringArg flag (Command msgConstructor format options) =
                                     Decode.map (\constructor -> constructor argValue) msgConstructor
                 )
         )
-        format
         (options ++ [ Option (OptionWithStringArg flag) Required ])
 
 
 optionalOptionWithStringArg : String -> Command (Maybe String -> msg) -> Command msg
-optionalOptionWithStringArg flag (Command msgConstructor format options) =
+optionalOptionWithStringArg flag (Command msgConstructor options) =
     Command
         (Decode.list Decode.string
             |> Decode.andThen
@@ -282,7 +276,6 @@ optionalOptionWithStringArg flag (Command msgConstructor format options) =
                                     Decode.map (\constructor -> constructor (Just argValue)) msgConstructor
                 )
         )
-        format
         (options ++ [ Option (OptionWithStringArg flag) Optional ])
 
 
@@ -326,7 +319,7 @@ optionHasArg options optionNameToCheck =
 
 
 flagsAndOperands : Command msg -> List String -> { flags : List String, operands : List String }
-flagsAndOperands (Command msgConstructor format options) argv =
+flagsAndOperands (Command msgConstructor options) argv =
     let
         firstOptionIndex =
             argv
@@ -373,10 +366,6 @@ flagsAndOperands (Command msgConstructor format options) argv =
 
         Nothing ->
             { flags = [], operands = argv }
-
-
-type Format
-    = Empty
 
 
 type Option
