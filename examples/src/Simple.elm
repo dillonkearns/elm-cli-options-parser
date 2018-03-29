@@ -22,7 +22,7 @@ type Msg
     = PrintVersion
     | PrintHelp
     | NoOp
-    | Greet String
+    | Greet String (Maybe String)
 
 
 init : Flags -> ( Model, Cmd Msg )
@@ -41,7 +41,9 @@ cli : List (Command.Command Msg)
 cli =
     [ Command.build PrintVersion |> Command.expectFlag "version"
     , Command.build PrintHelp |> Command.expectFlag "help"
-    , Command.build Greet |> Command.optionWithStringArg "name"
+    , Command.build Greet
+        |> Command.optionWithStringArg "name"
+        |> Command.optionalOptionWithStringArg "greeting"
     ]
 
 
@@ -59,8 +61,13 @@ update msg model =
                 NoOp ->
                     "No matching command"
 
-                Greet name ->
-                    "Hello " ++ name ++ "!"
+                Greet name maybePrefix ->
+                    case maybePrefix of
+                        Just greeting ->
+                            greeting ++ " " ++ name ++ "!"
+
+                        Nothing ->
+                            "Hello " ++ name ++ "!"
     in
     ( (), print toPrint )
 
