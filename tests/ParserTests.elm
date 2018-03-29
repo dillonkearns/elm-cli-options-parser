@@ -47,7 +47,7 @@ all =
                     |> Expect.equal Nothing
         , test "option with argument" <|
             \() ->
-                Command.tryMatch [ "--name", "Deanna" ] (Command.empty Name |> Command.optionWithStringArg "name")
+                Command.tryMatch [ "--name", "Deanna" ] (Command.build Name |> Command.optionWithStringArg "name")
                     |> Expect.equal (Just (Name "Deanna"))
         , test "option with multiple required string arguments" <|
             \() ->
@@ -57,7 +57,7 @@ all =
                     , "--first-name"
                     , "Deanna"
                     ]
-                    (Command.empty FullName
+                    (Command.build FullName
                         |> Command.optionWithStringArg "first-name"
                         |> Command.optionWithStringArg "last-name"
                     )

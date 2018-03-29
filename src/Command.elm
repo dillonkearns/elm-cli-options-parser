@@ -1,4 +1,4 @@
-module Command exposing (Command, Format(..), ParserError(..), command, commandWithArg, empty, optionWithStringArg, synopsis, tryMatch, withFlag)
+module Command exposing (Command, Format(..), ParserError(..), build, command, commandWithArg, optionWithStringArg, synopsis, tryMatch, withFlag)
 
 import Json.Decode as Decode
 import List.Extra
@@ -32,8 +32,8 @@ command msg format =
     Command (Decode.succeed msg) format
 
 
-empty : (a -> msg) -> Command (a -> msg)
-empty msgConstructor =
+build : (a -> msg) -> Command (a -> msg)
+build msgConstructor =
     Command (Decode.succeed msgConstructor) Empty
 
 
