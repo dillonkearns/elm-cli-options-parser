@@ -94,18 +94,41 @@ expectFlag flagName (Command decoder format options) =
             "--" ++ flagName
     in
     Command
-        (Decode.list Decode.string
-            |> Decode.andThen
-                (\list ->
-                    if List.member formattedFlag list then
-                        decoder
-                    else
-                        ("Expect flag " ++ formattedFlag)
-                            |> Decode.fail
-                )
+        (flagsAndThen
+            (\list ->
+                if
+                    list
+                        |> List.member formattedFlag
+                then
+                    decoder
+                else
+                    ("Expect flag " ++ formattedFlag)
+                        |> Decode.fail
+            )
         )
         format
         (options ++ [ Flag flagName ])
+
+
+flagsAndThen : (List String -> Decode.Decoder a) -> Decode.Decoder a
+flagsAndThen something =
+    let
+        startsWithFlag list =
+            list |> List.head |> Maybe.map isFlag |> Maybe.withDefault True
+    in
+    Decode.list Decode.string
+        |> Decode.andThen
+            (\list ->
+                if startsWithFlag list then
+                    something list
+                else
+                    something []
+            )
+
+
+isFlag : String -> Bool
+isFlag string =
+    string |> String.startsWith "--"
 
 
 optionWithStringArg : String -> Command (String -> msg) -> Command msg

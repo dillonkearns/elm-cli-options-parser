@@ -27,7 +27,7 @@ all =
                     |> Expect.equal (Just Version)
         , test "matching non-first element in list" <|
             \() ->
-                Command.tryMatch [ "unused", "--version" ] (Command.command Version (Command.LongOnly "version"))
+                Command.tryMatch [ "unused", "--version" ] (Command.build Version |> Command.expectFlag "version")
                     |> Expect.equal Nothing
         , test "command with args" <|
             \() ->
