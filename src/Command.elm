@@ -2,6 +2,7 @@ module Command exposing (Command, Format(..), ParserError(..), build, expectFlag
 
 import Json.Decode as Decode exposing (Decoder)
 import List.Extra
+import Occurences exposing (Occurences(..))
 
 
 tryMatch : List String -> Command msg -> Maybe msg
@@ -73,17 +74,7 @@ optionSynopsis occurences option =
         OptionWithStringArg optionName ->
             "--" ++ optionName ++ " <" ++ optionName ++ ">"
     )
-        |> notateOccurences occurences
-
-
-notateOccurences : Occurences -> String -> String
-notateOccurences occurences rawSynopsis =
-    case occurences of
-        Optional ->
-            "[" ++ rawSynopsis ++ "]"
-
-        Required ->
-            rawSynopsis
+        |> Occurences.qualifySynopsis occurences
 
 
 withFlag : String -> Command (Bool -> msg) -> Command msg
@@ -330,11 +321,6 @@ type Format
 type Option
     = Flag String
     | OptionWithStringArg String
-
-
-type Occurences
-    = Optional
-    | Required
 
 
 type UsageSpec
