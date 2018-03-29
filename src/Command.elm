@@ -7,19 +7,6 @@ import List.Extra
 tryMatch : List String -> Command msg -> Maybe msg
 tryMatch argv ((Command decoder format options) as command) =
     case format of
-        OperandOnly ->
-            Decode.decodeString
-                (flagsAndOperandsAndThen command
-                    (\{ operands } ->
-                        if List.length operands > 1 then
-                            Decode.fail "More operands than expected"
-                        else
-                            decoder
-                    )
-                )
-                (argv |> toString)
-                |> Result.toMaybe
-
         Empty ->
             Decode.decodeString
                 (flagsAndOperandsAndThen command
@@ -60,9 +47,6 @@ build msgConstructor =
 synopsis : String -> Command msg -> String
 synopsis programName (Command decoder format options) =
     case format of
-        OperandOnly ->
-            "TODO"
-
         Empty ->
             programName
                 ++ " "
@@ -288,8 +272,7 @@ flagsAndOperands (Command msgConstructor format options) argv =
 
 
 type Format
-    = OperandOnly
-    | Empty
+    = Empty
 
 
 
