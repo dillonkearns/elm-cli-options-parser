@@ -7,7 +7,13 @@ import Occurences exposing (Occurences(..))
 
 tryMatch : List String -> Command msg -> Maybe msg
 tryMatch argv command =
-    Decode.decodeString (command |> expectedOperandCountOrFail |> decoder) (argv |> toString)
+    Decode.decodeString
+        (command
+            |> expectedOperandCountOrFail
+            |> failIfUnexpectedOptions
+            |> decoder
+        )
+        (argv |> toString)
         |> Result.toMaybe
 
 
@@ -43,6 +49,59 @@ expectedOperandCountOrFail ((Command decoder format options) as command) =
 decoder : Command msg -> Decoder msg
 decoder (Command decoder format options) =
     decoder
+
+
+failIfUnexpectedOptions : Command msg -> Command msg
+failIfUnexpectedOptions ((Command decoder format options) as command) =
+    Command
+        (flagsAndOperandsAndThen command
+            (\{ flags } ->
+                let
+                    ( invalidOptions, unconsumedArg ) =
+                        flags
+                            |> List.Extra.indexedFoldl
+                                (\index element ( invalidSoFar, unconsumedLeft ) ->
+                                    if unconsumedLeft then
+                                        ( invalidSoFar, False )
+                                    else
+                                        case optionExists options element of
+                                            Just option ->
+                                                case option of
+                                                    OptionWithStringArg argName ->
+                                                        ( invalidSoFar, True )
+
+                                                    Flag flagName ->
+                                                        ( invalidSoFar, False )
+
+                                            Nothing ->
+                                                ( invalidSoFar ++ [ element ], False )
+                                )
+                                ( [], False )
+                in
+                if invalidOptions == [] && not unconsumedArg then
+                    decoder
+                else
+                    Decode.fail "Found unexpected options."
+            )
+        )
+        format
+        options
+
+
+optionExists : List UsageSpec -> String -> Maybe Option
+optionExists usageSpecs thisOptionName =
+    usageSpecs
+        |> List.filterMap
+            (\usageSpec ->
+                case usageSpec of
+                    Option option occurences ->
+                        option
+                            |> Just
+
+                    Operand _ ->
+                        Nothing
+            )
+        |> List.Extra.find (\option -> ("--" ++ optionName option) == thisOptionName)
 
 
 type Command msg
@@ -87,19 +146,19 @@ optionSynopsis occurences option =
 
 
 withFlag : String -> Command (Bool -> msg) -> Command msg
-withFlag flag (Command msgConstructor format options) =
+withFlag flagName (Command msgConstructor format options) =
     Command
         (Decode.list Decode.string
             |> Decode.andThen
                 (\list ->
-                    if List.member ("--" ++ flag) list then
+                    if List.member ("--" ++ flagName) list then
                         Decode.map (\constructor -> constructor True) msgConstructor
                     else
                         Decode.map (\constructor -> constructor False) msgConstructor
                 )
         )
         format
-        options
+        (options ++ [ Option (Flag flagName) Optional ])
 
 
 expectFlag : String -> Command msg -> Command msg

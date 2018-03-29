@@ -93,6 +93,31 @@ all =
                             |> Command.optionWithStringArg "last-name"
                         )
                         |> Expect.equal Nothing
+            , test "doesn't match when unexpected options are present" <|
+                \() ->
+                    Command.tryMatch
+                        [ "--verbose"
+                        , "--unexpected-option"
+                        ]
+                        (Command.build FullName
+                            |> Command.expectFlag "verbose"
+                        )
+                        |> Expect.equal Nothing
+
+            -- , test "doesn't match when options with arg are present but without arg" <|
+            --     \() ->
+            --         Command.tryMatch
+            --             [ "--last-name"
+            --             , "Troi"
+            --             , "--first-name"
+            --             , "Deanna"
+            --             , "unexpectedOperand"
+            --             ]
+            --             (Command.build FullName
+            --                 |> Command.optionWithStringArg "first-name"
+            --                 |> Command.optionWithStringArg "last-name"
+            --             )
+            --             |> Expect.equal Nothing
             ]
         , describe "flags and operands extraction"
             [ test "recognizes empty operands and flags" <|
