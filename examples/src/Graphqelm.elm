@@ -74,7 +74,7 @@ update msg model =
                     "...fetching from url " ++ url ++ "\noptions: " ++ toString ( url, base, outputPath, excludeDeprecated )
 
                 FromFile file base outputPath excludeDeprecated ->
-                    "...fetching from file " ++ file
+                    "...fetching from file " ++ file ++ "\noptions: " ++ toString ( base, outputPath, excludeDeprecated )
     in
     ( (), print toPrint )
 
