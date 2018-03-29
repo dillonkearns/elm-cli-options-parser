@@ -115,22 +115,20 @@ build msgConstructor =
 
 synopsis : String -> Command msg -> String
 synopsis programName (Command decoder format options) =
-    case format of
-        Empty ->
-            programName
-                ++ " "
-                ++ (options
-                        |> List.map
-                            (\spec ->
-                                case spec of
-                                    Option option occurences ->
-                                        optionSynopsis occurences option
+    programName
+        ++ " "
+        ++ (options
+                |> List.map
+                    (\spec ->
+                        case spec of
+                            Option option occurences ->
+                                optionSynopsis occurences option
 
-                                    Operand operandName ->
-                                        operandName
-                            )
-                        |> String.join " "
-                   )
+                            Operand operandName ->
+                                operandName
+                    )
+                |> String.join " "
+           )
 
 
 optionSynopsis : Occurences -> Option -> String
