@@ -18,7 +18,7 @@ tryMatch argv (Command decoder format options) =
             Decode.decodeString decoder (argv |> toString)
                 |> Result.toMaybe
 
-        Empty options ->
+        Empty ->
             Decode.decodeString decoder (argv |> toString)
                 |> Result.toMaybe
 
@@ -34,7 +34,7 @@ command msg format =
 
 build : (a -> msg) -> Command (a -> msg)
 build msgConstructor =
-    Command (Decode.succeed msgConstructor) (Empty []) []
+    Command (Decode.succeed msgConstructor) Empty []
 
 
 commandWithArg : (String -> msg) -> Command msg
@@ -51,7 +51,7 @@ synopsis programName (Command decoder format options) =
         OperandOnly ->
             "TODO"
 
-        Empty _ ->
+        Empty ->
             programName
                 ++ " "
                 ++ (options |> List.map optionSynopsis |> String.join " ")
@@ -113,7 +113,7 @@ optionWithStringArg flag (Command msgConstructor format options) =
 type Format
     = LongOnly String
     | OperandOnly
-    | Empty (List Option)
+    | Empty
 
 
 type Option
