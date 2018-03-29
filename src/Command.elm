@@ -7,13 +7,6 @@ import List.Extra
 tryMatch : List String -> Command msg -> Maybe msg
 tryMatch argv (Command decoder format options) =
     case format of
-        LongOnly longOption ->
-            if argv == [ "--" ++ longOption ] then
-                Decode.decodeString decoder (argv |> toString)
-                    |> Result.toMaybe
-            else
-                Nothing
-
         OperandOnly ->
             Decode.decodeString decoder (argv |> toString)
                 |> Result.toMaybe
@@ -40,9 +33,6 @@ commandWithArg msg =
 synopsis : String -> Command msg -> String
 synopsis programName (Command decoder format options) =
     case format of
-        LongOnly longOption ->
-            programName ++ " --" ++ longOption
-
         OperandOnly ->
             "TODO"
 
@@ -146,8 +136,7 @@ optionWithStringArg flag (Command msgConstructor format options) =
 
 
 type Format
-    = LongOnly String
-    | OperandOnly
+    = OperandOnly
     | Empty
 
 
