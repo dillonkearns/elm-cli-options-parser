@@ -32,12 +32,17 @@ init flags =
             flags
                 |> List.drop 2
                 |> Cli.try
-                    [ Command.command PrintVersion (Command.LongOnly "version")
-                    , Command.command PrintHelp (Command.LongOnly "help")
-                    , Command.build Greet |> Command.optionWithStringArg "name"
-                    ]
+                    cli
     in
     update (msg |> Maybe.withDefault NoOp) ()
+
+
+cli : List (Command.Command Msg)
+cli =
+    [ Command.command PrintVersion (Command.LongOnly "version")
+    , Command.command PrintHelp (Command.LongOnly "help")
+    , Command.build Greet |> Command.optionWithStringArg "name"
+    ]
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -49,7 +54,7 @@ update msg model =
                     "You are on version 3.1.4"
 
                 PrintHelp ->
-                    "Help text here..."
+                    Cli.helpText "greet" cli
 
                 NoOp ->
                     "No matching command"

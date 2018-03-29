@@ -1,4 +1,4 @@
-module Cli exposing (try)
+module Cli exposing (helpText, try)
 
 import Command exposing (Command)
 
@@ -20,3 +20,10 @@ oneOf =
                 x
         )
         Nothing
+
+
+helpText : String -> List (Command msg) -> String
+helpText programName cli =
+    cli
+        |> List.map (Command.synopsis programName)
+        |> String.join "\n"
