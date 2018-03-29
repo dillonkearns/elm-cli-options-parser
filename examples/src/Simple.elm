@@ -22,6 +22,7 @@ type Msg
     = PrintVersion
     | PrintHelp
     | NoOp
+    | Greet String
 
 
 init : Flags -> ( Model, Cmd Msg )
@@ -33,6 +34,7 @@ init flags =
                 |> Cli.try
                     [ Command.command PrintVersion (Command.LongOnly "version")
                     , Command.command PrintHelp (Command.LongOnly "help")
+                    , Command.build Greet |> Command.optionWithStringArg "name"
                     ]
     in
     update (msg |> Maybe.withDefault NoOp) ()
@@ -51,6 +53,9 @@ update msg model =
 
                 NoOp ->
                     "No matching command"
+
+                Greet name ->
+                    "Hello " ++ name ++ "!"
     in
     ( (), print toPrint )
 
