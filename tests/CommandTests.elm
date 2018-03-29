@@ -76,6 +76,27 @@ all =
                     |> Command.expectFlag "version"
                     |> Command.synopsis "greet"
                     |> Expect.equal "greet --version"
+        , test "recognizes empty operands and flags" <|
+            \() ->
+                []
+                    |> Command.flagsAndOperands
+                        (Command.build FullName
+                            |> Command.optionWithStringArg "first-name"
+                            |> Command.optionWithStringArg "last-name"
+                        )
+                    |> Expect.equal { flags = [], operands = [] }
+        , test "gets operand from the front" <|
+            \() ->
+                [ "operand", "--first-name", "Will", "--last-name", "Riker" ]
+                    |> Command.flagsAndOperands
+                        (Command.build FullName
+                            |> Command.optionWithStringArg "first-name"
+                            |> Command.optionWithStringArg "last-name"
+                        )
+                    |> Expect.equal
+                        { flags = [ "--first-name", "Will", "--last-name", "Riker" ]
+                        , operands = [ "operand" ]
+                        }
 
         -- |> Expect.equal "greet -n <name> [-l][-a][-c option_argument][operand...]"
         ]

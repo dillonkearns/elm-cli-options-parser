@@ -1,6 +1,6 @@
-module Command exposing (Command, Format(..), ParserError(..), build, commandWithArg, expectFlag, optionWithStringArg, synopsis, tryMatch, withFlag)
+module Command exposing (Command, Format(..), ParserError(..), build, commandWithArg, expectFlag, flagsAndOperands, optionWithStringArg, synopsis, tryMatch, withFlag)
 
-import Json.Decode as Decode
+import Json.Decode as Decode exposing (Decoder)
 import List.Extra
 
 
@@ -133,6 +133,31 @@ optionWithStringArg flag (Command msgConstructor format options) =
         )
         format
         (options ++ [ OptionWithStringArg flag ])
+
+
+flagsAndOperandsAndThen : Command msg -> ({ flags : List String, operands : List String } -> Decoder decodesTo) -> Decoder decodesTo
+flagsAndOperandsAndThen command decoderFunction =
+    Decode.list Decode.string
+        |> Decode.andThen
+            (\list ->
+                list
+                    |> flagsAndOperands command
+                    |> decoderFunction
+            )
+
+
+flagsAndOperands : Command msg -> List String -> { flags : List String, operands : List String }
+flagsAndOperands (Command msgConstructor format options) argv =
+    let
+        frontOperands =
+            argv
+                |> List.Extra.takeWhile (not << isFlag)
+
+        withoutFrontOperands =
+            argv
+                |> List.Extra.dropWhile (not << isFlag)
+    in
+    { flags = withoutFrontOperands, operands = frontOperands }
 
 
 type Format
