@@ -6,36 +6,43 @@ import Occurences exposing (Occurences(..))
 
 
 tryMatch : List String -> Command msg -> Maybe msg
-tryMatch argv ((Command decoder format options) as command) =
-    case format of
-        Empty ->
-            Decode.decodeString (expectedOperandCountOrFail command) (argv |> toString)
-                |> Result.toMaybe
+tryMatch argv command =
+    Decode.decodeString (command |> expectedOperandCountOrFail |> decoder) (argv |> toString)
+        |> Result.toMaybe
 
 
-expectedOperandCountOrFail : Command msg -> Decoder msg
+expectedOperandCountOrFail : Command msg -> Command msg
 expectedOperandCountOrFail ((Command decoder format options) as command) =
-    flagsAndOperandsAndThen command
-        (\{ operands } ->
-            if
-                (operands |> List.length)
-                    > (options
-                        |> List.filterMap
-                            (\option ->
-                                case option of
-                                    Operand operand ->
-                                        Just operand
+    Command
+        (flagsAndOperandsAndThen command
+            (\{ operands } ->
+                if
+                    (operands |> List.length)
+                        > (options
+                            |> List.filterMap
+                                (\option ->
+                                    case option of
+                                        Operand operand ->
+                                            Just operand
 
-                                    Option _ _ ->
-                                        Nothing
-                            )
-                        |> List.length
-                      )
-            then
-                Decode.fail "More operands than expected"
-            else
-                decoder
+                                        Option _ _ ->
+                                            Nothing
+                                )
+                            |> List.length
+                          )
+                then
+                    Decode.fail "More operands than expected"
+                else
+                    decoder
+            )
         )
+        format
+        options
+
+
+decoder : Command msg -> Decoder msg
+decoder (Command decoder format options) =
+    decoder
 
 
 type Command msg
