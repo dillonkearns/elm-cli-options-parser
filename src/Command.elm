@@ -5,7 +5,7 @@ import List.Extra
 
 
 tryMatch : List String -> Command msg -> Maybe msg
-tryMatch argv (Command decoder format) =
+tryMatch argv (Command decoder format options) =
     case format of
         LongOnly longOption ->
             if argv == [ "--" ++ longOption ] then
@@ -24,26 +24,26 @@ tryMatch argv (Command decoder format) =
 
 
 type Command msg
-    = Command (Decode.Decoder msg) Format
+    = Command (Decode.Decoder msg) Format (List Option)
 
 
 command : msg -> Format -> Command msg
 command msg format =
-    Command (Decode.succeed msg) format
+    Command (Decode.succeed msg) format []
 
 
 build : (a -> msg) -> Command (a -> msg)
 build msgConstructor =
-    Command (Decode.succeed msgConstructor) (Empty [])
+    Command (Decode.succeed msgConstructor) (Empty []) []
 
 
 commandWithArg : (String -> msg) -> Command msg
 commandWithArg msg =
-    Command (Decode.map msg (Decode.index 0 Decode.string)) OperandOnly
+    Command (Decode.map msg (Decode.index 0 Decode.string)) OperandOnly []
 
 
 synopsis : String -> Command msg -> String
-synopsis programName (Command decoder format) =
+synopsis programName (Command decoder format options) =
     case format of
         LongOnly longOption ->
             programName ++ " --" ++ longOption
@@ -51,12 +51,28 @@ synopsis programName (Command decoder format) =
         OperandOnly ->
             "TODO"
 
-        Empty options ->
-            "TODO"
+        Empty _ ->
+            programName
+                ++ " "
+                ++ (options |> List.map optionSynopsis |> String.join " ")
+
+
+
+-- " --first-name <first-name> --last-name <last-name>"
+
+
+optionSynopsis : Option -> String
+optionSynopsis option =
+    case option of
+        Flag string ->
+            ""
+
+        OptionWithStringArg optionName ->
+            "--" ++ optionName ++ " <" ++ optionName ++ ">"
 
 
 withFlag : String -> Command (Bool -> msg) -> Command msg
-withFlag flag (Command msgConstructor format) =
+withFlag flag (Command msgConstructor format options) =
     Command
         (Decode.list Decode.string
             |> Decode.andThen
@@ -68,10 +84,11 @@ withFlag flag (Command msgConstructor format) =
                 )
         )
         format
+        options
 
 
 optionWithStringArg : String -> Command (String -> msg) -> Command msg
-optionWithStringArg flag (Command msgConstructor format) =
+optionWithStringArg flag (Command msgConstructor format options) =
     Command
         (Decode.list Decode.string
             |> Decode.andThen
@@ -90,6 +107,7 @@ optionWithStringArg flag (Command msgConstructor format) =
                 )
         )
         format
+        (options ++ [ OptionWithStringArg flag ])
 
 
 type Format

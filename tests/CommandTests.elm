@@ -62,6 +62,14 @@ all =
                         |> Command.optionWithStringArg "last-name"
                     )
                     |> Expect.equal (Just (FullName "Deanna" "Troi"))
+        , test "synopsis prints options with arguments" <|
+            \() ->
+                (Command.build FullName
+                    |> Command.optionWithStringArg "first-name"
+                    |> Command.optionWithStringArg "last-name"
+                )
+                    |> Command.synopsis "greet"
+                    |> Expect.equal "greet --first-name <first-name> --last-name <last-name>"
         , test "print synopsis with required flag" <|
             \() ->
                 Command.command Version (Command.LongOnly "version")
