@@ -42,7 +42,7 @@ cli : List (Command.Command Msg)
 cli =
     [ Command.build PrintVersion |> Command.expectFlag "version"
     , Command.build PrintHelp |> Command.expectFlag "help"
-    , Command.build FromUrl
+    , Command.buildWithDoc FromUrl "generate files based on the schema at `url`"
         |> Command.expectOperand "url"
         |> Command.optionalOptionWithStringArg "base"
         |> Command.optionalOptionWithStringArg "output"

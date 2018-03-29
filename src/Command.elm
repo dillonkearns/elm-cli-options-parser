@@ -1,4 +1,4 @@
-module Command exposing (Command, build, expectFlag, expectOperand, flagsAndOperands, optionWithStringArg, optionalOptionWithStringArg, synopsis, tryMatch, withFlag)
+module Command exposing (Command, build, buildWithDoc, expectFlag, expectOperand, flagsAndOperands, optionWithStringArg, optionalOptionWithStringArg, synopsis, tryMatch, withFlag)
 
 import Json.Decode as Decode exposing (Decoder)
 import List.Extra
@@ -123,8 +123,17 @@ build msgConstructor =
         }
 
 
+buildWithDoc : msg -> String -> Command msg
+buildWithDoc msgConstructor docString =
+    Command
+        { decoder = Decode.succeed msgConstructor
+        , usageSpecs = []
+        , description = Just docString
+        }
+
+
 synopsis : String -> Command msg -> String
-synopsis programName (Command { decoder, usageSpecs }) =
+synopsis programName (Command { decoder, usageSpecs, description }) =
     programName
         ++ " "
         ++ (usageSpecs
@@ -139,6 +148,7 @@ synopsis programName (Command { decoder, usageSpecs }) =
                     )
                 |> String.join " "
            )
+        ++ (description |> Maybe.map (\doc -> " # " ++ doc) |> Maybe.withDefault "")
 
 
 optionSynopsis : Occurences -> Option -> String
