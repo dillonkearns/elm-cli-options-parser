@@ -1,4 +1,4 @@
-module ParserTests exposing (all)
+module CommandTests exposing (all)
 
 import Command
 import Expect exposing (Expectation)
