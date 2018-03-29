@@ -90,8 +90,8 @@ all =
                 [ "operand", "--verbose", "--dry-run" ]
                     |> Command.flagsAndOperands
                         (Command.build (,,)
-                            |> Command.optionWithStringArg "verbose"
-                            |> Command.optionWithStringArg "dry-run"
+                            |> Command.expectFlag "verbose"
+                            |> Command.expectFlag "dry-run"
                         )
                     |> Expect.equal
                         { flags = [ "--verbose", "--dry-run" ]
@@ -102,37 +102,37 @@ all =
                 [ "--verbose", "--dry-run", "operand" ]
                     |> Command.flagsAndOperands
                         (Command.build (,,)
-                            |> Command.optionWithStringArg "verbose"
-                            |> Command.optionWithStringArg "dry-run"
+                            |> Command.expectFlag "verbose"
+                            |> Command.expectFlag "dry-run"
                         )
                     |> Expect.equal
                         { flags = [ "--verbose", "--dry-run" ]
                         , operands = [ "operand" ]
                         }
+        , test "gets operand from the front when args are used" <|
+            \() ->
+                [ "operand", "--first-name", "Will", "--last-name", "Riker" ]
+                    |> Command.flagsAndOperands
+                        (Command.build FullName
+                            |> Command.optionWithStringArg "first-name"
+                            |> Command.optionWithStringArg "last-name"
+                        )
+                    |> Expect.equal
+                        { flags = [ "--first-name", "Will", "--last-name", "Riker" ]
+                        , operands = [ "operand" ]
+                        }
+        , test "gets operand from the back when args are present" <|
+            \() ->
+                [ "--first-name", "Will", "--last-name", "Riker", "operand" ]
+                    |> Command.flagsAndOperands
+                        (Command.build FullName
+                            |> Command.optionWithStringArg "first-name"
+                            |> Command.optionWithStringArg "last-name"
+                        )
+                    |> Expect.equal
+                        { flags = [ "--first-name", "Will", "--last-name", "Riker" ]
+                        , operands = [ "operand" ]
+                        }
 
-        -- , test "gets operand from the front when args are used" <|
-        --     \() ->
-        --         [ "operand", "--first-name", "Will", "--last-name", "Riker" ]
-        --             |> Command.flagsAndOperands
-        --                 (Command.build FullName
-        --                     |> Command.optionWithStringArg "first-name"
-        --                     |> Command.optionWithStringArg "last-name"
-        --                 )
-        --             |> Expect.equal
-        --                 { flags = [ "--first-name", "Will", "--last-name", "Riker" ]
-        --                 , operands = [ "operand" ]
-        --                 }
-        -- , test "gets operand from the back when args are present" <|
-        --     \() ->
-        --         [ "--first-name", "Will", "--last-name", "Riker", "operand" ]
-        --             |> Command.flagsAndOperands
-        --                 (Command.build FullName
-        --                     |> Command.optionWithStringArg "first-name"
-        --                     |> Command.optionWithStringArg "last-name"
-        --                 )
-        --             |> Expect.equal
-        --                 { flags = [ "--first-name", "Will", "--last-name", "Riker" ]
-        --                 , operands = [ "operand" ]
-        --                 }
         -- |> Expect.equal "greet -n <name> [-l][-a][-c option_argument][operand...]"
         ]

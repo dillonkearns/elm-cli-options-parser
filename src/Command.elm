@@ -146,6 +146,21 @@ flagsAndOperandsAndThen command decoderFunction =
             )
 
 
+optionHasArg : List Option -> String -> Bool
+optionHasArg options optionNameToCheck =
+    case List.Extra.find (\option -> optionName option == optionNameToCheck) options of
+        Just option ->
+            case option of
+                Flag flagName ->
+                    False
+
+                OptionWithStringArg optionName ->
+                    True
+
+        Nothing ->
+            False
+
+
 flagsAndOperands : Command msg -> List String -> { flags : List String, operands : List String }
 flagsAndOperands (Command msgConstructor format options) argv =
     let
@@ -157,10 +172,17 @@ flagsAndOperands (Command msgConstructor format options) argv =
         lastOptionIndex =
             List.Extra.indexedFoldl
                 (\index element lastIndexSoFar ->
+                    let
+                        hasArg =
+                            optionHasArg options (String.dropLeft 2 element)
+                    in
                     if index < firstOptionIndex then
                         lastIndexSoFar
                     else if isFlag element then
-                        index
+                        if hasArg then
+                            index + 1
+                        else
+                            index
                     else
                         lastIndexSoFar
                 )
@@ -177,11 +199,11 @@ flagsAndOperands (Command msgConstructor format options) argv =
                 |> List.Extra.splitAt firstOptionIndex
                 |> Tuple.second
 
-        ( options, backOperands ) =
+        ( flags, backOperands ) =
             withoutFrontOperands
                 |> List.Extra.splitAt (lastOptionIndex + 1 - (List.length argv - List.length withoutFrontOperands))
     in
-    { flags = options, operands = frontOperands ++ backOperands }
+    { flags = flags, operands = frontOperands ++ backOperands }
 
 
 type Format
@@ -189,9 +211,24 @@ type Format
     | Empty
 
 
+
+-- foo =
+--     List.Extra.find (\option -> optionName option == String.dropLeft 2 element) options
+
+
 type Option
     = Flag String
     | OptionWithStringArg String
+
+
+optionName : Option -> String
+optionName option =
+    case option of
+        Flag flagName ->
+            flagName
+
+        OptionWithStringArg optionName ->
+            optionName
 
 
 type ParserError
