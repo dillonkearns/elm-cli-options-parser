@@ -1,4 +1,4 @@
-module Command exposing (Command, Format(..), ParserError(..), build, expectFlag, expectOperand, flagsAndOperands, optionWithStringArg, optionalOptionWithStringArg, synopsis, tryMatch, withFlag)
+module Command exposing (Command, build, expectFlag, expectOperand, flagsAndOperands, optionWithStringArg, optionalOptionWithStringArg, synopsis, tryMatch, withFlag)
 
 import Json.Decode as Decode exposing (Decoder)
 import List.Extra
@@ -313,11 +313,6 @@ type Format
     = Empty
 
 
-
--- foo =
---     List.Extra.find (\option -> optionName option == String.dropLeft 2 element) options
-
-
 type Option
     = Flag String
     | OptionWithStringArg String
@@ -336,7 +331,3 @@ optionName option =
 
         OptionWithStringArg optionName ->
             optionName
-
-
-type ParserError
-    = UnknownOption String
