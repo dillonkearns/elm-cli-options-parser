@@ -35,7 +35,7 @@ tryMatch argv ((Command decoder format options) as command) =
 
 
 type Command msg
-    = Command (Decode.Decoder msg) Format (List Option)
+    = Command (Decode.Decoder msg) Format (List UsageSpec)
 
 
 build : msg -> Command msg
@@ -57,7 +57,16 @@ synopsis programName (Command decoder format options) =
         Empty ->
             programName
                 ++ " "
-                ++ (options |> List.map optionSynopsis |> String.join " ")
+                ++ (options
+                        |> List.filterMap
+                            (\spec ->
+                                case spec of
+                                    Option option ->
+                                        Just option
+                            )
+                        |> List.map optionSynopsis
+                        |> String.join " "
+                   )
 
 
 optionSynopsis : Option -> String
@@ -106,7 +115,7 @@ expectFlag flagName (Command decoder format options) =
             )
         )
         format
-        (options ++ [ Flag flagName ])
+        (options ++ [ Flag flagName |> Option ])
 
 
 flagsAndThen : (List String -> Decode.Decoder a) -> Decode.Decoder a
@@ -150,7 +159,7 @@ optionWithStringArg flag (Command msgConstructor format options) =
                 )
         )
         format
-        (options ++ [ OptionWithStringArg flag ])
+        (options ++ [ OptionWithStringArg flag |> Option ])
 
 
 flagsAndOperandsAndThen : Command msg -> ({ flags : List String, operands : List String } -> Decoder decodesTo) -> Decoder decodesTo
@@ -164,9 +173,19 @@ flagsAndOperandsAndThen command decoderFunction =
             )
 
 
-optionHasArg : List Option -> String -> Bool
+optionHasArg : List UsageSpec -> String -> Bool
 optionHasArg options optionNameToCheck =
-    case List.Extra.find (\option -> optionName option == optionNameToCheck) options of
+    case
+        options
+            |> List.filterMap
+                (\spec ->
+                    case spec of
+                        Option option ->
+                            Just option
+                )
+            |> List.Extra.find
+                (\spec -> optionName spec == optionNameToCheck)
+    of
         Just option ->
             case option of
                 Flag flagName ->
@@ -237,6 +256,10 @@ type Format
 type Option
     = Flag String
     | OptionWithStringArg String
+
+
+type UsageSpec
+    = Option Option
 
 
 optionName : Option -> String
