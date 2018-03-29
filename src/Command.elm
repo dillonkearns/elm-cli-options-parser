@@ -149,15 +149,39 @@ flagsAndOperandsAndThen command decoderFunction =
 flagsAndOperands : Command msg -> List String -> { flags : List String, operands : List String }
 flagsAndOperands (Command msgConstructor format options) argv =
     let
+        firstOptionIndex =
+            argv
+                |> List.Extra.findIndex isFlag
+                |> Maybe.withDefault 0
+
+        lastOptionIndex =
+            List.Extra.indexedFoldl
+                (\index element lastIndexSoFar ->
+                    if index < firstOptionIndex then
+                        lastIndexSoFar
+                    else if isFlag element then
+                        index
+                    else
+                        lastIndexSoFar
+                )
+                firstOptionIndex
+                argv
+
         frontOperands =
             argv
-                |> List.Extra.takeWhile (not << isFlag)
+                |> List.Extra.splitAt firstOptionIndex
+                |> Tuple.first
 
         withoutFrontOperands =
             argv
-                |> List.Extra.dropWhile (not << isFlag)
+                |> List.Extra.splitAt firstOptionIndex
+                |> Tuple.second
+
+        ( options, backOperands ) =
+            withoutFrontOperands
+                |> List.Extra.splitAt (lastOptionIndex + 1 - (List.length argv - List.length withoutFrontOperands))
     in
-    { flags = withoutFrontOperands, operands = frontOperands }
+    { flags = options, operands = frontOperands ++ backOperands }
 
 
 type Format
