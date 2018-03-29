@@ -29,10 +29,18 @@ all =
             \() ->
                 Command.tryMatch [ "unused", "--version" ] (Command.build Version |> Command.expectFlag "version")
                     |> Expect.equal Nothing
-        , test "command with args" <|
+        , test "command with operand" <|
             \() ->
                 Command.tryMatch [ "http://my-domain.com" ] (Command.build OpenUrl |> Command.expectOperand "url")
                     |> Expect.equal (Just (OpenUrl "http://my-domain.com"))
+        , test "command with multiple operands" <|
+            \() ->
+                Command.tryMatch [ "http://my-domain.com", "./file.txt" ]
+                    (Command.build (,)
+                        |> Command.expectOperand "url"
+                        |> Command.expectOperand "path/to/file"
+                    )
+                    |> Expect.equal (Just ( "http://my-domain.com", "./file.txt" ))
         , test "detects that optional flag is absent" <|
             \() ->
                 Command.tryMatch [ "http://my-domain.com" ] (Command.build OpenUrlWithFlag |> Command.expectOperand "url" |> Command.withFlag "p")

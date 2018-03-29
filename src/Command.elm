@@ -118,9 +118,23 @@ expectOperand operandName ((Command decoder format options) as command) =
     Command
         (flagsAndOperandsAndThen command
             (\{ operands } ->
+                let
+                    operandsSoFar =
+                        options
+                            |> List.filterMap
+                                (\spec ->
+                                    case spec of
+                                        Option _ ->
+                                            Nothing
+
+                                        Operand operandName ->
+                                            Just operandName
+                                )
+                            |> List.length
+                in
                 case
                     operands
-                        |> List.Extra.getAt 0
+                        |> List.Extra.getAt operandsSoFar
                 of
                     Just operandValue ->
                         Decode.map
