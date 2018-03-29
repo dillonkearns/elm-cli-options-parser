@@ -5,14 +5,32 @@ import List.Extra
 
 
 tryMatch : List String -> Command msg -> Maybe msg
-tryMatch argv (Command decoder format options) =
+tryMatch argv ((Command decoder format options) as command) =
     case format of
         OperandOnly ->
-            Decode.decodeString decoder (argv |> toString)
+            Decode.decodeString
+                (flagsAndOperandsAndThen command
+                    (\{ operands } ->
+                        if List.length operands > 1 then
+                            Decode.fail "More operands than expected"
+                        else
+                            decoder
+                    )
+                )
+                (argv |> toString)
                 |> Result.toMaybe
 
         Empty ->
-            Decode.decodeString decoder (argv |> toString)
+            Decode.decodeString
+                (flagsAndOperandsAndThen command
+                    (\{ operands } ->
+                        if List.length operands > 0 then
+                            Decode.fail "More operands than expected"
+                        else
+                            decoder
+                    )
+                )
+                (argv |> toString)
                 |> Result.toMaybe
 
 

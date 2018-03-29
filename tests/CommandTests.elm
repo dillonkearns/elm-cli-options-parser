@@ -133,6 +133,20 @@ all =
                         { flags = [ "--first-name", "Will", "--last-name", "Riker" ]
                         , operands = [ "operand" ]
                         }
+        , test "doesn't match if operands are present when none are expected" <|
+            \() ->
+                Command.tryMatch
+                    [ "--last-name"
+                    , "Troi"
+                    , "--first-name"
+                    , "Deanna"
+                    , "unexpectedOperand"
+                    ]
+                    (Command.build FullName
+                        |> Command.optionWithStringArg "first-name"
+                        |> Command.optionWithStringArg "last-name"
+                    )
+                    |> Expect.equal Nothing
 
         -- |> Expect.equal "greet -n <name> [-l][-a][-c option_argument][operand...]"
         ]
