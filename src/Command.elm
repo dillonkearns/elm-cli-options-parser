@@ -18,72 +18,74 @@ tryMatch argv command =
 
 
 expectedOperandCountOrFail : Command msg -> Command msg
-expectedOperandCountOrFail ((Command decoder options) as command) =
+expectedOperandCountOrFail ((Command { decoder, usageSpecs }) as command) =
     Command
-        (flagsAndOperandsAndThen command
-            (\{ operands } ->
-                if
-                    (operands |> List.length)
-                        > (options
-                            |> List.filterMap
-                                (\option ->
-                                    case option of
-                                        Operand operand ->
-                                            Just operand
+        { decoder =
+            flagsAndOperandsAndThen command
+                (\{ operands } ->
+                    if
+                        (operands |> List.length)
+                            > (usageSpecs
+                                |> List.filterMap
+                                    (\option ->
+                                        case option of
+                                            Operand operand ->
+                                                Just operand
 
-                                        Option _ _ ->
-                                            Nothing
-                                )
-                            |> List.length
-                          )
-                then
-                    Decode.fail "More operands than expected"
-                else
-                    decoder
-            )
-        )
-        options
+                                            Option _ _ ->
+                                                Nothing
+                                    )
+                                |> List.length
+                              )
+                    then
+                        Decode.fail "More operands than expected"
+                    else
+                        decoder
+                )
+        , usageSpecs = usageSpecs
+        }
 
 
 decoder : Command msg -> Decoder msg
-decoder (Command decoder options) =
+decoder (Command { decoder }) =
     decoder
 
 
 failIfUnexpectedOptions : Command msg -> Command msg
-failIfUnexpectedOptions ((Command decoder options) as command) =
+failIfUnexpectedOptions ((Command { decoder, usageSpecs }) as command) =
     Command
-        (flagsAndOperandsAndThen command
-            (\{ flags } ->
-                let
-                    ( invalidOptions, unconsumedArg ) =
-                        flags
-                            |> List.Extra.indexedFoldl
-                                (\index element ( invalidSoFar, unconsumedLeft ) ->
-                                    if unconsumedLeft then
-                                        ( invalidSoFar, False )
-                                    else
-                                        case optionExists options element of
-                                            Just option ->
-                                                case option of
-                                                    OptionWithStringArg argName ->
-                                                        ( invalidSoFar, True )
+        { decoder =
+            flagsAndOperandsAndThen command
+                (\{ flags } ->
+                    let
+                        ( invalidOptions, unconsumedArg ) =
+                            flags
+                                |> List.Extra.indexedFoldl
+                                    (\index element ( invalidSoFar, unconsumedLeft ) ->
+                                        if unconsumedLeft then
+                                            ( invalidSoFar, False )
+                                        else
+                                            case optionExists usageSpecs element of
+                                                Just option ->
+                                                    case option of
+                                                        OptionWithStringArg argName ->
+                                                            ( invalidSoFar, True )
 
-                                                    Flag flagName ->
-                                                        ( invalidSoFar, False )
+                                                        Flag flagName ->
+                                                            ( invalidSoFar, False )
 
-                                            Nothing ->
-                                                ( invalidSoFar ++ [ element ], False )
-                                )
-                                ( [], False )
-                in
-                if invalidOptions == [] && not unconsumedArg then
-                    decoder
-                else
-                    Decode.fail "Found unexpected options."
-            )
-        )
-        options
+                                                Nothing ->
+                                                    ( invalidSoFar ++ [ element ], False )
+                                    )
+                                    ( [], False )
+                    in
+                    if invalidOptions == [] && not unconsumedArg then
+                        decoder
+                    else
+                        Decode.fail "Found unexpected options."
+                )
+        , usageSpecs = usageSpecs
+        }
 
 
 optionExists : List UsageSpec -> String -> Maybe Option
@@ -103,19 +105,22 @@ optionExists usageSpecs thisOptionName =
 
 
 type Command msg
-    = Command (Decode.Decoder msg) (List UsageSpec)
+    = Command { decoder : Decode.Decoder msg, usageSpecs : List UsageSpec }
 
 
 build : msg -> Command msg
 build msgConstructor =
-    Command (Decode.succeed msgConstructor) []
+    Command
+        { decoder = Decode.succeed msgConstructor
+        , usageSpecs = []
+        }
 
 
 synopsis : String -> Command msg -> String
-synopsis programName (Command decoder options) =
+synopsis programName (Command { decoder, usageSpecs }) =
     programName
         ++ " "
-        ++ (options
+        ++ (usageSpecs
                 |> List.map
                     (\spec ->
                         case spec of
@@ -142,76 +147,79 @@ optionSynopsis occurences option =
 
 
 withFlag : String -> Command (Bool -> msg) -> Command msg
-withFlag flagName (Command msgConstructor options) =
+withFlag flagName (Command { decoder, usageSpecs }) =
     Command
-        (Decode.list Decode.string
-            |> Decode.andThen
-                (\list ->
-                    if List.member ("--" ++ flagName) list then
-                        Decode.map (\constructor -> constructor True) msgConstructor
-                    else
-                        Decode.map (\constructor -> constructor False) msgConstructor
-                )
-        )
-        (options ++ [ Option (Flag flagName) Optional ])
+        { decoder =
+            Decode.list Decode.string
+                |> Decode.andThen
+                    (\list ->
+                        if List.member ("--" ++ flagName) list then
+                            Decode.map (\constructor -> constructor True) decoder
+                        else
+                            Decode.map (\constructor -> constructor False) decoder
+                    )
+        , usageSpecs = usageSpecs ++ [ Option (Flag flagName) Optional ]
+        }
 
 
 expectFlag : String -> Command msg -> Command msg
-expectFlag flagName (Command decoder options) =
+expectFlag flagName (Command { decoder, usageSpecs }) =
     let
         formattedFlag =
             "--" ++ flagName
     in
     Command
-        (flagsAndThen
-            (\list ->
-                if
-                    list
-                        |> List.member formattedFlag
-                then
-                    decoder
-                else
-                    ("Expect flag " ++ formattedFlag)
-                        |> Decode.fail
-            )
-        )
-        (options ++ [ Option (Flag flagName) Required ])
+        { decoder =
+            flagsAndThen
+                (\list ->
+                    if
+                        list
+                            |> List.member formattedFlag
+                    then
+                        decoder
+                    else
+                        ("Expect flag " ++ formattedFlag)
+                            |> Decode.fail
+                )
+        , usageSpecs = usageSpecs ++ [ Option (Flag flagName) Required ]
+        }
 
 
 expectOperand : String -> Command (String -> msg) -> Command msg
-expectOperand operandName ((Command decoder options) as command) =
+expectOperand operandName ((Command { decoder, usageSpecs }) as command) =
     Command
-        (flagsAndOperandsAndThen command
-            (\{ operands } ->
-                let
-                    operandsSoFar =
-                        options
-                            |> List.filterMap
-                                (\spec ->
-                                    case spec of
-                                        Option _ _ ->
-                                            Nothing
+        { decoder =
+            flagsAndOperandsAndThen command
+                (\{ operands } ->
+                    let
+                        operandsSoFar =
+                            usageSpecs
+                                |> List.filterMap
+                                    (\spec ->
+                                        case spec of
+                                            Option _ _ ->
+                                                Nothing
 
-                                        Operand operandName ->
-                                            Just operandName
-                                )
-                            |> List.length
-                in
-                case
-                    operands
-                        |> List.Extra.getAt operandsSoFar
-                of
-                    Just operandValue ->
-                        Decode.map
-                            (\constructor -> constructor operandValue)
-                            decoder
+                                            Operand operandName ->
+                                                Just operandName
+                                    )
+                                |> List.length
+                    in
+                    case
+                        operands
+                            |> List.Extra.getAt operandsSoFar
+                    of
+                        Just operandValue ->
+                            Decode.map
+                                (\constructor -> constructor operandValue)
+                                decoder
 
-                    Nothing ->
-                        ("Expect operand " ++ operandName)
-                            |> Decode.fail
-            )
-        )
-        (options ++ [ Operand operandName ])
+                        Nothing ->
+                            ("Expect operand " ++ operandName)
+                                |> Decode.fail
+                )
+        , usageSpecs = usageSpecs ++ [ Operand operandName ]
+        }
 
 
 flagsAndThen : (List String -> Decode.Decoder a) -> Decode.Decoder a
@@ -236,47 +244,49 @@ isFlag string =
 
 
 optionWithStringArg : String -> Command (String -> msg) -> Command msg
-optionWithStringArg flag (Command msgConstructor options) =
+optionWithStringArg flag (Command { decoder, usageSpecs }) =
     Command
-        (Decode.list Decode.string
-            |> Decode.andThen
-                (\list ->
-                    case list |> List.Extra.elemIndex ("--" ++ flag) of
-                        Nothing ->
-                            Decode.fail ("--" ++ flag ++ " not found")
+        { decoder =
+            Decode.list Decode.string
+                |> Decode.andThen
+                    (\list ->
+                        case list |> List.Extra.elemIndex ("--" ++ flag) of
+                            Nothing ->
+                                Decode.fail ("--" ++ flag ++ " not found")
 
-                        Just flagIndex ->
-                            case list |> List.Extra.getAt (flagIndex + 1) of
-                                Nothing ->
-                                    Decode.fail ("Found --" ++ flag ++ " flag but expected an argument")
+                            Just flagIndex ->
+                                case list |> List.Extra.getAt (flagIndex + 1) of
+                                    Nothing ->
+                                        Decode.fail ("Found --" ++ flag ++ " flag but expected an argument")
 
-                                Just argValue ->
-                                    Decode.map (\constructor -> constructor argValue) msgConstructor
-                )
-        )
-        (options ++ [ Option (OptionWithStringArg flag) Required ])
+                                    Just argValue ->
+                                        Decode.map (\constructor -> constructor argValue) decoder
+                    )
+        , usageSpecs = usageSpecs ++ [ Option (OptionWithStringArg flag) Required ]
+        }
 
 
 optionalOptionWithStringArg : String -> Command (Maybe String -> msg) -> Command msg
-optionalOptionWithStringArg flag (Command msgConstructor options) =
+optionalOptionWithStringArg flag ((Command { decoder, usageSpecs }) as command) =
     Command
-        (Decode.list Decode.string
-            |> Decode.andThen
-                (\list ->
-                    case list |> List.Extra.elemIndex ("--" ++ flag) of
-                        Nothing ->
-                            Decode.map (\constructor -> constructor Nothing) msgConstructor
+        { decoder =
+            Decode.list Decode.string
+                |> Decode.andThen
+                    (\list ->
+                        case list |> List.Extra.elemIndex ("--" ++ flag) of
+                            Nothing ->
+                                Decode.map (\constructor -> constructor Nothing) decoder
 
-                        Just flagIndex ->
-                            case list |> List.Extra.getAt (flagIndex + 1) of
-                                Nothing ->
-                                    Decode.fail ("Found --" ++ flag ++ " flag but expected an argument")
+                            Just flagIndex ->
+                                case list |> List.Extra.getAt (flagIndex + 1) of
+                                    Nothing ->
+                                        Decode.fail ("Found --" ++ flag ++ " flag but expected an argument")
 
-                                Just argValue ->
-                                    Decode.map (\constructor -> constructor (Just argValue)) msgConstructor
-                )
-        )
-        (options ++ [ Option (OptionWithStringArg flag) Optional ])
+                                    Just argValue ->
+                                        Decode.map (\constructor -> constructor (Just argValue)) decoder
+                    )
+        , usageSpecs = usageSpecs ++ [ Option (OptionWithStringArg flag) Optional ]
+        }
 
 
 flagsAndOperandsAndThen : Command msg -> ({ flags : List String, operands : List String } -> Decoder decodesTo) -> Decoder decodesTo
@@ -319,7 +329,7 @@ optionHasArg options optionNameToCheck =
 
 
 flagsAndOperands : Command msg -> List String -> { flags : List String, operands : List String }
-flagsAndOperands (Command msgConstructor options) argv =
+flagsAndOperands (Command { decoder, usageSpecs }) argv =
     let
         firstOptionIndex =
             argv
@@ -333,7 +343,7 @@ flagsAndOperands (Command msgConstructor options) argv =
                         (\index element lastIndexSoFar ->
                             let
                                 hasArg =
-                                    optionHasArg options (String.dropLeft 2 element)
+                                    optionHasArg usageSpecs (String.dropLeft 2 element)
                             in
                             if index < firstIndex then
                                 lastIndexSoFar
