@@ -22,7 +22,7 @@ type Msg
     = PrintVersion
     | PrintHelp
     | NoOp
-    | FromUrl String (Maybe String) (Maybe String) Bool
+    | FromUrl String (Maybe String) (Maybe String) Bool (List String)
     | FromFile String (Maybe String) (Maybe String) Bool
 
 
@@ -47,6 +47,7 @@ cli =
         |> Command.optionalOptionWithStringArg "base"
         |> Command.optionalOptionWithStringArg "output"
         |> Command.withFlag "excludeDeprecated"
+        |> Command.zeroOrMoreWithStringArg "header"
     , Command.build FromFile
         |> Command.optionWithStringArg "introspection-file"
         |> Command.optionalOptionWithStringArg "base"
@@ -70,8 +71,8 @@ update msg model =
                     "\nNo matching command...\n\nUsage:\n\n"
                         ++ Cli.helpText "graphqelm" cli
 
-                FromUrl url base outputPath excludeDeprecated ->
-                    "...fetching from url " ++ url ++ "\noptions: " ++ toString ( url, base, outputPath, excludeDeprecated )
+                FromUrl url base outputPath excludeDeprecated headers ->
+                    "...fetching from url " ++ url ++ "\noptions: " ++ toString ( url, base, outputPath, excludeDeprecated, headers )
 
                 FromFile file base outputPath excludeDeprecated ->
                     "...fetching from file " ++ file ++ "\noptions: " ++ toString ( base, outputPath, excludeDeprecated )
