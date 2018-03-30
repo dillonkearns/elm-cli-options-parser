@@ -4,6 +4,7 @@ module Occurences exposing (Occurences(..), qualifySynopsis)
 type Occurences
     = Optional
     | Required
+    | ZeroOrMore
 
 
 qualifySynopsis : Occurences -> String -> String
@@ -14,3 +15,6 @@ qualifySynopsis occurences rawSynopsis =
 
         Required ->
             rawSynopsis
+
+        ZeroOrMore ->
+            "[" ++ rawSynopsis ++ "]..."

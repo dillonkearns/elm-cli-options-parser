@@ -93,6 +93,18 @@ all =
                             |> Command.optionWithStringArg "last-name"
                         )
                         |> Expect.equal Nothing
+            , test "extracts multiple params" <|
+                \() ->
+                    Command.tryMatch
+                        [ "--header"
+                        , "abc123"
+                        , "--header"
+                        , "def456"
+                        ]
+                        (Command.build identity
+                            |> Command.zeroOrMoreWithStringArg "header"
+                        )
+                        |> Expect.equal (Just [ "abc123", "def456" ])
             , test "doesn't match when unexpected options are present" <|
                 \() ->
                     Command.tryMatch
@@ -210,6 +222,13 @@ all =
                         |> Command.optionalOptionWithStringArg "prefix"
                         |> Command.synopsis "greet"
                         |> Expect.equal "greet --name <name> [--prefix <prefix>] # greets somebody in your terminal"
+            , test "print synopsis with zero or more arg option" <|
+                \() ->
+                    (Command.build identity
+                        |> Command.zeroOrMoreWithStringArg "header"
+                    )
+                        |> Command.synopsis "curl"
+                        |> Expect.equal "curl [--header <header>]..."
             ]
         ]
 

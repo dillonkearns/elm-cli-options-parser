@@ -1,4 +1,4 @@
-module Command exposing (Command, build, buildWithDoc, expectFlag, expectOperand, flagsAndOperands, optionWithStringArg, optionalOptionWithStringArg, synopsis, tryMatch, withFlag)
+module Command exposing (Command, build, buildWithDoc, expectFlag, expectOperand, flagsAndOperands, optionWithStringArg, optionalOptionWithStringArg, synopsis, tryMatch, withFlag, zeroOrMoreWithStringArg)
 
 import Json.Decode as Decode exposing (Decoder)
 import List.Extra
@@ -284,6 +284,26 @@ optionWithStringArg flag (Command ({ decoder, usageSpecs } as command)) =
                                             Decode.map (\constructor -> constructor argValue) decoder
                         )
             , usageSpecs = usageSpecs ++ [ Option (OptionWithStringArg flag) Required ]
+        }
+
+
+zeroOrMoreWithStringArg : String -> Command (List String -> msg) -> Command msg
+zeroOrMoreWithStringArg flag (Command ({ decoder, usageSpecs } as command)) =
+    Command
+        { command
+            | decoder =
+                Decode.list Decode.string
+                    |> Decode.andThen
+                        (\list ->
+                            let
+                                values =
+                                    list
+                                        |> List.Extra.elemIndices ("--" ++ flag)
+                                        |> List.filterMap (\index -> list |> List.Extra.getAt (index + 1))
+                            in
+                            Decode.map (\constructor -> constructor values) decoder
+                        )
+            , usageSpecs = usageSpecs ++ [ Option (OptionWithStringArg flag) ZeroOrMore ]
         }
 
 
