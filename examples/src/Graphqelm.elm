@@ -18,7 +18,11 @@ type alias Model =
     ()
 
 
-type Msg
+type alias Msg =
+    ()
+
+
+type InitMsg
     = PrintVersion
     | PrintHelp
     | NoOp
@@ -32,13 +36,30 @@ init flags =
         msg =
             flags
                 |> List.drop 2
-                |> Cli.try
-                    cli
+                |> Cli.try cli
+
+        toPrint =
+            case msg |> Maybe.withDefault NoOp of
+                PrintVersion ->
+                    "You are on version 3.1.4"
+
+                PrintHelp ->
+                    Cli.helpText "graphqelm" cli
+
+                NoOp ->
+                    "\nNo matching command...\n\nUsage:\n\n"
+                        ++ Cli.helpText "graphqelm" cli
+
+                FromUrl url base outputPath excludeDeprecated headers ->
+                    "...fetching from url " ++ url ++ "\noptions: " ++ toString ( url, base, outputPath, excludeDeprecated, headers )
+
+                FromFile file base outputPath excludeDeprecated ->
+                    "...fetching from file " ++ file ++ "\noptions: " ++ toString ( base, outputPath, excludeDeprecated )
     in
-    update (msg |> Maybe.withDefault NoOp) ()
+    ( (), print toPrint )
 
 
-cli : List (Command.Command Msg)
+cli : List (Command.Command InitMsg)
 cli =
     [ Command.build PrintVersion |> Command.expectFlag "version"
     , Command.build PrintHelp |> Command.expectFlag "help"
@@ -58,26 +79,7 @@ cli =
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
-    let
-        toPrint =
-            case msg of
-                PrintVersion ->
-                    "You are on version 3.1.4"
-
-                PrintHelp ->
-                    Cli.helpText "graphqelm" cli
-
-                NoOp ->
-                    "\nNo matching command...\n\nUsage:\n\n"
-                        ++ Cli.helpText "graphqelm" cli
-
-                FromUrl url base outputPath excludeDeprecated headers ->
-                    "...fetching from url " ++ url ++ "\noptions: " ++ toString ( url, base, outputPath, excludeDeprecated, headers )
-
-                FromFile file base outputPath excludeDeprecated ->
-                    "...fetching from file " ++ file ++ "\noptions: " ++ toString ( base, outputPath, excludeDeprecated )
-    in
-    ( (), print toPrint )
+    ( model, Cmd.none )
 
 
 port print : String -> Cmd msg
