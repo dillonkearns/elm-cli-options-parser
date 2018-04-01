@@ -286,7 +286,3 @@ all =
                         |> Expect.equal "rm [--dry-run] <files>..."
             ]
         ]
-
-
-
--- |> Expect.equal "greet -n <name> [-l][-a][-c option_argument][operand...]"
