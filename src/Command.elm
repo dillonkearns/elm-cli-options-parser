@@ -17,6 +17,20 @@ tryMatch argv command =
         |> Result.toMaybe
 
 
+hasRestArgs : List UsageSpec -> Bool
+hasRestArgs usageSpecs =
+    List.any
+        (\usageSpec ->
+            case usageSpec of
+                RestArgs _ ->
+                    True
+
+                _ ->
+                    False
+        )
+        usageSpecs
+
+
 expectedOperandCountOrFail : Command msg -> Command msg
 expectedOperandCountOrFail ((Command ({ decoder, usageSpecs } as command)) as fullCommand) =
     Command
@@ -25,7 +39,8 @@ expectedOperandCountOrFail ((Command ({ decoder, usageSpecs } as command)) as fu
                 flagsAndOperandsAndThen fullCommand
                     (\{ operands } ->
                         if
-                            (operands |> List.length)
+                            not (hasRestArgs usageSpecs)
+                                && (operands |> List.length)
                                 > (usageSpecs
                                     |> List.filterMap
                                         (\option ->
@@ -34,6 +49,9 @@ expectedOperandCountOrFail ((Command ({ decoder, usageSpecs } as command)) as fu
                                                     Just operand
 
                                                 Option _ _ ->
+                                                    Nothing
+
+                                                RestArgs _ ->
                                                     Nothing
                                         )
                                     |> List.length
@@ -102,6 +120,9 @@ optionExists usageSpecs thisOptionName =
 
                     Operand _ ->
                         Nothing
+
+                    RestArgs _ ->
+                        Nothing
             )
         |> List.Extra.find (\option -> ("--" ++ optionName option) == thisOptionName)
 
@@ -134,7 +155,7 @@ captureRestOperands (CommandBuilder ({ decoder, usageSpecs } as record)) =
                             )
                             decoder
                     )
-            , usageSpecs = usageSpecs ++ [ Operand "", Operand "" ]
+            , usageSpecs = usageSpecs ++ [ RestArgs "files" ]
         }
 
 
@@ -177,6 +198,9 @@ synopsis programName (Command { decoder, usageSpecs, description }) =
 
                             Operand operandName ->
                                 "<" ++ operandName ++ ">"
+
+                            RestArgs description ->
+                                "<" ++ description ++ ">..."
                     )
                 |> String.join " "
            )
@@ -247,6 +271,9 @@ operandCount usageSpecs =
 
                     Operand operandName ->
                         Just operandName
+
+                    RestArgs _ ->
+                        Nothing
             )
         |> List.length
 
@@ -391,6 +418,9 @@ optionHasArg options optionNameToCheck =
 
                         Operand _ ->
                             Nothing
+
+                        RestArgs _ ->
+                            Nothing
                 )
             |> List.Extra.find
                 (\spec -> optionName spec == optionNameToCheck)
@@ -465,6 +495,7 @@ type Option
 type UsageSpec
     = Option Option Occurences
     | Operand String
+    | RestArgs String
 
 
 optionName : Option -> String

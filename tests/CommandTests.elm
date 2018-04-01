@@ -271,6 +271,19 @@ all =
                         |> Command.toCommand
                         |> Command.synopsis "curl"
                         |> Expect.equal "curl [--header <header>]..."
+            , test "print rest operands synopsis" <|
+                \() ->
+                    Command.build identity
+                        |> Command.captureRestOperands
+                        |> Command.synopsis "rm"
+                        |> Expect.equal "rm <files>..."
+            , test "prints rest args at the end of the synopsis" <|
+                \() ->
+                    Command.build (,)
+                        |> Command.withFlag "dry-run"
+                        |> Command.captureRestOperands
+                        |> Command.synopsis "rm"
+                        |> Expect.equal "rm [--dry-run] <files>..."
             ]
         ]
 
