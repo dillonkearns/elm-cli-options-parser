@@ -61,19 +61,21 @@ init flags =
 
 cli : List (Command.Command InitMsg)
 cli =
-    [ Command.build PrintVersion |> Command.expectFlag "version"
-    , Command.build PrintHelp |> Command.expectFlag "help"
+    [ Command.build PrintVersion |> Command.expectFlag "version" |> Command.toCommand
+    , Command.build PrintHelp |> Command.expectFlag "help" |> Command.toCommand
     , Command.buildWithDoc FromUrl "generate files based on the schema at `url`"
         |> Command.expectOperand "url"
         |> Command.optionalOptionWithStringArg "base"
         |> Command.optionalOptionWithStringArg "output"
         |> Command.withFlag "excludeDeprecated"
         |> Command.zeroOrMoreWithStringArg "header"
+        |> Command.toCommand
     , Command.build FromFile
         |> Command.optionWithStringArg "introspection-file"
         |> Command.optionalOptionWithStringArg "base"
         |> Command.optionalOptionWithStringArg "output"
         |> Command.withFlag "excludeDeprecated"
+        |> Command.toCommand
     ]
 
 

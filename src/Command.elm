@@ -1,4 +1,4 @@
-module Command exposing (Command, build, buildWithDoc, expectFlag, expectOperand, flagsAndOperands, optionWithStringArg, optionalOptionWithStringArg, synopsis, tryMatch, withFlag, zeroOrMoreWithStringArg)
+module Command exposing (Command, CommandBuilder, build, buildWithDoc, expectFlag, expectOperand, flagsAndOperands, optionWithStringArg, optionalOptionWithStringArg, synopsis, toCommand, tryMatch, withFlag, zeroOrMoreWithStringArg)
 
 import Json.Decode as Decode exposing (Decoder)
 import List.Extra
@@ -106,6 +106,19 @@ optionExists usageSpecs thisOptionName =
         |> List.Extra.find (\option -> ("--" ++ optionName option) == thisOptionName)
 
 
+type CommandBuilder msg
+    = CommandBuilder
+        { decoder : Decode.Decoder msg
+        , usageSpecs : List UsageSpec
+        , description : Maybe String
+        }
+
+
+toCommand : CommandBuilder msg -> Command msg
+toCommand (CommandBuilder record) =
+    Command record
+
+
 type Command msg
     = Command
         { decoder : Decode.Decoder msg
@@ -114,18 +127,18 @@ type Command msg
         }
 
 
-build : msg -> Command msg
+build : msg -> CommandBuilder msg
 build msgConstructor =
-    Command
+    CommandBuilder
         { decoder = Decode.succeed msgConstructor
         , usageSpecs = []
         , description = Nothing
         }
 
 
-buildWithDoc : msg -> String -> Command msg
+buildWithDoc : msg -> String -> CommandBuilder msg
 buildWithDoc msgConstructor docString =
-    Command
+    CommandBuilder
         { decoder = Decode.succeed msgConstructor
         , usageSpecs = []
         , description = Just docString
@@ -163,9 +176,9 @@ optionSynopsis occurences option =
         |> Occurences.qualifySynopsis occurences
 
 
-withFlag : String -> Command (Bool -> msg) -> Command msg
-withFlag flagName (Command ({ decoder, usageSpecs } as command)) =
-    Command
+withFlag : String -> CommandBuilder (Bool -> msg) -> CommandBuilder msg
+withFlag flagName (CommandBuilder ({ decoder, usageSpecs } as command)) =
+    CommandBuilder
         { command
             | decoder =
                 Decode.list Decode.string
@@ -180,13 +193,13 @@ withFlag flagName (Command ({ decoder, usageSpecs } as command)) =
         }
 
 
-expectFlag : String -> Command msg -> Command msg
-expectFlag flagName (Command ({ decoder, usageSpecs } as command)) =
+expectFlag : String -> CommandBuilder msg -> CommandBuilder msg
+expectFlag flagName (CommandBuilder ({ decoder, usageSpecs } as command)) =
     let
         formattedFlag =
             "--" ++ flagName
     in
-    Command
+    CommandBuilder
         { command
             | decoder =
                 flagsAndThen
@@ -204,12 +217,12 @@ expectFlag flagName (Command ({ decoder, usageSpecs } as command)) =
         }
 
 
-expectOperand : String -> Command (String -> msg) -> Command msg
-expectOperand operandName ((Command ({ decoder, usageSpecs } as command)) as fullCommand) =
-    Command
+expectOperand : String -> CommandBuilder (String -> msg) -> CommandBuilder msg
+expectOperand operandName ((CommandBuilder ({ decoder, usageSpecs } as command)) as fullCommand) =
+    CommandBuilder
         { command
             | decoder =
-                flagsAndOperandsAndThen fullCommand
+                flagsAndOperandsAndThen (Command command)
                     (\{ operands } ->
                         let
                             operandsSoFar =
@@ -263,9 +276,9 @@ isFlag string =
     string |> String.startsWith "--"
 
 
-optionWithStringArg : String -> Command (String -> msg) -> Command msg
-optionWithStringArg flag (Command ({ decoder, usageSpecs } as command)) =
-    Command
+optionWithStringArg : String -> CommandBuilder (String -> msg) -> CommandBuilder msg
+optionWithStringArg flag (CommandBuilder ({ decoder, usageSpecs } as command)) =
+    CommandBuilder
         { command
             | decoder =
                 Decode.list Decode.string
@@ -287,9 +300,9 @@ optionWithStringArg flag (Command ({ decoder, usageSpecs } as command)) =
         }
 
 
-zeroOrMoreWithStringArg : String -> Command (List String -> msg) -> Command msg
-zeroOrMoreWithStringArg flag (Command ({ decoder, usageSpecs } as command)) =
-    Command
+zeroOrMoreWithStringArg : String -> CommandBuilder (List String -> msg) -> CommandBuilder msg
+zeroOrMoreWithStringArg flag (CommandBuilder ({ decoder, usageSpecs } as command)) =
+    CommandBuilder
         { command
             | decoder =
                 Decode.list Decode.string
@@ -307,9 +320,9 @@ zeroOrMoreWithStringArg flag (Command ({ decoder, usageSpecs } as command)) =
         }
 
 
-optionalOptionWithStringArg : String -> Command (Maybe String -> msg) -> Command msg
-optionalOptionWithStringArg flag (Command ({ decoder, usageSpecs } as command)) =
-    Command
+optionalOptionWithStringArg : String -> CommandBuilder (Maybe String -> msg) -> CommandBuilder msg
+optionalOptionWithStringArg flag (CommandBuilder ({ decoder, usageSpecs } as command)) =
+    CommandBuilder
         { command
             | decoder =
                 Decode.list Decode.string
