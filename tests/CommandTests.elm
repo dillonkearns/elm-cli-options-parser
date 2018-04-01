@@ -121,6 +121,14 @@ all =
                             |> Command.toCommand
                         )
                         |> Expect.equal Nothing
+            , test "rest operands is empty with no operands" <|
+                \() ->
+                    Command.tryMatch [ "--verbose" ]
+                        (Command.build identity
+                            |> Command.expectFlag "verbose"
+                            |> Command.captureRestOperands
+                        )
+                        |> Expect.equal (Just [])
             ]
         , describe "flags and operands extraction"
             [ test "recognizes empty operands and flags" <|

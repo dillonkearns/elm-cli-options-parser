@@ -1,4 +1,4 @@
-module Command exposing (Command, CommandBuilder, build, buildWithDoc, expectFlag, expectOperand, flagsAndOperands, optionWithStringArg, optionalOptionWithStringArg, synopsis, toCommand, tryMatch, withFlag, zeroOrMoreWithStringArg)
+module Command exposing (Command, CommandBuilder, build, buildWithDoc, captureRestOperands, expectFlag, expectOperand, flagsAndOperands, optionWithStringArg, optionalOptionWithStringArg, synopsis, toCommand, tryMatch, withFlag, zeroOrMoreWithStringArg)
 
 import Json.Decode as Decode exposing (Decoder)
 import List.Extra
@@ -117,6 +117,15 @@ type CommandBuilder msg
 toCommand : CommandBuilder msg -> Command msg
 toCommand (CommandBuilder record) =
     Command record
+
+
+captureRestOperands : CommandBuilder (List String -> msg) -> Command msg
+captureRestOperands (CommandBuilder ({ decoder } as record)) =
+    Command
+        { record
+            | decoder =
+                Decode.map (\constructor -> constructor []) decoder
+        }
 
 
 type Command msg
