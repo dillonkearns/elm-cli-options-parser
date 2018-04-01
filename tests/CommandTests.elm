@@ -126,7 +126,7 @@ all =
                     Command.tryMatch [ "--verbose" ]
                         (Command.build identity
                             |> Command.expectFlag "verbose"
-                            |> Command.captureRestOperands
+                            |> Command.captureRestOperands "files"
                         )
                         |> Expect.equal (Just [])
             , test "rest operands has all operands when there are no required operands" <|
@@ -134,7 +134,7 @@ all =
                     Command.tryMatch [ "--verbose", "rest1", "rest2" ]
                         (Command.build identity
                             |> Command.expectFlag "verbose"
-                            |> Command.captureRestOperands
+                            |> Command.captureRestOperands "files"
                         )
                         |> Expect.equal (Just [ "rest1", "rest2" ])
             , test "rest operands has all operands when there is a required operand" <|
@@ -143,7 +143,7 @@ all =
                         (Command.build (,)
                             |> Command.expectFlag "something"
                             |> Command.expectOperand "operand"
-                            |> Command.captureRestOperands
+                            |> Command.captureRestOperands "files"
                         )
                         |> Expect.equal (Just ( "operand1", [ "rest1", "rest2" ] ))
             ]
@@ -274,14 +274,14 @@ all =
             , test "print rest operands synopsis" <|
                 \() ->
                     Command.build identity
-                        |> Command.captureRestOperands
+                        |> Command.captureRestOperands "files"
                         |> Command.synopsis "rm"
                         |> Expect.equal "rm <files>..."
             , test "prints rest args at the end of the synopsis" <|
                 \() ->
                     Command.build (,)
                         |> Command.withFlag "dry-run"
-                        |> Command.captureRestOperands
+                        |> Command.captureRestOperands "files"
                         |> Command.synopsis "rm"
                         |> Expect.equal "rm [--dry-run] <files>..."
             ]

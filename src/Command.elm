@@ -140,8 +140,8 @@ toCommand (CommandBuilder record) =
     Command record
 
 
-captureRestOperands : CommandBuilder (List String -> msg) -> Command msg
-captureRestOperands (CommandBuilder ({ decoder, usageSpecs } as record)) =
+captureRestOperands : String -> CommandBuilder (List String -> msg) -> Command msg
+captureRestOperands restOperandsDescription (CommandBuilder ({ decoder, usageSpecs } as record)) =
     Command
         { record
             | decoder =
@@ -155,7 +155,7 @@ captureRestOperands (CommandBuilder ({ decoder, usageSpecs } as record)) =
                             )
                             decoder
                     )
-            , usageSpecs = usageSpecs ++ [ RestArgs "files" ]
+            , usageSpecs = usageSpecs ++ [ RestArgs restOperandsDescription ]
         }
 
 
