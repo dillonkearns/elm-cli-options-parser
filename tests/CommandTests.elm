@@ -129,6 +129,23 @@ all =
                             |> Command.captureRestOperands
                         )
                         |> Expect.equal (Just [])
+            , test "rest operands has all operands when there are no required operands" <|
+                \() ->
+                    Command.tryMatch [ "--verbose", "rest1", "rest2" ]
+                        (Command.build identity
+                            |> Command.expectFlag "verbose"
+                            |> Command.captureRestOperands
+                        )
+                        |> Expect.equal (Just [ "rest1", "rest2" ])
+            , test "rest operands has all operands when there is a required operand" <|
+                \() ->
+                    Command.tryMatch [ "--something", "operand1", "rest1", "rest2" ]
+                        (Command.build (,)
+                            |> Command.expectFlag "something"
+                            |> Command.expectOperand "operand"
+                            |> Command.captureRestOperands
+                        )
+                        |> Expect.equal (Just ( "operand1", [ "rest1", "rest2" ] ))
             ]
         , describe "flags and operands extraction"
             [ test "recognizes empty operands and flags" <|

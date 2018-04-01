@@ -120,11 +120,21 @@ toCommand (CommandBuilder record) =
 
 
 captureRestOperands : CommandBuilder (List String -> msg) -> Command msg
-captureRestOperands (CommandBuilder ({ decoder } as record)) =
+captureRestOperands (CommandBuilder ({ decoder, usageSpecs } as record)) =
     Command
         { record
             | decoder =
-                Decode.map (\constructor -> constructor []) decoder
+                flagsAndOperandsAndThen (Command record)
+                    (\{ operands } ->
+                        Decode.map
+                            (\constructor ->
+                                operands
+                                    |> List.drop (operandCount usageSpecs)
+                                    |> constructor
+                            )
+                            decoder
+                    )
+            , usageSpecs = usageSpecs ++ [ Operand "", Operand "" ]
         }
 
 
@@ -226,6 +236,21 @@ expectFlag flagName (CommandBuilder ({ decoder, usageSpecs } as command)) =
         }
 
 
+operandCount : List UsageSpec -> Int
+operandCount usageSpecs =
+    usageSpecs
+        |> List.filterMap
+            (\spec ->
+                case spec of
+                    Option _ _ ->
+                        Nothing
+
+                    Operand operandName ->
+                        Just operandName
+            )
+        |> List.length
+
+
 expectOperand : String -> CommandBuilder (String -> msg) -> CommandBuilder msg
 expectOperand operandName ((CommandBuilder ({ decoder, usageSpecs } as command)) as fullCommand) =
     CommandBuilder
@@ -235,17 +260,7 @@ expectOperand operandName ((CommandBuilder ({ decoder, usageSpecs } as command))
                     (\{ operands } ->
                         let
                             operandsSoFar =
-                                usageSpecs
-                                    |> List.filterMap
-                                        (\spec ->
-                                            case spec of
-                                                Option _ _ ->
-                                                    Nothing
-
-                                                Operand operandName ->
-                                                    Just operandName
-                                        )
-                                    |> List.length
+                                operandCount usageSpecs
                         in
                         case
                             operands
