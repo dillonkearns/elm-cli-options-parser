@@ -147,6 +147,17 @@ all =
                         )
                         |> Expect.equal (Just ( "operand1", [ "rest1", "rest2" ] ))
             ]
+        , describe "mapping"
+            [ test "maps operand" <|
+                \() ->
+                    Command.tryMatch
+                        [ "hello" ]
+                        (Command.build identity
+                            |> Command.with (Command.expectOperandNew "" |> Command.mapNew String.length)
+                            |> Command.toCommand
+                        )
+                        |> Expect.equal (Just 5)
+            ]
         , describe "flags and operands extraction"
             [ test "recognizes empty operands and flags" <|
                 \() ->

@@ -1,5 +1,6 @@
-module Command exposing (Command, CommandBuilder, build, buildWithDoc, captureRestOperands, expectFlag, expectOperand, flagsAndOperands, optionWithStringArg, optionalOptionWithStringArg, synopsis, toCommand, tryMatch, withFlag, zeroOrMoreWithStringArg)
+module Command exposing (Command, CommandBuilder, build, buildWithDoc, captureRestOperands, expectFlag, expectOperand, expectOperandNew, flagsAndOperands, mapNew, optionWithStringArg, optionalOptionWithStringArg, synopsis, toCommand, tryMatch, with, withFlag, zeroOrMoreWithStringArg)
 
+import Cli.Decode
 import Json.Decode as Decode exposing (Decoder)
 import List.Extra
 import Occurences exposing (Occurences(..))
@@ -496,6 +497,58 @@ type UsageSpec
     = Option Option Occurences
     | Operand String
     | RestArgs String
+
+
+type NewThing from to
+    = NewThing UsageSpec (Cli.Decode.Decoder from to)
+
+
+expectOperandNew : String -> NewThing String String
+expectOperandNew operandDescription =
+    NewThing (Operand operandDescription) Cli.Decode.decoder
+
+
+mapNew : (toRaw -> toMapped) -> NewThing from toRaw -> NewThing from toMapped
+mapNew mapFn (NewThing usageSpec ((Cli.Decode.Decoder decodeFn) as decoder)) =
+    NewThing usageSpec (Cli.Decode.map mapFn decoder)
+
+
+with : NewThing String to -> CommandBuilder (to -> msg) -> CommandBuilder msg
+with (NewThing usageSpec (Cli.Decode.Decoder decodeFn)) ((CommandBuilder ({ decoder, usageSpecs } as command)) as fullCommand) =
+    case usageSpec of
+        Operand operandName ->
+            CommandBuilder
+                { command
+                    | decoder =
+                        flagsAndOperandsAndThen (Command command)
+                            (\{ operands } ->
+                                let
+                                    operandsSoFar =
+                                        operandCount usageSpecs
+                                in
+                                case
+                                    operands
+                                        |> List.Extra.getAt operandsSoFar
+                                of
+                                    Just operandValue ->
+                                        case decodeFn operandValue of
+                                            Ok value ->
+                                                Decode.map
+                                                    (\constructor -> constructor value)
+                                                    decoder
+
+                                            Err message ->
+                                                Decode.fail "Validation failure"
+
+                                    Nothing ->
+                                        ("Expect operand " ++ operandName)
+                                            |> Decode.fail
+                            )
+                    , usageSpecs = usageSpecs ++ [ usageSpec ]
+                }
+
+        _ ->
+            Debug.crash "TODO"
 
 
 optionName : Option -> String
