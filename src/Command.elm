@@ -439,7 +439,7 @@ optionHasArg options optionNameToCheck =
 
 
 flagsAndOperands : Command msg -> List String -> { flags : List String, operands : List String }
-flagsAndOperands (Command { decoder, usageSpecs }) argv =
+flagsAndOperands (Command { usageSpecs }) argv =
     let
         firstOptionIndex =
             argv
@@ -500,50 +500,58 @@ type UsageSpec
 
 
 type NewThing from to
-    = NewThing UsageSpec (Cli.Decode.Decoder from to)
+    = NewThing (DataGrabber from) UsageSpec (Cli.Decode.Decoder from to)
+
+
+type alias DataGrabber decodesTo =
+    Command Never -> ({ flags : List String, operands : List String } -> Decode.Decoder decodesTo)
 
 
 expectOperandNew : String -> NewThing String String
 expectOperandNew operandDescription =
-    NewThing (Operand operandDescription) Cli.Decode.decoder
+    NewThing
+        (\(Command { usageSpecs }) { operands } ->
+            let
+                operandsSoFar =
+                    operandCount usageSpecs
+            in
+            case
+                operands
+                    |> List.Extra.getAt operandsSoFar
+            of
+                Just operandValue ->
+                    Decode.succeed operandValue
+
+                Nothing ->
+                    ("Expect operand " ++ operandDescription)
+                        |> Decode.fail
+        )
+        (Operand operandDescription)
+        Cli.Decode.decoder
 
 
 mapNew : (toRaw -> toMapped) -> NewThing from toRaw -> NewThing from toMapped
-mapNew mapFn (NewThing usageSpec ((Cli.Decode.Decoder decodeFn) as decoder)) =
-    NewThing usageSpec (Cli.Decode.map mapFn decoder)
+mapNew mapFn (NewThing dataGrabber usageSpec ((Cli.Decode.Decoder decodeFn) as decoder)) =
+    NewThing dataGrabber usageSpec (Cli.Decode.map mapFn decoder)
 
 
-with : NewThing String to -> CommandBuilder (to -> msg) -> CommandBuilder msg
-with (NewThing usageSpec (Cli.Decode.Decoder decodeFn)) ((CommandBuilder ({ decoder, usageSpecs } as command)) as fullCommand) =
+with : NewThing from to -> CommandBuilder (to -> msg) -> CommandBuilder msg
+with (NewThing dataGrabber usageSpec (Cli.Decode.Decoder decodeFn)) ((CommandBuilder ({ decoder, usageSpecs } as command)) as fullCommand) =
     case usageSpec of
         Operand operandName ->
             CommandBuilder
                 { command
                     | decoder =
-                        flagsAndOperandsAndThen (Command command)
-                            (\{ operands } ->
-                                let
-                                    operandsSoFar =
-                                        operandCount usageSpecs
-                                in
-                                case
-                                    operands
-                                        |> List.Extra.getAt operandsSoFar
-                                of
-                                    Just operandValue ->
-                                        case decodeFn operandValue of
-                                            Ok value ->
-                                                Decode.map
-                                                    (\constructor -> constructor value)
-                                                    decoder
+                        flagsAndOperandsAndThen (Command command) (dataGrabber (Command { command | decoder = Decode.fail "" }))
+                            |> Decode.andThen
+                                (\value ->
+                                    case decodeFn value of
+                                        Ok finalValue ->
+                                            Decode.map (\constructor -> constructor finalValue) decoder
 
-                                            Err message ->
-                                                Decode.fail "Validation failure"
-
-                                    Nothing ->
-                                        ("Expect operand " ++ operandName)
-                                            |> Decode.fail
-                            )
+                                        Err error ->
+                                            Decode.fail ""
+                                )
                     , usageSpecs = usageSpecs ++ [ usageSpec ]
                 }
 
