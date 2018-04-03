@@ -168,7 +168,7 @@ all =
                                 |> Command.optionWithStringArg "last-name"
                                 |> Command.toCommand
                             )
-                        |> Expect.equal { flags = [], operands = [] }
+                        |> expectFlagsAndOperands { flags = [], operands = [] }
             , test "gets operand from the front" <|
                 \() ->
                     [ "operand", "--verbose", "--dry-run" ]
@@ -178,7 +178,7 @@ all =
                                 |> Command.expectFlag "dry-run"
                                 |> Command.toCommand
                             )
-                        |> Expect.equal
+                        |> expectFlagsAndOperands
                             { flags = [ "--verbose", "--dry-run" ]
                             , operands = [ "operand" ]
                             }
@@ -191,7 +191,7 @@ all =
                                 |> Command.expectFlag "dry-run"
                                 |> Command.toCommand
                             )
-                        |> Expect.equal
+                        |> expectFlagsAndOperands
                             { flags = [ "--verbose", "--dry-run" ]
                             , operands = [ "operand" ]
                             }
@@ -204,7 +204,7 @@ all =
                                 |> Command.optionWithStringArg "last-name"
                                 |> Command.toCommand
                             )
-                        |> Expect.equal
+                        |> expectFlagsAndOperands
                             { flags = [ "--first-name", "Will", "--last-name", "Riker" ]
                             , operands = [ "operand" ]
                             }
@@ -217,7 +217,7 @@ all =
                                 |> Command.optionWithStringArg "last-name"
                                 |> Command.toCommand
                             )
-                        |> Expect.equal
+                        |> expectFlagsAndOperands
                             { flags = [ "--first-name", "Will", "--last-name", "Riker" ]
                             , operands = [ "operand" ]
                             }
@@ -229,7 +229,7 @@ all =
                                 |> Command.expectOperand "foo"
                                 |> Command.toCommand
                             )
-                        |> Expect.equal
+                        |> expectFlagsAndOperands
                             { flags = []
                             , operands = [ "operand" ]
                             }
@@ -297,3 +297,13 @@ all =
                         |> Expect.equal "rm [--dry-run] <files>..."
             ]
         ]
+
+
+expectFlagsAndOperands :
+    { flags : flags, operands : operands }
+    -> { result | flags : flags, operands : operands }
+    -> Expectation
+expectFlagsAndOperands expected thing =
+    thing
+        |> (\{ flags, operands } -> { flags = flags, operands = operands })
+        |> Expect.equal expected

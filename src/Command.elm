@@ -396,7 +396,7 @@ optionalOptionWithStringArg flag (CommandBuilder ({ decoder, usageSpecs } as com
         }
 
 
-flagsAndOperandsAndThen : Command msg -> ({ flags : List String, operands : List String } -> Decoder decodesTo) -> Decoder decodesTo
+flagsAndOperandsAndThen : Command msg -> ({ usageSpecs : List UsageSpec, flags : List String, operands : List String } -> Decoder decodesTo) -> Decoder decodesTo
 flagsAndOperandsAndThen command decoderFunction =
     Decode.list Decode.string
         |> Decode.andThen
@@ -438,7 +438,7 @@ optionHasArg options optionNameToCheck =
             False
 
 
-flagsAndOperands : Command msg -> List String -> { flags : List String, operands : List String }
+flagsAndOperands : Command msg -> List String -> { usageSpecs : List UsageSpec, flags : List String, operands : List String }
 flagsAndOperands (Command { usageSpecs }) argv =
     let
         firstOptionIndex =
@@ -482,10 +482,10 @@ flagsAndOperands (Command { usageSpecs }) argv =
                     withoutFrontOperands
                         |> List.Extra.splitAt (lastOptionIndex + 1 - (List.length argv - List.length withoutFrontOperands))
             in
-            { flags = flags, operands = frontOperands ++ backOperands }
+            { flags = flags, operands = frontOperands ++ backOperands, usageSpecs = usageSpecs }
 
         Nothing ->
-            { flags = [], operands = argv }
+            { flags = [], operands = argv, usageSpecs = usageSpecs }
 
 
 type Option
@@ -504,13 +504,13 @@ type NewThing from to
 
 
 type alias DataGrabber decodesTo =
-    List UsageSpec -> ({ flags : List String, operands : List String } -> Decode.Decoder decodesTo)
+    { usageSpecs : List UsageSpec, flags : List String, operands : List String } -> Decode.Decoder decodesTo
 
 
 expectOperandNew : String -> NewThing String String
 expectOperandNew operandDescription =
     NewThing
-        (\usageSpecs { operands } ->
+        (\{ usageSpecs, operands } ->
             let
                 operandsSoFar =
                     operandCount usageSpecs
@@ -540,7 +540,7 @@ with (NewThing dataGrabber usageSpec (Cli.Decode.Decoder decodeFn)) ((CommandBui
     CommandBuilder
         { command
             | decoder =
-                flagsAndOperandsAndThen (Command command) (dataGrabber usageSpecs)
+                flagsAndOperandsAndThen (Command command) dataGrabber
                     |> Decode.andThen
                         (\value ->
                             case decodeFn value of
