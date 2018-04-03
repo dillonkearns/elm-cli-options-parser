@@ -187,7 +187,7 @@ buildWithDoc msgConstructor docString =
 
 
 synopsis : String -> Command msg -> String
-synopsis programName (Command { decoder, usageSpecs, description }) =
+synopsis programName (Command { usageSpecs, description }) =
     programName
         ++ " "
         ++ (usageSpecs
