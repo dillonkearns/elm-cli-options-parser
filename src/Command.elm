@@ -7,6 +7,13 @@ import List.Extra
 import Occurences exposing (Occurences(..))
 
 
+synopsis : String -> Command decodesTo -> String
+synopsis programName command =
+    command
+        |> (\(Command record) -> record)
+        |> Cli.UsageSpec.synopsis programName
+
+
 tryMatch : List String -> Command msg -> Maybe msg
 tryMatch argv command =
     Decode.decodeString
@@ -185,40 +192,6 @@ buildWithDoc msgConstructor docString =
         , usageSpecs = []
         , description = Just docString
         }
-
-
-synopsis : String -> Command msg -> String
-synopsis programName (Command { usageSpecs, description }) =
-    programName
-        ++ " "
-        ++ (usageSpecs
-                |> List.map
-                    (\spec ->
-                        case spec of
-                            Option option occurences ->
-                                optionSynopsis occurences option
-
-                            Operand operandName ->
-                                "<" ++ operandName ++ ">"
-
-                            RestArgs description ->
-                                "<" ++ description ++ ">..."
-                    )
-                |> String.join " "
-           )
-        ++ (description |> Maybe.map (\doc -> " # " ++ doc) |> Maybe.withDefault "")
-
-
-optionSynopsis : Occurences -> Option -> String
-optionSynopsis occurences option =
-    (case option of
-        Flag flagName ->
-            "--" ++ flagName
-
-        OptionWithStringArg optionName ->
-            "--" ++ optionName ++ " <" ++ optionName ++ ">"
-    )
-        |> Occurences.qualifySynopsis occurences
 
 
 withFlag : String -> CommandBuilder (Bool -> msg) -> CommandBuilder msg
