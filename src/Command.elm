@@ -1,4 +1,4 @@
-module Command exposing (Command, CommandBuilder, build, buildWithDoc, captureRestOperands, expectFlag, expectFlagNew, expectOperand, expectOperandNew, flagsAndOperands, mapNew, optionWithStringArg, optionalOptionWithStringArg, synopsis, toCommand, tryMatch, with, withFlag, zeroOrMoreWithStringArg)
+module Command exposing (Command, CommandBuilder, build, buildWithDoc, captureRestOperands, expectFlag, expectFlagNew, expectOperand, expectOperandNew, flagsAndOperands, mapNew, optionWithStringArg, optionalOptionWithStringArg, synopsis, toCommand, tryMatch, validate, with, withFlag, zeroOrMoreWithStringArg)
 
 import Cli.Decode
 import Cli.UsageSpec exposing (..)
@@ -514,6 +514,24 @@ expectFlagNew flagName =
 mapNew : (toRaw -> toMapped) -> CliUnit from toRaw -> CliUnit from toMapped
 mapNew mapFn (CliUnit dataGrabber usageSpec ((Cli.Decode.Decoder decodeFn) as decoder)) =
     CliUnit dataGrabber usageSpec (Cli.Decode.map mapFn decoder)
+
+
+validate : (to -> Result String to) -> CliUnit from to -> CliUnit from to
+validate validateFunction (CliUnit dataGrabber usageSpec (Cli.Decode.Decoder decodeFn)) =
+    CliUnit dataGrabber
+        usageSpec
+        (Cli.Decode.Decoder
+            (decodeFn
+                >> (\result ->
+                        case result of
+                            Ok value ->
+                                validateFunction value
+
+                            Err error ->
+                                result
+                   )
+            )
+        )
 
 
 with : CliUnit from to -> CommandBuilder (to -> msg) -> CommandBuilder msg
