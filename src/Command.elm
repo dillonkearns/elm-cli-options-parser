@@ -537,26 +537,21 @@ mapNew mapFn (NewThing dataGrabber usageSpec ((Cli.Decode.Decoder decodeFn) as d
 
 with : NewThing from to -> CommandBuilder (to -> msg) -> CommandBuilder msg
 with (NewThing dataGrabber usageSpec (Cli.Decode.Decoder decodeFn)) ((CommandBuilder ({ decoder, usageSpecs } as command)) as fullCommand) =
-    case usageSpec of
-        Operand operandName ->
-            CommandBuilder
-                { command
-                    | decoder =
-                        flagsAndOperandsAndThen (Command command) (dataGrabber (Command { command | decoder = Decode.fail "" }))
-                            |> Decode.andThen
-                                (\value ->
-                                    case decodeFn value of
-                                        Ok finalValue ->
-                                            Decode.map (\constructor -> constructor finalValue) decoder
+    CommandBuilder
+        { command
+            | decoder =
+                flagsAndOperandsAndThen (Command command) (dataGrabber (Command { command | decoder = Decode.fail "" }))
+                    |> Decode.andThen
+                        (\value ->
+                            case decodeFn value of
+                                Ok finalValue ->
+                                    Decode.map (\constructor -> constructor finalValue) decoder
 
-                                        Err error ->
-                                            Decode.fail ""
-                                )
-                    , usageSpecs = usageSpecs ++ [ usageSpec ]
-                }
-
-        _ ->
-            Debug.crash "TODO"
+                                Err error ->
+                                    Decode.fail ""
+                        )
+            , usageSpecs = usageSpecs ++ [ usageSpec ]
+        }
 
 
 optionName : Option -> String
