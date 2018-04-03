@@ -499,17 +499,17 @@ type UsageSpec
     | RestArgs String
 
 
-type NewThing from to
-    = NewThing (DataGrabber from) UsageSpec (Cli.Decode.Decoder from to)
+type CliUnit from to
+    = CliUnit (DataGrabber from) UsageSpec (Cli.Decode.Decoder from to)
 
 
 type alias DataGrabber decodesTo =
     { usageSpecs : List UsageSpec, flags : List String, operands : List String } -> Decode.Decoder decodesTo
 
 
-expectOperandNew : String -> NewThing String String
+expectOperandNew : String -> CliUnit String String
 expectOperandNew operandDescription =
-    NewThing
+    CliUnit
         (\{ usageSpecs, operands } ->
             let
                 operandsSoFar =
@@ -530,13 +530,13 @@ expectOperandNew operandDescription =
         Cli.Decode.decoder
 
 
-mapNew : (toRaw -> toMapped) -> NewThing from toRaw -> NewThing from toMapped
-mapNew mapFn (NewThing dataGrabber usageSpec ((Cli.Decode.Decoder decodeFn) as decoder)) =
-    NewThing dataGrabber usageSpec (Cli.Decode.map mapFn decoder)
+mapNew : (toRaw -> toMapped) -> CliUnit from toRaw -> CliUnit from toMapped
+mapNew mapFn (CliUnit dataGrabber usageSpec ((Cli.Decode.Decoder decodeFn) as decoder)) =
+    CliUnit dataGrabber usageSpec (Cli.Decode.map mapFn decoder)
 
 
-with : NewThing from to -> CommandBuilder (to -> msg) -> CommandBuilder msg
-with (NewThing dataGrabber usageSpec (Cli.Decode.Decoder decodeFn)) ((CommandBuilder ({ decoder, usageSpecs } as command)) as fullCommand) =
+with : CliUnit from to -> CommandBuilder (to -> msg) -> CommandBuilder msg
+with (CliUnit dataGrabber usageSpec (Cli.Decode.Decoder decodeFn)) ((CommandBuilder ({ decoder, usageSpecs } as command)) as fullCommand) =
     CommandBuilder
         { command
             | decoder =
