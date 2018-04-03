@@ -1,4 +1,4 @@
-module Command exposing (Command, CommandBuilder, build, buildWithDoc, captureRestOperands, expectFlag, expectOperand, expectOperandNew, flagsAndOperands, mapNew, optionWithStringArg, optionalOptionWithStringArg, synopsis, toCommand, tryMatch, with, withFlag, zeroOrMoreWithStringArg)
+module Command exposing (Command, CommandBuilder, build, buildWithDoc, captureRestOperands, expectFlag, expectFlagNew, expectOperand, expectOperandNew, flagsAndOperands, mapNew, optionWithStringArg, optionalOptionWithStringArg, synopsis, toCommand, tryMatch, with, withFlag, zeroOrMoreWithStringArg)
 
 import Cli.Decode
 import Json.Decode as Decode exposing (Decoder)
@@ -527,6 +527,24 @@ expectOperandNew operandDescription =
                         |> Decode.fail
         )
         (Operand operandDescription)
+        Cli.Decode.decoder
+
+
+expectFlagNew : String -> CliUnit () ()
+expectFlagNew flagName =
+    CliUnit
+        (\{ flags } ->
+            let
+                formattedFlag =
+                    "--" ++ flagName
+            in
+            if List.member formattedFlag flags then
+                Decode.succeed ()
+            else
+                ("Expect flag " ++ formattedFlag)
+                    |> Decode.fail
+        )
+        (Option (Flag flagName) Required)
         Cli.Decode.decoder
 
 

@@ -5,9 +5,9 @@ type Decoder decodesFrom decodesTo
     = Decoder (decodesFrom -> Result String decodesTo)
 
 
-decoder : Decoder String String
+decoder : Decoder a a
 decoder =
-    Decoder (\string -> Ok string)
+    Decoder (\value -> Ok value)
 
 
 map : (a -> b) -> Decoder from a -> Decoder from b

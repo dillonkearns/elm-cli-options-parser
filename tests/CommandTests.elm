@@ -20,7 +20,11 @@ all =
         [ describe "matching"
             [ test "help command" <|
                 \() ->
-                    Command.tryMatch [ "--help" ] (Command.build Help |> Command.expectFlag "help" |> Command.toCommand)
+                    Command.tryMatch [ "--help" ]
+                        (Command.build Help
+                            |> Command.expectFlag "help"
+                            |> Command.toCommand
+                        )
                         |> Expect.equal (Just Help)
             , test "version command" <|
                 \() ->
