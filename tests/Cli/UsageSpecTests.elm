@@ -5,21 +5,12 @@ import Expect exposing (Expectation)
 import Test exposing (..)
 
 
-type Msg
-    = Help
-    | Version
-    | OpenUrl String
-    | OpenUrlWithFlag String Bool
-    | Name String
-    | FullName String String
-
-
 all : Test
 all =
     describe "synopsis"
         [ test "synopsis prints options with arguments" <|
             \() ->
-                (Command.build FullName
+                (Command.build (,)
                     |> Command.optionWithStringArg "first-name"
                     |> Command.optionWithStringArg "last-name"
                     |> Command.toCommand
@@ -28,7 +19,7 @@ all =
                     |> Expect.equal "greet --first-name <first-name> --last-name <last-name>"
         , test "print synopsis with required flag" <|
             \() ->
-                Command.build Version
+                Command.build (,)
                     |> Command.expectFlag "version"
                     |> Command.toCommand
                     |> Command.synopsis "greet"
