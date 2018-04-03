@@ -1,6 +1,7 @@
 module Command exposing (Command, CommandBuilder, build, buildWithDoc, captureRestOperands, expectFlag, expectFlagNew, expectOperand, expectOperandNew, flagsAndOperands, mapNew, optionWithStringArg, optionalOptionWithStringArg, synopsis, toCommand, tryMatch, with, withFlag, zeroOrMoreWithStringArg)
 
 import Cli.Decode
+import Cli.UsageSpec exposing (..)
 import Json.Decode as Decode exposing (Decoder)
 import List.Extra
 import Occurences exposing (Occurences(..))
@@ -486,17 +487,6 @@ flagsAndOperands (Command { usageSpecs }) argv =
 
         Nothing ->
             { flags = [], operands = argv, usageSpecs = usageSpecs }
-
-
-type Option
-    = Flag String
-    | OptionWithStringArg String
-
-
-type UsageSpec
-    = Option Option Occurences
-    | Operand String
-    | RestArgs String
 
 
 type CliUnit from to
