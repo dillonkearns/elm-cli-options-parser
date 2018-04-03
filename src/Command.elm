@@ -504,13 +504,13 @@ type NewThing from to
 
 
 type alias DataGrabber decodesTo =
-    Command Never -> ({ flags : List String, operands : List String } -> Decode.Decoder decodesTo)
+    List UsageSpec -> ({ flags : List String, operands : List String } -> Decode.Decoder decodesTo)
 
 
 expectOperandNew : String -> NewThing String String
 expectOperandNew operandDescription =
     NewThing
-        (\(Command { usageSpecs }) { operands } ->
+        (\usageSpecs { operands } ->
             let
                 operandsSoFar =
                     operandCount usageSpecs
@@ -540,7 +540,7 @@ with (NewThing dataGrabber usageSpec (Cli.Decode.Decoder decodeFn)) ((CommandBui
     CommandBuilder
         { command
             | decoder =
-                flagsAndOperandsAndThen (Command command) (dataGrabber (Command { command | decoder = Decode.fail "" }))
+                flagsAndOperandsAndThen (Command command) (dataGrabber usageSpecs)
                     |> Decode.andThen
                         (\value ->
                             case decodeFn value of
