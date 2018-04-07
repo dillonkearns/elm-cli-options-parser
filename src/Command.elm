@@ -146,7 +146,7 @@ optionExists usageSpecs thisOptionName =
 type CommandBuilder msg
     = CommandBuilder
         { decoder : Decode.Decoder msg
-        , newDecoder : { options : List ParsedOption, operands : List String } -> Result String msg
+        , newDecoder : { usageSpecs : List UsageSpec, options : List ParsedOption, operands : List String } -> Result String msg
         , usageSpecs : List UsageSpec
         , description : Maybe String
         }
@@ -180,7 +180,7 @@ captureRestOperands restOperandsDescription (CommandBuilder ({ decoder, usageSpe
 type Command msg
     = Command
         { decoder : Decode.Decoder msg
-        , newDecoder : { options : List ParsedOption, operands : List String } -> Result String msg
+        , newDecoder : { usageSpecs : List UsageSpec, options : List ParsedOption, operands : List String } -> Result String msg
         , usageSpecs : List UsageSpec
         , description : Maybe String
         }
@@ -585,11 +585,20 @@ validate validateFunction (CliUnit dataGrabber usageSpec (Cli.Decode.Decoder dec
 
 
 with : CliUnit from to -> CommandBuilder (to -> msg) -> CommandBuilder msg
-with (CliUnit dataGrabber usageSpec (Cli.Decode.Decoder decodeFn)) ((CommandBuilder ({ decoder, usageSpecs } as command)) as fullCommand) =
+with (CliUnit dataGrabber usageSpec (Cli.Decode.Decoder decodeFn)) ((CommandBuilder ({ newDecoder, decoder, usageSpecs } as command)) as fullCommand) =
     CommandBuilder
         { command
             | decoder = Decode.fail ""
-            , newDecoder = \{ options } -> Err ""
+            , newDecoder =
+                \optionsAndOperands ->
+                    optionsAndOperands
+                        |> dataGrabber
+                        |> Result.andThen decodeFn
+                        |> Result.andThen
+                            (\fromValue ->
+                                Result.map (\fn -> fn fromValue)
+                                    (newDecoder optionsAndOperands)
+                            )
             , usageSpecs = usageSpecs ++ [ usageSpec ]
         }
 
