@@ -496,7 +496,7 @@ type CliUnit from to
 
 
 type alias DataGrabber decodesTo =
-    { usageSpecs : List UsageSpec, flags : List String, operands : List String, options : List Parser.ParsedOption } -> Decode.Decoder decodesTo
+    { usageSpecs : List UsageSpec, operands : List String, options : List Parser.ParsedOption } -> Result String decodesTo
 
 
 expectOperandNew : String -> CliUnit String String
@@ -512,11 +512,10 @@ expectOperandNew operandDescription =
                     |> List.Extra.getAt operandsSoFar
             of
                 Just operandValue ->
-                    Decode.succeed operandValue
+                    Ok operandValue
 
                 Nothing ->
-                    ("Expect operand " ++ operandDescription)
-                        |> Decode.fail
+                    Err ("Expect operand " ++ operandDescription)
         )
         (Operand operandDescription)
         Cli.Decode.decoder
@@ -525,7 +524,7 @@ expectOperandNew operandDescription =
 requiredOptionNew : String -> CliUnit String String
 requiredOptionNew optionName =
     CliUnit
-        (\{ usageSpecs, operands, flags, options } ->
+        (\{ operands, options } ->
             case
                 options
                     |> List.Extra.find
@@ -533,13 +532,13 @@ requiredOptionNew optionName =
                     |> Debug.log "got"
             of
                 Nothing ->
-                    Decode.fail ("Expected to find " ++ optionName)
+                    Err ("Expected to find " ++ optionName)
 
                 Just (Parser.ParsedOption _ (Parser.OptionWithArg optionArg)) ->
-                    Decode.succeed optionArg
+                    Ok optionArg
 
                 _ ->
-                    Decode.fail ("Expected option " ++ optionName ++ " to have arg but found none.")
+                    Err ("Expected option " ++ optionName ++ " to have arg but found none.")
         )
         (Option (OptionWithStringArg optionName) Required)
         Cli.Decode.decoder
@@ -548,16 +547,15 @@ requiredOptionNew optionName =
 expectFlagNew : String -> CliUnit () ()
 expectFlagNew flagName =
     CliUnit
-        (\{ flags } ->
+        (\{ options } ->
             let
                 formattedFlag =
                     "--" ++ flagName
             in
-            if List.member formattedFlag flags then
-                Decode.succeed ()
+            if List.member (Parser.ParsedOption flagName Parser.Flag) options then
+                Ok ()
             else
-                ("Expect flag " ++ formattedFlag)
-                    |> Decode.fail
+                Err ("Expect flag " ++ formattedFlag)
         )
         (Option (Flag flagName) Required)
         Cli.Decode.decoder
@@ -590,17 +588,7 @@ with : CliUnit from to -> CommandBuilder (to -> msg) -> CommandBuilder msg
 with (CliUnit dataGrabber usageSpec (Cli.Decode.Decoder decodeFn)) ((CommandBuilder ({ decoder, usageSpecs } as command)) as fullCommand) =
     CommandBuilder
         { command
-            | decoder =
-                flagsAndOperandsAndThen (Command { command | newDecoder = \_ -> Err "" }) dataGrabber
-                    |> Decode.andThen
-                        (\value ->
-                            case decodeFn value of
-                                Ok finalValue ->
-                                    Decode.map (\constructor -> constructor finalValue) decoder
-
-                                Err error ->
-                                    Decode.fail ""
-                        )
+            | decoder = Decode.fail ""
             , newDecoder = \{ options } -> Err ""
             , usageSpecs = usageSpecs ++ [ usageSpec ]
         }
