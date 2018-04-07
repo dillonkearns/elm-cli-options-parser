@@ -146,6 +146,7 @@ optionExists usageSpecs thisOptionName =
 type CommandBuilder msg
     = CommandBuilder
         { decoder : Decode.Decoder msg
+        , newDecoder : { options : List ParsedOption, operands : List String } -> Result String msg
         , usageSpecs : List UsageSpec
         , description : Maybe String
         }
@@ -157,27 +158,29 @@ toCommand (CommandBuilder record) =
 
 
 captureRestOperands : String -> CommandBuilder (List String -> msg) -> Command msg
-captureRestOperands restOperandsDescription (CommandBuilder ({ decoder, usageSpecs } as record)) =
+captureRestOperands restOperandsDescription (CommandBuilder ({ decoder, usageSpecs, description } as record)) =
     Command
-        { record
-            | decoder =
-                flagsAndOperandsAndThen (Command record)
-                    (\{ operands } ->
-                        Decode.map
-                            (\constructor ->
-                                operands
-                                    |> List.drop (operandCount usageSpecs)
-                                    |> constructor
-                            )
-                            decoder
-                    )
-            , usageSpecs = usageSpecs ++ [ RestArgs restOperandsDescription ]
+        { decoder =
+            flagsAndOperandsAndThen (Command { record | newDecoder = \_ -> Err "" })
+                (\{ operands } ->
+                    Decode.map
+                        (\constructor ->
+                            operands
+                                |> List.drop (operandCount usageSpecs)
+                                |> constructor
+                        )
+                        decoder
+                )
+        , usageSpecs = usageSpecs ++ [ RestArgs restOperandsDescription ]
+        , description = description
+        , newDecoder = \_ -> Err ""
         }
 
 
 type Command msg
     = Command
         { decoder : Decode.Decoder msg
+        , newDecoder : { options : List ParsedOption, operands : List String } -> Result String msg
         , usageSpecs : List UsageSpec
         , description : Maybe String
         }
@@ -189,6 +192,7 @@ build msgConstructor =
         { decoder = Decode.succeed msgConstructor
         , usageSpecs = []
         , description = Nothing
+        , newDecoder = \_ -> Err ""
         }
 
 
@@ -198,6 +202,7 @@ buildWithDoc msgConstructor docString =
         { decoder = Decode.succeed msgConstructor
         , usageSpecs = []
         , description = Just docString
+        , newDecoder = \_ -> Err ""
         }
 
 
@@ -215,6 +220,7 @@ withFlag flagName (CommandBuilder ({ decoder, usageSpecs } as command)) =
                                 Decode.map (\constructor -> constructor False) decoder
                         )
             , usageSpecs = usageSpecs ++ [ Option (Flag flagName) Optional ]
+            , newDecoder = \_ -> Err ""
         }
 
 
@@ -265,7 +271,8 @@ expectOperand operandName ((CommandBuilder ({ decoder, usageSpecs } as command))
     CommandBuilder
         { command
             | decoder =
-                flagsAndOperandsAndThen (Command command)
+                flagsAndOperandsAndThen
+                    (Command { command | newDecoder = \{ options } -> Err "" })
                     (\{ operands } ->
                         let
                             operandsSoFar =
@@ -284,6 +291,7 @@ expectOperand operandName ((CommandBuilder ({ decoder, usageSpecs } as command))
                                 ("Expect operand " ++ operandName)
                                     |> Decode.fail
                     )
+            , newDecoder = \{ options } -> Err ""
             , usageSpecs = usageSpecs ++ [ Operand operandName ]
         }
 
@@ -330,6 +338,7 @@ optionWithStringArg flag (CommandBuilder ({ decoder, usageSpecs } as command)) =
                                             Decode.map (\constructor -> constructor argValue) decoder
                         )
             , usageSpecs = usageSpecs ++ [ Option (OptionWithStringArg flag) Required ]
+            , newDecoder = \_ -> Err ""
         }
 
 
@@ -350,6 +359,7 @@ zeroOrMoreWithStringArg flag (CommandBuilder ({ decoder, usageSpecs } as command
                             Decode.map (\constructor -> constructor values) decoder
                         )
             , usageSpecs = usageSpecs ++ [ Option (OptionWithStringArg flag) ZeroOrMore ]
+            , newDecoder = \_ -> Err ""
         }
 
 
@@ -374,6 +384,7 @@ optionalOptionWithStringArg flag (CommandBuilder ({ decoder, usageSpecs } as com
                                             Decode.map (\constructor -> constructor (Just argValue)) decoder
                         )
             , usageSpecs = usageSpecs ++ [ Option (OptionWithStringArg flag) Optional ]
+            , newDecoder = \_ -> Err ""
         }
 
 
@@ -580,7 +591,7 @@ with (CliUnit dataGrabber usageSpec (Cli.Decode.Decoder decodeFn)) ((CommandBuil
     CommandBuilder
         { command
             | decoder =
-                flagsAndOperandsAndThen (Command command) dataGrabber
+                flagsAndOperandsAndThen (Command { command | newDecoder = \_ -> Err "" }) dataGrabber
                     |> Decode.andThen
                         (\value ->
                             case decodeFn value of
@@ -590,6 +601,7 @@ with (CliUnit dataGrabber usageSpec (Cli.Decode.Decoder decodeFn)) ((CommandBuil
                                 Err error ->
                                     Decode.fail ""
                         )
+            , newDecoder = \{ options } -> Err ""
             , usageSpecs = usageSpecs ++ [ usageSpec ]
         }
 
