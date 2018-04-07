@@ -1,10 +1,15 @@
-module Command exposing (Command, CommandBuilder, build, buildWithDoc, captureRestOperands, expectFlag, expectFlagNew, expectOperand, expectOperandNew, flagsAndOperands, mapNew, optionWithStringArg, optionalOptionWithStringArg, synopsis, toCommand, tryMatch, validate, with, withFlag, zeroOrMoreWithStringArg)
+module Command exposing (Command, CommandBuilder, build, buildWithDoc, captureRestOperands, expectFlag, expectFlagNew, expectOperand, expectOperandNew, flagsAndOperands, getUsageSpecs, mapNew, optionWithStringArg, optionalOptionWithStringArg, synopsis, toCommand, tryMatch, validate, with, withFlag, zeroOrMoreWithStringArg)
 
 import Cli.Decode
 import Cli.UsageSpec exposing (..)
 import Json.Decode as Decode exposing (Decoder)
 import List.Extra
 import Occurences exposing (Occurences(..))
+
+
+getUsageSpecs : Command decodesTo -> List UsageSpec
+getUsageSpecs (Command { usageSpecs }) =
+    usageSpecs
 
 
 synopsis : String -> Command decodesTo -> String

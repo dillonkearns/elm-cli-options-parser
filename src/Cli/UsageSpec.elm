@@ -1,6 +1,7 @@
-module Cli.UsageSpec exposing (Option(..), UsageSpec(..), synopsis)
+module Cli.UsageSpec exposing (Option(..), UsageSpec(..), optionHasArg, synopsis)
 
-import Occurences exposing (Occurences)
+import List.Extra
+import Occurences exposing (Occurences(..))
 
 
 type Option
@@ -46,3 +47,44 @@ optionSynopsis occurences option =
             "--" ++ optionName ++ " <" ++ optionName ++ ">"
     )
         |> Occurences.qualifySynopsis occurences
+
+
+optionHasArg : List UsageSpec -> String -> Bool
+optionHasArg options optionNameToCheck =
+    case
+        options
+            |> List.filterMap
+                (\spec ->
+                    case spec of
+                        Option option occurences ->
+                            Just option
+
+                        Operand _ ->
+                            Nothing
+
+                        RestArgs _ ->
+                            Nothing
+                )
+            |> List.Extra.find
+                (\spec -> optionName spec == optionNameToCheck)
+    of
+        Just option ->
+            case option of
+                Flag flagName ->
+                    False
+
+                OptionWithStringArg optionName ->
+                    True
+
+        Nothing ->
+            False
+
+
+optionName : Option -> String
+optionName option =
+    case option of
+        Flag flagName ->
+            flagName
+
+        OptionWithStringArg optionName ->
+            optionName

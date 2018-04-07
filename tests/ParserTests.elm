@@ -21,6 +21,29 @@ flagsAndOperands_ usageSpecs argv soFar =
         [] ->
             soFar
 
+        first :: second :: rest ->
+            case String.toList first of
+                '-' :: '-' :: restOfFirstString ->
+                    if Cli.UsageSpec.optionHasArg usageSpecs (restOfFirstString |> String.fromList) then
+                        flagsAndOperands_ usageSpecs
+                            rest
+                            { flags = soFar.flags ++ [ Option first second ]
+                            , operands = soFar.operands
+                            }
+                    else
+                        flagsAndOperands_ usageSpecs
+                            (second :: rest)
+                            { flags = soFar.flags ++ [ Flag first ]
+                            , operands = soFar.operands
+                            }
+
+                _ ->
+                    flagsAndOperands_ usageSpecs
+                        (second :: rest)
+                        { flags = soFar.flags
+                        , operands = soFar.operands ++ [ first ]
+                        }
+
         first :: rest ->
             case String.toList first of
                 '-' :: '-' :: restOfFirstString ->
@@ -79,19 +102,19 @@ all =
                     { flags = [ Flag "--verbose", Flag "--dry-run" ]
                     , operands = [ "operand" ]
                     }
+        , test "gets operand from the front when args are used" <|
+            \() ->
+                expectFlagsAndOperands
+                    [ "operand", "--first-name", "Will", "--last-name", "Riker" ]
+                    (Command.build (,)
+                        |> Command.optionWithStringArg "first-name"
+                        |> Command.optionWithStringArg "last-name"
+                        |> Command.toCommand
+                    )
+                    { flags = [ Option "--first-name" "Will", Option "--last-name" "Riker" ]
+                    , operands = [ "operand" ]
+                    }
 
-        -- , test "gets operand from the front when args are used" <|
-        --     \() ->
-        --         expectFlagsAndOperands
-        --             [ "operand", "--first-name", "Will", "--last-name", "Riker" ]
-        --             (Command.build (,)
-        --                 |> Command.optionWithStringArg "first-name"
-        --                 |> Command.optionWithStringArg "last-name"
-        --                 |> Command.toCommand
-        --             )
-        --             { flags = [ Option "--first-name" "Will", Option "--last-name" "Riker" ]
-        --             , operands = [ "operand" ]
-        --             }
         -- , test "gets operand from the back when args are present" <|
         --     \() ->
         --         [ "--first-name", "Will", "--last-name", "Riker", "operand" ]
