@@ -114,32 +114,29 @@ all =
                     { flags = [ Option "--first-name" "Will", Option "--last-name" "Riker" ]
                     , operands = [ "operand" ]
                     }
-
-        -- , test "gets operand from the back when args are present" <|
-        --     \() ->
-        --         [ "--first-name", "Will", "--last-name", "Riker", "operand" ]
-        --             |> Command.flagsAndOperands
-        --                 (Command.build FullName
-        --                     |> Command.optionWithStringArg "first-name"
-        --                     |> Command.optionWithStringArg "last-name"
-        --                     |> Command.toCommand
-        --                 )
-        --             |> expectFlagsAndOperands
-        --                 { flags = [ "--first-name", "Will", "--last-name", "Riker" ]
-        --                 , operands = [ "operand" ]
-        --                 }
-        -- , test "gets operand when there are no options" <|
-        --     \() ->
-        --         [ "operand" ]
-        --             |> Command.flagsAndOperands
-        --                 (Command.build identity
-        --                     |> Command.expectOperand "foo"
-        --                     |> Command.toCommand
-        --                 )
-        --             |> expectFlagsAndOperands
-        --                 { flags = []
-        --                 , operands = [ "operand" ]
-        --                 }
+        , test "gets operand from the back when args are present" <|
+            \() ->
+                expectFlagsAndOperands
+                    [ "--first-name", "Will", "--last-name", "Riker", "operand" ]
+                    (Command.build (,)
+                        |> Command.optionWithStringArg "first-name"
+                        |> Command.optionWithStringArg "last-name"
+                        |> Command.toCommand
+                    )
+                    { flags = [ Option "--first-name" "Will", Option "--last-name" "Riker" ]
+                    , operands = [ "operand" ]
+                    }
+        , test "gets operand when there are no options" <|
+            \() ->
+                expectFlagsAndOperands
+                    [ "operand" ]
+                    (Command.build identity
+                        |> Command.expectOperand "foo"
+                        |> Command.toCommand
+                    )
+                    { flags = []
+                    , operands = [ "operand" ]
+                    }
         ]
 
 
