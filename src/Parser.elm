@@ -29,13 +29,13 @@ flagsAndOperands_ usageSpecs argv soFar =
                     if Cli.UsageSpec.optionHasArg usageSpecs (restOfFirstString |> String.fromList) then
                         flagsAndOperands_ usageSpecs
                             rest
-                            { flags = soFar.flags ++ [ Option first second ]
+                            { flags = soFar.flags ++ [ Option (restOfFirstString |> String.fromList) second ]
                             , operands = soFar.operands
                             }
                     else
                         flagsAndOperands_ usageSpecs
                             (second :: rest)
-                            { flags = soFar.flags ++ [ Flag first ]
+                            { flags = soFar.flags ++ [ Flag (restOfFirstString |> String.fromList) ]
                             , operands = soFar.operands
                             }
 
@@ -51,7 +51,7 @@ flagsAndOperands_ usageSpecs argv soFar =
                 '-' :: '-' :: restOfFirstString ->
                     flagsAndOperands_ usageSpecs
                         rest
-                        { flags = soFar.flags ++ [ Flag first ]
+                        { flags = soFar.flags ++ [ Flag (restOfFirstString |> String.fromList) ]
                         , operands = soFar.operands
                         }
 

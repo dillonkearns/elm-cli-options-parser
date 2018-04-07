@@ -27,7 +27,7 @@ all =
                         |> Command.expectFlag "dry-run"
                         |> Command.toCommand
                     )
-                    { flags = [ Flag "--verbose", Flag "--dry-run" ]
+                    { flags = [ Flag "verbose", Flag "dry-run" ]
                     , operands = [ "operand" ]
                     }
         , test "gets operand from the back" <|
@@ -39,7 +39,7 @@ all =
                         |> Command.expectFlag "dry-run"
                         |> Command.toCommand
                     )
-                    { flags = [ Flag "--verbose", Flag "--dry-run" ]
+                    { flags = [ Flag "verbose", Flag "dry-run" ]
                     , operands = [ "operand" ]
                     }
         , test "gets operand from the front when args are used" <|
@@ -51,7 +51,7 @@ all =
                         |> Command.optionWithStringArg "last-name"
                         |> Command.toCommand
                     )
-                    { flags = [ Option "--first-name" "Will", Option "--last-name" "Riker" ]
+                    { flags = [ Option "first-name" "Will", Option "last-name" "Riker" ]
                     , operands = [ "operand" ]
                     }
         , test "gets operand from the back when args are present" <|
@@ -63,7 +63,7 @@ all =
                         |> Command.optionWithStringArg "last-name"
                         |> Command.toCommand
                     )
-                    { flags = [ Option "--first-name" "Will", Option "--last-name" "Riker" ]
+                    { flags = [ Option "first-name" "Will", Option "last-name" "Riker" ]
                     , operands = [ "operand" ]
                     }
         , test "gets operand when there are no options" <|
