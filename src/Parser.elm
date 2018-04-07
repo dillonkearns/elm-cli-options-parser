@@ -1,11 +1,15 @@
-module Parser exposing (ParsedOption(..), flagsAndOperands)
+module Parser exposing (OptionKind(..), ParsedOption(..), flagsAndOperands)
 
 import Cli.UsageSpec exposing (UsageSpec)
 
 
 type ParsedOption
-    = Flag String
-    | Option String String
+    = ParsedOption String OptionKind
+
+
+type OptionKind
+    = Flag
+    | OptionWithArg String
 
 
 flagsAndOperands : List UsageSpec -> List String -> { options : List ParsedOption, operands : List String }
@@ -29,13 +33,13 @@ flagsAndOperands_ usageSpecs argv soFar =
                     if Cli.UsageSpec.optionHasArg usageSpecs (restOfFirstString |> String.fromList) then
                         flagsAndOperands_ usageSpecs
                             rest
-                            { options = soFar.options ++ [ Option (restOfFirstString |> String.fromList) second ]
+                            { options = soFar.options ++ [ ParsedOption (restOfFirstString |> String.fromList) (OptionWithArg second) ]
                             , operands = soFar.operands
                             }
                     else
                         flagsAndOperands_ usageSpecs
                             (second :: rest)
-                            { options = soFar.options ++ [ Flag (restOfFirstString |> String.fromList) ]
+                            { options = soFar.options ++ [ ParsedOption (restOfFirstString |> String.fromList) Flag ]
                             , operands = soFar.operands
                             }
 
@@ -51,7 +55,7 @@ flagsAndOperands_ usageSpecs argv soFar =
                 '-' :: '-' :: restOfFirstString ->
                     flagsAndOperands_ usageSpecs
                         rest
-                        { options = soFar.options ++ [ Flag (restOfFirstString |> String.fromList) ]
+                        { options = soFar.options ++ [ ParsedOption (restOfFirstString |> String.fromList) Flag ]
                         , operands = soFar.operands
                         }
 
