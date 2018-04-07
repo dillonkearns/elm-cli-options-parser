@@ -27,39 +27,48 @@ flagsAndOperands_ usageSpecs argv soFar =
         [] ->
             soFar
 
-        first :: second :: rest ->
+        first :: rest ->
             case String.toList first of
                 '-' :: '-' :: restOfFirstString ->
-                    if Cli.UsageSpec.optionHasArg usageSpecs (restOfFirstString |> String.fromList) then
+                    if Cli.UsageSpec.optionHasArg (usageSpecs |> Debug.log "SPECS") (restOfFirstString |> String.fromList |> Debug.log "name") |> Debug.log "hasArg" then
+                        case rest of
+                            second :: subRest ->
+                                let
+                                    _ =
+                                        Debug.log first "1"
+                                in
+                                flagsAndOperands_ usageSpecs
+                                    subRest
+                                    { options = soFar.options ++ [ ParsedOption (restOfFirstString |> String.fromList) (OptionWithArg second) ]
+                                    , operands = soFar.operands
+                                    }
+
+                            _ ->
+                                let
+                                    _ =
+                                        Debug.log first "2"
+                                in
+                                flagsAndOperands_ usageSpecs
+                                    rest
+                                    { options = soFar.options ++ [ ParsedOption (restOfFirstString |> String.fromList) Flag ]
+                                    , operands = soFar.operands
+                                    }
+                    else
+                        let
+                            _ =
+                                Debug.log first "3"
+                        in
                         flagsAndOperands_ usageSpecs
                             rest
-                            { options = soFar.options ++ [ ParsedOption (restOfFirstString |> String.fromList) (OptionWithArg second) ]
-                            , operands = soFar.operands
-                            }
-                    else
-                        flagsAndOperands_ usageSpecs
-                            (second :: rest)
                             { options = soFar.options ++ [ ParsedOption (restOfFirstString |> String.fromList) Flag ]
                             , operands = soFar.operands
                             }
 
                 _ ->
-                    flagsAndOperands_ usageSpecs
-                        (second :: rest)
-                        { options = soFar.options
-                        , operands = soFar.operands ++ [ first ]
-                        }
-
-        first :: rest ->
-            case String.toList first of
-                '-' :: '-' :: restOfFirstString ->
-                    flagsAndOperands_ usageSpecs
-                        rest
-                        { options = soFar.options ++ [ ParsedOption (restOfFirstString |> String.fromList) Flag ]
-                        , operands = soFar.operands
-                        }
-
-                _ ->
+                    let
+                        _ =
+                            Debug.log first "4"
+                    in
                     flagsAndOperands_ usageSpecs
                         rest
                         { options = soFar.options

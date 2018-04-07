@@ -66,6 +66,22 @@ all =
                     { options = [ ParsedOption "first-name" (Parser.OptionWithArg "Will"), ParsedOption "last-name" (Parser.OptionWithArg "Riker") ]
                     , operands = [ "operand" ]
                     }
+        , test "new" <|
+            \() ->
+                expectFlagsAndOperands
+                    [ "--last-name"
+                    , "Troi"
+                    , "--first-name"
+                    , "Deanna"
+                    ]
+                    (Command.build (,)
+                        |> Command.with (Command.requiredOptionNew "first-name")
+                        |> Command.with (Command.requiredOptionNew "last-name")
+                        |> Command.toCommand
+                    )
+                    { options = [ ParsedOption "last-name" (Parser.OptionWithArg "Troi"), ParsedOption "first-name" (Parser.OptionWithArg "Deanna") ]
+                    , operands = []
+                    }
         , test "gets operand when there are no options" <|
             \() ->
                 expectFlagsAndOperands

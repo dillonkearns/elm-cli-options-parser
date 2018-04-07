@@ -96,8 +96,8 @@ all =
                         , "unexpectedOperand"
                         ]
                         (Command.build FullName
-                            |> Command.optionWithStringArg "first-name"
-                            |> Command.optionWithStringArg "last-name"
+                            |> Command.with (Command.requiredOptionNew "first-name")
+                            |> Command.with (Command.requiredOptionNew "last-name")
                             |> Command.toCommand
                         )
                         |> Expect.equal Nothing
@@ -151,6 +151,18 @@ all =
                         )
                         |> Expect.equal (Just ( "operand1", [ "rest1", "rest2" ] ))
             ]
+
+        -- , describe "validation"
+        --     [ only <|
+        --         test "forced err validation makes it not match" <|
+        --             \() ->
+        --                 Command.tryMatch [ "--name", "Bob" ]
+        --                     (Command.build identity
+        --                         |> Command.with (Command.requiredOptionNew "name")
+        --                         |> Command.toCommand
+        --                     )
+        --                     |> Expect.equal (Just "Bob")
+        --     ]
         , describe "mapping"
             [ test "maps operand" <|
                 \() ->

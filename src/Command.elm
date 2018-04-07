@@ -1,11 +1,11 @@
-module Command exposing (Command, CommandBuilder, build, buildWithDoc, captureRestOperands, expectFlag, expectFlagNew, expectOperand, expectOperandNew, flagsAndOperands, getUsageSpecs, mapNew, optionWithStringArg, optionalOptionWithStringArg, synopsis, toCommand, tryMatch, validate, with, withFlag, zeroOrMoreWithStringArg)
+module Command exposing (Command, CommandBuilder, build, buildWithDoc, captureRestOperands, expectFlag, expectFlagNew, expectOperand, expectOperandNew, flagsAndOperands, getUsageSpecs, mapNew, optionWithStringArg, optionalOptionWithStringArg, requiredOptionNew, synopsis, toCommand, tryMatch, validate, with, withFlag, zeroOrMoreWithStringArg)
 
 import Cli.Decode
 import Cli.UsageSpec exposing (..)
 import Json.Decode as Decode exposing (Decoder)
 import List.Extra
 import Occurences exposing (Occurences(..))
-import Parser
+import Parser exposing (ParsedOption)
 
 
 getUsageSpecs : Command decodesTo -> List UsageSpec
@@ -29,6 +29,7 @@ tryMatch argv command =
             |> decoder
         )
         (argv |> toString)
+        |> Debug.log "result"
         |> Result.toMaybe
 
 
@@ -387,7 +388,11 @@ flagsAndOperandsAndThen command decoderFunction =
                             { usageSpecs = usageSpecs
                             , flags = flags
                             , operands = operands
-                            , options = (Parser.flagsAndOperands (getUsageSpecs command) list).options
+                            , options =
+                                (Parser.flagsAndOperands (command |> getUsageSpecs |> Debug.log "<<<SPECSHERE>>>")
+                                    (list |> Debug.log "<<<list>>>")
+                                ).options
+                                    |> Debug.log "<<<HERE>>>"
                             }
                        )
                     |> decoderFunction
@@ -503,6 +508,29 @@ expectOperandNew operandDescription =
                         |> Decode.fail
         )
         (Operand operandDescription)
+        Cli.Decode.decoder
+
+
+requiredOptionNew : String -> CliUnit String String
+requiredOptionNew optionName =
+    CliUnit
+        (\{ usageSpecs, operands, flags, options } ->
+            case
+                options
+                    |> List.Extra.find
+                        (\(Parser.ParsedOption thisOptionName optionKind) -> (thisOptionName |> Debug.log "thisOptionName") == (optionName |> Debug.log "optionName"))
+                    |> Debug.log "got"
+            of
+                Nothing ->
+                    Decode.fail ("Expected to find " ++ optionName)
+
+                Just (Parser.ParsedOption _ (Parser.OptionWithArg optionArg)) ->
+                    Decode.succeed optionArg
+
+                _ ->
+                    Decode.fail ("Expected option " ++ optionName ++ " to have arg but found none.")
+        )
+        (Option (OptionWithStringArg optionName) Required)
         Cli.Decode.decoder
 
 
