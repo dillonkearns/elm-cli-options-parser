@@ -8,18 +8,39 @@ import Test exposing (..)
 
 flagsAndOperands : List UsageSpec -> List String -> { flags : List ParsedOption, operands : List String }
 flagsAndOperands usageSpecs argv =
+    flagsAndOperands_ usageSpecs argv { flags = [], operands = [] }
+
+
+flagsAndOperands_ :
+    List UsageSpec
+    -> List String
+    -> { flags : List ParsedOption, operands : List String }
+    -> { flags : List ParsedOption, operands : List String }
+flagsAndOperands_ usageSpecs argv soFar =
     case argv of
         [] ->
-            { flags = [], operands = [] }
+            soFar
 
-        _ ->
-            { flags = [ Flag "--verbose", Flag "--dry-run" ]
-            , operands = [ "operand" ]
-            }
+        first :: rest ->
+            case String.toList first of
+                '-' :: '-' :: restOfFirstString ->
+                    flagsAndOperands_ usageSpecs
+                        rest
+                        { flags = soFar.flags ++ [ Flag first ]
+                        , operands = soFar.operands
+                        }
+
+                _ ->
+                    flagsAndOperands_ usageSpecs
+                        rest
+                        { flags = soFar.flags
+                        , operands = soFar.operands ++ [ first ]
+                        }
 
 
 type ParsedOption
     = Flag String
+    | Option String String
 
 
 all : Test
@@ -46,33 +67,31 @@ all =
                     { flags = [ Flag "--verbose", Flag "--dry-run" ]
                     , operands = [ "operand" ]
                     }
+        , test "gets operand from the back" <|
+            \() ->
+                expectFlagsAndOperands
+                    [ "--verbose", "--dry-run", "operand" ]
+                    (Command.build (,,)
+                        |> Command.expectFlag "verbose"
+                        |> Command.expectFlag "dry-run"
+                        |> Command.toCommand
+                    )
+                    { flags = [ Flag "--verbose", Flag "--dry-run" ]
+                    , operands = [ "operand" ]
+                    }
 
-        -- , test "gets operand from the back" <|
-        --     \() ->
-        --         [ "--verbose", "--dry-run", "operand" ]
-        --             |> Command.flagsAndOperands
-        --                 (Command.build (,,)
-        --                     |> Command.expectFlag "verbose"
-        --                     |> Command.expectFlag "dry-run"
-        --                     |> Command.toCommand
-        --                 )
-        --             |> expectFlagsAndOperands
-        --                 { flags = [ "--verbose", "--dry-run" ]
-        --                 , operands = [ "operand" ]
-        --                 }
         -- , test "gets operand from the front when args are used" <|
         --     \() ->
-        --         [ "operand", "--first-name", "Will", "--last-name", "Riker" ]
-        --             |> Command.flagsAndOperands
-        --                 (Command.build FullName
-        --                     |> Command.optionWithStringArg "first-name"
-        --                     |> Command.optionWithStringArg "last-name"
-        --                     |> Command.toCommand
-        --                 )
-        --             |> expectFlagsAndOperands
-        --                 { flags = [ "--first-name", "Will", "--last-name", "Riker" ]
-        --                 , operands = [ "operand" ]
-        --                 }
+        --         expectFlagsAndOperands
+        --             [ "operand", "--first-name", "Will", "--last-name", "Riker" ]
+        --             (Command.build (,)
+        --                 |> Command.optionWithStringArg "first-name"
+        --                 |> Command.optionWithStringArg "last-name"
+        --                 |> Command.toCommand
+        --             )
+        --             { flags = [ Option "--first-name" "Will", Option "--last-name" "Riker" ]
+        --             , operands = [ "operand" ]
+        --             }
         -- , test "gets operand from the back when args are present" <|
         --     \() ->
         --         [ "--first-name", "Will", "--last-name", "Riker", "operand" ]
