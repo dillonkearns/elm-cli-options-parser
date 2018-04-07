@@ -5,6 +5,7 @@ import Cli.UsageSpec exposing (..)
 import Json.Decode as Decode exposing (Decoder)
 import List.Extra
 import Occurences exposing (Occurences(..))
+import Parser
 
 
 getUsageSpecs : Command decodesTo -> List UsageSpec
@@ -375,13 +376,20 @@ optionalOptionWithStringArg flag (CommandBuilder ({ decoder, usageSpecs } as com
         }
 
 
-flagsAndOperandsAndThen : Command msg -> ({ usageSpecs : List UsageSpec, flags : List String, operands : List String } -> Decoder decodesTo) -> Decoder decodesTo
+flagsAndOperandsAndThen : Command msg -> ({ usageSpecs : List UsageSpec, flags : List String, operands : List String, options : List Parser.ParsedOption } -> Decoder decodesTo) -> Decoder decodesTo
 flagsAndOperandsAndThen command decoderFunction =
     Decode.list Decode.string
         |> Decode.andThen
             (\list ->
                 list
                     |> flagsAndOperands command
+                    |> (\{ usageSpecs, flags, operands } ->
+                            { usageSpecs = usageSpecs
+                            , flags = flags
+                            , operands = operands
+                            , options = (Parser.flagsAndOperands (getUsageSpecs command) list).options
+                            }
+                       )
                     |> decoderFunction
             )
 
@@ -472,7 +480,7 @@ type CliUnit from to
 
 
 type alias DataGrabber decodesTo =
-    { usageSpecs : List UsageSpec, flags : List String, operands : List String } -> Decode.Decoder decodesTo
+    { usageSpecs : List UsageSpec, flags : List String, operands : List String, options : List Parser.ParsedOption } -> Decode.Decoder decodesTo
 
 
 expectOperandNew : String -> CliUnit String String
