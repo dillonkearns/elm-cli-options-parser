@@ -8,16 +8,16 @@ type ParsedOption
     | Option String String
 
 
-flagsAndOperands : List UsageSpec -> List String -> { flags : List ParsedOption, operands : List String }
+flagsAndOperands : List UsageSpec -> List String -> { options : List ParsedOption, operands : List String }
 flagsAndOperands usageSpecs argv =
-    flagsAndOperands_ usageSpecs argv { flags = [], operands = [] }
+    flagsAndOperands_ usageSpecs argv { options = [], operands = [] }
 
 
 flagsAndOperands_ :
     List UsageSpec
     -> List String
-    -> { flags : List ParsedOption, operands : List String }
-    -> { flags : List ParsedOption, operands : List String }
+    -> { options : List ParsedOption, operands : List String }
+    -> { options : List ParsedOption, operands : List String }
 flagsAndOperands_ usageSpecs argv soFar =
     case argv of
         [] ->
@@ -29,20 +29,20 @@ flagsAndOperands_ usageSpecs argv soFar =
                     if Cli.UsageSpec.optionHasArg usageSpecs (restOfFirstString |> String.fromList) then
                         flagsAndOperands_ usageSpecs
                             rest
-                            { flags = soFar.flags ++ [ Option (restOfFirstString |> String.fromList) second ]
+                            { options = soFar.options ++ [ Option (restOfFirstString |> String.fromList) second ]
                             , operands = soFar.operands
                             }
                     else
                         flagsAndOperands_ usageSpecs
                             (second :: rest)
-                            { flags = soFar.flags ++ [ Flag (restOfFirstString |> String.fromList) ]
+                            { options = soFar.options ++ [ Flag (restOfFirstString |> String.fromList) ]
                             , operands = soFar.operands
                             }
 
                 _ ->
                     flagsAndOperands_ usageSpecs
                         (second :: rest)
-                        { flags = soFar.flags
+                        { options = soFar.options
                         , operands = soFar.operands ++ [ first ]
                         }
 
@@ -51,13 +51,13 @@ flagsAndOperands_ usageSpecs argv soFar =
                 '-' :: '-' :: restOfFirstString ->
                     flagsAndOperands_ usageSpecs
                         rest
-                        { flags = soFar.flags ++ [ Flag (restOfFirstString |> String.fromList) ]
+                        { options = soFar.options ++ [ Flag (restOfFirstString |> String.fromList) ]
                         , operands = soFar.operands
                         }
 
                 _ ->
                     flagsAndOperands_ usageSpecs
                         rest
-                        { flags = soFar.flags
+                        { options = soFar.options
                         , operands = soFar.operands ++ [ first ]
                         }

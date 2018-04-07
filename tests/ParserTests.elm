@@ -17,7 +17,7 @@ all =
                         |> Command.optionWithStringArg "last-name"
                         |> Command.toCommand
                     )
-                    { flags = [], operands = [] }
+                    { options = [], operands = [] }
         , test "gets operand from the front" <|
             \() ->
                 expectFlagsAndOperands
@@ -27,7 +27,7 @@ all =
                         |> Command.expectFlag "dry-run"
                         |> Command.toCommand
                     )
-                    { flags = [ Flag "verbose", Flag "dry-run" ]
+                    { options = [ Flag "verbose", Flag "dry-run" ]
                     , operands = [ "operand" ]
                     }
         , test "gets operand from the back" <|
@@ -39,7 +39,7 @@ all =
                         |> Command.expectFlag "dry-run"
                         |> Command.toCommand
                     )
-                    { flags = [ Flag "verbose", Flag "dry-run" ]
+                    { options = [ Flag "verbose", Flag "dry-run" ]
                     , operands = [ "operand" ]
                     }
         , test "gets operand from the front when args are used" <|
@@ -51,7 +51,7 @@ all =
                         |> Command.optionWithStringArg "last-name"
                         |> Command.toCommand
                     )
-                    { flags = [ Option "first-name" "Will", Option "last-name" "Riker" ]
+                    { options = [ Option "first-name" "Will", Option "last-name" "Riker" ]
                     , operands = [ "operand" ]
                     }
         , test "gets operand from the back when args are present" <|
@@ -63,7 +63,7 @@ all =
                         |> Command.optionWithStringArg "last-name"
                         |> Command.toCommand
                     )
-                    { flags = [ Option "first-name" "Will", Option "last-name" "Riker" ]
+                    { options = [ Option "first-name" "Will", Option "last-name" "Riker" ]
                     , operands = [ "operand" ]
                     }
         , test "gets operand when there are no options" <|
@@ -74,7 +74,7 @@ all =
                         |> Command.expectOperand "foo"
                         |> Command.toCommand
                     )
-                    { flags = []
+                    { options = []
                     , operands = [ "operand" ]
                     }
         ]
@@ -83,9 +83,9 @@ all =
 expectFlagsAndOperands :
     List String
     -> Command.Command decodesTo
-    -> { flags : List ParsedOption, operands : List String }
+    -> { options : List ParsedOption, operands : List String }
     -> Expectation
 expectFlagsAndOperands argv command expected =
     Parser.flagsAndOperands (Command.getUsageSpecs command) argv
-        |> (\{ flags, operands } -> { flags = flags, operands = operands })
+        |> (\{ options, operands } -> { options = options, operands = operands })
         |> Expect.equal expected
