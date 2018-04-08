@@ -169,7 +169,7 @@ all =
                     Command.tryMatchNew
                         [ "hello" ]
                         (Command.build identity
-                            |> Command.with (Command.expectOperandNew "" |> Command.mapNew String.length)
+                            |> Command.with (Command.expectOperandNew "operand" |> Command.mapNew String.length)
                             |> Command.toCommand
                         )
                         |> Expect.equal (Just 5)
