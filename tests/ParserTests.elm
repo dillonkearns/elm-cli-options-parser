@@ -13,8 +13,8 @@ all =
             \() ->
                 expectFlagsAndOperands []
                     (Command.build (,)
-                        |> Command.optionWithStringArg "first-name"
-                        |> Command.optionWithStringArg "last-name"
+                        |> Command.with (Command.requiredOptionNew "first-name")
+                        |> Command.with (Command.requiredOptionNew "last-name")
                         |> Command.toCommand
                     )
                     { options = [], operands = [] }
@@ -47,8 +47,8 @@ all =
                 expectFlagsAndOperands
                     [ "operand", "--first-name", "Will", "--last-name", "Riker" ]
                     (Command.build (,)
-                        |> Command.optionWithStringArg "first-name"
-                        |> Command.optionWithStringArg "last-name"
+                        |> Command.with (Command.requiredOptionNew "first-name")
+                        |> Command.with (Command.requiredOptionNew "last-name")
                         |> Command.toCommand
                     )
                     { options = [ ParsedOption "first-name" (Parser.OptionWithArg "Will"), ParsedOption "last-name" (Parser.OptionWithArg "Riker") ]
@@ -59,8 +59,8 @@ all =
                 expectFlagsAndOperands
                     [ "--first-name", "Will", "--last-name", "Riker", "operand" ]
                     (Command.build (,)
-                        |> Command.optionWithStringArg "first-name"
-                        |> Command.optionWithStringArg "last-name"
+                        |> Command.with (Command.requiredOptionNew "first-name")
+                        |> Command.with (Command.requiredOptionNew "last-name")
                         |> Command.toCommand
                     )
                     { options = [ ParsedOption "first-name" (Parser.OptionWithArg "Will"), ParsedOption "last-name" (Parser.OptionWithArg "Riker") ]
@@ -87,7 +87,7 @@ all =
                 expectFlagsAndOperands
                     [ "operand" ]
                     (Command.build identity
-                        |> Command.expectOperand "foo"
+                        |> Command.with (Command.expectOperandNew "foo")
                         |> Command.toCommand
                     )
                     { options = []
