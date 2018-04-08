@@ -140,16 +140,15 @@ all =
                         |> Expect.equal Nothing
             , test "rest operands is empty with no operands" <|
                 \() ->
-                    Command.tryMatch [ "--verbose" ]
+                    Command.tryMatchNew [ "--verbose" ]
                         (Command.build identity
                             |> Command.expectFlag "verbose"
-                            -- TODO `captureRestOperands`
                             |> Command.captureRestOperands "files"
                         )
                         |> Expect.equal (Just [])
             , test "rest operands has all operands when there are no required operands" <|
                 \() ->
-                    Command.tryMatch [ "--verbose", "rest1", "rest2" ]
+                    Command.tryMatchNew [ "--verbose", "rest1", "rest2" ]
                         (Command.build identity
                             -- TODO `expectFlag`
                             |> Command.expectFlag "verbose"
@@ -158,10 +157,10 @@ all =
                         |> Expect.equal (Just [ "rest1", "rest2" ])
             , test "rest operands has all operands when there is a required operand" <|
                 \() ->
-                    Command.tryMatch [ "--something", "operand1", "rest1", "rest2" ]
+                    Command.tryMatchNew [ "--something", "operand1", "rest1", "rest2" ]
                         (Command.build (,)
                             |> Command.expectFlag "something"
-                            |> Command.expectOperand "operand"
+                            |> Command.with (Command.expectOperandNew "operand")
                             |> Command.captureRestOperands "files"
                         )
                         |> Expect.equal (Just ( "operand1", [ "rest1", "rest2" ] ))

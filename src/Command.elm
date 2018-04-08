@@ -302,7 +302,7 @@ toCommand (CommandBuilder record) =
 
 
 captureRestOperands : String -> CommandBuilder (List String -> msg) -> Command msg
-captureRestOperands restOperandsDescription (CommandBuilder ({ decoder, usageSpecs, description } as record)) =
+captureRestOperands restOperandsDescription (CommandBuilder ({ decoder, usageSpecs, description, newDecoder } as record)) =
     Command
         { decoder =
             flagsAndOperandsAndThen (Command { record | newDecoder = \_ -> Err "" })
@@ -317,7 +317,14 @@ captureRestOperands restOperandsDescription (CommandBuilder ({ decoder, usageSpe
                 )
         , usageSpecs = usageSpecs ++ [ RestArgs restOperandsDescription ]
         , description = description
-        , newDecoder = \_ -> Err "captureRestOperands"
+        , newDecoder =
+            \({ operands } as stuff) ->
+                let
+                    restOperands =
+                        operands
+                            |> List.drop (operandCount usageSpecs)
+                in
+                Result.map (\fn -> fn restOperands) (newDecoder stuff)
         }
 
 
