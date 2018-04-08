@@ -1,4 +1,4 @@
-module Command exposing (Command, CommandBuilder, build, buildWithDoc, captureRestOperands, expectFlag, expectFlagNew, expectOperand, expectOperandNew, flagsAndOperands, getUsageSpecs, mapNew, optionWithStringArg, optionalOptionWithStringArg, requiredOptionNew, synopsis, toCommand, tryMatch, tryMatchNew, validate, with, withFlag, zeroOrMoreWithStringArg)
+module Command exposing (Command, CommandBuilder, build, buildWithDoc, captureRestOperands, expectFlag, expectOperand, expectOperandNew, flagsAndOperands, getUsageSpecs, mapNew, optionWithStringArg, optionalOptionWithStringArg, requiredOptionNew, synopsis, toCommand, tryMatch, tryMatchNew, validate, with, withFlag, withFlagNew, zeroOrMoreWithStringArg)
 
 import Cli.Decode
 import Cli.UsageSpec exposing (..)
@@ -233,7 +233,17 @@ withFlag flagName (CommandBuilder ({ decoder, usageSpecs } as command)) =
                                 Decode.map (\constructor -> constructor False) decoder
                         )
             , usageSpecs = usageSpecs ++ [ Option (Flag flagName) Optional ]
-            , newDecoder = \_ -> Err ""
+            , newDecoder =
+                \{ options } ->
+                    -- if
+                    --     options
+                    --         |> List.member (Parser.ParsedOption flagName Parser.Flag)
+                    -- then
+                    --     Ok True
+                    -- else
+                    --     Ok False
+                    -- Ok True
+                    Err "withFlag"
         }
 
 
@@ -551,20 +561,19 @@ requiredOptionNew optionName =
         Cli.Decode.decoder
 
 
-expectFlagNew : String -> CliUnit () ()
-expectFlagNew flagName =
+withFlagNew : String -> CliUnit Bool Bool
+withFlagNew flagName =
     CliUnit
         (\{ options } ->
-            let
-                formattedFlag =
-                    "--" ++ flagName
-            in
-            if List.member (Parser.ParsedOption flagName Parser.Flag) options then
-                Ok ()
+            if
+                options
+                    |> List.member (Parser.ParsedOption flagName Parser.Flag)
+            then
+                Ok True
             else
-                Err ("Expect flag " ++ formattedFlag)
+                Ok False
         )
-        (Option (Flag flagName) Required)
+        (Option (Flag flagName) Optional)
         Cli.Decode.decoder
 
 

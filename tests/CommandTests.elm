@@ -53,7 +53,12 @@ all =
                         |> Expect.equal (Just ( "http://my-domain.com", "./file.txt" ))
             , test "detects that optional flag is absent" <|
                 \() ->
-                    Command.tryMatch [ "http://my-domain.com" ] (Command.build OpenUrlWithFlag |> Command.expectOperand "url" |> Command.withFlag "p" |> Command.toCommand)
+                    Command.tryMatchNew [ "http://my-domain.com" ]
+                        (Command.build OpenUrlWithFlag
+                            |> Command.with (Command.expectOperandNew "url")
+                            |> Command.with (Command.withFlagNew "p")
+                            |> Command.toCommand
+                        )
                         |> Expect.equal (Just (OpenUrlWithFlag "http://my-domain.com" False))
             , test "detects that optional flag is present" <|
                 \() ->
