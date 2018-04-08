@@ -125,12 +125,12 @@ all =
                         |> Expect.equal (Just [ "abc123", "def456" ])
             , test "doesn't match when unexpected options are present" <|
                 \() ->
-                    Command.tryMatch
+                    Command.tryMatchNew
                         [ "--verbose"
                         , "--unexpected-option"
                         ]
-                        (Command.build FullName
-                            |> Command.expectFlag "verbose"
+                        (Command.build identity
+                            |> Command.with (Command.withFlagNew "verbose")
                             |> Command.toCommand
                         )
                         |> Expect.equal Nothing

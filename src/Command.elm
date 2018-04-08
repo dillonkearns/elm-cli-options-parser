@@ -38,6 +38,7 @@ tryMatchNew argv ((Command { newDecoder, usageSpecs }) as command) =
         decoder =
             command
                 |> expectedOperandCountOrFailNew
+                |> failIfUnexpectedOptionsNew
                 |> getDecoderNew
     in
     decoder
@@ -192,6 +193,62 @@ failIfUnexpectedOptions ((Command ({ decoder, usageSpecs } as command)) as fullC
         }
 
 
+failIfUnexpectedOptionsNew : Command msg -> Command msg
+failIfUnexpectedOptionsNew ((Command ({ newDecoder, decoder, usageSpecs } as command)) as fullCommand) =
+    Command
+        { command
+            | newDecoder =
+                \({ options } as stuff) ->
+                    let
+                        unexpectedOptions =
+                            List.filterMap
+                                (\(Parser.ParsedOption optionName optionKind) ->
+                                    if optionExistsNew usageSpecs optionName == Nothing then
+                                        Just optionName
+                                    else
+                                        Nothing
+                                )
+                                options
+                    in
+                    if List.isEmpty unexpectedOptions then
+                        newDecoder stuff
+                    else
+                        Err ("Unexpected options " ++ toString unexpectedOptions)
+        }
+
+
+
+-- flagsAndOperandsAndThen fullCommand
+--     (\{ flags } ->
+--         let
+--             ( invalidOptions, unconsumedArg ) =
+--                 flags
+--                     |> List.Extra.indexedFoldl
+--                         (\index element ( invalidSoFar, unconsumedLeft ) ->
+--                             if unconsumedLeft then
+--                                 ( invalidSoFar, False )
+--                             else
+--                                 case optionExists usageSpecs element of
+--                                     Just option ->
+--                                         case option of
+--                                             OptionWithStringArg argName ->
+--                                                 ( invalidSoFar, True )
+--
+--                                             Flag flagName ->
+--                                                 ( invalidSoFar, False )
+--
+--                                     Nothing ->
+--                                         ( invalidSoFar ++ [ element ], False )
+--                         )
+--                         ( [], False )
+--         in
+--         if invalidOptions == [] && not unconsumedArg then
+--             decoder
+--         else
+--             Decode.fail "Found unexpected options."
+--     )
+
+
 optionExists : List UsageSpec -> String -> Maybe Option
 optionExists usageSpecs thisOptionName =
     usageSpecs
@@ -209,6 +266,25 @@ optionExists usageSpecs thisOptionName =
                         Nothing
             )
         |> List.Extra.find (\option -> ("--" ++ optionName option) == thisOptionName)
+
+
+optionExistsNew : List UsageSpec -> String -> Maybe Option
+optionExistsNew usageSpecs thisOptionName =
+    usageSpecs
+        |> List.filterMap
+            (\usageSpec ->
+                case usageSpec of
+                    Option option occurences ->
+                        option
+                            |> Just
+
+                    Operand _ ->
+                        Nothing
+
+                    RestArgs _ ->
+                        Nothing
+            )
+        |> List.Extra.find (\option -> optionName option == thisOptionName)
 
 
 type CommandBuilder msg
