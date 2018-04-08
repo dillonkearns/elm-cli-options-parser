@@ -116,15 +116,14 @@ all =
                         |> Expect.equal Nothing
             , test "extracts multiple params" <|
                 \() ->
-                    Command.tryMatch
+                    Command.tryMatchNew
                         [ "--header"
                         , "abc123"
                         , "--header"
                         , "def456"
                         ]
                         (Command.build identity
-                            -- TODO `zeroOrMoreWithStringArg`
-                            |> Command.zeroOrMoreWithStringArg "header"
+                            |> Command.with (Command.optionalListOption "header")
                             |> Command.toCommand
                         )
                         |> Expect.equal (Just [ "abc123", "def456" ])

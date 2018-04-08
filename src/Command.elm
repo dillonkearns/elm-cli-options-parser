@@ -1,4 +1,4 @@
-module Command exposing (Command, CommandBuilder, build, buildWithDoc, captureRestOperands, expectFlag, expectOperand, expectOperandNew, flagsAndOperands, getUsageSpecs, mapNew, optionWithStringArg, optionalOptionWithStringArg, requiredOptionNew, synopsis, toCommand, tryMatch, tryMatchNew, validate, with, withFlag, withFlagNew, zeroOrMoreWithStringArg)
+module Command exposing (Command, CommandBuilder, build, buildWithDoc, captureRestOperands, expectFlag, expectOperand, expectOperandNew, flagsAndOperands, getUsageSpecs, mapNew, optionWithStringArg, optionalListOption, optionalOptionWithStringArg, requiredOptionNew, synopsis, toCommand, tryMatch, tryMatchNew, validate, with, withFlag, withFlagNew, zeroOrMoreWithStringArg)
 
 import Cli.Decode
 import Cli.UsageSpec exposing (..)
@@ -515,6 +515,57 @@ zeroOrMoreWithStringArg flag (CommandBuilder ({ decoder, usageSpecs } as command
             , usageSpecs = usageSpecs ++ [ Option (OptionWithStringArg flag) ZeroOrMore ]
             , newDecoder = \_ -> Err ""
         }
+
+
+optionalListOption : String -> CliUnit (List String) (List String)
+optionalListOption flagName =
+    CliUnit
+        (\{ options } ->
+            options
+                |> List.filterMap
+                    (\(Parser.ParsedOption optionName optionKind) ->
+                        case ( optionName == flagName, optionKind ) of
+                            ( False, _ ) ->
+                                Nothing
+
+                            ( True, Parser.OptionWithArg optionValue ) ->
+                                Just optionValue
+
+                            ( True, _ ) ->
+                                Nothing
+                    )
+                |> Ok
+         -- Err ""
+        )
+        (Option (OptionWithStringArg flagName) ZeroOrMore)
+        Cli.Decode.decoder
+
+
+
+-- optionalListOption : String -> CommandBuilder (List String -> msg) -> CommandBuilder msg
+-- optionalListOption flag (CommandBuilder ({ decoder, usageSpecs } as command)) =
+--     CommandBuilder
+--         { command
+--             | decoder =
+--                 Decode.fail ""
+--                     Decode.list
+--                     Decode.string
+--                     |> Decode.andThen
+--                         (\list ->
+--                             let
+--                                 values =
+--                                     list
+--                                         |> List.Extra.elemIndices ("--" ++ flag)
+--                                         |> List.filterMap (\index -> list |> List.Extra.getAt (index + 1))
+--                             in
+--                             Decode.map (\constructor -> constructor values) decoder
+--                         )
+--             , usageSpecs = usageSpecs ++ [ Option (OptionWithStringArg flag) ZeroOrMore ]
+--             , newDecoder =
+--                 \_ ->
+--                     \{ options } ->
+--                         Err ""
+--         }
 
 
 optionalOptionWithStringArg : String -> CommandBuilder (Maybe String -> msg) -> CommandBuilder msg
