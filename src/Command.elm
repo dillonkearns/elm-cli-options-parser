@@ -1,4 +1,4 @@
-module Command exposing (Command, CommandBuilder, build, buildWithDoc, captureRestOperands, expectFlag, expectFlagNew, expectOperand, expectOperandNew, flagsAndOperands, getUsageSpecs, mapNew, optionWithStringArg, optionalOptionWithStringArg, requiredOptionNew, synopsis, toCommand, tryMatch, validate, with, withFlag, zeroOrMoreWithStringArg)
+module Command exposing (Command, CommandBuilder, build, buildWithDoc, captureRestOperands, expectFlag, expectFlagNew, expectOperand, expectOperandNew, flagsAndOperands, getUsageSpecs, mapNew, optionWithStringArg, optionalOptionWithStringArg, requiredOptionNew, synopsis, toCommand, tryMatch, tryMatchNew, validate, with, withFlag, zeroOrMoreWithStringArg)
 
 import Cli.Decode
 import Cli.UsageSpec exposing (..)
@@ -29,7 +29,20 @@ tryMatch argv command =
             |> decoder
         )
         (argv |> toString)
-        |> Debug.log "result"
+        |> Result.toMaybe
+
+
+tryMatchNew : List String -> Command msg -> Maybe msg
+tryMatchNew argv (Command { newDecoder, usageSpecs }) =
+    newDecoder
+        (Parser.flagsAndOperands usageSpecs argv
+            |> (\record ->
+                    { options = record.options
+                    , operands = record.operands
+                    , usageSpecs = usageSpecs
+                    }
+               )
+        )
         |> Result.toMaybe
 
 
@@ -173,7 +186,7 @@ captureRestOperands restOperandsDescription (CommandBuilder ({ decoder, usageSpe
                 )
         , usageSpecs = usageSpecs ++ [ RestArgs restOperandsDescription ]
         , description = description
-        , newDecoder = \_ -> Err ""
+        , newDecoder = \_ -> Err "captureRestOperands"
         }
 
 
@@ -192,7 +205,7 @@ build msgConstructor =
         { decoder = Decode.succeed msgConstructor
         , usageSpecs = []
         , description = Nothing
-        , newDecoder = \_ -> Err ""
+        , newDecoder = \_ -> Ok msgConstructor
         }
 
 
@@ -202,7 +215,7 @@ buildWithDoc msgConstructor docString =
         { decoder = Decode.succeed msgConstructor
         , usageSpecs = []
         , description = Just docString
-        , newDecoder = \_ -> Err ""
+        , newDecoder = \_ -> Err "buildWithDoc"
         }
 
 
@@ -496,17 +509,13 @@ type CliUnit from to
 
 
 type alias DataGrabber decodesTo =
-    { usageSpecs : List UsageSpec, operands : List String, options : List Parser.ParsedOption } -> Result String decodesTo
+    { usageSpecs : List UsageSpec, operands : List String, options : List Parser.ParsedOption, operandsSoFar : Int } -> Result String decodesTo
 
 
 expectOperandNew : String -> CliUnit String String
 expectOperandNew operandDescription =
     CliUnit
-        (\{ usageSpecs, operands } ->
-            let
-                operandsSoFar =
-                    operandCount usageSpecs
-            in
+        (\{ usageSpecs, operands, operandsSoFar } ->
             case
                 operands
                     |> List.Extra.getAt operandsSoFar
@@ -515,7 +524,7 @@ expectOperandNew operandDescription =
                     Ok operandValue
 
                 Nothing ->
-                    Err ("Expect operand " ++ operandDescription)
+                    Err ("Expect operand " ++ operandDescription ++ "at " ++ toString operandsSoFar ++ " but had operands " ++ toString operands)
         )
         (Operand operandDescription)
         Cli.Decode.decoder
@@ -588,10 +597,14 @@ with : CliUnit from to -> CommandBuilder (to -> msg) -> CommandBuilder msg
 with (CliUnit dataGrabber usageSpec (Cli.Decode.Decoder decodeFn)) ((CommandBuilder ({ newDecoder, decoder, usageSpecs } as command)) as fullCommand) =
     CommandBuilder
         { command
-            | decoder = Decode.fail ""
+            | decoder = Decode.fail "Hello"
             , newDecoder =
                 \optionsAndOperands ->
-                    optionsAndOperands
+                    { options = optionsAndOperands.options
+                    , operands = optionsAndOperands.operands
+                    , usageSpecs = optionsAndOperands.usageSpecs
+                    , operandsSoFar = 0
+                    }
                         |> dataGrabber
                         |> Result.andThen decodeFn
                         |> Result.andThen

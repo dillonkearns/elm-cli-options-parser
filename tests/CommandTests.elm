@@ -166,7 +166,7 @@ all =
         , describe "mapping"
             [ test "maps operand" <|
                 \() ->
-                    Command.tryMatch
+                    Command.tryMatchNew
                         [ "hello" ]
                         (Command.build identity
                             |> Command.with (Command.expectOperandNew "" |> Command.mapNew String.length)
