@@ -66,14 +66,18 @@ all =
                         |> Expect.equal (Just (OpenUrlWithFlag "http://my-domain.com" True))
             , test "non-matching option" <|
                 \() ->
-                    Command.tryMatch [ "--version" ] (Command.build Help |> Command.expectFlag "help" |> Command.toCommand)
+                    Command.tryMatchNew [ "--version" ]
+                        (Command.build Help
+                            |> Command.expectFlag "help"
+                            |> Command.toCommand
+                        )
                         |> Expect.equal Nothing
             , test "option with argument" <|
                 \() ->
-                    Command.tryMatch [ "--name", "Deanna", "--prefix", "Hello" ]
+                    Command.tryMatchNew [ "--name", "Deanna", "--prefix", "Hello" ]
                         (Command.build (,)
-                            |> Command.optionWithStringArg "name"
-                            |> Command.optionalOptionWithStringArg "prefix"
+                            |> Command.with (Command.requiredOptionNew "name")
+                            |> Command.with (Command.optionalOption "prefix")
                             |> Command.toCommand
                         )
                         |> Expect.equal (Just ( "Deanna", Just "Hello" ))

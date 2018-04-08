@@ -1,4 +1,4 @@
-module Command exposing (Command, CommandBuilder, build, buildWithDoc, captureRestOperands, expectFlag, expectOperand, expectOperandNew, flagsAndOperands, getUsageSpecs, mapNew, optionWithStringArg, optionalListOption, optionalOptionWithStringArg, requiredOptionNew, synopsis, toCommand, tryMatch, tryMatchNew, validate, with, withFlag, withFlagNew, zeroOrMoreWithStringArg)
+module Command exposing (Command, CommandBuilder, build, buildWithDoc, captureRestOperands, expectFlag, expectOperand, expectOperandNew, flagsAndOperands, getUsageSpecs, mapNew, optionWithStringArg, optionalListOption, optionalOption, optionalOptionWithStringArg, requiredOptionNew, synopsis, toCommand, tryMatch, tryMatchNew, validate, with, withFlag, withFlagNew, zeroOrMoreWithStringArg)
 
 import Cli.Decode
 import Cli.UsageSpec exposing (..)
@@ -386,7 +386,7 @@ withFlag flagName (CommandBuilder ({ decoder, usageSpecs } as command)) =
 
 
 expectFlag : String -> CommandBuilder msg -> CommandBuilder msg
-expectFlag flagName (CommandBuilder ({ decoder, usageSpecs } as command)) =
+expectFlag flagName (CommandBuilder ({ decoder, usageSpecs, newDecoder } as command)) =
     let
         formattedFlag =
             "--" ++ flagName
@@ -406,6 +406,9 @@ expectFlag flagName (CommandBuilder ({ decoder, usageSpecs } as command)) =
                                 |> Decode.fail
                     )
             , usageSpecs = usageSpecs ++ [ Option (Flag flagName) Required ]
+            , newDecoder =
+                \({ options } as stuff) ->
+                    newDecoder stuff
         }
 
 
@@ -725,6 +728,28 @@ expectOperandNew operandDescription =
                     Err ("Expect operand " ++ operandDescription ++ "at " ++ toString operandsSoFar ++ " but had operands " ++ toString operands)
         )
         (Operand operandDescription)
+        Cli.Decode.decoder
+
+
+optionalOption : String -> CliUnit (Maybe String) (Maybe String)
+optionalOption optionName =
+    CliUnit
+        (\{ operands, options } ->
+            case
+                options
+                    |> List.Extra.find
+                        (\(Parser.ParsedOption thisOptionName optionKind) -> thisOptionName == optionName)
+            of
+                Nothing ->
+                    Ok Nothing
+
+                Just (Parser.ParsedOption _ (Parser.OptionWithArg optionArg)) ->
+                    Ok (Just optionArg)
+
+                _ ->
+                    Err ("Expected option " ++ optionName ++ " to have arg but found none.")
+        )
+        (Option (OptionWithStringArg optionName) Required)
         Cli.Decode.decoder
 
 
