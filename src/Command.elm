@@ -413,10 +413,9 @@ flagsAndOperandsAndThen command decoderFunction =
                             , flags = flags
                             , operands = operands
                             , options =
-                                (Parser.flagsAndOperands (command |> getUsageSpecs |> Debug.log "<<<SPECSHERE>>>")
-                                    (list |> Debug.log "<<<list>>>")
+                                (Parser.flagsAndOperands (command |> getUsageSpecs)
+                                    list
                                 ).options
-                                    |> Debug.log "<<<HERE>>>"
                             }
                        )
                     |> decoderFunction
@@ -537,8 +536,7 @@ requiredOptionNew optionName =
             case
                 options
                     |> List.Extra.find
-                        (\(Parser.ParsedOption thisOptionName optionKind) -> (thisOptionName |> Debug.log "thisOptionName") == (optionName |> Debug.log "optionName"))
-                    |> Debug.log "got"
+                        (\(Parser.ParsedOption thisOptionName optionKind) -> thisOptionName == optionName)
             of
                 Nothing ->
                     Err ("Expected to find " ++ optionName)
@@ -603,7 +601,7 @@ with (CliUnit dataGrabber usageSpec (Cli.Decode.Decoder decodeFn)) ((CommandBuil
                     { options = optionsAndOperands.options
                     , operands = optionsAndOperands.operands
                     , usageSpecs = optionsAndOperands.usageSpecs
-                    , operandsSoFar = 0
+                    , operandsSoFar = operandCount usageSpecs
                     }
                         |> dataGrabber
                         |> Result.andThen decodeFn

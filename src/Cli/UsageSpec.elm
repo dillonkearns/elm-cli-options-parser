@@ -71,20 +71,12 @@ optionHasArg options optionNameToCheck =
         Just option ->
             case option of
                 Flag flagName ->
-                    let
-                        _ =
-                            Debug.log "!!!" optionNameToCheck
-                    in
                     False
 
                 OptionWithStringArg optionName ->
                     True
 
         Nothing ->
-            let
-                _ =
-                    Debug.log "NOTHING!!!" ""
-            in
             False
 
 

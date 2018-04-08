@@ -30,13 +30,9 @@ flagsAndOperands_ usageSpecs argv soFar =
         first :: rest ->
             case String.toList first of
                 '-' :: '-' :: restOfFirstString ->
-                    if Cli.UsageSpec.optionHasArg (usageSpecs |> Debug.log "SPECS") (restOfFirstString |> String.fromList |> Debug.log "name") |> Debug.log "hasArg" then
+                    if Cli.UsageSpec.optionHasArg usageSpecs (restOfFirstString |> String.fromList) then
                         case rest of
                             second :: subRest ->
-                                let
-                                    _ =
-                                        Debug.log first "1"
-                                in
                                 flagsAndOperands_ usageSpecs
                                     subRest
                                     { options = soFar.options ++ [ ParsedOption (restOfFirstString |> String.fromList) (OptionWithArg second) ]
@@ -44,20 +40,12 @@ flagsAndOperands_ usageSpecs argv soFar =
                                     }
 
                             _ ->
-                                let
-                                    _ =
-                                        Debug.log first "2"
-                                in
                                 flagsAndOperands_ usageSpecs
                                     rest
                                     { options = soFar.options ++ [ ParsedOption (restOfFirstString |> String.fromList) Flag ]
                                     , operands = soFar.operands
                                     }
                     else
-                        let
-                            _ =
-                                Debug.log first "3"
-                        in
                         flagsAndOperands_ usageSpecs
                             rest
                             { options = soFar.options ++ [ ParsedOption (restOfFirstString |> String.fromList) Flag ]
@@ -65,10 +53,6 @@ flagsAndOperands_ usageSpecs argv soFar =
                             }
 
                 _ ->
-                    let
-                        _ =
-                            Debug.log first "4"
-                    in
                     flagsAndOperands_ usageSpecs
                         rest
                         { options = soFar.options

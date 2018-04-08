@@ -40,10 +40,10 @@ all =
                         |> Expect.equal (Just (OpenUrl "http://my-domain.com"))
             , test "command with multiple operands" <|
                 \() ->
-                    Command.tryMatch [ "http://my-domain.com", "./file.txt" ]
+                    Command.tryMatchNew [ "http://my-domain.com", "./file.txt" ]
                         (Command.build (,)
-                            |> Command.expectOperand "url"
-                            |> Command.expectOperand "path/to/file"
+                            |> Command.with (Command.expectOperandNew "url")
+                            |> Command.with (Command.expectOperandNew "path/to/file")
                             |> Command.toCommand
                         )
                         |> Expect.equal (Just ( "http://my-domain.com", "./file.txt" ))
