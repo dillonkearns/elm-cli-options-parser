@@ -408,7 +408,14 @@ expectFlag flagName (CommandBuilder ({ decoder, usageSpecs, newDecoder } as comm
             , usageSpecs = usageSpecs ++ [ Option (Flag flagName) Required ]
             , newDecoder =
                 \({ options } as stuff) ->
-                    newDecoder stuff
+                    if
+                        options
+                            |> List.member (Parser.ParsedOption flagName Parser.Flag)
+                    then
+                        newDecoder stuff
+                    else
+                        ("Expect flag " ++ formattedFlag)
+                            |> Err
         }
 
 

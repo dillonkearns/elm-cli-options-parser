@@ -20,7 +20,7 @@ all =
         [ describe "matching"
             [ test "help command" <|
                 \() ->
-                    Command.tryMatch [ "--help" ]
+                    Command.tryMatchNew [ "--help" ]
                         (Command.build Help
                             |> Command.expectFlag "help"
                             |> Command.toCommand
@@ -28,11 +28,11 @@ all =
                         |> Expect.equal (Just Help)
             , test "version command" <|
                 \() ->
-                    Command.tryMatch [ "--version" ] (Command.build Version |> Command.expectFlag "version" |> Command.toCommand)
+                    Command.tryMatchNew [ "--version" ] (Command.build Version |> Command.expectFlag "version" |> Command.toCommand)
                         |> Expect.equal (Just Version)
             , test "matching non-first element in list" <|
                 \() ->
-                    Command.tryMatch [ "unused", "--version" ] (Command.build Version |> Command.expectFlag "version" |> Command.toCommand)
+                    Command.tryMatchNew [ "unused", "--version" ] (Command.build Version |> Command.expectFlag "version" |> Command.toCommand)
                         |> Expect.equal Nothing
             , test "command with operand" <|
                 \() ->
@@ -62,11 +62,24 @@ all =
                         |> Expect.equal (Just (OpenUrlWithFlag "http://my-domain.com" False))
             , test "detects that optional flag is present" <|
                 \() ->
-                    Command.tryMatch [ "http://my-domain.com", "--flag" ] (Command.build OpenUrlWithFlag |> Command.expectOperand "url" |> Command.withFlag "flag" |> Command.toCommand)
+                    Command.tryMatchNew [ "http://my-domain.com", "--flag" ]
+                        (Command.build OpenUrlWithFlag
+                            |> Command.with (Command.expectOperandNew "url")
+                            |> Command.with (Command.withFlagNew "flag")
+                            |> Command.toCommand
+                        )
                         |> Expect.equal (Just (OpenUrlWithFlag "http://my-domain.com" True))
             , test "non-matching option" <|
                 \() ->
                     Command.tryMatchNew [ "--version" ]
+                        (Command.build Help
+                            |> Command.expectFlag "help"
+                            |> Command.toCommand
+                        )
+                        |> Expect.equal Nothing
+            , test "empty args when flag is expected" <|
+                \() ->
+                    Command.tryMatchNew []
                         (Command.build Help
                             |> Command.expectFlag "help"
                             |> Command.toCommand
@@ -174,7 +187,7 @@ all =
         --     [ only <|
         --         test "forced err validation makes it not match" <|
         --             \() ->
-        --                 Command.tryMatch [ "--name", "Bob" ]
+        --                 Command.tryMatchNew [ "--name", "Bob" ]
         --                     (Command.build identity
         --                         |> Command.with (Command.requiredOptionNew "name")
         --                         |> Command.toCommand
