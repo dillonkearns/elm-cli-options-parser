@@ -56,13 +56,13 @@ all =
                     Command.tryMatchNew [ "http://my-domain.com" ]
                         (Command.build OpenUrlWithFlag
                             |> Command.with (Command.expectOperandNew "url")
-                            |> Command.with (Command.withFlagNew "p")
+                            |> Command.with (Command.withFlagNew "flag")
                             |> Command.toCommand
                         )
                         |> Expect.equal (Just (OpenUrlWithFlag "http://my-domain.com" False))
             , test "detects that optional flag is present" <|
                 \() ->
-                    Command.tryMatch [ "http://my-domain.com", "--p" ] (Command.build OpenUrlWithFlag |> Command.expectOperand "url" |> Command.withFlag "p" |> Command.toCommand)
+                    Command.tryMatch [ "http://my-domain.com", "--flag" ] (Command.build OpenUrlWithFlag |> Command.expectOperand "url" |> Command.withFlag "flag" |> Command.toCommand)
                         |> Expect.equal (Just (OpenUrlWithFlag "http://my-domain.com" True))
             , test "non-matching option" <|
                 \() ->
@@ -123,6 +123,7 @@ all =
                         , "def456"
                         ]
                         (Command.build identity
+                            -- TODO `zeroOrMoreWithStringArg`
                             |> Command.zeroOrMoreWithStringArg "header"
                             |> Command.toCommand
                         )
@@ -143,6 +144,7 @@ all =
                     Command.tryMatch [ "--verbose" ]
                         (Command.build identity
                             |> Command.expectFlag "verbose"
+                            -- TODO `captureRestOperands`
                             |> Command.captureRestOperands "files"
                         )
                         |> Expect.equal (Just [])
@@ -150,6 +152,7 @@ all =
                 \() ->
                     Command.tryMatch [ "--verbose", "rest1", "rest2" ]
                         (Command.build identity
+                            -- TODO `expectFlag`
                             |> Command.expectFlag "verbose"
                             |> Command.captureRestOperands "files"
                         )
