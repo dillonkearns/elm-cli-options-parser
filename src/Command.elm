@@ -33,8 +33,14 @@ tryMatch argv command =
 
 
 tryMatchNew : List String -> Command msg -> Maybe msg
-tryMatchNew argv (Command { newDecoder, usageSpecs }) =
-    newDecoder
+tryMatchNew argv ((Command { newDecoder, usageSpecs }) as command) =
+    let
+        decoder =
+            command
+                |> expectedOperandCountOrFailNew
+                |> getDecoderNew
+    in
+    decoder
         (Parser.flagsAndOperands usageSpecs argv
             |> (\record ->
                     { options = record.options
@@ -43,6 +49,7 @@ tryMatchNew argv (Command { newDecoder, usageSpecs }) =
                     }
                )
         )
+        -- |> Debug.log "result"
         |> Result.toMaybe
 
 
@@ -58,6 +65,42 @@ hasRestArgs usageSpecs =
                     False
         )
         usageSpecs
+
+
+expectedOperandCountOrFailNew : Command msg -> Command msg
+expectedOperandCountOrFailNew ((Command ({ newDecoder, usageSpecs } as command)) as fullCommand) =
+    Command
+        { command
+            | newDecoder =
+                \({ operands } as stuff) ->
+                    if
+                        not (hasRestArgs usageSpecs)
+                            && (operands |> List.length)
+                            > (usageSpecs
+                                |> List.filterMap
+                                    (\option ->
+                                        case option of
+                                            Operand operand ->
+                                                Just operand
+
+                                            Option _ _ ->
+                                                Nothing
+
+                                            RestArgs _ ->
+                                                Nothing
+                                    )
+                                |> List.length
+                              )
+                    then
+                        Err "Wrong number of operands"
+                    else
+                        newDecoder stuff
+
+            --     Decode.fail "More operands than expected"
+            -- else
+            --     decoder
+            , usageSpecs = usageSpecs
+        }
 
 
 expectedOperandCountOrFail : Command msg -> Command msg
@@ -97,6 +140,18 @@ expectedOperandCountOrFail ((Command ({ decoder, usageSpecs } as command)) as fu
 decoder : Command msg -> Decoder msg
 decoder (Command { decoder }) =
     decoder
+
+
+getDecoderNew :
+    Command msg
+    ->
+        { operands : List String
+        , options : List ParsedOption
+        , usageSpecs : List UsageSpec
+        }
+    -> Result String msg
+getDecoderNew (Command { newDecoder }) =
+    newDecoder
 
 
 failIfUnexpectedOptions : Command msg -> Command msg

@@ -97,7 +97,7 @@ all =
                         |> Expect.equal (Just (FullName "Deanna" "Troi"))
             , test "doesn't match if operands are present when none are expected" <|
                 \() ->
-                    Command.tryMatch
+                    Command.tryMatchNew
                         [ "--last-name"
                         , "Troi"
                         , "--first-name"
