@@ -83,15 +83,15 @@ all =
                         |> Expect.equal (Just (Name "Deanna"))
             , test "option with multiple required string arguments" <|
                 \() ->
-                    Command.tryMatch
+                    Command.tryMatchNew
                         [ "--last-name"
                         , "Troi"
                         , "--first-name"
                         , "Deanna"
                         ]
                         (Command.build FullName
-                            |> Command.optionWithStringArg "first-name"
-                            |> Command.optionWithStringArg "last-name"
+                            |> Command.with (Command.requiredOptionNew "first-name")
+                            |> Command.with (Command.requiredOptionNew "last-name")
                             |> Command.toCommand
                         )
                         |> Expect.equal (Just (FullName "Deanna" "Troi"))
