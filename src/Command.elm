@@ -1,4 +1,4 @@
-module Command exposing (Command, CommandBuilder, build, buildWithDoc, captureRestOperands, expectFlag, expectOperand, expectOperandNew, flagsAndOperands, getUsageSpecs, mapNew, optionWithStringArg, optionalListOption, optionalOption, optionalOptionWithStringArg, requiredOptionNew, synopsis, toCommand, tryMatch, tryMatchNew, validate, with, withFlag, withFlagNew, zeroOrMoreWithStringArg)
+module Command exposing (Command, CommandBuilder, build, buildWithDoc, captureRestOperands, expectFlag, expectOperand, expectOperandNew, flagsAndOperands, getUsageSpecs, mapNew, optionWithStringArg, optionalListOption, optionalOption, optionalOptionWithStringArg, requiredOptionNew, synopsis, toCommand, tryMatch, tryMatchNew, validate, with, withFlagNew, zeroOrMoreWithStringArg)
 
 import Cli.Decode
 import Cli.UsageSpec exposing (..)
@@ -354,34 +354,6 @@ buildWithDoc msgConstructor docString =
         , usageSpecs = []
         , description = Just docString
         , newDecoder = \_ -> Err "buildWithDoc"
-        }
-
-
-withFlag : String -> CommandBuilder (Bool -> msg) -> CommandBuilder msg
-withFlag flagName (CommandBuilder ({ decoder, usageSpecs } as command)) =
-    CommandBuilder
-        { command
-            | decoder =
-                Decode.list Decode.string
-                    |> Decode.andThen
-                        (\list ->
-                            if List.member ("--" ++ flagName) list then
-                                Decode.map (\constructor -> constructor True) decoder
-                            else
-                                Decode.map (\constructor -> constructor False) decoder
-                        )
-            , usageSpecs = usageSpecs ++ [ Option (Flag flagName) Optional ]
-            , newDecoder =
-                \{ options } ->
-                    -- if
-                    --     options
-                    --         |> List.member (Parser.ParsedOption flagName Parser.Flag)
-                    -- then
-                    --     Ok True
-                    -- else
-                    --     Ok False
-                    -- Ok True
-                    Err "withFlag"
         }
 
 

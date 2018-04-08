@@ -64,7 +64,7 @@ all =
         , test "prints rest args at the end of the synopsis" <|
             \() ->
                 Command.build (,)
-                    |> Command.withFlag "dry-run"
+                    |> Command.with (Command.withFlagNew "dry-run")
                     |> Command.captureRestOperands "files"
                     |> Command.synopsis "rm"
                     |> Expect.equal "rm [--dry-run] <files>..."
