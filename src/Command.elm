@@ -539,7 +539,7 @@ requiredOptionNew optionName =
                         (\(Parser.ParsedOption thisOptionName optionKind) -> thisOptionName == optionName)
             of
                 Nothing ->
-                    Err ("Expected to find " ++ optionName)
+                    Err ("Expected to find option " ++ optionName ++ " but only found options " ++ toString options)
 
                 Just (Parser.ParsedOption _ (Parser.OptionWithArg optionArg)) ->
                     Ok optionArg

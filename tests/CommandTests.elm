@@ -36,7 +36,11 @@ all =
                         |> Expect.equal Nothing
             , test "command with operand" <|
                 \() ->
-                    Command.tryMatch [ "http://my-domain.com" ] (Command.build OpenUrl |> Command.expectOperand "url" |> Command.toCommand)
+                    Command.tryMatchNew [ "http://my-domain.com" ]
+                        (Command.build OpenUrl
+                            |> Command.with (Command.expectOperandNew "url")
+                            |> Command.toCommand
+                        )
                         |> Expect.equal (Just (OpenUrl "http://my-domain.com"))
             , test "command with multiple operands" <|
                 \() ->
