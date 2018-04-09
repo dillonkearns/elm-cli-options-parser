@@ -316,7 +316,7 @@ buildWithDoc msgConstructor docString =
         { decoder = Decode.succeed msgConstructor
         , usageSpecs = []
         , description = Just docString
-        , newDecoder = \_ -> Err "buildWithDoc"
+        , newDecoder = \_ -> Ok msgConstructor
         }
 
 

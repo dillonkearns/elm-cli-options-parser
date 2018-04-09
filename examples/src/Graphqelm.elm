@@ -64,17 +64,17 @@ cli =
     [ Command.build PrintVersion |> Command.expectFlag "version" |> Command.toCommand
     , Command.build PrintHelp |> Command.expectFlag "help" |> Command.toCommand
     , Command.buildWithDoc FromUrl "generate files based on the schema at `url`"
-        |> Command.expectOperand "url"
-        |> Command.optionalOptionWithStringArg "base"
-        |> Command.optionalOptionWithStringArg "output"
-        |> Command.withFlag "excludeDeprecated"
-        |> Command.zeroOrMoreWithStringArg "header"
+        |> Command.with (Command.expectOperandNew "url")
+        |> Command.with (Command.optionalOption "base")
+        |> Command.with (Command.optionalOption "output")
+        |> Command.with (Command.withFlagNew "excludeDeprecated")
+        |> Command.with (Command.optionalListOption "header")
         |> Command.toCommand
     , Command.build FromFile
-        |> Command.optionWithStringArg "introspection-file"
-        |> Command.optionalOptionWithStringArg "base"
-        |> Command.optionalOptionWithStringArg "output"
-        |> Command.withFlag "excludeDeprecated"
+        |> Command.with (Command.requiredOptionNew "introspection-file")
+        |> Command.with (Command.optionalOption "base")
+        |> Command.with (Command.optionalOption "output")
+        |> Command.with (Command.withFlagNew "excludeDeprecated")
         |> Command.toCommand
     ]
 

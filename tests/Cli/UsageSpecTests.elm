@@ -50,7 +50,7 @@ all =
         , test "print synopsis with zero or more arg option" <|
             \() ->
                 (Command.build identity
-                    |> Command.zeroOrMoreWithStringArg "header"
+                    |> Command.with (Command.optionalListOption "header")
                 )
                     |> Command.toCommand
                     |> Command.synopsis "curl"
