@@ -1,4 +1,4 @@
-module Command exposing (Command, CommandBuilder, build, buildWithDoc, captureRestOperands, expectFlag, expectOperand, expectOperandNew, flagsAndOperands, getUsageSpecs, mapNew, optionWithStringArg, optionalListOption, optionalOption, optionalOptionWithStringArg, requiredOptionNew, synopsis, toCommand, tryMatch, tryMatchNew, validate, with, withFlagNew, zeroOrMoreWithStringArg)
+module Command exposing (Command, CommandBuilder, build, buildWithDoc, captureRestOperands, expectFlag, expectOperand, expectOperandNew, flagsAndOperands, getUsageSpecs, mapNew, optionWithStringArg, optionalListOption, optionalOption, optionalOptionWithStringArg, requiredOptionNew, synopsis, toCommand, tryMatch, tryMatchNew, validate, with, withFlagNew)
 
 import Cli.Decode
 import Cli.UsageSpec exposing (..)
@@ -445,27 +445,6 @@ optionWithStringArg flag (CommandBuilder ({ decoder, usageSpecs } as command)) =
                                             Decode.map (\constructor -> constructor argValue) decoder
                         )
             , usageSpecs = usageSpecs ++ [ Option (OptionWithStringArg flag) Required ]
-            , newDecoder = \_ -> Err ""
-        }
-
-
-zeroOrMoreWithStringArg : String -> CommandBuilder (List String -> msg) -> CommandBuilder msg
-zeroOrMoreWithStringArg flag (CommandBuilder ({ decoder, usageSpecs } as command)) =
-    CommandBuilder
-        { command
-            | decoder =
-                Decode.list Decode.string
-                    |> Decode.andThen
-                        (\list ->
-                            let
-                                values =
-                                    list
-                                        |> List.Extra.elemIndices ("--" ++ flag)
-                                        |> List.filterMap (\index -> list |> List.Extra.getAt (index + 1))
-                            in
-                            Decode.map (\constructor -> constructor values) decoder
-                        )
-            , usageSpecs = usageSpecs ++ [ Option (OptionWithStringArg flag) ZeroOrMore ]
             , newDecoder = \_ -> Err ""
         }
 
