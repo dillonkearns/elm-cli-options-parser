@@ -50,6 +50,7 @@ tryMatchNew argv ((Command { newDecoder, usageSpecs }) as command) =
                     }
                )
         )
+        |> Debug.log (synopsis "Graphqelm" command)
         |> Result.toMaybe
 
 

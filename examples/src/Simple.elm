@@ -42,8 +42,8 @@ cli =
     [ Command.build PrintVersion |> Command.expectFlag "version" |> Command.toCommand
     , Command.build PrintHelp |> Command.expectFlag "help" |> Command.toCommand
     , Command.build Greet
-        |> Command.optionWithStringArg "name"
-        |> Command.optionalOptionWithStringArg "greeting"
+        |> Command.with (Command.requiredOptionNew "name")
+        |> Command.with (Command.optionalOption "greeting")
         |> Command.toCommand
     ]
 
