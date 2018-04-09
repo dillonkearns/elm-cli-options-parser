@@ -1,4 +1,4 @@
-module Command exposing (Command, CommandBuilder, build, buildWithDoc, captureRestOperands, expectFlag, expectOperandNew, flagsAndOperands, getUsageSpecs, mapNew, optionalListOption, optionalOption, optionalOptionWithStringArg, requiredOptionNew, synopsis, toCommand, tryMatch, tryMatchNew, validate, with, withFlagNew)
+module Command exposing (Command, CommandBuilder, build, buildWithDoc, captureRestOperands, expectFlag, expectOperandNew, flagsAndOperands, getUsageSpecs, mapNew, optionalListOption, optionalOption, requiredOptionNew, synopsis, toCommand, tryMatch, tryMatchNew, validate, with, withFlagNew)
 
 import Cli.Decode
 import Cli.UsageSpec exposing (..)
@@ -416,31 +416,6 @@ optionalListOption flagName =
         Cli.Decode.decoder
 
 
-optionalOptionWithStringArg : String -> CommandBuilder (Maybe String -> msg) -> CommandBuilder msg
-optionalOptionWithStringArg flag (CommandBuilder ({ decoder, usageSpecs } as command)) =
-    CommandBuilder
-        { command
-            | decoder =
-                Decode.list Decode.string
-                    |> Decode.andThen
-                        (\list ->
-                            case list |> List.Extra.elemIndex ("--" ++ flag) of
-                                Nothing ->
-                                    Decode.map (\constructor -> constructor Nothing) decoder
-
-                                Just flagIndex ->
-                                    case list |> List.Extra.getAt (flagIndex + 1) of
-                                        Nothing ->
-                                            Decode.fail ("Found --" ++ flag ++ " flag but expected an argument")
-
-                                        Just argValue ->
-                                            Decode.map (\constructor -> constructor (Just argValue)) decoder
-                        )
-            , usageSpecs = usageSpecs ++ [ Option (OptionWithStringArg flag) Optional ]
-            , newDecoder = \_ -> Err ""
-        }
-
-
 flagsAndOperandsAndThen : Command msg -> ({ usageSpecs : List UsageSpec, flags : List String, operands : List String, options : List Parser.ParsedOption } -> Decoder decodesTo) -> Decoder decodesTo
 flagsAndOperandsAndThen command decoderFunction =
     Decode.list Decode.string
@@ -587,7 +562,7 @@ optionalOption optionName =
                 _ ->
                     Err ("Expected option " ++ optionName ++ " to have arg but found none.")
         )
-        (Option (OptionWithStringArg optionName) Required)
+        (Option (OptionWithStringArg optionName) Optional)
         Cli.Decode.decoder
 
 

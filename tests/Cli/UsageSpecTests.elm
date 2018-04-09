@@ -28,7 +28,7 @@ all =
             \() ->
                 Command.build (,)
                     |> Command.with (Command.requiredOptionNew "name")
-                    |> Command.optionalOptionWithStringArg "prefix"
+                    |> Command.with (Command.optionalOption "prefix")
                     |> Command.toCommand
                     |> Command.synopsis "greet"
                     |> Expect.equal "greet --name <name> [--prefix <prefix>]"
@@ -43,7 +43,7 @@ all =
             \() ->
                 Command.buildWithDoc (,) "greets somebody in your terminal"
                     |> Command.with (Command.requiredOptionNew "name")
-                    |> Command.optionalOptionWithStringArg "prefix"
+                    |> Command.with (Command.optionalOption "prefix")
                     |> Command.toCommand
                     |> Command.synopsis "greet"
                     |> Expect.equal "greet --name <name> [--prefix <prefix>] # greets somebody in your terminal"
