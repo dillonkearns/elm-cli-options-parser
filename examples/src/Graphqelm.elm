@@ -64,7 +64,7 @@ cli =
     [ Command.build PrintVersion |> Command.expectFlag "version" |> Command.toCommand
     , Command.build PrintHelp |> Command.expectFlag "help" |> Command.toCommand
     , Command.buildWithDoc FromUrl "generate files based on the schema at `url`"
-        |> Command.with (Command.expectOperand "url")
+        |> Command.with (Command.requiredOperand "url")
         |> Command.with (Command.optionalOption "base")
         |> Command.with (Command.optionalOption "output")
         |> Command.with (Command.withFlag "excludeDeprecated")

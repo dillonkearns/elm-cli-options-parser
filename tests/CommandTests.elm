@@ -38,7 +38,7 @@ all =
                 \() ->
                     Command.tryMatch [ "http://my-domain.com" ]
                         (Command.build OpenUrl
-                            |> Command.with (Command.expectOperand "url")
+                            |> Command.with (Command.requiredOperand "url")
                             |> Command.toCommand
                         )
                         |> Expect.equal (Just (OpenUrl "http://my-domain.com"))
@@ -46,8 +46,8 @@ all =
                 \() ->
                     Command.tryMatch [ "http://my-domain.com", "./file.txt" ]
                         (Command.build (,)
-                            |> Command.with (Command.expectOperand "url")
-                            |> Command.with (Command.expectOperand "path/to/file")
+                            |> Command.with (Command.requiredOperand "url")
+                            |> Command.with (Command.requiredOperand "path/to/file")
                             |> Command.toCommand
                         )
                         |> Expect.equal (Just ( "http://my-domain.com", "./file.txt" ))
@@ -55,7 +55,7 @@ all =
                 \() ->
                     Command.tryMatch [ "http://my-domain.com" ]
                         (Command.build OpenUrlWithFlag
-                            |> Command.with (Command.expectOperand "url")
+                            |> Command.with (Command.requiredOperand "url")
                             |> Command.with (Command.withFlag "flag")
                             |> Command.toCommand
                         )
@@ -64,7 +64,7 @@ all =
                 \() ->
                     Command.tryMatch [ "http://my-domain.com", "--flag" ]
                         (Command.build OpenUrlWithFlag
-                            |> Command.with (Command.expectOperand "url")
+                            |> Command.with (Command.requiredOperand "url")
                             |> Command.with (Command.withFlag "flag")
                             |> Command.toCommand
                         )
@@ -177,7 +177,7 @@ all =
                     Command.tryMatch [ "--something", "operand1", "rest1", "rest2" ]
                         (Command.build (,)
                             |> Command.expectFlag "something"
-                            |> Command.with (Command.expectOperand "operand")
+                            |> Command.with (Command.requiredOperand "operand")
                             |> Command.captureRestOperands "files"
                         )
                         |> Expect.equal (Just ( "operand1", [ "rest1", "rest2" ] ))
@@ -201,7 +201,7 @@ all =
                         [ "hello" ]
                         (Command.build identity
                             |> Command.with
-                                (Command.expectOperand "operand"
+                                (Command.requiredOperand "operand"
                                     |> Command.mapNew String.length
                                 )
                             |> Command.toCommand
@@ -276,7 +276,7 @@ all =
                     [ "operand" ]
                         |> Command.flagsAndOperands
                             (Command.build identity
-                                |> Command.with (Command.expectOperand "foo")
+                                |> Command.with (Command.requiredOperand "foo")
                                 |> Command.toCommand
                             )
                         |> expectFlagsAndOperands

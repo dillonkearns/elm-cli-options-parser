@@ -87,7 +87,7 @@ all =
                 expectFlagsAndOperands
                     [ "operand" ]
                     (Command.build identity
-                        |> Command.with (Command.expectOperand "foo")
+                        |> Command.with (Command.requiredOperand "foo")
                         |> Command.toCommand
                     )
                     { options = []
