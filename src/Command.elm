@@ -87,11 +87,6 @@ expectedOperandCountOrFailNew ((Command ({ newDecoder, usageSpecs } as command))
         }
 
 
-decoder : Command msg -> Decoder msg
-decoder (Command { decoder }) =
-    decoder
-
-
 getDecoderNew :
     Command msg
     ->
@@ -105,7 +100,7 @@ getDecoderNew (Command { newDecoder }) =
 
 
 failIfUnexpectedOptionsNew : Command msg -> Command msg
-failIfUnexpectedOptionsNew ((Command ({ newDecoder, decoder, usageSpecs } as command)) as fullCommand) =
+failIfUnexpectedOptionsNew ((Command ({ newDecoder, usageSpecs } as command)) as fullCommand) =
     Command
         { command
             | newDecoder =
@@ -149,8 +144,7 @@ optionExistsNew usageSpecs thisOptionName =
 
 type CommandBuilder msg
     = CommandBuilder
-        { decoder : Decode.Decoder msg
-        , newDecoder : { usageSpecs : List UsageSpec, options : List ParsedOption, operands : List String } -> Result String msg
+        { newDecoder : { usageSpecs : List UsageSpec, options : List ParsedOption, operands : List String } -> Result String msg
         , usageSpecs : List UsageSpec
         , description : Maybe String
         }
@@ -162,20 +156,9 @@ toCommand (CommandBuilder record) =
 
 
 captureRestOperands : String -> CommandBuilder (List String -> msg) -> Command msg
-captureRestOperands restOperandsDescription (CommandBuilder ({ decoder, usageSpecs, description, newDecoder } as record)) =
+captureRestOperands restOperandsDescription (CommandBuilder ({ usageSpecs, description, newDecoder } as record)) =
     Command
-        { decoder =
-            flagsAndOperandsAndThen (Command { record | newDecoder = \_ -> Err "" })
-                (\{ operands } ->
-                    Decode.map
-                        (\constructor ->
-                            operands
-                                |> List.drop (operandCount usageSpecs)
-                                |> constructor
-                        )
-                        decoder
-                )
-        , usageSpecs = usageSpecs ++ [ RestArgs restOperandsDescription ]
+        { usageSpecs = usageSpecs ++ [ RestArgs restOperandsDescription ]
         , description = description
         , newDecoder =
             \({ operands } as stuff) ->
@@ -190,8 +173,7 @@ captureRestOperands restOperandsDescription (CommandBuilder ({ decoder, usageSpe
 
 type Command msg
     = Command
-        { decoder : Decode.Decoder msg
-        , newDecoder : { usageSpecs : List UsageSpec, options : List ParsedOption, operands : List String } -> Result String msg
+        { newDecoder : { usageSpecs : List UsageSpec, options : List ParsedOption, operands : List String } -> Result String msg
         , usageSpecs : List UsageSpec
         , description : Maybe String
         }
@@ -200,8 +182,7 @@ type Command msg
 build : msg -> CommandBuilder msg
 build msgConstructor =
     CommandBuilder
-        { decoder = Decode.succeed msgConstructor
-        , usageSpecs = []
+        { usageSpecs = []
         , description = Nothing
         , newDecoder = \_ -> Ok msgConstructor
         }
@@ -210,34 +191,21 @@ build msgConstructor =
 buildWithDoc : msg -> String -> CommandBuilder msg
 buildWithDoc msgConstructor docString =
     CommandBuilder
-        { decoder = Decode.succeed msgConstructor
-        , usageSpecs = []
+        { usageSpecs = []
         , description = Just docString
         , newDecoder = \_ -> Ok msgConstructor
         }
 
 
 expectFlag : String -> CommandBuilder msg -> CommandBuilder msg
-expectFlag flagName (CommandBuilder ({ decoder, usageSpecs, newDecoder } as command)) =
+expectFlag flagName (CommandBuilder ({ usageSpecs, newDecoder } as command)) =
     let
         formattedFlag =
             "--" ++ flagName
     in
     CommandBuilder
         { command
-            | decoder =
-                flagsAndThen
-                    (\list ->
-                        if
-                            list
-                                |> List.member formattedFlag
-                        then
-                            decoder
-                        else
-                            ("Expect flag " ++ formattedFlag)
-                                |> Decode.fail
-                    )
-            , usageSpecs = usageSpecs ++ [ Option (Flag flagName) Required ]
+            | usageSpecs = usageSpecs ++ [ Option (Flag flagName) Required ]
             , newDecoder =
                 \({ options } as stuff) ->
                     if
@@ -525,11 +493,10 @@ validate validateFunction (CliUnit dataGrabber usageSpec (Cli.Decode.Decoder dec
 
 
 with : CliUnit from to -> CommandBuilder (to -> msg) -> CommandBuilder msg
-with (CliUnit dataGrabber usageSpec (Cli.Decode.Decoder decodeFn)) ((CommandBuilder ({ newDecoder, decoder, usageSpecs } as command)) as fullCommand) =
+with (CliUnit dataGrabber usageSpec (Cli.Decode.Decoder decodeFn)) ((CommandBuilder ({ newDecoder, usageSpecs } as command)) as fullCommand) =
     CommandBuilder
         { command
-            | decoder = Decode.fail "Hello"
-            , newDecoder =
+            | newDecoder =
                 \optionsAndOperands ->
                     { options = optionsAndOperands.options
                     , operands = optionsAndOperands.operands
