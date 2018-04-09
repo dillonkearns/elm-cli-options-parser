@@ -25,9 +25,9 @@ tryMatch argv ((Command { newDecoder, usageSpecs }) as command) =
     let
         decoder =
             command
-                |> expectedOperandCountOrFailNew
+                |> expectedOperandCountOrFail
                 |> failIfUnexpectedOptionsNew
-                |> getDecoderNew
+                |> getDecoder
     in
     decoder
         (Parser.flagsAndOperands usageSpecs argv
@@ -55,8 +55,8 @@ hasRestArgs usageSpecs =
         usageSpecs
 
 
-expectedOperandCountOrFailNew : Command msg -> Command msg
-expectedOperandCountOrFailNew ((Command ({ newDecoder, usageSpecs } as command)) as fullCommand) =
+expectedOperandCountOrFail : Command msg -> Command msg
+expectedOperandCountOrFail ((Command ({ newDecoder, usageSpecs } as command)) as fullCommand) =
     Command
         { command
             | newDecoder =
@@ -87,7 +87,7 @@ expectedOperandCountOrFailNew ((Command ({ newDecoder, usageSpecs } as command))
         }
 
 
-getDecoderNew :
+getDecoder :
     Command msg
     ->
         { operands : List String
@@ -95,7 +95,7 @@ getDecoderNew :
         , usageSpecs : List UsageSpec
         }
     -> Result String msg
-getDecoderNew (Command { newDecoder }) =
+getDecoder (Command { newDecoder }) =
     newDecoder
 
 
