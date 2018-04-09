@@ -13,8 +13,8 @@ all =
             \() ->
                 expectFlagsAndOperands []
                     (Command.build (,)
-                        |> Command.with (Command.requiredOptionNew "first-name")
-                        |> Command.with (Command.requiredOptionNew "last-name")
+                        |> Command.with (Command.requiredOption "first-name")
+                        |> Command.with (Command.requiredOption "last-name")
                         |> Command.toCommand
                     )
                     { options = [], operands = [] }
@@ -47,8 +47,8 @@ all =
                 expectFlagsAndOperands
                     [ "operand", "--first-name", "Will", "--last-name", "Riker" ]
                     (Command.build (,)
-                        |> Command.with (Command.requiredOptionNew "first-name")
-                        |> Command.with (Command.requiredOptionNew "last-name")
+                        |> Command.with (Command.requiredOption "first-name")
+                        |> Command.with (Command.requiredOption "last-name")
                         |> Command.toCommand
                     )
                     { options = [ ParsedOption "first-name" (Parser.OptionWithArg "Will"), ParsedOption "last-name" (Parser.OptionWithArg "Riker") ]
@@ -59,8 +59,8 @@ all =
                 expectFlagsAndOperands
                     [ "--first-name", "Will", "--last-name", "Riker", "operand" ]
                     (Command.build (,)
-                        |> Command.with (Command.requiredOptionNew "first-name")
-                        |> Command.with (Command.requiredOptionNew "last-name")
+                        |> Command.with (Command.requiredOption "first-name")
+                        |> Command.with (Command.requiredOption "last-name")
                         |> Command.toCommand
                     )
                     { options = [ ParsedOption "first-name" (Parser.OptionWithArg "Will"), ParsedOption "last-name" (Parser.OptionWithArg "Riker") ]
@@ -75,8 +75,8 @@ all =
                     , "Deanna"
                     ]
                     (Command.build (,)
-                        |> Command.with (Command.requiredOptionNew "first-name")
-                        |> Command.with (Command.requiredOptionNew "last-name")
+                        |> Command.with (Command.requiredOption "first-name")
+                        |> Command.with (Command.requiredOption "last-name")
                         |> Command.toCommand
                     )
                     { options = [ ParsedOption "last-name" (Parser.OptionWithArg "Troi"), ParsedOption "first-name" (Parser.OptionWithArg "Deanna") ]

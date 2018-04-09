@@ -89,7 +89,7 @@ all =
                 \() ->
                     Command.tryMatch [ "--name", "Deanna", "--prefix", "Hello" ]
                         (Command.build (,)
-                            |> Command.with (Command.requiredOptionNew "name")
+                            |> Command.with (Command.requiredOption "name")
                             |> Command.with (Command.optionalOption "prefix")
                             |> Command.toCommand
                         )
@@ -98,7 +98,7 @@ all =
                 \() ->
                     Command.tryMatch [ "--name", "Deanna" ]
                         (Command.build Name
-                            |> Command.with (Command.requiredOptionNew "name")
+                            |> Command.with (Command.requiredOption "name")
                             |> Command.toCommand
                         )
                         |> Expect.equal (Just (Name "Deanna"))
@@ -111,8 +111,8 @@ all =
                         , "Deanna"
                         ]
                         (Command.build FullName
-                            |> Command.with (Command.requiredOptionNew "first-name")
-                            |> Command.with (Command.requiredOptionNew "last-name")
+                            |> Command.with (Command.requiredOption "first-name")
+                            |> Command.with (Command.requiredOption "last-name")
                             |> Command.toCommand
                         )
                         |> Expect.equal (Just (FullName "Deanna" "Troi"))
@@ -126,8 +126,8 @@ all =
                         , "unexpectedOperand"
                         ]
                         (Command.build FullName
-                            |> Command.with (Command.requiredOptionNew "first-name")
-                            |> Command.with (Command.requiredOptionNew "last-name")
+                            |> Command.with (Command.requiredOption "first-name")
+                            |> Command.with (Command.requiredOption "last-name")
                             |> Command.toCommand
                         )
                         |> Expect.equal Nothing
@@ -189,7 +189,7 @@ all =
         --             \() ->
         --                 Command.tryMatch [ "--name", "Bob" ]
         --                     (Command.build identity
-        --                         |> Command.with (Command.requiredOptionNew "name")
+        --                         |> Command.with (Command.requiredOption "name")
         --                         |> Command.toCommand
         --                     )
         --                     |> Expect.equal (Just "Bob")
@@ -214,8 +214,8 @@ all =
                     []
                         |> Command.flagsAndOperands
                             (Command.build (,)
-                                |> Command.with (Command.requiredOptionNew "first-name")
-                                |> Command.with (Command.requiredOptionNew "last-name")
+                                |> Command.with (Command.requiredOption "first-name")
+                                |> Command.with (Command.requiredOption "last-name")
                                 |> Command.toCommand
                             )
                         |> expectFlagsAndOperands { flags = [], operands = [] }
@@ -250,8 +250,8 @@ all =
                     [ "operand", "--first-name", "Will", "--last-name", "Riker" ]
                         |> Command.flagsAndOperands
                             (Command.build FullName
-                                |> Command.with (Command.requiredOptionNew "first-name")
-                                |> Command.with (Command.requiredOptionNew "last-name")
+                                |> Command.with (Command.requiredOption "first-name")
+                                |> Command.with (Command.requiredOption "last-name")
                                 |> Command.toCommand
                             )
                         |> expectFlagsAndOperands
@@ -263,8 +263,8 @@ all =
                     [ "--first-name", "Will", "--last-name", "Riker", "operand" ]
                         |> Command.flagsAndOperands
                             (Command.build FullName
-                                |> Command.with (Command.requiredOptionNew "first-name")
-                                |> Command.with (Command.requiredOptionNew "last-name")
+                                |> Command.with (Command.requiredOption "first-name")
+                                |> Command.with (Command.requiredOption "last-name")
                                 |> Command.toCommand
                             )
                         |> expectFlagsAndOperands

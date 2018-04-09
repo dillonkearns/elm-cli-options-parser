@@ -11,8 +11,8 @@ all =
         [ test "synopsis prints options with arguments" <|
             \() ->
                 (Command.build (,)
-                    |> Command.with (Command.requiredOptionNew "first-name")
-                    |> Command.with (Command.requiredOptionNew "last-name")
+                    |> Command.with (Command.requiredOption "first-name")
+                    |> Command.with (Command.requiredOption "last-name")
                     |> Command.toCommand
                 )
                     |> Command.synopsis "greet"
@@ -27,7 +27,7 @@ all =
         , test "print synopsis with optional arg" <|
             \() ->
                 Command.build (,)
-                    |> Command.with (Command.requiredOptionNew "name")
+                    |> Command.with (Command.requiredOption "name")
                     |> Command.with (Command.optionalOption "prefix")
                     |> Command.toCommand
                     |> Command.synopsis "greet"
@@ -42,7 +42,7 @@ all =
         , test "print synopsis with doc string" <|
             \() ->
                 Command.buildWithDoc (,) "greets somebody in your terminal"
-                    |> Command.with (Command.requiredOptionNew "name")
+                    |> Command.with (Command.requiredOption "name")
                     |> Command.with (Command.optionalOption "prefix")
                     |> Command.toCommand
                     |> Command.synopsis "greet"

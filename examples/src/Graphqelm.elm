@@ -71,7 +71,7 @@ cli =
         |> Command.with (Command.optionalListOption "header")
         |> Command.toCommand
     , Command.build FromFile
-        |> Command.with (Command.requiredOptionNew "introspection-file")
+        |> Command.with (Command.requiredOption "introspection-file")
         |> Command.with (Command.optionalOption "base")
         |> Command.with (Command.optionalOption "output")
         |> Command.with (Command.withFlag "excludeDeprecated")
