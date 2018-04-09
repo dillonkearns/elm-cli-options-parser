@@ -1,4 +1,4 @@
-module Command exposing (Command, CommandBuilder, build, buildWithDoc, captureRestOperands, expectFlag, expectOperandNew, flagsAndOperands, getUsageSpecs, mapNew, optionalListOption, optionalOption, requiredOptionNew, synopsis, toCommand, tryMatchNew, validate, with, withFlagNew)
+module Command exposing (Command, CommandBuilder, build, buildWithDoc, captureRestOperands, expectFlag, expectOperandNew, flagsAndOperands, getUsageSpecs, mapNew, optionalListOption, optionalOption, requiredOptionNew, synopsis, toCommand, tryMatch, validate, with, withFlagNew)
 
 import Cli.Decode
 import Cli.UsageSpec exposing (..)
@@ -20,8 +20,8 @@ synopsis programName command =
         |> Cli.UsageSpec.synopsis programName
 
 
-tryMatchNew : List String -> Command msg -> Maybe msg
-tryMatchNew argv ((Command { newDecoder, usageSpecs }) as command) =
+tryMatch : List String -> Command msg -> Maybe msg
+tryMatch argv ((Command { newDecoder, usageSpecs }) as command) =
     let
         decoder =
             command

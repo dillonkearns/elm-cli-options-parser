@@ -20,7 +20,7 @@ all =
         [ describe "matching"
             [ test "help command" <|
                 \() ->
-                    Command.tryMatchNew [ "--help" ]
+                    Command.tryMatch [ "--help" ]
                         (Command.build Help
                             |> Command.expectFlag "help"
                             |> Command.toCommand
@@ -28,15 +28,15 @@ all =
                         |> Expect.equal (Just Help)
             , test "version command" <|
                 \() ->
-                    Command.tryMatchNew [ "--version" ] (Command.build Version |> Command.expectFlag "version" |> Command.toCommand)
+                    Command.tryMatch [ "--version" ] (Command.build Version |> Command.expectFlag "version" |> Command.toCommand)
                         |> Expect.equal (Just Version)
             , test "matching non-first element in list" <|
                 \() ->
-                    Command.tryMatchNew [ "unused", "--version" ] (Command.build Version |> Command.expectFlag "version" |> Command.toCommand)
+                    Command.tryMatch [ "unused", "--version" ] (Command.build Version |> Command.expectFlag "version" |> Command.toCommand)
                         |> Expect.equal Nothing
             , test "command with operand" <|
                 \() ->
-                    Command.tryMatchNew [ "http://my-domain.com" ]
+                    Command.tryMatch [ "http://my-domain.com" ]
                         (Command.build OpenUrl
                             |> Command.with (Command.expectOperandNew "url")
                             |> Command.toCommand
@@ -44,7 +44,7 @@ all =
                         |> Expect.equal (Just (OpenUrl "http://my-domain.com"))
             , test "command with multiple operands" <|
                 \() ->
-                    Command.tryMatchNew [ "http://my-domain.com", "./file.txt" ]
+                    Command.tryMatch [ "http://my-domain.com", "./file.txt" ]
                         (Command.build (,)
                             |> Command.with (Command.expectOperandNew "url")
                             |> Command.with (Command.expectOperandNew "path/to/file")
@@ -53,7 +53,7 @@ all =
                         |> Expect.equal (Just ( "http://my-domain.com", "./file.txt" ))
             , test "detects that optional flag is absent" <|
                 \() ->
-                    Command.tryMatchNew [ "http://my-domain.com" ]
+                    Command.tryMatch [ "http://my-domain.com" ]
                         (Command.build OpenUrlWithFlag
                             |> Command.with (Command.expectOperandNew "url")
                             |> Command.with (Command.withFlagNew "flag")
@@ -62,7 +62,7 @@ all =
                         |> Expect.equal (Just (OpenUrlWithFlag "http://my-domain.com" False))
             , test "detects that optional flag is present" <|
                 \() ->
-                    Command.tryMatchNew [ "http://my-domain.com", "--flag" ]
+                    Command.tryMatch [ "http://my-domain.com", "--flag" ]
                         (Command.build OpenUrlWithFlag
                             |> Command.with (Command.expectOperandNew "url")
                             |> Command.with (Command.withFlagNew "flag")
@@ -71,7 +71,7 @@ all =
                         |> Expect.equal (Just (OpenUrlWithFlag "http://my-domain.com" True))
             , test "non-matching option" <|
                 \() ->
-                    Command.tryMatchNew [ "--version" ]
+                    Command.tryMatch [ "--version" ]
                         (Command.build Help
                             |> Command.expectFlag "help"
                             |> Command.toCommand
@@ -79,7 +79,7 @@ all =
                         |> Expect.equal Nothing
             , test "empty args when flag is expected" <|
                 \() ->
-                    Command.tryMatchNew []
+                    Command.tryMatch []
                         (Command.build Help
                             |> Command.expectFlag "help"
                             |> Command.toCommand
@@ -87,7 +87,7 @@ all =
                         |> Expect.equal Nothing
             , test "option with argument" <|
                 \() ->
-                    Command.tryMatchNew [ "--name", "Deanna", "--prefix", "Hello" ]
+                    Command.tryMatch [ "--name", "Deanna", "--prefix", "Hello" ]
                         (Command.build (,)
                             |> Command.with (Command.requiredOptionNew "name")
                             |> Command.with (Command.optionalOption "prefix")
@@ -96,7 +96,7 @@ all =
                         |> Expect.equal (Just ( "Deanna", Just "Hello" ))
             , test "optional option with argument" <|
                 \() ->
-                    Command.tryMatchNew [ "--name", "Deanna" ]
+                    Command.tryMatch [ "--name", "Deanna" ]
                         (Command.build Name
                             |> Command.with (Command.requiredOptionNew "name")
                             |> Command.toCommand
@@ -104,7 +104,7 @@ all =
                         |> Expect.equal (Just (Name "Deanna"))
             , test "option with multiple required string arguments" <|
                 \() ->
-                    Command.tryMatchNew
+                    Command.tryMatch
                         [ "--last-name"
                         , "Troi"
                         , "--first-name"
@@ -118,7 +118,7 @@ all =
                         |> Expect.equal (Just (FullName "Deanna" "Troi"))
             , test "doesn't match if operands are present when none are expected" <|
                 \() ->
-                    Command.tryMatchNew
+                    Command.tryMatch
                         [ "--last-name"
                         , "Troi"
                         , "--first-name"
@@ -133,7 +133,7 @@ all =
                         |> Expect.equal Nothing
             , test "extracts multiple params" <|
                 \() ->
-                    Command.tryMatchNew
+                    Command.tryMatch
                         [ "--header"
                         , "abc123"
                         , "--header"
@@ -146,7 +146,7 @@ all =
                         |> Expect.equal (Just [ "abc123", "def456" ])
             , test "doesn't match when unexpected options are present" <|
                 \() ->
-                    Command.tryMatchNew
+                    Command.tryMatch
                         [ "--verbose"
                         , "--unexpected-option"
                         ]
@@ -157,7 +157,7 @@ all =
                         |> Expect.equal Nothing
             , test "rest operands is empty with no operands" <|
                 \() ->
-                    Command.tryMatchNew [ "--verbose" ]
+                    Command.tryMatch [ "--verbose" ]
                         (Command.build identity
                             |> Command.expectFlag "verbose"
                             |> Command.captureRestOperands "files"
@@ -165,7 +165,7 @@ all =
                         |> Expect.equal (Just [])
             , test "rest operands has all operands when there are no required operands" <|
                 \() ->
-                    Command.tryMatchNew [ "--verbose", "rest1", "rest2" ]
+                    Command.tryMatch [ "--verbose", "rest1", "rest2" ]
                         (Command.build identity
                             -- TODO `expectFlag`
                             |> Command.expectFlag "verbose"
@@ -174,7 +174,7 @@ all =
                         |> Expect.equal (Just [ "rest1", "rest2" ])
             , test "rest operands has all operands when there is a required operand" <|
                 \() ->
-                    Command.tryMatchNew [ "--something", "operand1", "rest1", "rest2" ]
+                    Command.tryMatch [ "--something", "operand1", "rest1", "rest2" ]
                         (Command.build (,)
                             |> Command.expectFlag "something"
                             |> Command.with (Command.expectOperandNew "operand")
@@ -187,7 +187,7 @@ all =
         --     [ only <|
         --         test "forced err validation makes it not match" <|
         --             \() ->
-        --                 Command.tryMatchNew [ "--name", "Bob" ]
+        --                 Command.tryMatch [ "--name", "Bob" ]
         --                     (Command.build identity
         --                         |> Command.with (Command.requiredOptionNew "name")
         --                         |> Command.toCommand
@@ -197,7 +197,7 @@ all =
         , describe "mapping"
             [ test "maps operand" <|
                 \() ->
-                    Command.tryMatchNew
+                    Command.tryMatch
                         [ "hello" ]
                         (Command.build identity
                             |> Command.with

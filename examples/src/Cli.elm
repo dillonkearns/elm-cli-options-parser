@@ -6,7 +6,7 @@ import Command exposing (Command)
 try : List (Command msg) -> List String -> Maybe msg
 try commands argv =
     commands
-        |> List.map (Command.tryMatchNew argv)
+        |> List.map (Command.tryMatch argv)
         |> oneOf
 
 
