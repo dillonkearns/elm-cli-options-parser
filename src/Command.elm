@@ -1,4 +1,4 @@
-module Command exposing (Command, CommandBuilder, build, buildWithDoc, captureRestOperands, expectFlag, expectOperandNew, flagsAndOperands, getUsageSpecs, mapNew, optionalListOption, optionalOption, requiredOptionNew, synopsis, toCommand, tryMatch, validate, with, withFlagNew)
+module Command exposing (Command, CommandBuilder, build, buildWithDoc, captureRestOperands, expectFlag, expectOperand, flagsAndOperands, getUsageSpecs, mapNew, optionalListOption, optionalOption, requiredOptionNew, synopsis, toCommand, tryMatch, validate, with, withFlagNew)
 
 import Cli.Decode
 import Cli.UsageSpec exposing (..)
@@ -391,8 +391,8 @@ type alias DataGrabber decodesTo =
     { usageSpecs : List UsageSpec, operands : List String, options : List Parser.ParsedOption, operandsSoFar : Int } -> Result String decodesTo
 
 
-expectOperandNew : String -> CliUnit String String
-expectOperandNew operandDescription =
+expectOperand : String -> CliUnit String String
+expectOperand operandDescription =
     CliUnit
         (\{ usageSpecs, operands, operandsSoFar } ->
             case
