@@ -50,7 +50,6 @@ tryMatchNew argv ((Command { newDecoder, usageSpecs }) as command) =
                     }
                )
         )
-        -- |> Debug.log "result"
         |> Result.toMaybe
 
 
@@ -96,10 +95,6 @@ expectedOperandCountOrFailNew ((Command ({ newDecoder, usageSpecs } as command))
                         Err "Wrong number of operands"
                     else
                         newDecoder stuff
-
-            --     Decode.fail "More operands than expected"
-            -- else
-            --     decoder
             , usageSpecs = usageSpecs
         }
 
@@ -215,38 +210,6 @@ failIfUnexpectedOptionsNew ((Command ({ newDecoder, decoder, usageSpecs } as com
                     else
                         Err ("Unexpected options " ++ toString unexpectedOptions)
         }
-
-
-
--- flagsAndOperandsAndThen fullCommand
---     (\{ flags } ->
---         let
---             ( invalidOptions, unconsumedArg ) =
---                 flags
---                     |> List.Extra.indexedFoldl
---                         (\index element ( invalidSoFar, unconsumedLeft ) ->
---                             if unconsumedLeft then
---                                 ( invalidSoFar, False )
---                             else
---                                 case optionExists usageSpecs element of
---                                     Just option ->
---                                         case option of
---                                             OptionWithStringArg argName ->
---                                                 ( invalidSoFar, True )
---
---                                             Flag flagName ->
---                                                 ( invalidSoFar, False )
---
---                                     Nothing ->
---                                         ( invalidSoFar ++ [ element ], False )
---                         )
---                         ( [], False )
---         in
---         if invalidOptions == [] && not unconsumedArg then
---             decoder
---         else
---             Decode.fail "Found unexpected options."
---     )
 
 
 optionExists : List UsageSpec -> String -> Maybe Option
@@ -524,37 +487,9 @@ optionalListOption flagName =
                                 Nothing
                     )
                 |> Ok
-         -- Err ""
         )
         (Option (OptionWithStringArg flagName) ZeroOrMore)
         Cli.Decode.decoder
-
-
-
--- optionalListOption : String -> CommandBuilder (List String -> msg) -> CommandBuilder msg
--- optionalListOption flag (CommandBuilder ({ decoder, usageSpecs } as command)) =
---     CommandBuilder
---         { command
---             | decoder =
---                 Decode.fail ""
---                     Decode.list
---                     Decode.string
---                     |> Decode.andThen
---                         (\list ->
---                             let
---                                 values =
---                                     list
---                                         |> List.Extra.elemIndices ("--" ++ flag)
---                                         |> List.filterMap (\index -> list |> List.Extra.getAt (index + 1))
---                             in
---                             Decode.map (\constructor -> constructor values) decoder
---                         )
---             , usageSpecs = usageSpecs ++ [ Option (OptionWithStringArg flag) ZeroOrMore ]
---             , newDecoder =
---                 \_ ->
---                     \{ options } ->
---                         Err ""
---         }
 
 
 optionalOptionWithStringArg : String -> CommandBuilder (Maybe String -> msg) -> CommandBuilder msg
