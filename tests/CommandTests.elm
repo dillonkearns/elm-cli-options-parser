@@ -276,7 +276,7 @@ all =
                     [ "operand" ]
                         |> Command.flagsAndOperands
                             (Command.build identity
-                                |> Command.expectOperand "foo"
+                                |> Command.with (Command.expectOperandNew "foo")
                                 |> Command.toCommand
                             )
                         |> expectFlagsAndOperands

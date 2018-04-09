@@ -1,4 +1,4 @@
-module Command exposing (Command, CommandBuilder, build, buildWithDoc, captureRestOperands, expectFlag, expectOperand, expectOperandNew, flagsAndOperands, getUsageSpecs, mapNew, optionWithStringArg, optionalListOption, optionalOption, optionalOptionWithStringArg, requiredOptionNew, synopsis, toCommand, tryMatch, tryMatchNew, validate, with, withFlagNew)
+module Command exposing (Command, CommandBuilder, build, buildWithDoc, captureRestOperands, expectFlag, expectOperandNew, flagsAndOperands, getUsageSpecs, mapNew, optionWithStringArg, optionalListOption, optionalOption, optionalOptionWithStringArg, requiredOptionNew, synopsis, toCommand, tryMatch, tryMatchNew, validate, with, withFlagNew)
 
 import Cli.Decode
 import Cli.UsageSpec exposing (..)
@@ -370,36 +370,6 @@ operandCount usageSpecs =
                         Nothing
             )
         |> List.length
-
-
-expectOperand : String -> CommandBuilder (String -> msg) -> CommandBuilder msg
-expectOperand operandName ((CommandBuilder ({ decoder, usageSpecs } as command)) as fullCommand) =
-    CommandBuilder
-        { command
-            | decoder =
-                flagsAndOperandsAndThen
-                    (Command { command | newDecoder = \{ options } -> Err "" })
-                    (\{ operands } ->
-                        let
-                            operandsSoFar =
-                                operandCount usageSpecs
-                        in
-                        case
-                            operands
-                                |> List.Extra.getAt operandsSoFar
-                        of
-                            Just operandValue ->
-                                Decode.map
-                                    (\constructor -> constructor operandValue)
-                                    decoder
-
-                            Nothing ->
-                                ("Expect operand " ++ operandName)
-                                    |> Decode.fail
-                    )
-            , newDecoder = \{ options } -> Err ""
-            , usageSpecs = usageSpecs ++ [ Operand operandName ]
-        }
 
 
 flagsAndThen : (List String -> Decode.Decoder a) -> Decode.Decoder a

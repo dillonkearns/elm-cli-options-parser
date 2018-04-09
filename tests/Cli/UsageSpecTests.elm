@@ -35,7 +35,7 @@ all =
         , test "print synopsis with required operand" <|
             \() ->
                 Command.build identity
-                    |> Command.expectOperand "MyApp.elm"
+                    |> Command.with (Command.expectOperandNew "MyApp.elm")
                     |> Command.toCommand
                     |> Command.synopsis "elm-interop"
                     |> Expect.equal "elm-interop <MyApp.elm>"
