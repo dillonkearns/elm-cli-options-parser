@@ -67,14 +67,14 @@ cli =
         |> Command.with (Command.expectOperand "url")
         |> Command.with (Command.optionalOption "base")
         |> Command.with (Command.optionalOption "output")
-        |> Command.with (Command.withFlagNew "excludeDeprecated")
+        |> Command.with (Command.withFlag "excludeDeprecated")
         |> Command.with (Command.optionalListOption "header")
         |> Command.toCommand
     , Command.build FromFile
         |> Command.with (Command.requiredOptionNew "introspection-file")
         |> Command.with (Command.optionalOption "base")
         |> Command.with (Command.optionalOption "output")
-        |> Command.with (Command.withFlagNew "excludeDeprecated")
+        |> Command.with (Command.withFlag "excludeDeprecated")
         |> Command.toCommand
     ]
 
