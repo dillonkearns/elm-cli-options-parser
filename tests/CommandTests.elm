@@ -214,8 +214,8 @@ all =
                     []
                         |> Command.flagsAndOperands
                             (Command.build (,)
-                                |> Command.optionWithStringArg "first-name"
-                                |> Command.optionWithStringArg "last-name"
+                                |> Command.with (Command.requiredOptionNew "first-name")
+                                |> Command.with (Command.requiredOptionNew "last-name")
                                 |> Command.toCommand
                             )
                         |> expectFlagsAndOperands { flags = [], operands = [] }
@@ -250,8 +250,8 @@ all =
                     [ "operand", "--first-name", "Will", "--last-name", "Riker" ]
                         |> Command.flagsAndOperands
                             (Command.build FullName
-                                |> Command.optionWithStringArg "first-name"
-                                |> Command.optionWithStringArg "last-name"
+                                |> Command.with (Command.requiredOptionNew "first-name")
+                                |> Command.with (Command.requiredOptionNew "last-name")
                                 |> Command.toCommand
                             )
                         |> expectFlagsAndOperands
@@ -263,8 +263,8 @@ all =
                     [ "--first-name", "Will", "--last-name", "Riker", "operand" ]
                         |> Command.flagsAndOperands
                             (Command.build FullName
-                                |> Command.optionWithStringArg "first-name"
-                                |> Command.optionWithStringArg "last-name"
+                                |> Command.with (Command.requiredOptionNew "first-name")
+                                |> Command.with (Command.requiredOptionNew "last-name")
                                 |> Command.toCommand
                             )
                         |> expectFlagsAndOperands

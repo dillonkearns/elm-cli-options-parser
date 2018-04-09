@@ -1,4 +1,4 @@
-module Command exposing (Command, CommandBuilder, build, buildWithDoc, captureRestOperands, expectFlag, expectOperandNew, flagsAndOperands, getUsageSpecs, mapNew, optionWithStringArg, optionalListOption, optionalOption, optionalOptionWithStringArg, requiredOptionNew, synopsis, toCommand, tryMatch, tryMatchNew, validate, with, withFlagNew)
+module Command exposing (Command, CommandBuilder, build, buildWithDoc, captureRestOperands, expectFlag, expectOperandNew, flagsAndOperands, getUsageSpecs, mapNew, optionalListOption, optionalOption, optionalOptionWithStringArg, requiredOptionNew, synopsis, toCommand, tryMatch, tryMatchNew, validate, with, withFlagNew)
 
 import Cli.Decode
 import Cli.UsageSpec exposing (..)
@@ -391,31 +391,6 @@ flagsAndThen something =
 isFlag : String -> Bool
 isFlag string =
     string |> String.startsWith "--"
-
-
-optionWithStringArg : String -> CommandBuilder (String -> msg) -> CommandBuilder msg
-optionWithStringArg flag (CommandBuilder ({ decoder, usageSpecs } as command)) =
-    CommandBuilder
-        { command
-            | decoder =
-                Decode.list Decode.string
-                    |> Decode.andThen
-                        (\list ->
-                            case list |> List.Extra.elemIndex ("--" ++ flag) of
-                                Nothing ->
-                                    Decode.fail ("--" ++ flag ++ " not found")
-
-                                Just flagIndex ->
-                                    case list |> List.Extra.getAt (flagIndex + 1) of
-                                        Nothing ->
-                                            Decode.fail ("Found --" ++ flag ++ " flag but expected an argument")
-
-                                        Just argValue ->
-                                            Decode.map (\constructor -> constructor argValue) decoder
-                        )
-            , usageSpecs = usageSpecs ++ [ Option (OptionWithStringArg flag) Required ]
-            , newDecoder = \_ -> Err ""
-        }
 
 
 optionalListOption : String -> CliUnit (List String) (List String)
