@@ -25,6 +25,5 @@ oneOf =
 helpText : String -> List (Command msg) -> String
 helpText programName commands =
     commands
-        -- |> List.map (\(Command record) -> record)
         |> List.map (Command.synopsis programName)
         |> String.join "\n"
