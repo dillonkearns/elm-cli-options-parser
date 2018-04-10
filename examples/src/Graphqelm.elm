@@ -1,7 +1,7 @@
 port module Graphqelm exposing (main)
 
 import Cli
-import Command
+import Command exposing (with)
 import Json.Decode exposing (..)
 
 
@@ -14,17 +14,17 @@ cli =
         |> Command.expectFlag "help"
         |> Command.toCommand
     , Command.buildWithDoc FromUrl "generate files based on the schema at `url`"
-        |> Command.with (Command.requiredOperand "url")
-        |> Command.with (Command.optionalOption "base")
-        |> Command.with (Command.optionalOption "output")
-        |> Command.with (Command.optionalFlag "excludeDeprecated")
-        |> Command.with (Command.optionalListOption "header")
+        |> with (Command.requiredOperand "url")
+        |> with (Command.optionalOption "base")
+        |> with (Command.optionalOption "output")
+        |> with (Command.optionalFlag "excludeDeprecated")
+        |> with (Command.optionalListOption "header")
         |> Command.toCommand
     , Command.build FromFile
-        |> Command.with (Command.requiredOption "introspection-file")
-        |> Command.with (Command.optionalOption "base")
-        |> Command.with (Command.optionalOption "output")
-        |> Command.with (Command.optionalFlag "excludeDeprecated")
+        |> with (Command.requiredOption "introspection-file")
+        |> with (Command.optionalOption "base")
+        |> with (Command.optionalOption "output")
+        |> with (Command.optionalFlag "excludeDeprecated")
         |> Command.toCommand
     ]
 
