@@ -1,4 +1,4 @@
-module Command exposing (Command, CommandBuilder, ValidationResult(..), build, buildWithDoc, captureRestOperands, expectFlag, flagsAndOperands, getUsageSpecs, mapNew, optionalFlag, optionalListOption, optionalOption, requiredOperand, requiredOption, synopsis, toCommand, tryMatch, validate, with)
+module Command exposing (Command, CommandBuilder, ValidationResult(..), build, buildWithDoc, captureRestOperands, expectFlag, flagsAndOperands, getUsageSpecs, mapNew, optionalFlag, optionalListOption, optionalOption, requiredOperand, requiredOption, synopsis, toCommand, tryMatch, validate, with, withDefault)
 
 import Cli.Decode
 import Cli.UsageSpec exposing (..)
@@ -376,6 +376,11 @@ requiredOperand operandDescription =
         )
         (Operand operandDescription)
         Cli.Decode.decoder
+
+
+withDefault : value -> CliUnit (Maybe value) (Maybe value) -> CliUnit (Maybe value) value
+withDefault defaultValue (CliUnit dataGrabber usageSpec decoder) =
+    CliUnit dataGrabber usageSpec (decoder |> Cli.Decode.map (Maybe.withDefault defaultValue))
 
 
 optionalOption : String -> CliUnit (Maybe String) (Maybe String)

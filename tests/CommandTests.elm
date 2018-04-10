@@ -241,6 +241,30 @@ all =
                             |> Command.toCommand
                         )
                         |> Expect.equal (Just 5)
+            , test "uses default when option not present" <|
+                \() ->
+                    Command.tryMatch
+                        []
+                        (Command.build identity
+                            |> Command.with
+                                (Command.optionalOption "output"
+                                    |> Command.withDefault "elm.js"
+                                )
+                            |> Command.toCommand
+                        )
+                        |> Expect.equal (Just "elm.js")
+            , test "withDefault uses actual option when option is present" <|
+                \() ->
+                    Command.tryMatch
+                        [ "--output=bundle.js" ]
+                        (Command.build identity
+                            |> Command.with
+                                (Command.optionalOption "output"
+                                    |> Command.withDefault "elm.js"
+                                )
+                            |> Command.toCommand
+                        )
+                        |> Expect.equal (Just "bundle.js")
             ]
         , describe "flags and operands extraction"
             [ test "recognizes empty operands and flags" <|
