@@ -61,8 +61,12 @@ init flags =
 
 cli : List (Command.Command InitMsg)
 cli =
-    [ Command.build PrintVersion |> Command.expectFlag "version" |> Command.toCommand
-    , Command.build PrintHelp |> Command.expectFlag "help" |> Command.toCommand
+    [ Command.build PrintVersion
+        |> Command.expectFlag "version"
+        |> Command.toCommand
+    , Command.build PrintHelp
+        |> Command.expectFlag "help"
+        |> Command.toCommand
     , Command.buildWithDoc FromUrl "generate files based on the schema at `url`"
         |> Command.with (Command.requiredOperand "url")
         |> Command.with (Command.optionalOption "base")
