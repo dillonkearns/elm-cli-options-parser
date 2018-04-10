@@ -1,4 +1,4 @@
-module Command exposing (Command, CommandBuilder, ValidationResult(..), build, buildWithDoc, captureRestOperands, expectFlag, flagsAndOperands, getUsageSpecs, mapNew, optionalFlag, optionalListOption, optionalOption, requiredOperand, requiredOption, synopsis, toCommand, tryMatch, validate, with, withDefault)
+module Command exposing (Command, CommandBuilder, ValidationResult(..), build, buildWithDoc, captureRestOperands, expectFlag, flagsAndOperands, getUsageSpecs, hardcoded, mapNew, optionalFlag, optionalListOption, optionalOption, requiredOperand, requiredOption, synopsis, toCommand, tryMatch, validate, with, withDefault)
 
 import Cli.Decode
 import Cli.UsageSpec exposing (..)
@@ -200,6 +200,15 @@ buildWithDoc msgConstructor docString =
         { usageSpecs = []
         , description = Just docString
         , newDecoder = \_ -> Ok msgConstructor
+        }
+
+
+hardcoded : value -> CommandBuilder (value -> msg) -> CommandBuilder msg
+hardcoded hardcodedValue (CommandBuilder ({ newDecoder } as command)) =
+    CommandBuilder
+        { command
+            | newDecoder =
+                \stuff -> Result.map (\fn -> fn hardcodedValue) (newDecoder stuff)
         }
 
 

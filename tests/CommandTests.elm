@@ -265,6 +265,15 @@ all =
                             |> Command.toCommand
                         )
                         |> Expect.equal (Just "bundle.js")
+            , test "hardcoded passes value through" <|
+                \() ->
+                    Command.tryMatch
+                        []
+                        (Command.build identity
+                            |> Command.hardcoded "hardcoded value"
+                            |> Command.toCommand
+                        )
+                        |> Expect.equal (Just "hardcoded value")
             ]
         , describe "flags and operands extraction"
             [ test "recognizes empty operands and flags" <|
