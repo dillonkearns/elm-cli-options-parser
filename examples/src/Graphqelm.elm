@@ -5,6 +5,30 @@ import Command
 import Json.Decode exposing (..)
 
 
+cli : List (Command.Command InitMsg)
+cli =
+    [ Command.build PrintVersion
+        |> Command.expectFlag "version"
+        |> Command.toCommand
+    , Command.build PrintHelp
+        |> Command.expectFlag "help"
+        |> Command.toCommand
+    , Command.buildWithDoc FromUrl "generate files based on the schema at `url`"
+        |> Command.with (Command.requiredOperand "url")
+        |> Command.with (Command.optionalOption "base")
+        |> Command.with (Command.optionalOption "output")
+        |> Command.with (Command.optionalFlag "excludeDeprecated")
+        |> Command.with (Command.optionalListOption "header")
+        |> Command.toCommand
+    , Command.build FromFile
+        |> Command.with (Command.requiredOption "introspection-file")
+        |> Command.with (Command.optionalOption "base")
+        |> Command.with (Command.optionalOption "output")
+        |> Command.with (Command.optionalFlag "excludeDeprecated")
+        |> Command.toCommand
+    ]
+
+
 dummy : Decoder String
 dummy =
     Json.Decode.string
@@ -57,30 +81,6 @@ init flags =
                     "...fetching from file " ++ file ++ "\noptions: " ++ toString ( base, outputPath, excludeDeprecated )
     in
     ( (), print toPrint )
-
-
-cli : List (Command.Command InitMsg)
-cli =
-    [ Command.build PrintVersion
-        |> Command.expectFlag "version"
-        |> Command.toCommand
-    , Command.build PrintHelp
-        |> Command.expectFlag "help"
-        |> Command.toCommand
-    , Command.buildWithDoc FromUrl "generate files based on the schema at `url`"
-        |> Command.with (Command.requiredOperand "url")
-        |> Command.with (Command.optionalOption "base")
-        |> Command.with (Command.optionalOption "output")
-        |> Command.with (Command.optionalFlag "excludeDeprecated")
-        |> Command.with (Command.optionalListOption "header")
-        |> Command.toCommand
-    , Command.build FromFile
-        |> Command.with (Command.requiredOption "introspection-file")
-        |> Command.with (Command.optionalOption "base")
-        |> Command.with (Command.optionalOption "output")
-        |> Command.with (Command.optionalFlag "excludeDeprecated")
-        |> Command.toCommand
-    ]
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
