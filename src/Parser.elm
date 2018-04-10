@@ -27,34 +27,34 @@ flagsAndOperands_ usageSpecs argv soFar =
         [] ->
             soFar
 
-        first :: rest ->
-            case String.toList first of
+        firstArg :: restArgs ->
+            case String.toList firstArg of
                 '-' :: '-' :: restOfFirstString ->
                     if Cli.UsageSpec.optionHasArg usageSpecs (restOfFirstString |> String.fromList) then
-                        case rest of
-                            second :: subRest ->
+                        case restArgs of
+                            secondArg :: afterSecondArg ->
                                 flagsAndOperands_ usageSpecs
-                                    subRest
-                                    { options = soFar.options ++ [ ParsedOption (restOfFirstString |> String.fromList) (OptionWithArg second) ]
+                                    afterSecondArg
+                                    { options = soFar.options ++ [ ParsedOption (restOfFirstString |> String.fromList) (OptionWithArg secondArg) ]
                                     , operands = soFar.operands
                                     }
 
                             _ ->
                                 flagsAndOperands_ usageSpecs
-                                    rest
+                                    restArgs
                                     { options = soFar.options ++ [ ParsedOption (restOfFirstString |> String.fromList) Flag ]
                                     , operands = soFar.operands
                                     }
                     else
                         flagsAndOperands_ usageSpecs
-                            rest
+                            restArgs
                             { options = soFar.options ++ [ ParsedOption (restOfFirstString |> String.fromList) Flag ]
                             , operands = soFar.operands
                             }
 
                 _ ->
                     flagsAndOperands_ usageSpecs
-                        rest
+                        restArgs
                         { options = soFar.options
-                        , operands = soFar.operands ++ [ first ]
+                        , operands = soFar.operands ++ [ firstArg ]
                         }
