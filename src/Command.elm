@@ -1,4 +1,4 @@
-module Command exposing (Command, CommandBuilder, ValidationResult(..), build, buildWithDoc, captureRestOperands, expectFlag, flagsAndOperands, getUsageSpecs, hardcoded, mapNew, optionalFlag, optionalListOption, optionalOption, requiredOperand, requiredOption, synopsis, toCommand, tryMatch, validate, with, withDefault)
+module Command exposing (Command, CommandBuilder, ValidationResult(..), build, buildWithDoc, captureRestOperands, expectFlag, getUsageSpecs, hardcoded, mapNew, optionalFlag, optionalListOption, optionalOption, requiredOperand, requiredOption, synopsis, toCommand, tryMatch, validate, with, withDefault)
 
 import Cli.Decode
 import Cli.UsageSpec exposing (..)
@@ -89,7 +89,6 @@ expectedOperandCountOrFail ((Command ({ newDecoder, usageSpecs } as command)) as
                         Err "Wrong number of operands"
                     else
                         newDecoder stuff
-            , usageSpecs = usageSpecs
         }
 
 
@@ -252,11 +251,6 @@ operandCount usageSpecs =
         |> List.length
 
 
-isFlag : String -> Bool
-isFlag string =
-    string |> String.startsWith "--"
-
-
 optionalListOption : String -> CliUnit (List String) (List String)
 optionalListOption flagName =
     CliUnit
@@ -278,87 +272,6 @@ optionalListOption flagName =
         )
         (Option (OptionWithStringArg flagName) ZeroOrMore)
         Cli.Decode.decoder
-
-
-optionHasArg : List UsageSpec -> String -> Bool
-optionHasArg options optionNameToCheck =
-    case
-        options
-            |> List.filterMap
-                (\spec ->
-                    case spec of
-                        Option option occurences ->
-                            Just option
-
-                        Operand _ ->
-                            Nothing
-
-                        RestArgs _ ->
-                            Nothing
-                )
-            |> List.Extra.find
-                (\spec -> optionName spec == optionNameToCheck)
-    of
-        Just option ->
-            case option of
-                Flag flagName ->
-                    False
-
-                OptionWithStringArg optionName ->
-                    True
-
-        Nothing ->
-            False
-
-
-flagsAndOperands : Command msg -> List String -> { usageSpecs : List UsageSpec, flags : List String, operands : List String }
-flagsAndOperands (Command { usageSpecs }) argv =
-    let
-        firstOptionIndex =
-            argv
-                |> List.Extra.findIndex isFlag
-    in
-    case firstOptionIndex of
-        Just firstIndex ->
-            let
-                lastOptionIndex =
-                    List.Extra.indexedFoldl
-                        (\index element lastIndexSoFar ->
-                            let
-                                hasArg =
-                                    optionHasArg usageSpecs (String.dropLeft 2 element)
-                            in
-                            if index < firstIndex then
-                                lastIndexSoFar
-                            else if isFlag element then
-                                if hasArg then
-                                    index + 1
-                                else
-                                    index
-                            else
-                                lastIndexSoFar
-                        )
-                        firstIndex
-                        argv
-
-                frontOperands =
-                    argv
-                        |> List.Extra.splitAt firstIndex
-                        |> Tuple.first
-
-                withoutFrontOperands =
-                    argv
-                        |> List.Extra.splitAt firstIndex
-                        |> Tuple.second
-
-                ( flags, backOperands ) =
-                    withoutFrontOperands
-                        |> List.Extra.splitAt (lastOptionIndex + 1 - (List.length argv - List.length withoutFrontOperands))
-            in
-            { flags = flags, operands = frontOperands ++ backOperands, usageSpecs = usageSpecs }
-
-        Nothing ->
-            { flags = [], operands = argv, usageSpecs = usageSpecs }
 
 
 type CliUnit from to
