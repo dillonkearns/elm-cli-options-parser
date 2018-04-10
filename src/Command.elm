@@ -259,6 +259,7 @@ optionalListOption flagName =
                                 Just optionValue
 
                             ( True, _ ) ->
+                                -- TODO this should probably be an error
                                 Nothing
                     )
                 |> Ok
