@@ -167,7 +167,6 @@ all =
                 \() ->
                     Command.tryMatch [ "--verbose", "rest1", "rest2" ]
                         (Command.build identity
-                            -- TODO `expectFlag`
                             |> Command.expectFlag "verbose"
                             |> Command.captureRestOperands "files"
                         )
@@ -182,18 +181,53 @@ all =
                         )
                         |> Expect.equal (Just ( "operand1", [ "rest1", "rest2" ] ))
             ]
-
-        -- , describe "validation"
-        --     [ only <|
-        --         test "forced err validation makes it not match" <|
-        --             \() ->
-        --                 Command.tryMatch [ "--name", "Bob" ]
-        --                     (Command.build identity
-        --                         |> Command.with (Command.requiredOption "name")
-        --                         |> Command.toCommand
-        --                     )
-        --                     |> Expect.equal (Just "Bob")
-        --     ]
+        , describe "validation"
+            [ test "forced err validation makes it not match" <|
+                \() ->
+                    Command.tryMatch [ "--name", "Bob" ]
+                        (Command.build identity
+                            |> Command.with
+                                (Command.requiredOption "name"
+                                    |> Command.validate (\_ -> Command.Invalid "Invalid")
+                                )
+                            |> Command.toCommand
+                        )
+                        |> Expect.equal Nothing
+            , test "fails when validation function fails" <|
+                \() ->
+                    Command.tryMatch [ "--name", "Robert" ]
+                        (Command.build identity
+                            |> Command.with
+                                (Command.requiredOption "name"
+                                    |> Command.validate
+                                        (\name ->
+                                            if String.length name == 3 then
+                                                Command.Valid
+                                            else
+                                                Command.Invalid "Must be 3 characters long"
+                                        )
+                                )
+                            |> Command.toCommand
+                        )
+                        |> Expect.equal Nothing
+            , test "succeeds when validation function passes" <|
+                \() ->
+                    Command.tryMatch [ "--name", "Bob" ]
+                        (Command.build identity
+                            |> Command.with
+                                (Command.requiredOption "name"
+                                    |> Command.validate
+                                        (\name ->
+                                            if String.length name == 3 then
+                                                Command.Valid
+                                            else
+                                                Command.Invalid "Must be 3 characters long"
+                                        )
+                                )
+                            |> Command.toCommand
+                        )
+                        |> Expect.equal (Just "Bob")
+            ]
         , describe "mapping"
             [ test "maps operand" <|
                 \() ->

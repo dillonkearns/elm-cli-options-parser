@@ -1,4 +1,4 @@
-module Command exposing (Command, CommandBuilder, build, buildWithDoc, captureRestOperands, expectFlag, flagsAndOperands, getUsageSpecs, mapNew, optionalFlag, optionalListOption, optionalOption, requiredOperand, requiredOption, synopsis, toCommand, tryMatch, validate, with)
+module Command exposing (Command, CommandBuilder, ValidationResult(..), build, buildWithDoc, captureRestOperands, expectFlag, flagsAndOperands, getUsageSpecs, mapNew, optionalFlag, optionalListOption, optionalOption, requiredOperand, requiredOption, synopsis, toCommand, tryMatch, validate, with)
 
 import Cli.Decode
 import Cli.UsageSpec exposing (..)
@@ -474,7 +474,12 @@ mapNew mapFn (CliUnit dataGrabber usageSpec ((Cli.Decode.Decoder decodeFn) as de
     CliUnit dataGrabber usageSpec (Cli.Decode.map mapFn decoder)
 
 
-validate : (to -> Result String to) -> CliUnit from to -> CliUnit from to
+type ValidationResult
+    = Valid
+    | Invalid String
+
+
+validate : (to -> ValidationResult) -> CliUnit from to -> CliUnit from to
 validate validateFunction (CliUnit dataGrabber usageSpec (Cli.Decode.Decoder decodeFn)) =
     CliUnit dataGrabber
         usageSpec
@@ -483,7 +488,12 @@ validate validateFunction (CliUnit dataGrabber usageSpec (Cli.Decode.Decoder dec
                 >> (\result ->
                         case result of
                             Ok value ->
-                                validateFunction value
+                                case validateFunction value of
+                                    Valid ->
+                                        result
+
+                                    Invalid invalidReason ->
+                                        Err invalidReason
 
                             Err error ->
                                 result
