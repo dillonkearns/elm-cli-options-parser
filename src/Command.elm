@@ -2,7 +2,6 @@ module Command exposing (Command, CommandBuilder, ValidationResult(..), build, b
 
 import Cli.Decode
 import Cli.UsageSpec exposing (..)
-import Json.Decode as Decode exposing (Decoder)
 import List.Extra
 import Occurences exposing (Occurences(..))
 import Parser exposing (ParsedOption)
@@ -244,22 +243,6 @@ operandCount usageSpecs =
         |> List.length
 
 
-flagsAndThen : (List String -> Decode.Decoder a) -> Decode.Decoder a
-flagsAndThen something =
-    let
-        startsWithFlag list =
-            list |> List.head |> Maybe.map isFlag |> Maybe.withDefault True
-    in
-    Decode.list Decode.string
-        |> Decode.andThen
-            (\list ->
-                if startsWithFlag list then
-                    something list
-                else
-                    something []
-            )
-
-
 isFlag : String -> Bool
 isFlag string =
     string |> String.startsWith "--"
@@ -286,27 +269,6 @@ optionalListOption flagName =
         )
         (Option (OptionWithStringArg flagName) ZeroOrMore)
         Cli.Decode.decoder
-
-
-flagsAndOperandsAndThen : Command msg -> ({ usageSpecs : List UsageSpec, flags : List String, operands : List String, options : List Parser.ParsedOption } -> Decoder decodesTo) -> Decoder decodesTo
-flagsAndOperandsAndThen command decoderFunction =
-    Decode.list Decode.string
-        |> Decode.andThen
-            (\list ->
-                list
-                    |> flagsAndOperands command
-                    |> (\{ usageSpecs, flags, operands } ->
-                            { usageSpecs = usageSpecs
-                            , flags = flags
-                            , operands = operands
-                            , options =
-                                (Parser.flagsAndOperands (command |> getUsageSpecs)
-                                    list
-                                ).options
-                            }
-                       )
-                    |> decoderFunction
-            )
 
 
 optionHasArg : List UsageSpec -> String -> Bool
