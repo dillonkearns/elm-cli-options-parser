@@ -29,6 +29,10 @@ cli =
     ]
 
 
+
+-- this is a workaround for an Elm compiler bug
+
+
 dummy : Decoder String
 dummy =
     Json.Decode.string
