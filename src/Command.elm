@@ -1,4 +1,4 @@
-module Command exposing (Command, CommandBuilder, build, buildWithDoc, captureRestOperands, expectFlag, flagsAndOperands, getUsageSpecs, mapNew, optionalListOption, optionalOption, requiredOperand, requiredOption, synopsis, toCommand, tryMatch, validate, with, withFlag)
+module Command exposing (Command, CommandBuilder, build, buildWithDoc, captureRestOperands, expectFlag, flagsAndOperands, getUsageSpecs, mapNew, optionalFlag, optionalListOption, optionalOption, requiredOperand, requiredOption, synopsis, toCommand, tryMatch, validate, with)
 
 import Cli.Decode
 import Cli.UsageSpec exposing (..)
@@ -453,8 +453,8 @@ requiredOption optionName =
         Cli.Decode.decoder
 
 
-withFlag : String -> CliUnit Bool Bool
-withFlag flagName =
+optionalFlag : String -> CliUnit Bool Bool
+optionalFlag flagName =
     CliUnit
         (\{ options } ->
             if
