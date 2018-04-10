@@ -93,6 +93,14 @@ all =
                     { options = []
                     , operands = [ "operand" ]
                     }
+        , test "gets options with --option=value syntax" <|
+            \() ->
+                expectFlagsAndOperands [ "--name=Picard" ]
+                    (Command.build identity
+                        |> Command.with (Command.requiredOption "name")
+                        |> Command.toCommand
+                    )
+                    { options = [ ParsedOption "name" (Parser.OptionWithArg "Picard") ], operands = [] }
         ]
 
 

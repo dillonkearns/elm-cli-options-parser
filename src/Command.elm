@@ -55,6 +55,13 @@ hasRestArgs usageSpecs =
         usageSpecs
 
 
+type Failure
+    = ValidationError String
+    | UnexpectedOptions String
+    | UnexpectedOperands String
+    | NoMatch String
+
+
 expectedOperandCountOrFail : Command msg -> Command msg
 expectedOperandCountOrFail ((Command ({ newDecoder, usageSpecs } as command)) as fullCommand) =
     Command

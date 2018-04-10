@@ -17,7 +17,7 @@ split string =
                         |> Option
 
                 optionName :: splitAfterOptionName ->
-                    OptionWithArg { name = "name", value = String.concat splitAfterOptionName }
+                    OptionWithArg { name = optionName, value = String.concat splitAfterOptionName }
 
                 _ ->
                     optionName

@@ -1,6 +1,7 @@
 module Parser exposing (OptionKind(..), ParsedOption(..), flagsAndOperands)
 
 import Cli.UsageSpec exposing (UsageSpec)
+import Parser.EqualsSplitter as EqualsSplitter
 
 
 type ParsedOption
@@ -28,31 +29,38 @@ flagsAndOperands_ usageSpecs argv soFar =
             soFar
 
         firstArg :: restArgs ->
-            case String.toList firstArg of
-                '-' :: '-' :: restOfFirstString ->
-                    if Cli.UsageSpec.optionHasArg usageSpecs (restOfFirstString |> String.fromList) then
+            case EqualsSplitter.split firstArg of
+                EqualsSplitter.Option optionName ->
+                    if Cli.UsageSpec.optionHasArg usageSpecs optionName then
                         case restArgs of
                             secondArg :: afterSecondArg ->
                                 flagsAndOperands_ usageSpecs
                                     afterSecondArg
-                                    { options = soFar.options ++ [ ParsedOption (restOfFirstString |> String.fromList) (OptionWithArg secondArg) ]
+                                    { options = soFar.options ++ [ ParsedOption optionName (OptionWithArg secondArg) ]
                                     , operands = soFar.operands
                                     }
 
                             _ ->
                                 flagsAndOperands_ usageSpecs
                                     restArgs
-                                    { options = soFar.options ++ [ ParsedOption (restOfFirstString |> String.fromList) Flag ]
+                                    { options = soFar.options ++ [ ParsedOption optionName Flag ]
                                     , operands = soFar.operands
                                     }
                     else
                         flagsAndOperands_ usageSpecs
                             restArgs
-                            { options = soFar.options ++ [ ParsedOption (restOfFirstString |> String.fromList) Flag ]
+                            { options = soFar.options ++ [ ParsedOption optionName Flag ]
                             , operands = soFar.operands
                             }
 
-                _ ->
+                EqualsSplitter.OptionWithArg { name, value } ->
+                    flagsAndOperands_ usageSpecs
+                        restArgs
+                        { options = soFar.options ++ [ ParsedOption name (OptionWithArg value) ]
+                        , operands = soFar.operands
+                        }
+
+                EqualsSplitter.NotOption ->
                     flagsAndOperands_ usageSpecs
                         restArgs
                         { options = soFar.options
