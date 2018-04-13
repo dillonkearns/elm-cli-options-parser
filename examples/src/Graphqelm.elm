@@ -67,22 +67,25 @@ init flags =
                 |> Cli.try cli
 
         toPrint =
-            case msg |> Maybe.withDefault NoOp of
-                PrintVersion ->
+            case msg |> Maybe.withDefault (Ok NoOp) of
+                Ok PrintVersion ->
                     "You are on version 3.1.4"
 
-                PrintHelp ->
+                Ok PrintHelp ->
                     Cli.helpText "graphqelm" cli
 
-                NoOp ->
+                Ok NoOp ->
                     "\nNo matching command...\n\nUsage:\n\n"
                         ++ Cli.helpText "graphqelm" cli
 
-                FromUrl url base outputPath excludeDeprecated headers ->
+                Ok (FromUrl url base outputPath excludeDeprecated headers) ->
                     "...fetching from url " ++ url ++ "\noptions: " ++ toString ( url, base, outputPath, excludeDeprecated, headers )
 
-                FromFile file base outputPath excludeDeprecated ->
+                Ok (FromFile file base outputPath excludeDeprecated) ->
                     "...fetching from file " ++ file ++ "\noptions: " ++ toString ( base, outputPath, excludeDeprecated )
+
+                Err validationErrors ->
+                    "Validation errors:\n\n" ++ toString validationErrors
     in
     ( (), print toPrint )
 

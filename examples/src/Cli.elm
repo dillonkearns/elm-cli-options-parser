@@ -3,7 +3,7 @@ module Cli exposing (helpText, try)
 import Command exposing (Command)
 
 
-try : List (Command msg) -> List String -> Maybe msg
+try : List (Command msg) -> List String -> Maybe (Result (List String) msg)
 try commands argv =
     commands
         |> List.map (Command.tryMatch argv)

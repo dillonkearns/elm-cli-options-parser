@@ -19,7 +19,7 @@ synopsis programName command =
         |> Cli.UsageSpec.synopsis programName
 
 
-tryMatch : List String -> Command msg -> Maybe msg
+tryMatch : List String -> Command msg -> Maybe (Result (List String) msg)
 tryMatch argv ((Command { decoder, usageSpecs }) as command) =
     let
         decoder =
@@ -37,17 +37,16 @@ tryMatch argv ((Command { decoder, usageSpecs }) as command) =
                     }
                )
         )
-        |> Result.toMaybe
-        |> (\maybeValue ->
-                case maybeValue of
-                    Nothing ->
+        |> (\result ->
+                case result of
+                    Err error ->
                         Nothing
 
-                    Just ( [], value ) ->
-                        Just value
+                    Ok ( [], value ) ->
+                        Just (Ok value)
 
-                    Just ( validationErrors, value ) ->
-                        Nothing
+                    Ok ( validationErrors, value ) ->
+                        Just (Err validationErrors)
            )
 
 
