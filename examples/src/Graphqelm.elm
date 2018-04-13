@@ -3,6 +3,7 @@ port module Graphqelm exposing (main)
 import Cli
 import Command exposing (with)
 import Json.Decode exposing (..)
+import Regex
 
 
 cli : List (Command.Command InitMsg)
@@ -15,26 +16,45 @@ cli =
         |> Command.toCommand
     , Command.buildWithDoc FromUrl "generate files based on the schema at `url`"
         |> with (Command.requiredOperand "url")
-        |> with (Command.optionalOption "base")
+        |> with baseOption
         |> with (Command.optionalOption "output")
         |> with (Command.optionalFlag "excludeDeprecated")
         |> with (Command.optionalListOption "header")
         |> Command.toCommand
     , Command.build FromFile
         |> with (Command.requiredOption "introspection-file")
-        |> with (Command.optionalOption "base")
+        |> with baseOption
         |> with (Command.optionalOption "output")
         |> with (Command.optionalFlag "excludeDeprecated")
         |> Command.toCommand
     ]
 
 
+baseModuleRegex : String
+baseModuleRegex =
+    "^[A-Z][A-Za-z_]*(\\.[A-Z][A-Za-z_]*)*$"
 
--- this is a workaround for an Elm compiler bug
+
+baseOption : Command.CliUnit (Maybe String) (Maybe String)
+baseOption =
+    Command.optionalOption "base"
+        |> Command.validate
+            (\maybeBaseModuleName ->
+                case maybeBaseModuleName of
+                    Just baseModuleName ->
+                        if Regex.contains (Regex.regex baseModuleRegex) baseModuleName then
+                            Command.Valid
+                        else
+                            Command.Invalid ("Must be of form /" ++ baseModuleRegex ++ "/")
+
+                    Nothing ->
+                        Command.Valid
+            )
 
 
 dummy : Decoder String
 dummy =
+    -- this is a workaround for an Elm compiler bug
     Json.Decode.string
 
 

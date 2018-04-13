@@ -1,4 +1,4 @@
-module Command exposing (Command, CommandBuilder, ValidationResult(..), build, buildWithDoc, captureRestOperands, expectFlag, getUsageSpecs, hardcoded, mapNew, optionalFlag, optionalListOption, optionalOption, requiredOperand, requiredOption, synopsis, toCommand, tryMatch, validate, with, withDefault)
+module Command exposing (CliUnit, Command, CommandBuilder, ValidationResult(..), build, buildWithDoc, captureRestOperands, expectFlag, getUsageSpecs, hardcoded, mapNew, optionalFlag, optionalListOption, optionalOption, requiredOperand, requiredOption, synopsis, toCommand, tryMatch, validate, with, withDefault)
 
 import Cli.Decode
 import Cli.UsageSpec exposing (..)
