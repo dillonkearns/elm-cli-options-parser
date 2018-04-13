@@ -38,7 +38,17 @@ tryMatch argv ((Command { decoder, usageSpecs }) as command) =
                )
         )
         |> Result.toMaybe
-        |> Maybe.map Tuple.second
+        |> (\maybeValue ->
+                case maybeValue of
+                    Nothing ->
+                        Nothing
+
+                    Just ( [], value ) ->
+                        Just value
+
+                    Just ( validationErrors, value ) ->
+                        Nothing
+           )
 
 
 hasRestArgs : List UsageSpec -> Bool
@@ -413,8 +423,15 @@ with (CliUnit dataGrabber usageSpec (Cli.Decode.Decoder decodeFn)) ((CommandBuil
                         |> Result.andThen decodeFn
                         |> Result.andThen
                             (\( validationErrors, fromValue ) ->
-                                resultMap (\fn -> fn fromValue)
-                                    (decoder optionsAndOperands)
+                                case
+                                    resultMap (\fn -> fn fromValue)
+                                        (decoder optionsAndOperands)
+                                of
+                                    Ok ( previousValidationErrors, thing ) ->
+                                        Ok ( previousValidationErrors ++ validationErrors, thing )
+
+                                    value ->
+                                        value
                             )
             , usageSpecs = usageSpecs ++ [ usageSpec ]
         }
