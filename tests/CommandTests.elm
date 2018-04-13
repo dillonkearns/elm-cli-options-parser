@@ -193,7 +193,7 @@ all =
                                 )
                             |> Command.toCommand
                         )
-                        |> Expect.equal (Just (Err [ "Invalid" ]))
+                        |> Expect.equal (Just (Err [ { name = "name", invalidReason = "Invalid", valueAsString = toString "Bob" } ]))
             , test "fails when validation function fails" <|
                 \() ->
                     Command.tryMatch [ "--name", "Robert" ]
@@ -210,7 +210,7 @@ all =
                                 )
                             |> Command.toCommand
                         )
-                        |> Expect.equal (Just (Err [ "Must be 3 characters long" ]))
+                        |> Expect.equal (Just (Err [ { name = "name", invalidReason = "Must be 3 characters long", valueAsString = toString "Robert" } ]))
             , test "succeeds when validation function passes" <|
                 \() ->
                     expectMatch [ "--name", "Bob" ]

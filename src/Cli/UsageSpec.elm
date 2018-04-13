@@ -1,4 +1,4 @@
-module Cli.UsageSpec exposing (Option(..), UsageSpec(..), optionHasArg, synopsis)
+module Cli.UsageSpec exposing (Option(..), UsageSpec(..), name, optionHasArg, synopsis)
 
 import List.Extra
 import Occurences exposing (Occurences(..))
@@ -13,6 +13,24 @@ type UsageSpec
     = Option Option Occurences
     | Operand String
     | RestArgs String
+
+
+name : UsageSpec -> String
+name usageSpec =
+    case usageSpec of
+        Option option occurences ->
+            case option of
+                Flag name ->
+                    name
+
+                OptionWithStringArg name ->
+                    name
+
+        Operand name ->
+            name
+
+        RestArgs name ->
+            name
 
 
 synopsis : String -> { command | usageSpecs : List UsageSpec, description : Maybe String } -> String

@@ -105,7 +105,19 @@ init flags =
                     "...fetching from file " ++ file ++ "\noptions: " ++ toString ( base, outputPath, excludeDeprecated )
 
                 Err validationErrors ->
-                    "Validation errors:\n\n" ++ toString validationErrors
+                    "Validation errors:\n\n"
+                        ++ (validationErrors
+                                |> List.map
+                                    (\{ name, invalidReason, valueAsString } ->
+                                        "`"
+                                            ++ name
+                                            ++ "` failed a validation. "
+                                            ++ invalidReason
+                                            ++ "\nValue was:\n"
+                                            ++ valueAsString
+                                    )
+                                |> String.join "\n"
+                           )
     in
     ( (), print toPrint )
 

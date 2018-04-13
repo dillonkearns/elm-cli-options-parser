@@ -19,7 +19,7 @@ synopsis programName command =
         |> Cli.UsageSpec.synopsis programName
 
 
-tryMatch : List String -> Command msg -> Maybe (Result (List String) msg)
+tryMatch : List String -> Command msg -> Maybe (Result (List Cli.Decode.ValidationError) msg)
 tryMatch argv ((Command { decoder, usageSpecs }) as command) =
     let
         decoder =
@@ -102,7 +102,7 @@ getDecoder :
         , options : List ParsedOption
         , usageSpecs : List UsageSpec
         }
-    -> Result String ( List String, msg )
+    -> Result String ( List Cli.Decode.ValidationError, msg )
 getDecoder (Command { decoder }) =
     decoder
 
@@ -152,7 +152,7 @@ optionExistsNew usageSpecs thisOptionName =
 
 type CommandBuilder msg
     = CommandBuilder
-        { decoder : { usageSpecs : List UsageSpec, options : List ParsedOption, operands : List String } -> Result String ( List String, msg )
+        { decoder : { usageSpecs : List UsageSpec, options : List ParsedOption, operands : List String } -> Result String ( List Cli.Decode.ValidationError, msg )
         , usageSpecs : List UsageSpec
         , description : Maybe String
         }
@@ -181,7 +181,7 @@ captureRestOperands restOperandsDescription (CommandBuilder ({ usageSpecs, descr
 
 type Command msg
     = Command
-        { decoder : { usageSpecs : List UsageSpec, options : List ParsedOption, operands : List String } -> Result String ( List String, msg )
+        { decoder : { usageSpecs : List UsageSpec, options : List ParsedOption, operands : List String } -> Result String ( List Cli.Decode.ValidationError, msg )
         , usageSpecs : List UsageSpec
         , description : Maybe String
         }
@@ -214,7 +214,7 @@ hardcoded hardcodedValue (CommandBuilder ({ decoder } as command)) =
         }
 
 
-resultMap : (a -> value) -> Result String ( List String, a ) -> Result String ( List String, value )
+resultMap : (a -> value) -> Result String ( List Cli.Decode.ValidationError, a ) -> Result String ( List Cli.Decode.ValidationError, value )
 resultMap mapFunction result =
     result
         |> Result.map (\( validationErrors, value ) -> ( validationErrors, mapFunction value ))
@@ -385,6 +385,11 @@ type ValidationResult
     | Invalid String
 
 
+validateMap : (to -> Result String toMapped) -> CliUnit from to -> CliUnit from toMapped
+validateMap function tofromCliUnit =
+    Debug.crash ""
+
+
 validate : (to -> ValidationResult) -> CliUnit from to -> CliUnit from to
 validate validateFunction (CliUnit dataGrabber usageSpec (Cli.Decode.Decoder decodeFn)) =
     CliUnit dataGrabber
@@ -399,7 +404,14 @@ validate validateFunction (CliUnit dataGrabber usageSpec (Cli.Decode.Decoder dec
                                         ( validationErrors, value )
 
                                     Invalid invalidReason ->
-                                        ( validationErrors ++ [ invalidReason ], value )
+                                        ( validationErrors
+                                            ++ [ { name = Cli.UsageSpec.name usageSpec
+                                                 , invalidReason = invalidReason
+                                                 , valueAsString = toString value
+                                                 }
+                                               ]
+                                        , value
+                                        )
                             )
                             result
                    )

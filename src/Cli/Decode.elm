@@ -1,8 +1,15 @@
-module Cli.Decode exposing (Decoder(Decoder), decoder, map)
+module Cli.Decode exposing (Decoder(Decoder), ValidationError, decoder, map)
+
+
+type alias ValidationError =
+    { name : String
+    , invalidReason : String
+    , valueAsString : String
+    }
 
 
 type Decoder decodesFrom decodesTo
-    = Decoder (decodesFrom -> Result String ( List String, decodesTo ))
+    = Decoder (decodesFrom -> Result String ( List ValidationError, decodesTo ))
 
 
 decoder : Decoder a a
