@@ -38,6 +38,7 @@ tryMatch argv ((Command { decoder, usageSpecs }) as command) =
                )
         )
         |> Result.toMaybe
+        |> Maybe.map Tuple.second
 
 
 hasRestArgs : List UsageSpec -> Bool
@@ -92,7 +93,7 @@ getDecoder :
         , options : List ParsedOption
         , usageSpecs : List UsageSpec
         }
-    -> Result String msg
+    -> Result String ( List String, msg )
 getDecoder (Command { decoder }) =
     decoder
 
@@ -142,7 +143,7 @@ optionExistsNew usageSpecs thisOptionName =
 
 type CommandBuilder msg
     = CommandBuilder
-        { decoder : { usageSpecs : List UsageSpec, options : List ParsedOption, operands : List String } -> Result String msg
+        { decoder : { usageSpecs : List UsageSpec, options : List ParsedOption, operands : List String } -> Result String ( List String, msg )
         , usageSpecs : List UsageSpec
         , description : Maybe String
         }
@@ -165,13 +166,13 @@ captureRestOperands restOperandsDescription (CommandBuilder ({ usageSpecs, descr
                         operands
                             |> List.drop (operandCount usageSpecs)
                 in
-                Result.map (\fn -> fn restOperands) (decoder stuff)
+                resultMap (\fn -> fn restOperands) (decoder stuff)
         }
 
 
 type Command msg
     = Command
-        { decoder : { usageSpecs : List UsageSpec, options : List ParsedOption, operands : List String } -> Result String msg
+        { decoder : { usageSpecs : List UsageSpec, options : List ParsedOption, operands : List String } -> Result String ( List String, msg )
         , usageSpecs : List UsageSpec
         , description : Maybe String
         }
@@ -182,7 +183,7 @@ build msgConstructor =
     CommandBuilder
         { usageSpecs = []
         , description = Nothing
-        , decoder = \_ -> Ok msgConstructor
+        , decoder = \_ -> Ok ( [], msgConstructor )
         }
 
 
@@ -191,7 +192,7 @@ buildWithDoc msgConstructor docString =
     CommandBuilder
         { usageSpecs = []
         , description = Just docString
-        , decoder = \_ -> Ok msgConstructor
+        , decoder = \_ -> Ok ( [], msgConstructor )
         }
 
 
@@ -200,8 +201,14 @@ hardcoded hardcodedValue (CommandBuilder ({ decoder } as command)) =
     CommandBuilder
         { command
             | decoder =
-                \stuff -> Result.map (\fn -> fn hardcodedValue) (decoder stuff)
+                \stuff -> resultMap (\fn -> fn hardcodedValue) (decoder stuff)
         }
+
+
+resultMap : (a -> value) -> Result String ( List String, a ) -> Result String ( List String, value )
+resultMap mapFunction result =
+    result
+        |> Result.map (\( validationErrors, value ) -> ( validationErrors, mapFunction value ))
 
 
 expectFlag : String -> CommandBuilder msg -> CommandBuilder msg
@@ -406,7 +413,7 @@ with (CliUnit dataGrabber usageSpec (Cli.Decode.Decoder decodeFn)) ((CommandBuil
                         |> Result.andThen decodeFn
                         |> Result.andThen
                             (\( validationErrors, fromValue ) ->
-                                Result.map (\fn -> fn fromValue)
+                                resultMap (\fn -> fn fromValue)
                                     (decoder optionsAndOperands)
                             )
             , usageSpecs = usageSpecs ++ [ usageSpec ]
