@@ -376,17 +376,16 @@ validate validateFunction (CliUnit dataGrabber usageSpec (Cli.Decode.Decoder dec
         (Cli.Decode.Decoder
             (decodeFn
                 >> (\result ->
-                        case result of
-                            Ok value ->
+                        Result.map
+                            (\( validationErrors, value ) ->
                                 case validateFunction value of
                                     Valid ->
-                                        result
+                                        ( validationErrors, value )
 
                                     Invalid invalidReason ->
-                                        Err invalidReason
-
-                            Err error ->
-                                result
+                                        ( validationErrors ++ [ invalidReason ], value )
+                            )
+                            result
                    )
             )
         )
@@ -406,7 +405,7 @@ with (CliUnit dataGrabber usageSpec (Cli.Decode.Decoder decodeFn)) ((CommandBuil
                         |> dataGrabber
                         |> Result.andThen decodeFn
                         |> Result.andThen
-                            (\fromValue ->
+                            (\( validationErrors, fromValue ) ->
                                 Result.map (\fn -> fn fromValue)
                                     (decoder optionsAndOperands)
                             )
