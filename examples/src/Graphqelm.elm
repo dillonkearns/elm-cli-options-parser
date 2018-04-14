@@ -6,7 +6,15 @@ import Command exposing (with)
 import Json.Decode exposing (..)
 
 
-cli : List (Command.Command InitMsg)
+type CliCommand
+    = PrintVersion
+    | PrintHelp
+    | NoOp
+    | FromUrl String (Maybe String) (Maybe String) Bool (List String)
+    | FromFile String (Maybe String) (Maybe String) Bool
+
+
+cli : List (Command.Command CliCommand)
 cli =
     [ Command.build PrintVersion
         |> Command.expectFlag "version"
@@ -57,14 +65,6 @@ type alias Model =
 
 type alias Msg =
     ()
-
-
-type InitMsg
-    = PrintVersion
-    | PrintHelp
-    | NoOp
-    | FromUrl String (Maybe String) (Maybe String) Bool (List String)
-    | FromFile String (Maybe String) (Maybe String) Bool
 
 
 init : Flags -> ( Model, Cmd Msg )
