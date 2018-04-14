@@ -38,15 +38,10 @@ cli =
     ]
 
 
-baseModuleRegex : String
-baseModuleRegex =
-    "^[A-Z][A-Za-z_]*(\\.[A-Z][A-Za-z_]*)*$"
-
-
 baseOption : Command.CliUnit (Maybe String) (Maybe String)
 baseOption =
     Command.optionalOption "base"
-        |> Command.validateIfPresent (Cli.Validate.regex baseModuleRegex)
+        |> Command.validateIfPresent (Cli.Validate.regex "^[A-Z][A-Za-z_]*(\\.[A-Z][A-Za-z_]*)*$")
 
 
 dummy : Decoder String
