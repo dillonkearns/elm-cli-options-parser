@@ -23,16 +23,16 @@ cli =
         |> Command.expectFlag "help"
         |> Command.toCommand
     , Command.buildWithDoc FromUrl "generate files based on the schema at `url`"
-        |> with (Command.requiredOperand "url")
+        |> with (Command.positionalArg "url")
         |> with baseOption
-        |> with (Command.optionalOption "output")
+        |> with (Command.optionalKeywordArg "output")
         |> with (Command.optionalFlag "excludeDeprecated")
-        |> with (Command.optionalListOption "header")
+        |> with (Command.keywordArgList "header")
         |> Command.toCommand
     , Command.build FromFile
-        |> with (Command.requiredOption "introspection-file")
+        |> with (Command.requiredKeywordArg "introspection-file")
         |> with baseOption
-        |> with (Command.optionalOption "output")
+        |> with (Command.optionalKeywordArg "output")
         |> with (Command.optionalFlag "excludeDeprecated")
         |> Command.toCommand
     ]
@@ -40,7 +40,7 @@ cli =
 
 baseOption : Command.CliUnit (Maybe String) (Maybe String)
 baseOption =
-    Command.optionalOption "base"
+    Command.optionalKeywordArg "base"
         |> Command.validateIfPresent
             (Cli.Validate.regex "^[A-Z][A-Za-z_]*(\\.[A-Z][A-Za-z_]*)*$")
 

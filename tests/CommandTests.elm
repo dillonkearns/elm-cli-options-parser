@@ -39,7 +39,7 @@ all =
                 \() ->
                     expectMatch [ "http://my-domain.com" ]
                         (Command.build OpenUrl
-                            |> Command.with (Command.requiredOperand "url")
+                            |> Command.with (Command.positionalArg "url")
                             |> Command.toCommand
                         )
                         (OpenUrl "http://my-domain.com")
@@ -47,8 +47,8 @@ all =
                 \() ->
                     expectMatch [ "http://my-domain.com", "./file.txt" ]
                         (Command.build (,)
-                            |> Command.with (Command.requiredOperand "url")
-                            |> Command.with (Command.requiredOperand "path/to/file")
+                            |> Command.with (Command.positionalArg "url")
+                            |> Command.with (Command.positionalArg "path/to/file")
                             |> Command.toCommand
                         )
                         ( "http://my-domain.com", "./file.txt" )
@@ -56,7 +56,7 @@ all =
                 \() ->
                     expectMatch [ "http://my-domain.com" ]
                         (Command.build OpenUrlWithFlag
-                            |> Command.with (Command.requiredOperand "url")
+                            |> Command.with (Command.positionalArg "url")
                             |> Command.with (Command.optionalFlag "flag")
                             |> Command.toCommand
                         )
@@ -65,7 +65,7 @@ all =
                 \() ->
                     expectMatch [ "http://my-domain.com", "--flag" ]
                         (Command.build OpenUrlWithFlag
-                            |> Command.with (Command.requiredOperand "url")
+                            |> Command.with (Command.positionalArg "url")
                             |> Command.with (Command.optionalFlag "flag")
                             |> Command.toCommand
                         )
@@ -90,8 +90,8 @@ all =
                 \() ->
                     expectMatch [ "--name", "Deanna", "--prefix", "Hello" ]
                         (Command.build (,)
-                            |> Command.with (Command.requiredOption "name")
-                            |> Command.with (Command.optionalOption "prefix")
+                            |> Command.with (Command.requiredKeywordArg "name")
+                            |> Command.with (Command.optionalKeywordArg "prefix")
                             |> Command.toCommand
                         )
                         ( "Deanna", Just "Hello" )
@@ -99,7 +99,7 @@ all =
                 \() ->
                     expectMatch [ "--name", "Deanna" ]
                         (Command.build Name
-                            |> Command.with (Command.requiredOption "name")
+                            |> Command.with (Command.requiredKeywordArg "name")
                             |> Command.toCommand
                         )
                         (Name "Deanna")
@@ -112,8 +112,8 @@ all =
                         , "Deanna"
                         ]
                         (Command.build FullName
-                            |> Command.with (Command.requiredOption "first-name")
-                            |> Command.with (Command.requiredOption "last-name")
+                            |> Command.with (Command.requiredKeywordArg "first-name")
+                            |> Command.with (Command.requiredKeywordArg "last-name")
                             |> Command.toCommand
                         )
                         (FullName "Deanna" "Troi")
@@ -127,8 +127,8 @@ all =
                         , "unexpectedOperand"
                         ]
                         (Command.build FullName
-                            |> Command.with (Command.requiredOption "first-name")
-                            |> Command.with (Command.requiredOption "last-name")
+                            |> Command.with (Command.requiredKeywordArg "first-name")
+                            |> Command.with (Command.requiredKeywordArg "last-name")
                             |> Command.toCommand
                         )
                         |> Expect.equal Nothing
@@ -141,7 +141,7 @@ all =
                         , "def456"
                         ]
                         (Command.build identity
-                            |> Command.with (Command.optionalListOption "header")
+                            |> Command.with (Command.keywordArgList "header")
                             |> Command.toCommand
                         )
                         [ "abc123", "def456" ]
@@ -177,7 +177,7 @@ all =
                     expectMatch [ "--something", "operand1", "rest1", "rest2" ]
                         (Command.build (,)
                             |> Command.expectFlag "something"
-                            |> Command.with (Command.requiredOperand "operand")
+                            |> Command.with (Command.positionalArg "operand")
                             |> Command.captureRestOperands "files"
                         )
                         ( "operand1", [ "rest1", "rest2" ] )
@@ -188,7 +188,7 @@ all =
                     Command.tryMatch [ "--name", "Bob" ]
                         (Command.build identity
                             |> Command.with
-                                (Command.requiredOption "name"
+                                (Command.requiredKeywordArg "name"
                                     |> Command.validate (\_ -> Command.Invalid "Invalid")
                                 )
                             |> Command.toCommand
@@ -199,7 +199,7 @@ all =
                     Command.tryMatch [ "--name", "Robert" ]
                         (Command.build identity
                             |> Command.with
-                                (Command.requiredOption "name"
+                                (Command.requiredKeywordArg "name"
                                     |> Command.validate
                                         (\name ->
                                             if String.length name == 3 then
@@ -216,7 +216,7 @@ all =
                     expectMatch [ "--name", "Bob" ]
                         (Command.build identity
                             |> Command.with
-                                (Command.requiredOption "name"
+                                (Command.requiredKeywordArg "name"
                                     |> Command.validate
                                         (\name ->
                                             if String.length name == 3 then
@@ -236,7 +236,7 @@ all =
                         [ "hello" ]
                         (Command.build identity
                             |> Command.with
-                                (Command.requiredOperand "operand"
+                                (Command.positionalArg "operand"
                                     |> Command.mapNew String.length
                                 )
                             |> Command.toCommand
@@ -248,7 +248,7 @@ all =
                         []
                         (Command.build identity
                             |> Command.with
-                                (Command.optionalOption "output"
+                                (Command.optionalKeywordArg "output"
                                     |> Command.withDefault "elm.js"
                                 )
                             |> Command.toCommand
@@ -260,7 +260,7 @@ all =
                         [ "--output=bundle.js" ]
                         (Command.build identity
                             |> Command.with
-                                (Command.optionalOption "output"
+                                (Command.optionalKeywordArg "output"
                                     |> Command.withDefault "elm.js"
                                 )
                             |> Command.toCommand

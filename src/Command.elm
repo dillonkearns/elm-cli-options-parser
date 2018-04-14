@@ -1,4 +1,4 @@
-module Command exposing (CliUnit, Command, CommandBuilder, ValidationResult(..), build, buildWithDoc, captureRestOperands, expectFlag, getUsageSpecs, hardcoded, mapNew, optionalFlag, optionalListOption, optionalOption, requiredOperand, requiredOption, synopsis, toCommand, tryMatch, validate, validateIfPresent, with, withDefault)
+module Command exposing (CliUnit, Command, CommandBuilder, ValidationResult(..), build, buildWithDoc, captureRestOperands, expectFlag, getUsageSpecs, hardcoded, keywordArgList, mapNew, optionalFlag, optionalKeywordArg, positionalArg, requiredKeywordArg, synopsis, toCommand, tryMatch, validate, validateIfPresent, with, withDefault)
 
 import Cli.Decode
 import Cli.UsageSpec exposing (..)
@@ -260,8 +260,8 @@ operandCount usageSpecs =
         |> List.length
 
 
-optionalListOption : String -> CliUnit (List String) (List String)
-optionalListOption flagName =
+keywordArgList : String -> CliUnit (List String) (List String)
+keywordArgList flagName =
     CliUnit
         (\{ options } ->
             options
@@ -292,8 +292,8 @@ type alias DataGrabber decodesTo =
     { usageSpecs : List UsageSpec, operands : List String, options : List Parser.ParsedOption, operandsSoFar : Int } -> Result String decodesTo
 
 
-requiredOperand : String -> CliUnit String String
-requiredOperand operandDescription =
+positionalArg : String -> CliUnit String String
+positionalArg operandDescription =
     CliUnit
         (\{ usageSpecs, operands, operandsSoFar } ->
             case
@@ -315,8 +315,8 @@ withDefault defaultValue (CliUnit dataGrabber usageSpec decoder) =
     CliUnit dataGrabber usageSpec (decoder |> Cli.Decode.map (Maybe.withDefault defaultValue))
 
 
-optionalOption : String -> CliUnit (Maybe String) (Maybe String)
-optionalOption optionName =
+optionalKeywordArg : String -> CliUnit (Maybe String) (Maybe String)
+optionalKeywordArg optionName =
     CliUnit
         (\{ operands, options } ->
             case
@@ -337,8 +337,8 @@ optionalOption optionName =
         Cli.Decode.decoder
 
 
-requiredOption : String -> CliUnit String String
-requiredOption optionName =
+requiredKeywordArg : String -> CliUnit String String
+requiredKeywordArg optionName =
     CliUnit
         (\{ operands, options } ->
             case

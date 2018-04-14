@@ -11,8 +11,8 @@ all =
         [ test "synopsis prints options with arguments" <|
             \() ->
                 (Command.build (,)
-                    |> Command.with (Command.requiredOption "first-name")
-                    |> Command.with (Command.requiredOption "last-name")
+                    |> Command.with (Command.requiredKeywordArg "first-name")
+                    |> Command.with (Command.requiredKeywordArg "last-name")
                     |> Command.toCommand
                 )
                     |> Command.synopsis "greet"
@@ -27,30 +27,30 @@ all =
         , test "print synopsis with optional arg" <|
             \() ->
                 Command.build (,)
-                    |> Command.with (Command.requiredOption "name")
-                    |> Command.with (Command.optionalOption "prefix")
+                    |> Command.with (Command.requiredKeywordArg "name")
+                    |> Command.with (Command.optionalKeywordArg "prefix")
                     |> Command.toCommand
                     |> Command.synopsis "greet"
                     |> Expect.equal "greet --name <name> [--prefix <prefix>]"
         , test "print synopsis with required operand" <|
             \() ->
                 Command.build identity
-                    |> Command.with (Command.requiredOperand "MyApp.elm")
+                    |> Command.with (Command.positionalArg "MyApp.elm")
                     |> Command.toCommand
                     |> Command.synopsis "elm-interop"
                     |> Expect.equal "elm-interop <MyApp.elm>"
         , test "print synopsis with doc string" <|
             \() ->
                 Command.buildWithDoc (,) "greets somebody in your terminal"
-                    |> Command.with (Command.requiredOption "name")
-                    |> Command.with (Command.optionalOption "prefix")
+                    |> Command.with (Command.requiredKeywordArg "name")
+                    |> Command.with (Command.optionalKeywordArg "prefix")
                     |> Command.toCommand
                     |> Command.synopsis "greet"
                     |> Expect.equal "greet --name <name> [--prefix <prefix>] # greets somebody in your terminal"
         , test "print synopsis with zero or more arg option" <|
             \() ->
                 (Command.build identity
-                    |> Command.with (Command.optionalListOption "header")
+                    |> Command.with (Command.keywordArgList "header")
                 )
                     |> Command.toCommand
                     |> Command.synopsis "curl"
