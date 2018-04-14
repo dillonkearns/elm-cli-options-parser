@@ -1,9 +1,9 @@
 port module Graphqelm exposing (main)
 
 import Cli
+import Cli.Validate
 import Command exposing (with)
 import Json.Decode exposing (..)
-import Regex
 
 
 cli : List (Command.Command InitMsg)
@@ -42,10 +42,7 @@ baseOption =
             (\maybeBaseModuleName ->
                 case maybeBaseModuleName of
                     Just baseModuleName ->
-                        if Regex.contains (Regex.regex baseModuleRegex) baseModuleName then
-                            Command.Valid
-                        else
-                            Command.Invalid ("Must be of form /" ++ baseModuleRegex ++ "/")
+                        Cli.Validate.regex baseModuleRegex baseModuleName
 
                     Nothing ->
                         Command.Valid
