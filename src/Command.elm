@@ -1,4 +1,4 @@
-module Command exposing (CliUnit, Command, CommandBuilder, ValidationResult(..), build, buildWithDoc, captureRestOperands, expectFlag, getUsageSpecs, hardcoded, mapNew, optionalFlag, optionalListOption, optionalOption, requiredOperand, requiredOption, synopsis, toCommand, tryMatch, validate, with, withDefault)
+module Command exposing (CliUnit, Command, CommandBuilder, ValidationResult(..), build, buildWithDoc, captureRestOperands, expectFlag, getUsageSpecs, hardcoded, mapNew, optionalFlag, optionalListOption, optionalOption, requiredOperand, requiredOption, synopsis, toCommand, tryMatch, validate, validateIfPresent, with, withDefault)
 
 import Cli.Decode
 import Cli.UsageSpec exposing (..)
@@ -417,6 +417,20 @@ validate validateFunction (CliUnit dataGrabber usageSpec (Cli.Decode.Decoder dec
                    )
             )
         )
+
+
+validateIfPresent : (to -> ValidationResult) -> CliUnit from (Maybe to) -> CliUnit from (Maybe to)
+validateIfPresent validateFunction cliUnit =
+    validate
+        (\maybeValue ->
+            case maybeValue of
+                Just value ->
+                    validateFunction value
+
+                Nothing ->
+                    Valid
+        )
+        cliUnit
 
 
 with : CliUnit from to -> CommandBuilder (to -> msg) -> CommandBuilder msg

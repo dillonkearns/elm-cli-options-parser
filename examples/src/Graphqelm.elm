@@ -38,15 +38,7 @@ baseModuleRegex =
 baseOption : Command.CliUnit (Maybe String) (Maybe String)
 baseOption =
     Command.optionalOption "base"
-        |> Command.validate
-            (\maybeBaseModuleName ->
-                case maybeBaseModuleName of
-                    Just baseModuleName ->
-                        Cli.Validate.regex baseModuleRegex baseModuleName
-
-                    Nothing ->
-                        Command.Valid
-            )
+        |> Command.validateIfPresent (Cli.Validate.regex baseModuleRegex)
 
 
 dummy : Decoder String
