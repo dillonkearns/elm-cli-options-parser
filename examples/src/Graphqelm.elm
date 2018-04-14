@@ -26,14 +26,14 @@ cli =
         |> with (Command.positionalArg "url")
         |> with baseOption
         |> with (Command.optionalKeywordArg "output")
-        |> with (Command.optionalFlag "excludeDeprecated")
+        |> with (Command.flag "excludeDeprecated")
         |> with (Command.keywordArgList "header")
         |> Command.toCommand
     , Command.build FromFile
         |> with (Command.requiredKeywordArg "introspection-file")
         |> with baseOption
         |> with (Command.optionalKeywordArg "output")
-        |> with (Command.optionalFlag "excludeDeprecated")
+        |> with (Command.flag "excludeDeprecated")
         |> Command.toCommand
     ]
 

@@ -57,7 +57,7 @@ all =
                     expectMatch [ "http://my-domain.com" ]
                         (Command.build OpenUrlWithFlag
                             |> Command.with (Command.positionalArg "url")
-                            |> Command.with (Command.optionalFlag "flag")
+                            |> Command.with (Command.flag "flag")
                             |> Command.toCommand
                         )
                         (OpenUrlWithFlag "http://my-domain.com" False)
@@ -66,7 +66,7 @@ all =
                     expectMatch [ "http://my-domain.com", "--flag" ]
                         (Command.build OpenUrlWithFlag
                             |> Command.with (Command.positionalArg "url")
-                            |> Command.with (Command.optionalFlag "flag")
+                            |> Command.with (Command.flag "flag")
                             |> Command.toCommand
                         )
                         (OpenUrlWithFlag "http://my-domain.com" True)
@@ -152,7 +152,7 @@ all =
                         , "--unexpected-option"
                         ]
                         (Command.build identity
-                            |> Command.with (Command.optionalFlag "verbose")
+                            |> Command.with (Command.flag "verbose")
                             |> Command.toCommand
                         )
                         |> Expect.equal Nothing
