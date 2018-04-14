@@ -1,7 +1,6 @@
 module Command exposing (Command, CommandBuilder, ValidationResult(..), build, buildWithDoc, captureRestOperands, expectFlag, flag, getUsageSpecs, hardcoded, keywordArgList, mapNew, optionalKeywordArg, positionalArg, requiredKeywordArg, synopsis, toCommand, tryMatch, validate, validateIfPresent, with, withDefault)
 
 import Cli.Decode
-import Cli.Expect exposing (Expectation)
 import Cli.Unit exposing (CliUnit(..))
 import Cli.UsageSpec exposing (..)
 import List.Extra
@@ -425,12 +424,6 @@ validateIfPresent validateFunction cliUnit =
                     Valid
         )
         cliUnit
-
-
-expect : Expectation -> CommandBuilder decodesTo -> CommandBuilder decodesTo
-expect expectation builder =
-    -- CommandBuilder { decoder = \record -> _, usageSpecs = [], description = Nothing }
-    builder
 
 
 with : CliUnit from to -> CommandBuilder (to -> msg) -> CommandBuilder msg
