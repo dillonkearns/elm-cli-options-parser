@@ -2,7 +2,7 @@ port module Graphqelm exposing (main)
 
 import Cli
 import Cli.Command as Command exposing (Command, with)
-import Cli.Spec
+import Cli.Spec as Spec
 import Cli.Validate
 import Json.Decode exposing (..)
 
@@ -24,25 +24,25 @@ cli =
         |> Command.expectFlag "help"
         |> Command.toCommand
     , Command.buildWithDoc FromUrl "generate files based on the schema at `url`"
-        |> with (Cli.Spec.positionalArg "url")
+        |> with (Spec.positionalArg "url")
         |> with baseOption
-        |> with (Cli.Spec.optionalKeywordArg "output")
-        |> with (Cli.Spec.flag "excludeDeprecated")
-        |> with (Cli.Spec.keywordArgList "header")
+        |> with (Spec.optionalKeywordArg "output")
+        |> with (Spec.flag "excludeDeprecated")
+        |> with (Spec.keywordArgList "header")
         |> Command.toCommand
     , Command.build FromFile
-        |> with (Cli.Spec.requiredKeywordArg "introspection-file")
+        |> with (Spec.requiredKeywordArg "introspection-file")
         |> with baseOption
-        |> with (Cli.Spec.optionalKeywordArg "output")
-        |> with (Cli.Spec.flag "excludeDeprecated")
+        |> with (Spec.optionalKeywordArg "output")
+        |> with (Spec.flag "excludeDeprecated")
         |> Command.toCommand
     ]
 
 
-baseOption : Cli.Spec.CliSpec (Maybe String) (Maybe String)
+baseOption : Spec.CliSpec (Maybe String) (Maybe String)
 baseOption =
-    Cli.Spec.optionalKeywordArg "base"
-        |> Cli.Spec.validateIfPresent
+    Spec.optionalKeywordArg "base"
+        |> Spec.validateIfPresent
             (Cli.Validate.regex "^[A-Z][A-Za-z_]*(\\.[A-Z][A-Za-z_]*)*$")
 
 
