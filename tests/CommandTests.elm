@@ -1,7 +1,7 @@
 module CommandTests exposing (all)
 
+import Cli.Command as Command
 import Cli.Validate as Validate
-import Command
 import Expect exposing (Expectation)
 import Test exposing (..)
 

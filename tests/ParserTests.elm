@@ -1,6 +1,6 @@
 module ParserTests exposing (all)
 
-import Command
+import Cli.Command as Command
 import Expect exposing (Expectation)
 import Parser exposing (ParsedOption(..))
 import Test exposing (..)

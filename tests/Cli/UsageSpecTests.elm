@@ -1,6 +1,6 @@
 module Cli.UsageSpecTests exposing (all)
 
-import Command
+import Cli.Command as Command
 import Expect exposing (Expectation)
 import Test exposing (..)
 

@@ -1,9 +1,9 @@
 port module Graphqelm exposing (main)
 
 import Cli
+import Cli.Command as Command exposing (with)
 import Cli.Spec
 import Cli.Validate
-import Command exposing (with)
 import Json.Decode exposing (..)
 
 

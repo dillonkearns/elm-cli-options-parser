@@ -1,7 +1,7 @@
 module Cli exposing (helpText, try)
 
+import Cli.Command as Command exposing (Command)
 import Cli.Decode
-import Command exposing (Command)
 
 
 try : List (Command msg) -> List String -> Maybe (Result (List Cli.Decode.ValidationError) msg)

@@ -1,7 +1,7 @@
 port module Simple exposing (main)
 
 import Cli
-import Command
+import Cli.Command as Command
 import Json.Decode exposing (..)
 
 
