@@ -26,22 +26,22 @@ cli =
     , Command.buildWithDoc FromUrl "generate files based on the schema at `url`"
         |> with (Cli.Spec.positionalArg "url")
         |> with baseOption
-        |> with (Command.optionalKeywordArg "output")
-        |> with (Command.flag "excludeDeprecated")
-        |> with (Command.keywordArgList "header")
+        |> with (Cli.Spec.optionalKeywordArg "output")
+        |> with (Cli.Spec.flag "excludeDeprecated")
+        |> with (Cli.Spec.keywordArgList "header")
         |> Command.toCommand
     , Command.build FromFile
-        |> with (Command.requiredKeywordArg "introspection-file")
+        |> with (Cli.Spec.requiredKeywordArg "introspection-file")
         |> with baseOption
-        |> with (Command.optionalKeywordArg "output")
-        |> with (Command.flag "excludeDeprecated")
+        |> with (Cli.Spec.optionalKeywordArg "output")
+        |> with (Cli.Spec.flag "excludeDeprecated")
         |> Command.toCommand
     ]
 
 
 baseOption : Cli.Spec.CliSpec (Maybe String) (Maybe String)
 baseOption =
-    Command.optionalKeywordArg "base"
+    Cli.Spec.optionalKeywordArg "base"
         |> Command.validateIfPresent
             (Cli.Validate.regex "^[A-Z][A-Za-z_]*(\\.[A-Z][A-Za-z_]*)*$")
 
