@@ -1,12 +1,16 @@
-module Cli.Validate exposing (regex)
+module Cli.Validate exposing (ValidationResult(..), regex)
 
-import Command
 import Regex
 
 
-regex : String -> String -> Command.ValidationResult
+type ValidationResult
+    = Valid
+    | Invalid String
+
+
+regex : String -> String -> ValidationResult
 regex regexPattern checkString =
     if Regex.contains (Regex.regex regexPattern) checkString then
-        Command.Valid
+        Valid
     else
-        Command.Invalid ("Must be of form /" ++ regexPattern ++ "/")
+        Invalid ("Must be of form /" ++ regexPattern ++ "/")

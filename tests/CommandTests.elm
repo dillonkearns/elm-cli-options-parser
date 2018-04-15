@@ -1,5 +1,6 @@
 module CommandTests exposing (all)
 
+import Cli.Validate as Validate
 import Command
 import Expect exposing (Expectation)
 import Test exposing (..)
@@ -189,7 +190,7 @@ all =
                         (Command.build identity
                             |> Command.with
                                 (Command.requiredKeywordArg "name"
-                                    |> Command.validate (\_ -> Command.Invalid "Invalid")
+                                    |> Command.validate (\_ -> Validate.Invalid "Invalid")
                                 )
                             |> Command.toCommand
                         )
@@ -203,9 +204,9 @@ all =
                                     |> Command.validate
                                         (\name ->
                                             if String.length name == 3 then
-                                                Command.Valid
+                                                Validate.Valid
                                             else
-                                                Command.Invalid "Must be 3 characters long"
+                                                Validate.Invalid "Must be 3 characters long"
                                         )
                                 )
                             |> Command.toCommand
@@ -220,9 +221,9 @@ all =
                                     |> Command.validate
                                         (\name ->
                                             if String.length name == 3 then
-                                                Command.Valid
+                                                Validate.Valid
                                             else
-                                                Command.Invalid "Must be 3 characters long"
+                                                Validate.Invalid "Must be 3 characters long"
                                         )
                                 )
                             |> Command.toCommand

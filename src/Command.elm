@@ -1,8 +1,9 @@
-module Command exposing (Command, CommandBuilder, ValidationResult(..), build, buildWithDoc, captureRestOperands, expectFlag, flag, getUsageSpecs, hardcoded, keywordArgList, mapNew, optionalKeywordArg, positionalArg, requiredKeywordArg, synopsis, toCommand, tryMatch, validate, validateIfPresent, with, withDefault)
+module Command exposing (Command, CommandBuilder, build, buildWithDoc, captureRestOperands, expectFlag, flag, getUsageSpecs, hardcoded, keywordArgList, mapNew, optionalKeywordArg, positionalArg, requiredKeywordArg, synopsis, toCommand, tryMatch, validate, validateIfPresent, with, withDefault)
 
 import Cli.Decode
 import Cli.Spec exposing (CliSpec(..))
 import Cli.UsageSpec exposing (..)
+import Cli.Validate exposing (ValidationResult(Invalid, Valid))
 import List.Extra
 import Occurences exposing (Occurences(..))
 import Parser exposing (ParsedOption)
@@ -371,11 +372,6 @@ flag flagName =
 mapNew : (toRaw -> toMapped) -> CliSpec from toRaw -> CliSpec from toMapped
 mapNew mapFn (CliSpec dataGrabber usageSpec ((Cli.Decode.Decoder decodeFn) as decoder)) =
     CliSpec dataGrabber usageSpec (Cli.Decode.map mapFn decoder)
-
-
-type ValidationResult
-    = Valid
-    | Invalid String
 
 
 validateMap : (to -> Result String toMapped) -> CliSpec from to -> CliSpec from toMapped
