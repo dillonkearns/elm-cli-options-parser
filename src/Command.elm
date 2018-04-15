@@ -224,10 +224,6 @@ resultMap mapFunction result =
 
 expectFlag : String -> CommandBuilder msg -> CommandBuilder msg
 expectFlag flagName (CommandBuilder ({ usageSpecs, decoder } as command)) =
-    let
-        formattedFlag =
-            "--" ++ flagName
-    in
     CommandBuilder
         { command
             | usageSpecs = usageSpecs ++ [ Option (Flag flagName) Required ]
@@ -239,7 +235,7 @@ expectFlag flagName (CommandBuilder ({ usageSpecs, decoder } as command)) =
                     then
                         decoder stuff
                     else
-                        ("Expect flag " ++ formattedFlag)
+                        ("Expect flag " ++ ("--" ++ flagName))
                             |> Err
         }
 
