@@ -42,7 +42,7 @@ cli =
 baseOption : Cli.Spec.CliSpec (Maybe String) (Maybe String)
 baseOption =
     Cli.Spec.optionalKeywordArg "base"
-        |> Command.validateIfPresent
+        |> Cli.Spec.validateIfPresent
             (Cli.Validate.regex "^[A-Z][A-Za-z_]*(\\.[A-Z][A-Za-z_]*)*$")
 
 

@@ -1,9 +1,8 @@
 module Cli.Spec exposing (..)
 
--- (CliSpec(..), positionalArg)
-
 import Cli.Decode
 import Cli.UsageSpec exposing (..)
+import Cli.Validate as Validate
 import List.Extra
 import Occurences exposing (Occurences(Optional, Required, ZeroOrMore))
 import Parser
@@ -15,6 +14,49 @@ type CliSpec from to
 
 type alias DataGrabber decodesTo =
     { usageSpecs : List UsageSpec, operands : List String, options : List Parser.ParsedOption, operandsSoFar : Int } -> Result String decodesTo
+
+
+validate : (to -> Validate.ValidationResult) -> CliSpec from to -> CliSpec from to
+validate validateFunction (CliSpec dataGrabber usageSpec (Cli.Decode.Decoder decodeFn)) =
+    CliSpec dataGrabber
+        usageSpec
+        (Cli.Decode.Decoder
+            (decodeFn
+                >> (\result ->
+                        Result.map
+                            (\( validationErrors, value ) ->
+                                case validateFunction value of
+                                    Validate.Valid ->
+                                        ( validationErrors, value )
+
+                                    Validate.Invalid invalidReason ->
+                                        ( validationErrors
+                                            ++ [ { name = Cli.UsageSpec.name usageSpec
+                                                 , invalidReason = invalidReason
+                                                 , valueAsString = toString value
+                                                 }
+                                               ]
+                                        , value
+                                        )
+                            )
+                            result
+                   )
+            )
+        )
+
+
+validateIfPresent : (to -> Validate.ValidationResult) -> CliSpec from (Maybe to) -> CliSpec from (Maybe to)
+validateIfPresent validateFunction cliSpec =
+    validate
+        (\maybeValue ->
+            case maybeValue of
+                Just value ->
+                    validateFunction value
+
+                Nothing ->
+                    Validate.Valid
+        )
+        cliSpec
 
 
 positionalArg : String -> CliSpec String String
