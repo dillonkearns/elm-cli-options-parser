@@ -1,7 +1,7 @@
 module Command exposing (Command, CommandBuilder, ValidationResult(..), build, buildWithDoc, captureRestOperands, expectFlag, flag, getUsageSpecs, hardcoded, keywordArgList, mapNew, optionalKeywordArg, positionalArg, requiredKeywordArg, synopsis, toCommand, tryMatch, validate, validateIfPresent, with, withDefault)
 
 import Cli.Decode
-import Cli.Unit exposing (CliUnit(..))
+import Cli.Spec exposing (CliSpec(..))
 import Cli.UsageSpec exposing (..)
 import List.Extra
 import Occurences exposing (Occurences(..))
@@ -261,9 +261,9 @@ operandCount usageSpecs =
         |> List.length
 
 
-keywordArgList : String -> CliUnit (List String) (List String)
+keywordArgList : String -> CliSpec (List String) (List String)
 keywordArgList flagName =
-    CliUnit
+    CliSpec
         (\{ options } ->
             options
                 |> List.filterMap
@@ -285,9 +285,9 @@ keywordArgList flagName =
         Cli.Decode.decoder
 
 
-positionalArg : String -> CliUnit String String
+positionalArg : String -> CliSpec String String
 positionalArg operandDescription =
-    CliUnit
+    CliSpec
         (\{ usageSpecs, operands, operandsSoFar } ->
             case
                 operands
@@ -303,14 +303,14 @@ positionalArg operandDescription =
         Cli.Decode.decoder
 
 
-withDefault : value -> CliUnit (Maybe value) (Maybe value) -> CliUnit (Maybe value) value
-withDefault defaultValue (CliUnit dataGrabber usageSpec decoder) =
-    CliUnit dataGrabber usageSpec (decoder |> Cli.Decode.map (Maybe.withDefault defaultValue))
+withDefault : value -> CliSpec (Maybe value) (Maybe value) -> CliSpec (Maybe value) value
+withDefault defaultValue (CliSpec dataGrabber usageSpec decoder) =
+    CliSpec dataGrabber usageSpec (decoder |> Cli.Decode.map (Maybe.withDefault defaultValue))
 
 
-optionalKeywordArg : String -> CliUnit (Maybe String) (Maybe String)
+optionalKeywordArg : String -> CliSpec (Maybe String) (Maybe String)
 optionalKeywordArg optionName =
-    CliUnit
+    CliSpec
         (\{ operands, options } ->
             case
                 options
@@ -330,9 +330,9 @@ optionalKeywordArg optionName =
         Cli.Decode.decoder
 
 
-requiredKeywordArg : String -> CliUnit String String
+requiredKeywordArg : String -> CliSpec String String
 requiredKeywordArg optionName =
-    CliUnit
+    CliSpec
         (\{ operands, options } ->
             case
                 options
@@ -352,9 +352,9 @@ requiredKeywordArg optionName =
         Cli.Decode.decoder
 
 
-flag : String -> CliUnit Bool Bool
+flag : String -> CliSpec Bool Bool
 flag flagName =
-    CliUnit
+    CliSpec
         (\{ options } ->
             if
                 options
@@ -368,9 +368,9 @@ flag flagName =
         Cli.Decode.decoder
 
 
-mapNew : (toRaw -> toMapped) -> CliUnit from toRaw -> CliUnit from toMapped
-mapNew mapFn (CliUnit dataGrabber usageSpec ((Cli.Decode.Decoder decodeFn) as decoder)) =
-    CliUnit dataGrabber usageSpec (Cli.Decode.map mapFn decoder)
+mapNew : (toRaw -> toMapped) -> CliSpec from toRaw -> CliSpec from toMapped
+mapNew mapFn (CliSpec dataGrabber usageSpec ((Cli.Decode.Decoder decodeFn) as decoder)) =
+    CliSpec dataGrabber usageSpec (Cli.Decode.map mapFn decoder)
 
 
 type ValidationResult
@@ -378,14 +378,14 @@ type ValidationResult
     | Invalid String
 
 
-validateMap : (to -> Result String toMapped) -> CliUnit from to -> CliUnit from toMapped
-validateMap function tofromCliUnit =
+validateMap : (to -> Result String toMapped) -> CliSpec from to -> CliSpec from toMapped
+validateMap function tofromCliSpec =
     Debug.crash ""
 
 
-validate : (to -> ValidationResult) -> CliUnit from to -> CliUnit from to
-validate validateFunction (CliUnit dataGrabber usageSpec (Cli.Decode.Decoder decodeFn)) =
-    CliUnit dataGrabber
+validate : (to -> ValidationResult) -> CliSpec from to -> CliSpec from to
+validate validateFunction (CliSpec dataGrabber usageSpec (Cli.Decode.Decoder decodeFn)) =
+    CliSpec dataGrabber
         usageSpec
         (Cli.Decode.Decoder
             (decodeFn
@@ -412,8 +412,8 @@ validate validateFunction (CliUnit dataGrabber usageSpec (Cli.Decode.Decoder dec
         )
 
 
-validateIfPresent : (to -> ValidationResult) -> CliUnit from (Maybe to) -> CliUnit from (Maybe to)
-validateIfPresent validateFunction cliUnit =
+validateIfPresent : (to -> ValidationResult) -> CliSpec from (Maybe to) -> CliSpec from (Maybe to)
+validateIfPresent validateFunction cliSpec =
     validate
         (\maybeValue ->
             case maybeValue of
@@ -423,11 +423,11 @@ validateIfPresent validateFunction cliUnit =
                 Nothing ->
                     Valid
         )
-        cliUnit
+        cliSpec
 
 
-with : CliUnit from to -> CommandBuilder (to -> msg) -> CommandBuilder msg
-with (CliUnit dataGrabber usageSpec (Cli.Decode.Decoder decodeFn)) ((CommandBuilder ({ decoder, usageSpecs } as command)) as fullCommand) =
+with : CliSpec from to -> CommandBuilder (to -> msg) -> CommandBuilder msg
+with (CliSpec dataGrabber usageSpec (Cli.Decode.Decoder decodeFn)) ((CommandBuilder ({ decoder, usageSpecs } as command)) as fullCommand) =
     CommandBuilder
         { command
             | decoder =

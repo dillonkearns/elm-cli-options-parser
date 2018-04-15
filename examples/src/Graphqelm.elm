@@ -1,7 +1,7 @@
 port module Graphqelm exposing (main)
 
 import Cli
-import Cli.Unit
+import Cli.Spec
 import Cli.Validate
 import Command exposing (with)
 import Json.Decode exposing (..)
@@ -24,7 +24,7 @@ cli =
         |> Command.expectFlag "help"
         |> Command.toCommand
     , Command.buildWithDoc FromUrl "generate files based on the schema at `url`"
-        |> with (Cli.Unit.positionalArg "url")
+        |> with (Cli.Spec.positionalArg "url")
         |> with baseOption
         |> with (Command.optionalKeywordArg "output")
         |> with (Command.flag "excludeDeprecated")
@@ -39,7 +39,7 @@ cli =
     ]
 
 
-baseOption : Cli.Unit.CliUnit (Maybe String) (Maybe String)
+baseOption : Cli.Spec.CliSpec (Maybe String) (Maybe String)
 baseOption =
     Command.optionalKeywordArg "base"
         |> Command.validateIfPresent
