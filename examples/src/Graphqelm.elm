@@ -1,7 +1,7 @@
 port module Graphqelm exposing (main)
 
 import Cli
-import Cli.Command as Command exposing (with)
+import Cli.Command as Command exposing (Command, with)
 import Cli.Spec
 import Cli.Validate
 import Json.Decode exposing (..)
@@ -15,7 +15,7 @@ type CliCommand
     | FromFile String (Maybe String) (Maybe String) Bool
 
 
-cli : List (Command.Command CliCommand)
+cli : List (Command CliCommand)
 cli =
     [ Command.build PrintVersion
         |> Command.expectFlag "version"
