@@ -56,14 +56,6 @@ type alias Flags =
     List String
 
 
-type alias Model =
-    ()
-
-
-type alias Msg =
-    ()
-
-
 init : Flags -> ( Model, Cmd Msg )
 init flags =
     let
@@ -108,18 +100,21 @@ init flags =
     ( (), print toPrint )
 
 
-update : Msg -> Model -> ( Model, Cmd Msg )
-update msg model =
-    ( model, Cmd.none )
-
-
 port print : String -> Cmd msg
+
+
+type alias Model =
+    ()
+
+
+type alias Msg =
+    ()
 
 
 main : Program Flags Model Msg
 main =
     Platform.programWithFlags
         { init = init
-        , update = update
+        , update = \msg model -> ( model, Cmd.none )
         , subscriptions = \_ -> Sub.none
         }
