@@ -41,7 +41,7 @@ all =
                 \() ->
                     expectMatch [ "http://my-domain.com" ]
                         (Command.build OpenUrl
-                            |> Command.with (Command.positionalArg "url")
+                            |> Command.with (Spec.positionalArg "url")
                             |> Command.toCommand
                         )
                         (OpenUrl "http://my-domain.com")
@@ -49,8 +49,8 @@ all =
                 \() ->
                     expectMatch [ "http://my-domain.com", "./file.txt" ]
                         (Command.build (,)
-                            |> Command.with (Command.positionalArg "url")
-                            |> Command.with (Command.positionalArg "path/to/file")
+                            |> Command.with (Spec.positionalArg "url")
+                            |> Command.with (Spec.positionalArg "path/to/file")
                             |> Command.toCommand
                         )
                         ( "http://my-domain.com", "./file.txt" )
@@ -58,8 +58,8 @@ all =
                 \() ->
                     expectMatch [ "http://my-domain.com" ]
                         (Command.build OpenUrlWithFlag
-                            |> Command.with (Command.positionalArg "url")
-                            |> Command.with (Command.flag "flag")
+                            |> Command.with (Spec.positionalArg "url")
+                            |> Command.with (Spec.flag "flag")
                             |> Command.toCommand
                         )
                         (OpenUrlWithFlag "http://my-domain.com" False)
@@ -67,8 +67,8 @@ all =
                 \() ->
                     expectMatch [ "http://my-domain.com", "--flag" ]
                         (Command.build OpenUrlWithFlag
-                            |> Command.with (Command.positionalArg "url")
-                            |> Command.with (Command.flag "flag")
+                            |> Command.with (Spec.positionalArg "url")
+                            |> Command.with (Spec.flag "flag")
                             |> Command.toCommand
                         )
                         (OpenUrlWithFlag "http://my-domain.com" True)
@@ -92,8 +92,8 @@ all =
                 \() ->
                     expectMatch [ "--name", "Deanna", "--prefix", "Hello" ]
                         (Command.build (,)
-                            |> Command.with (Command.requiredKeywordArg "name")
-                            |> Command.with (Command.optionalKeywordArg "prefix")
+                            |> Command.with (Spec.requiredKeywordArg "name")
+                            |> Command.with (Spec.optionalKeywordArg "prefix")
                             |> Command.toCommand
                         )
                         ( "Deanna", Just "Hello" )
@@ -101,7 +101,7 @@ all =
                 \() ->
                     expectMatch [ "--name", "Deanna" ]
                         (Command.build Name
-                            |> Command.with (Command.requiredKeywordArg "name")
+                            |> Command.with (Spec.requiredKeywordArg "name")
                             |> Command.toCommand
                         )
                         (Name "Deanna")
@@ -114,8 +114,8 @@ all =
                         , "Deanna"
                         ]
                         (Command.build FullName
-                            |> Command.with (Command.requiredKeywordArg "first-name")
-                            |> Command.with (Command.requiredKeywordArg "last-name")
+                            |> Command.with (Spec.requiredKeywordArg "first-name")
+                            |> Command.with (Spec.requiredKeywordArg "last-name")
                             |> Command.toCommand
                         )
                         (FullName "Deanna" "Troi")
@@ -129,8 +129,8 @@ all =
                         , "unexpectedOperand"
                         ]
                         (Command.build FullName
-                            |> Command.with (Command.requiredKeywordArg "first-name")
-                            |> Command.with (Command.requiredKeywordArg "last-name")
+                            |> Command.with (Spec.requiredKeywordArg "first-name")
+                            |> Command.with (Spec.requiredKeywordArg "last-name")
                             |> Command.toCommand
                         )
                         |> Expect.equal Nothing
@@ -143,7 +143,7 @@ all =
                         , "def456"
                         ]
                         (Command.build identity
-                            |> Command.with (Command.keywordArgList "header")
+                            |> Command.with (Spec.keywordArgList "header")
                             |> Command.toCommand
                         )
                         [ "abc123", "def456" ]
@@ -154,7 +154,7 @@ all =
                         , "--unexpected-option"
                         ]
                         (Command.build identity
-                            |> Command.with (Command.flag "verbose")
+                            |> Command.with (Spec.flag "verbose")
                             |> Command.toCommand
                         )
                         |> Expect.equal Nothing
@@ -179,7 +179,7 @@ all =
                     expectMatch [ "--something", "operand1", "rest1", "rest2" ]
                         (Command.build (,)
                             |> Command.expectFlag "something"
-                            |> Command.with (Command.positionalArg "operand")
+                            |> Command.with (Spec.positionalArg "operand")
                             |> Command.captureRestOperands "files"
                         )
                         ( "operand1", [ "rest1", "rest2" ] )
@@ -190,8 +190,8 @@ all =
                     Command.tryMatch [ "--name", "Bob" ]
                         (Command.build identity
                             |> Command.with
-                                (Command.requiredKeywordArg "name"
-                                    |> Command.validate (\_ -> Validate.Invalid "Invalid")
+                                (Spec.requiredKeywordArg "name"
+                                    |> Spec.validate (\_ -> Validate.Invalid "Invalid")
                                 )
                             |> Command.toCommand
                         )
@@ -201,7 +201,7 @@ all =
                     Command.tryMatch [ "--name", "Robert" ]
                         (Command.build identity
                             |> Command.with
-                                (Command.requiredKeywordArg "name"
+                                (Spec.requiredKeywordArg "name"
                                     |> Command.validate
                                         (\name ->
                                             if String.length name == 3 then
@@ -218,8 +218,8 @@ all =
                     expectMatch [ "--name", "Bob" ]
                         (Command.build identity
                             |> Command.with
-                                (Command.requiredKeywordArg "name"
-                                    |> Command.validate
+                                (Spec.requiredKeywordArg "name"
+                                    |> Spec.validate
                                         (\name ->
                                             if String.length name == 3 then
                                                 Validate.Valid
@@ -238,8 +238,8 @@ all =
                         [ "hello" ]
                         (Command.build identity
                             |> Command.with
-                                (Command.positionalArg "operand"
-                                    |> Command.mapNew String.length
+                                (Spec.positionalArg "operand"
+                                    |> Spec.map String.length
                                 )
                             |> Command.toCommand
                         )
@@ -250,8 +250,8 @@ all =
                         []
                         (Command.build identity
                             |> Command.with
-                                (Command.optionalKeywordArg "output"
-                                    |> Command.withDefault "elm.js"
+                                (Spec.optionalKeywordArg "output"
+                                    |> Spec.withDefault "elm.js"
                                 )
                             |> Command.toCommand
                         )
@@ -262,7 +262,7 @@ all =
                         [ "--output=bundle.js" ]
                         (Command.build identity
                             |> Command.with
-                                (Command.optionalKeywordArg "output"
+                                (Spec.optionalKeywordArg "output"
                                     |> Spec.withDefault "elm.js"
                                 )
                             |> Command.toCommand
