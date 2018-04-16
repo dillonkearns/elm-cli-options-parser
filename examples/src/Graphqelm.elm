@@ -7,7 +7,7 @@ import Cli.Validate
 import Json.Decode exposing (..)
 
 
-type CliCommand
+type GraphqelmCommand
     = PrintVersion
     | PrintHelp
     | NoOp
@@ -15,7 +15,7 @@ type CliCommand
     | FromFile String (Maybe String) (Maybe String) Bool
 
 
-cli : List (Command CliCommand)
+cli : List (Command GraphqelmCommand)
 cli =
     [ Command.build PrintVersion
         |> Command.expectFlag "version"
