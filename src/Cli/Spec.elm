@@ -137,9 +137,18 @@ flag flagName =
         Cli.Decode.decoder
 
 
-mapNew : (toRaw -> toMapped) -> CliSpec from toRaw -> CliSpec from toMapped
-mapNew mapFn (CliSpec dataGrabber usageSpec ((Cli.Decode.Decoder decodeFn) as decoder)) =
+map : (toRaw -> toMapped) -> CliSpec from toRaw -> CliSpec from toMapped
+map mapFn (CliSpec dataGrabber usageSpec ((Cli.Decode.Decoder decodeFn) as decoder)) =
     CliSpec dataGrabber usageSpec (Cli.Decode.map mapFn decoder)
+
+
+
+-- withDefault : toMapped -> CliSpec from toRaw -> CliSpec from toMapped
+
+
+withDefault : to -> CliSpec from (Maybe to) -> CliSpec from to
+withDefault defaultValue (CliSpec dataGrabber usageSpec ((Cli.Decode.Decoder decodeFn) as decoder)) =
+    CliSpec dataGrabber usageSpec (Cli.Decode.map (Maybe.withDefault defaultValue) decoder)
 
 
 keywordArgList : String -> CliSpec (List String) (List String)

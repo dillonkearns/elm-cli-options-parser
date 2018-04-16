@@ -1,6 +1,7 @@
 module CommandTests exposing (all)
 
 import Cli.Command as Command
+import Cli.Spec as Spec
 import Cli.Validate as Validate
 import Expect exposing (Expectation)
 import Test exposing (..)
@@ -262,7 +263,7 @@ all =
                         (Command.build identity
                             |> Command.with
                                 (Command.optionalKeywordArg "output"
-                                    |> Command.withDefault "elm.js"
+                                    |> Spec.withDefault "elm.js"
                                 )
                             |> Command.toCommand
                         )
