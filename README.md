@@ -4,11 +4,3 @@
 * https://pythonconquerstheuniverse.wordpress.com/2010/07/25/command-line-syntax-some-basic-concepts/
 * https://devcenter.heroku.com/articles/cli-style-guide
 * http://docopt.org/
-
-## Potential Names
-
-* elm-cli
-* elm-cli-builder
-* elm-cli-parser
-* elm-command-line-parser
-* elm-cli-options-parser
