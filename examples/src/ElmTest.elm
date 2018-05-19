@@ -42,9 +42,7 @@ init : Flags -> ( Model, Cmd Msg )
 init flags =
     let
         msg =
-            flags
-                |> List.drop 2
-                |> Cli.try cli
+            Cli.try cli flags
 
         toPrint =
             case msg |> Maybe.withDefault (Ok NoOp) of

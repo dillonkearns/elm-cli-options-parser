@@ -7,7 +7,11 @@ import Cli.Decode
 try : List (Command msg) -> List String -> Maybe (Result (List Cli.Decode.ValidationError) msg)
 try commands argv =
     commands
-        |> List.map (Command.tryMatch argv)
+        |> List.map
+            (argv
+                |> List.drop 2
+                |> Command.tryMatch
+            )
         |> oneOf
 
 
