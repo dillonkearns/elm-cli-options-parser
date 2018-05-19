@@ -185,23 +185,22 @@ all =
                         ( "operand1", [ "rest1", "rest2" ] )
             ]
         , describe "sub commands"
-            [ test "doesn't match if sub command doesn't match" <|
+            [ -- test "doesn't match if sub command doesn't match" <|
+              --    \() ->
+              --        expectNoMatch [ "start" ]
+              --            (Command.subCommand "help" identity
+              --                |> Command.hardcoded ()
+              --                |> Command.toCommand
+              --            )
+              --            ()
+              test "matches if sub command is first word" <|
                 \() ->
-                    expectNoMatch [ "start" ]
+                    expectMatch [ "help" ]
                         (Command.subCommand "help" identity
                             |> Command.hardcoded ()
                             |> Command.toCommand
                         )
                         ()
-
-            -- test "matches if sub command is first word" <|
-            --     \() ->
-            --         expectMatch [ "help" ]
-            --             (Command.subCommand "help" identity
-            --                 |> Command.hardcoded ()
-            --                 |> Command.toCommand
-            --             )
-            --             ()
             ]
         , describe "validation"
             [ test "forced err validation makes it not match" <|

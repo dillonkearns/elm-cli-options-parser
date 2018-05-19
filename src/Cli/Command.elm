@@ -22,22 +22,29 @@ synopsis programName command =
 
 
 tryMatch : List String -> Command msg -> Maybe (Result (List Cli.Decode.ValidationError) msg)
-tryMatch argv ((Command { decoder, usageSpecs }) as command) =
+tryMatch argv ((Command { decoder, usageSpecs, subCommand }) as command) =
     let
         decoder =
             command
                 |> expectedOperandCountOrFail
                 |> failIfUnexpectedOptionsNew
-                |> checkSubCommandOrFail
                 |> getDecoder
     in
     decoder
         (Parser.flagsAndOperands usageSpecs argv
             |> (\record ->
-                    { options = record.options
-                    , operands = record.operands
-                    , usageSpecs = usageSpecs
-                    }
+                    case subCommand of
+                        Nothing ->
+                            { options = record.options
+                            , operands = record.operands
+                            , usageSpecs = usageSpecs
+                            }
+
+                        Just subCommandName ->
+                            { options = record.options
+                            , operands = record.operands |> List.drop 1
+                            , usageSpecs = usageSpecs
+                            }
                )
         )
         |> (\result ->
