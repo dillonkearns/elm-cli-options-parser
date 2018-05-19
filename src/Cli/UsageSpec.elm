@@ -33,10 +33,11 @@ name usageSpec =
             name
 
 
-synopsis : String -> { command | usageSpecs : List UsageSpec, description : Maybe String } -> String
-synopsis programName { usageSpecs, description } =
+synopsis : String -> { command | usageSpecs : List UsageSpec, description : Maybe String, subCommand : Maybe String } -> String
+synopsis programName { usageSpecs, description, subCommand } =
     programName
         ++ " "
+        ++ (subCommand |> Maybe.withDefault "")
         ++ (usageSpecs
                 |> List.map
                     (\spec ->
