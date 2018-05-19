@@ -2,8 +2,6 @@ module ElmTest exposing (main)
 
 import Cli
 import Cli.Command as Command exposing (Command, with)
-import Cli.Spec as Spec
-import Cli.Validate
 import Json.Decode exposing (..)
 import Ports
 
@@ -18,13 +16,6 @@ cli =
         |> Command.hardcoded ()
         |> Command.toCommand
     ]
-
-
-baseOption : Spec.CliSpec (Maybe String) (Maybe String)
-baseOption =
-    Spec.optionalKeywordArg "base"
-        |> Spec.validateIfPresent
-            (Cli.Validate.regex "^[A-Z][A-Za-z_]*(\\.[A-Z][A-Za-z_]*)*$")
 
 
 dummy : Decoder String
