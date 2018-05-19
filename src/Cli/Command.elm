@@ -1,4 +1,4 @@
-module Cli.Command exposing (Command, CommandBuilder, build, buildWithDoc, captureRestOperands, expectFlag, flag, getUsageSpecs, hardcoded, keywordArgList, mapNew, optionalKeywordArg, positionalArg, requiredKeywordArg, synopsis, toCommand, tryMatch, validate, validateIfPresent, with, withDefault)
+module Cli.Command exposing (Command, CommandBuilder, build, buildWithDoc, captureRestOperands, expectFlag, flag, getUsageSpecs, hardcoded, keywordArgList, mapNew, optionalKeywordArg, positionalArg, requiredKeywordArg, subCommand, synopsis, toCommand, tryMatch, validate, validateIfPresent, with, withDefault)
 
 import Cli.Decode
 import Cli.Spec exposing (CliSpec(..))
@@ -28,6 +28,7 @@ tryMatch argv ((Command { decoder, usageSpecs }) as command) =
             command
                 |> expectedOperandCountOrFail
                 |> failIfUnexpectedOptionsNew
+                |> checkSubCommandOrFail
                 |> getDecoder
     in
     decoder
@@ -64,6 +65,28 @@ hasRestArgs usageSpecs =
                     False
         )
         usageSpecs
+
+
+checkSubCommandOrFail : Command msg -> Command msg
+checkSubCommandOrFail ((Command ({ decoder, usageSpecs, subCommand } as command)) as fullCommand) =
+    Command
+        { command
+            | decoder =
+                \({ operands } as stuff) ->
+                    case subCommand of
+                        Just subCommandName ->
+                            let
+                                actualSubCommand =
+                                    List.head operands
+                            in
+                            if Just subCommandName == actualSubCommand then
+                                decoder stuff
+                            else
+                                Err ("Expected " ++ subCommandName ++ " sub command, but was " ++ toString actualSubCommand)
+
+                        Nothing ->
+                            decoder stuff
+        }
 
 
 expectedOperandCountOrFail : Command msg -> Command msg
@@ -157,6 +180,7 @@ type CommandBuilder msg
         { decoder : { usageSpecs : List UsageSpec, options : List ParsedOption, operands : List String } -> Result String ( List Cli.Decode.ValidationError, msg )
         , usageSpecs : List UsageSpec
         , description : Maybe String
+        , subCommand : Maybe String
         }
 
 
@@ -178,6 +202,7 @@ captureRestOperands restOperandsDescription (CommandBuilder ({ usageSpecs, descr
                             |> List.drop (operandCount usageSpecs)
                 in
                 resultMap (\fn -> fn restOperands) (decoder stuff)
+        , subCommand = record.subCommand
         }
 
 
@@ -186,6 +211,7 @@ type Command msg
         { decoder : { usageSpecs : List UsageSpec, options : List ParsedOption, operands : List String } -> Result String ( List Cli.Decode.ValidationError, msg )
         , usageSpecs : List UsageSpec
         , description : Maybe String
+        , subCommand : Maybe String
         }
 
 
@@ -195,6 +221,17 @@ build msgConstructor =
         { usageSpecs = []
         , description = Nothing
         , decoder = \_ -> Ok ( [], msgConstructor )
+        , subCommand = Nothing
+        }
+
+
+subCommand : String -> msg -> CommandBuilder msg
+subCommand subCommandName msgConstructor =
+    CommandBuilder
+        { usageSpecs = []
+        , description = Nothing
+        , decoder = \_ -> Ok ( [], msgConstructor )
+        , subCommand = Just subCommandName
         }
 
 
@@ -204,6 +241,7 @@ buildWithDoc msgConstructor docString =
         { usageSpecs = []
         , description = Just docString
         , decoder = \_ -> Ok ( [], msgConstructor )
+        , subCommand = Nothing
         }
 
 

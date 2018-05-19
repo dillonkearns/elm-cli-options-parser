@@ -184,6 +184,25 @@ all =
                         )
                         ( "operand1", [ "rest1", "rest2" ] )
             ]
+        , describe "sub commands"
+            [ test "doesn't match if sub command doesn't match" <|
+                \() ->
+                    expectNoMatch [ "start" ]
+                        (Command.subCommand "help" identity
+                            |> Command.hardcoded ()
+                            |> Command.toCommand
+                        )
+                        ()
+
+            -- test "matches if sub command is first word" <|
+            --     \() ->
+            --         expectMatch [ "help" ]
+            --             (Command.subCommand "help" identity
+            --                 |> Command.hardcoded ()
+            --                 |> Command.toCommand
+            --             )
+            --             ()
+            ]
         , describe "validation"
             [ test "forced err validation makes it not match" <|
                 \() ->
@@ -283,7 +302,11 @@ all =
 
 expectMatch : List String -> Command.Command a -> a -> Expectation
 expectMatch argv commands expectedValue =
-    Command.tryMatch
-        argv
-        commands
+    Command.tryMatch argv commands
         |> Expect.equal (Just (Ok expectedValue))
+
+
+expectNoMatch : List String -> Command.Command a -> a -> Expectation
+expectNoMatch argv commands expectedValue =
+    Command.tryMatch argv commands
+        |> Expect.equal Nothing
