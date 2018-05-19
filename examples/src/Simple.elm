@@ -37,37 +37,22 @@ type alias Model =
 type Msg
     = PrintVersion
     | PrintHelp
-    | NoOp
     | Greet String (Maybe String)
 
 
 init : Flags -> ( Model, Cmd Msg )
 init flags =
     let
-        msg =
+        matchResult =
             Cli.try cli flags
 
         toPrint =
-            case msg |> Maybe.withDefault (Ok NoOp) of
-                Ok PrintVersion ->
-                    "You are on version 3.1.4"
-
-                Ok PrintHelp ->
-                    Cli.helpText "greet" cli
-
-                Ok NoOp ->
+            case matchResult of
+                Cli.NoMatch ->
                     "\nNo matching command...\n\nUsage:\n\n"
                         ++ Cli.helpText "simple" cli
 
-                Ok (Greet name maybePrefix) ->
-                    case maybePrefix of
-                        Just greeting ->
-                            greeting ++ " " ++ name ++ "!"
-
-                        Nothing ->
-                            "Hello " ++ name ++ "!"
-
-                Err validationErrors ->
+                Cli.ValidationErrors validationErrors ->
                     "Validation errors:\n\n"
                         ++ (validationErrors
                                 |> List.map
@@ -81,8 +66,29 @@ init flags =
                                     )
                                 |> String.join "\n"
                            )
+
+                Cli.Match msg ->
+                    handleMsg msg
     in
     ( (), Ports.print toPrint )
+
+
+handleMsg : Msg -> String
+handleMsg msg =
+    case msg of
+        PrintVersion ->
+            "You are on version 3.1.4"
+
+        PrintHelp ->
+            Cli.helpText "greet" cli
+
+        Greet name maybePrefix ->
+            case maybePrefix of
+                Just greeting ->
+                    greeting ++ " " ++ name ++ "!"
+
+                Nothing ->
+                    "Hello " ++ name ++ "!"
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )

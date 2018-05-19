@@ -10,7 +10,6 @@ import Ports
 
 type ElmTestCommand
     = Init ()
-    | NoOp
 
 
 cli : List (Command ElmTestCommand)
@@ -41,19 +40,16 @@ type alias Flags =
 init : Flags -> ( Model, Cmd Msg )
 init flags =
     let
-        msg =
+        matchResult =
             Cli.try cli flags
 
         toPrint =
-            case msg |> Maybe.withDefault (Ok NoOp) of
-                Ok (Init ()) ->
-                    "Initializing test suite..."
-
-                Ok NoOp ->
+            case matchResult of
+                Cli.NoMatch ->
                     "\nNo matching command...\n\nUsage:\n\n"
-                        ++ Cli.helpText "elm-test" cli
+                        ++ Cli.helpText "simple" cli
 
-                Err validationErrors ->
+                Cli.ValidationErrors validationErrors ->
                     "Validation errors:\n\n"
                         ++ (validationErrors
                                 |> List.map
@@ -67,6 +63,11 @@ init flags =
                                     )
                                 |> String.join "\n"
                            )
+
+                Cli.Match msg ->
+                    case msg of
+                        Init () ->
+                            "Initializing test suite..."
     in
     ( (), Ports.print toPrint )
 

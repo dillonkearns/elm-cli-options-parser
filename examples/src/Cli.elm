@@ -1,10 +1,16 @@
-module Cli exposing (helpText, try)
+module Cli exposing (MatchResult(..), helpText, try)
 
 import Cli.Command as Command exposing (Command)
 import Cli.Decode
 
 
-try : List (Command msg) -> List String -> Maybe (Result (List Cli.Decode.ValidationError) msg)
+type MatchResult msg
+    = ValidationErrors (List Cli.Decode.ValidationError)
+    | NoMatch
+    | Match msg
+
+
+try : List (Command msg) -> List String -> MatchResult msg
 try commands argv =
     commands
         |> List.map
@@ -13,6 +19,19 @@ try commands argv =
                 |> Command.tryMatch
             )
         |> oneOf
+        |> (\maybeResult ->
+                case maybeResult of
+                    Just result ->
+                        case result of
+                            Ok msg ->
+                                Match msg
+
+                            Err validationErrors ->
+                                ValidationErrors validationErrors
+
+                    Nothing ->
+                        NoMatch
+           )
 
 
 oneOf : List (Maybe a) -> Maybe a

@@ -11,7 +11,6 @@ import Ports
 type GraphqelmCommand
     = PrintVersion
     | PrintHelp
-    | NoOp
     | FromUrl String (Maybe String) (Maybe String) Bool (List String)
     | FromFile String (Maybe String) (Maybe String) Bool
 
@@ -60,28 +59,16 @@ type alias Flags =
 init : Flags -> ( Model, Cmd Msg )
 init flags =
     let
-        msg =
+        matchResult =
             Cli.try cli flags
 
         toPrint =
-            case msg |> Maybe.withDefault (Ok NoOp) of
-                Ok PrintVersion ->
-                    "You are on version 3.1.4"
-
-                Ok PrintHelp ->
-                    Cli.helpText "graphqelm" cli
-
-                Ok NoOp ->
+            case matchResult of
+                Cli.NoMatch ->
                     "\nNo matching command...\n\nUsage:\n\n"
-                        ++ Cli.helpText "graphqelm" cli
+                        ++ Cli.helpText "simple" cli
 
-                Ok (FromUrl url base outputPath excludeDeprecated headers) ->
-                    "...fetching from url " ++ url ++ "\noptions: " ++ toString ( url, base, outputPath, excludeDeprecated, headers )
-
-                Ok (FromFile file base outputPath excludeDeprecated) ->
-                    "...fetching from file " ++ file ++ "\noptions: " ++ toString ( base, outputPath, excludeDeprecated )
-
-                Err validationErrors ->
+                Cli.ValidationErrors validationErrors ->
                     "Validation errors:\n\n"
                         ++ (validationErrors
                                 |> List.map
@@ -95,6 +82,20 @@ init flags =
                                     )
                                 |> String.join "\n"
                            )
+
+                Cli.Match msg ->
+                    case msg of
+                        PrintVersion ->
+                            "You are on version 3.1.4"
+
+                        PrintHelp ->
+                            Cli.helpText "graphqelm" cli
+
+                        FromUrl url base outputPath excludeDeprecated headers ->
+                            "...fetching from url " ++ url ++ "\noptions: " ++ toString ( url, base, outputPath, excludeDeprecated, headers )
+
+                        FromFile file base outputPath excludeDeprecated ->
+                            "...fetching from file " ++ file ++ "\noptions: " ++ toString ( base, outputPath, excludeDeprecated )
     in
     ( (), Ports.print toPrint )
 
