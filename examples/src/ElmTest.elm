@@ -1,10 +1,11 @@
-port module ElmTest exposing (main)
+module ElmTest exposing (main)
 
 import Cli
 import Cli.Command as Command exposing (Command, with)
 import Cli.Spec as Spec
 import Cli.Validate
 import Json.Decode exposing (..)
+import Ports
 
 
 type ElmTestCommand
@@ -69,10 +70,7 @@ init flags =
                                 |> String.join "\n"
                            )
     in
-    ( (), print toPrint )
-
-
-port print : String -> Cmd msg
+    ( (), Ports.print toPrint )
 
 
 type alias Model =

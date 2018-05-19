@@ -4,7 +4,9 @@
   "description": "Parse CLI options declaritively in Elm.",
   "main": "argv.js",
   "scripts": {
-    "test": "elm-test"
+    "test": "elm-test",
+    "build": "cd examples && elm-make src/*.elm --output src/elm.js && cd -"
+
   },
   "author": "Dillon Kearns",
   "license": "ISC",

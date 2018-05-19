@@ -1,8 +1,24 @@
-port module Simple exposing (main)
+module Simple exposing (main)
 
 import Cli
 import Cli.Command as Command
 import Json.Decode exposing (..)
+import Ports
+
+
+cli : List (Command.Command Msg)
+cli =
+    [ Command.build PrintVersion
+        |> Command.expectFlag "version"
+        |> Command.toCommand
+    , Command.build PrintHelp
+        |> Command.expectFlag "help"
+        |> Command.toCommand
+    , Command.build Greet
+        |> Command.with (Command.requiredKeywordArg "name")
+        |> Command.with (Command.optionalKeywordArg "greeting")
+        |> Command.toCommand
+    ]
 
 
 dummy : Decoder String
@@ -33,47 +49,48 @@ init flags =
                 |> List.drop 2
                 |> Cli.try
                     cli
-    in
-    update (msg |> Maybe.withDefault NoOp) ()
 
-
-cli : List (Command.Command Msg)
-cli =
-    [ Command.build PrintVersion |> Command.expectFlag "version" |> Command.toCommand
-    , Command.build PrintHelp |> Command.expectFlag "help" |> Command.toCommand
-    , Command.build Greet
-        |> Command.with (Command.requiredKeywordArg "name")
-        |> Command.with (Command.optionalKeywordArg "greeting")
-        |> Command.toCommand
-    ]
-
-
-update : Msg -> Model -> ( Model, Cmd Msg )
-update msg model =
-    let
         toPrint =
-            case msg of
-                PrintVersion ->
+            case msg |> Maybe.withDefault (Ok NoOp) of
+                Ok PrintVersion ->
                     "You are on version 3.1.4"
 
-                PrintHelp ->
+                Ok PrintHelp ->
                     Cli.helpText "greet" cli
 
-                NoOp ->
-                    "No matching command"
+                Ok NoOp ->
+                    "\nNo matching command...\n\nUsage:\n\n"
+                        ++ Cli.helpText "simple" cli
 
-                Greet name maybePrefix ->
+                Ok (Greet name maybePrefix) ->
                     case maybePrefix of
                         Just greeting ->
                             greeting ++ " " ++ name ++ "!"
 
                         Nothing ->
                             "Hello " ++ name ++ "!"
+
+                Err validationErrors ->
+                    "Validation errors:\n\n"
+                        ++ (validationErrors
+                                |> List.map
+                                    (\{ name, invalidReason, valueAsString } ->
+                                        "`"
+                                            ++ name
+                                            ++ "` failed a validation. "
+                                            ++ invalidReason
+                                            ++ "\nValue was:\n"
+                                            ++ valueAsString
+                                    )
+                                |> String.join "\n"
+                           )
     in
-    ( (), print toPrint )
+    ( (), Ports.print toPrint )
 
 
-port print : String -> Cmd msg
+update : Msg -> Model -> ( Model, Cmd Msg )
+update msg model =
+    ( (), Cmd.none )
 
 
 main : Program Flags Model Msg
