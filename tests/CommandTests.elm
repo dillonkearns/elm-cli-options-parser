@@ -35,8 +35,7 @@ all =
                         Version
             , test "matching non-first element in list" <|
                 \() ->
-                    Command.tryMatch [ "unused", "--version" ] (Command.build Version |> Command.expectFlag "version" |> Command.toCommand)
-                        |> Expect.equal Nothing
+                    expectNoMatch [ "unused", "--version" ] (Command.build Version |> Command.expectFlag "version" |> Command.toCommand)
             , test "command with operand" <|
                 \() ->
                     expectMatch [ "http://my-domain.com" ]
@@ -74,20 +73,18 @@ all =
                         (OpenUrlWithFlag "http://my-domain.com" True)
             , test "non-matching option" <|
                 \() ->
-                    Command.tryMatch [ "--version" ]
+                    expectNoMatch [ "--version" ]
                         (Command.build Help
                             |> Command.expectFlag "help"
                             |> Command.toCommand
                         )
-                        |> Expect.equal Nothing
             , test "empty args when flag is expected" <|
                 \() ->
-                    Command.tryMatch []
+                    expectNoMatch []
                         (Command.build Help
                             |> Command.expectFlag "help"
                             |> Command.toCommand
                         )
-                        |> Expect.equal Nothing
             , test "option with argument" <|
                 \() ->
                     expectMatch [ "--name", "Deanna", "--prefix", "Hello" ]
@@ -121,7 +118,7 @@ all =
                         (FullName "Deanna" "Troi")
             , test "doesn't match if operands are present when none are expected" <|
                 \() ->
-                    Command.tryMatch
+                    expectNoMatch
                         [ "--last-name"
                         , "Troi"
                         , "--first-name"
@@ -133,7 +130,6 @@ all =
                             |> Command.with (Spec.requiredKeywordArg "last-name")
                             |> Command.toCommand
                         )
-                        |> Expect.equal Nothing
             , test "extracts multiple params" <|
                 \() ->
                     expectMatch
@@ -149,7 +145,7 @@ all =
                         [ "abc123", "def456" ]
             , test "doesn't match when unexpected options are present" <|
                 \() ->
-                    Command.tryMatch
+                    expectNoMatch
                         [ "--verbose"
                         , "--unexpected-option"
                         ]
@@ -157,7 +153,6 @@ all =
                             |> Command.with (Spec.flag "verbose")
                             |> Command.toCommand
                         )
-                        |> Expect.equal Nothing
             , test "rest operands is empty with no operands" <|
                 \() ->
                     expectMatch [ "--verbose" ]
@@ -192,7 +187,6 @@ all =
                             |> Command.hardcoded ()
                             |> Command.toCommand
                         )
-                        ()
             , test "matches if sub command is first word" <|
                 \() ->
                     expectMatch [ "help" ]
@@ -305,7 +299,7 @@ expectMatch argv commands expectedValue =
         |> Expect.equal (Just (Ok expectedValue))
 
 
-expectNoMatch : List String -> Command.Command a -> a -> Expectation
-expectNoMatch argv commands expectedValue =
+expectNoMatch : List String -> Command.Command a -> Expectation
+expectNoMatch argv commands =
     Command.tryMatch argv commands
         |> Expect.equal Nothing
