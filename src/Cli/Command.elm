@@ -29,24 +29,25 @@ tryMatch argv ((Command { decoder, usageSpecs, subCommand }) as command) =
                 |> expectedOperandCountOrFail
                 |> failIfUnexpectedOptionsNew
                 |> getDecoder
-    in
-    decoder
-        (Parser.flagsAndOperands usageSpecs argv
-            |> (\record ->
-                    case subCommand of
-                        Nothing ->
-                            { options = record.options
-                            , operands = record.operands
-                            , usageSpecs = usageSpecs
-                            }
 
-                        Just subCommandName ->
-                            { options = record.options
-                            , operands = record.operands |> List.drop 1
-                            , usageSpecs = usageSpecs
-                            }
-               )
-        )
+        flagsAndOperands =
+            Parser.flagsAndOperands usageSpecs argv
+                |> (\record ->
+                        case subCommand of
+                            Nothing ->
+                                { options = record.options
+                                , operands = record.operands
+                                , usageSpecs = usageSpecs
+                                }
+
+                            Just subCommandName ->
+                                { options = record.options
+                                , operands = record.operands |> List.drop 1
+                                , usageSpecs = usageSpecs
+                                }
+                   )
+    in
+    decoder flagsAndOperands
         |> (\result ->
                 case result of
                     Err error ->
