@@ -33,32 +33,45 @@ tryMatch argv ((Command { decoder, usageSpecs, subCommand }) as command) =
         flagsAndOperands =
             Parser.flagsAndOperands usageSpecs argv
                 |> (\record ->
-                        case subCommand of
-                            Nothing ->
-                                { options = record.options
-                                , operands = record.operands
-                                , usageSpecs = usageSpecs
-                                }
+                        case ( subCommand, record.operands ) of
+                            ( Nothing, _ ) ->
+                                Ok
+                                    { options = record.options
+                                    , operands = record.operands
+                                    , usageSpecs = usageSpecs
+                                    }
 
-                            Just subCommandName ->
-                                { options = record.options
-                                , operands = record.operands |> List.drop 1
-                                , usageSpecs = usageSpecs
-                                }
+                            ( Just subCommandName, actualSubCommand :: remainingOperands ) ->
+                                if actualSubCommand == subCommandName then
+                                    Ok
+                                        { options = record.options
+                                        , operands = remainingOperands
+                                        , usageSpecs = usageSpecs
+                                        }
+                                else
+                                    Err "Sub command does not match"
+
+                            ( Just subCommandName, [] ) ->
+                                Err "No sub command provided"
                    )
     in
-    decoder flagsAndOperands
-        |> (\result ->
-                case result of
-                    Err error ->
-                        Nothing
+    case flagsAndOperands of
+        Ok actualFlagsAndOperands ->
+            decoder actualFlagsAndOperands
+                |> (\result ->
+                        case result of
+                            Err error ->
+                                Nothing
 
-                    Ok ( [], value ) ->
-                        Just (Ok value)
+                            Ok ( [], value ) ->
+                                Just (Ok value)
 
-                    Ok ( validationErrors, value ) ->
-                        Just (Err validationErrors)
-           )
+                            Ok ( validationErrors, value ) ->
+                                Just (Err validationErrors)
+                   )
+
+        Err _ ->
+            Nothing
 
 
 hasRestArgs : List UsageSpec -> Bool
