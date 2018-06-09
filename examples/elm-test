@@ -1,0 +1,2 @@
+# /bin/bash
+elm-make src/ElmTest.elm --output src/elm.js && ./src/elm-test.js $@
