@@ -2,13 +2,14 @@ module ElmTest exposing (main)
 
 import Cli
 import Cli.Command as Command exposing (Command, with)
+import Cli.Spec as Spec
 import Json.Decode exposing (..)
 import Ports
 
 
 type ElmTestCommand
     = Init ()
-    | RunTests (List String)
+    | RunTests (Maybe String) (List String)
     | PrintHelp
     | PrintVersion
 
@@ -19,6 +20,7 @@ cli =
         |> Command.hardcoded ()
         |> Command.toCommand
     , Command.build RunTests
+        |> with (Spec.optionalKeywordArg "fuzz")
         |> Command.captureRestOperands "TESTFILES"
     , Command.build PrintHelp
         |> Command.expectFlag "help"
@@ -71,8 +73,12 @@ init flags =
                         Init () ->
                             "Initializing test suite..."
 
-                        RunTests testFiles ->
-                            "Running the following test files: " ++ toString testFiles
+                        RunTests maybeFuzz testFiles ->
+                            [ "Running the following test files: " ++ toString testFiles |> Just
+                            , maybeFuzz |> Maybe.map (\fuzz -> "with fuzz: " ++ fuzz)
+                            ]
+                                |> List.filterMap identity
+                                |> String.join "\n"
 
                         PrintHelp ->
                             Cli.helpText "elm-test" cli
