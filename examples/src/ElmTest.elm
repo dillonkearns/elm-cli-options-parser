@@ -9,6 +9,8 @@ import Ports
 type ElmTestCommand
     = Init ()
     | RunTests (List String)
+    | PrintHelp
+    | PrintVersion
 
 
 cli : List (Command ElmTestCommand)
@@ -18,6 +20,12 @@ cli =
         |> Command.toCommand
     , Command.build RunTests
         |> Command.captureRestOperands "TESTFILES"
+    , Command.build PrintHelp
+        |> Command.expectFlag "help"
+        |> Command.toCommand
+    , Command.build PrintVersion
+        |> Command.expectFlag "version"
+        |> Command.toCommand
     ]
 
 
@@ -65,6 +73,12 @@ init flags =
 
                         RunTests testFiles ->
                             "Running the following test files: " ++ toString testFiles
+
+                        PrintHelp ->
+                            Cli.helpText "elm-test" cli
+
+                        PrintVersion ->
+                            "You are on version 3.1.4"
     in
     ( (), Ports.print toPrint )
 
