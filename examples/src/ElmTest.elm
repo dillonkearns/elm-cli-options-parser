@@ -38,7 +38,7 @@ init flags =
             case matchResult of
                 Cli.NoMatch ->
                     "\nNo matching command...\n\nUsage:\n\n"
-                        ++ Cli.helpText "simple" cli
+                        ++ Cli.helpText "elm-test" cli
 
                 Cli.ValidationErrors validationErrors ->
                     "Validation errors:\n\n"
