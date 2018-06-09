@@ -8,6 +8,7 @@ import Ports
 
 type ElmTestCommand
     = Init ()
+    | RunTests (List String)
 
 
 cli : List (Command ElmTestCommand)
@@ -15,6 +16,8 @@ cli =
     [ Command.subCommand "init" Init
         |> Command.hardcoded ()
         |> Command.toCommand
+    , Command.build RunTests
+        |> Command.captureRestOperands "TESTFILES"
     ]
 
 
@@ -59,6 +62,9 @@ init flags =
                     case msg of
                         Init () ->
                             "Initializing test suite..."
+
+                        RunTests testFiles ->
+                            "Running the following test files: " ++ toString testFiles
     in
     ( (), Ports.print toPrint )
 
