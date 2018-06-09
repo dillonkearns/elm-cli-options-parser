@@ -142,8 +142,34 @@ map mapFn (CliSpec dataGrabber usageSpec ((Cli.Decode.Decoder decodeFn) as decod
     CliSpec dataGrabber usageSpec (Cli.Decode.map mapFn decoder)
 
 
+validateMap : (to -> Result String toMapped) -> CliSpec from to -> CliSpec from toMapped
+validateMap mapFn (CliSpec dataGrabber usageSpec ((Cli.Decode.Decoder decodeFn) as decoder)) =
+    CliSpec dataGrabber
+        usageSpec
+        (Cli.Decode.Decoder
+            (decodeFn
+                >> (\result ->
+                        Result.map
+                            (\( validationErrors, value ) ->
+                                case mapFn value of
+                                    Ok mappedValue ->
+                                        ( validationErrors, mappedValue )
 
--- withDefault : toMapped -> CliSpec from toRaw -> CliSpec from toMapped
+                                    Err invalidReason ->
+                                        ( validationErrors
+                                            ++ [ { name = Cli.UsageSpec.name usageSpec
+                                                 , invalidReason = invalidReason
+                                                 , valueAsString = toString value
+                                                 }
+                                               ]
+                                          -- , value
+                                        , Debug.crash ""
+                                        )
+                            )
+                            result
+                   )
+            )
+        )
 
 
 withDefault : to -> CliSpec from (Maybe to) -> CliSpec from to

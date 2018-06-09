@@ -242,6 +242,17 @@ all =
                             |> Command.toCommand
                         )
                         "Bob"
+            , test "map validation" <|
+                \() ->
+                    expectMatch [ "--fuzz", "123" ]
+                        (Command.build identity
+                            |> Command.with
+                                (Spec.requiredKeywordArg "fuzz"
+                                    |> Spec.validateMap String.toInt
+                                )
+                            |> Command.toCommand
+                        )
+                        123
             ]
         , describe "mapping"
             [ test "maps operand" <|
