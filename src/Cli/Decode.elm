@@ -14,7 +14,7 @@ type ProcessingError
 
 
 type Decoder decodesFrom decodesTo
-    = Decoder (decodesFrom -> Result String ( List ValidationError, decodesTo ))
+    = Decoder (decodesFrom -> Result ProcessingError ( List ValidationError, decodesTo ))
 
 
 decoder : Decoder a a

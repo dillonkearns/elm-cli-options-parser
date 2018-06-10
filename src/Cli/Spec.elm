@@ -13,7 +13,7 @@ type CliSpec from to
 
 
 type alias DataGrabber decodesTo =
-    { usageSpecs : List UsageSpec, operands : List String, options : List Parser.ParsedOption, operandsSoFar : Int } -> Result String decodesTo
+    { usageSpecs : List UsageSpec, operands : List String, options : List Parser.ParsedOption, operandsSoFar : Int } -> Result Cli.Decode.ProcessingError decodesTo
 
 
 validate : (to -> Validate.ValidationResult) -> CliSpec from to -> CliSpec from to
@@ -71,7 +71,7 @@ positionalArg operandDescription =
                     Ok operandValue
 
                 Nothing ->
-                    Err ("Expect operand " ++ operandDescription ++ "at " ++ toString operandsSoFar ++ " but had operands " ++ toString operands)
+                    Cli.Decode.MatchError ("Expect operand " ++ operandDescription ++ "at " ++ toString operandsSoFar ++ " but had operands " ++ toString operands) |> Err
         )
         (Operand operandDescription)
         Cli.Decode.decoder
@@ -93,7 +93,7 @@ optionalKeywordArg optionName =
                     Ok (Just optionArg)
 
                 _ ->
-                    Err ("Expected option " ++ optionName ++ " to have arg but found none.")
+                    Cli.Decode.MatchError ("Expected option " ++ optionName ++ " to have arg but found none.") |> Err
         )
         (Option (OptionWithStringArg optionName) Optional)
         Cli.Decode.decoder
@@ -109,13 +109,13 @@ requiredKeywordArg optionName =
                         (\(Parser.ParsedOption thisOptionName optionKind) -> thisOptionName == optionName)
             of
                 Nothing ->
-                    Err ("Expected to find option " ++ optionName ++ " but only found options " ++ toString options)
+                    Cli.Decode.MatchError ("Expected to find option " ++ optionName ++ " but only found options " ++ toString options) |> Err
 
                 Just (Parser.ParsedOption _ (Parser.OptionWithArg optionArg)) ->
                     Ok optionArg
 
                 _ ->
-                    Err ("Expected option " ++ optionName ++ " to have arg but found none.")
+                    Cli.Decode.MatchError ("Expected option " ++ optionName ++ " to have arg but found none.") |> Err
         )
         (Option (OptionWithStringArg optionName) Required)
         Cli.Decode.decoder
@@ -156,8 +156,14 @@ validateMap mapFn (CliSpec dataGrabber usageSpec ((Cli.Decode.Decoder decodeFn) 
                                         Ok ( validationErrors, mappedValue )
 
                                     Err invalidReason ->
-                                        Err ("Can't go on because: " ++ invalidReason)
+                                        Cli.Decode.UnrecoverableValidationError
+                                            { name = "fuzz"
+                                            , invalidReason = "Must be 3 characters long"
+                                            , valueAsString = toString "Robert"
+                                            }
+                                            |> Err
 
+                            -- ("Can't go on because: " ++ invalidReason)
                             {-
                                                           { name = Cli.UsageSpec.name usageSpec
                                --                      , invalidReason = invalidReason

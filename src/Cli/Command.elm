@@ -103,7 +103,7 @@ checkSubCommandOrFail ((Command ({ decoder, usageSpecs, subCommand } as command)
                             if Just subCommandName == actualSubCommand then
                                 decoder stuff
                             else
-                                Err ("Expected " ++ subCommandName ++ " sub command, but was " ++ toString actualSubCommand)
+                                Cli.Decode.MatchError ("Expected " ++ subCommandName ++ " sub command, but was " ++ toString actualSubCommand) |> Err
 
                         Nothing ->
                             decoder stuff
@@ -135,7 +135,7 @@ expectedOperandCountOrFail ((Command ({ decoder, usageSpecs } as command)) as fu
                                 |> List.length
                               )
                     then
-                        Err "Wrong number of operands"
+                        Cli.Decode.MatchError "Wrong number of operands" |> Err
                     else
                         decoder stuff
         }
@@ -148,7 +148,7 @@ getDecoder :
         , options : List ParsedOption
         , usageSpecs : List UsageSpec
         }
-    -> Result String ( List Cli.Decode.ValidationError, msg )
+    -> Result Cli.Decode.ProcessingError ( List Cli.Decode.ValidationError, msg )
 getDecoder (Command { decoder }) =
     decoder
 
@@ -173,7 +173,7 @@ failIfUnexpectedOptionsNew ((Command ({ decoder, usageSpecs } as command)) as fu
                     if List.isEmpty unexpectedOptions then
                         decoder stuff
                     else
-                        Err ("Unexpected options " ++ toString unexpectedOptions)
+                        Cli.Decode.MatchError ("Unexpected options " ++ toString unexpectedOptions) |> Err
         }
 
 
@@ -198,7 +198,7 @@ optionExistsNew usageSpecs thisOptionName =
 
 type CommandBuilder msg
     = CommandBuilder
-        { decoder : { usageSpecs : List UsageSpec, options : List ParsedOption, operands : List String } -> Result String ( List Cli.Decode.ValidationError, msg )
+        { decoder : { usageSpecs : List UsageSpec, options : List ParsedOption, operands : List String } -> Result Cli.Decode.ProcessingError ( List Cli.Decode.ValidationError, msg )
         , usageSpecs : List UsageSpec
         , description : Maybe String
         , subCommand : Maybe String
@@ -229,7 +229,7 @@ captureRestOperands restOperandsDescription (CommandBuilder ({ usageSpecs, descr
 
 type Command msg
     = Command
-        { decoder : { usageSpecs : List UsageSpec, options : List ParsedOption, operands : List String } -> Result String ( List Cli.Decode.ValidationError, msg )
+        { decoder : { usageSpecs : List UsageSpec, options : List ParsedOption, operands : List String } -> Result Cli.Decode.ProcessingError ( List Cli.Decode.ValidationError, msg )
         , usageSpecs : List UsageSpec
         , description : Maybe String
         , subCommand : Maybe String
@@ -275,7 +275,7 @@ hardcoded hardcodedValue (CommandBuilder ({ decoder } as command)) =
         }
 
 
-resultMap : (a -> value) -> Result String ( List Cli.Decode.ValidationError, a ) -> Result String ( List Cli.Decode.ValidationError, value )
+resultMap : (a -> value) -> Result Cli.Decode.ProcessingError ( List Cli.Decode.ValidationError, a ) -> Result Cli.Decode.ProcessingError ( List Cli.Decode.ValidationError, value )
 resultMap mapFunction result =
     result
         |> Result.map (\( validationErrors, value ) -> ( validationErrors, mapFunction value ))
@@ -294,7 +294,7 @@ expectFlag flagName (CommandBuilder ({ usageSpecs, decoder } as command)) =
                     then
                         decoder stuff
                     else
-                        ("Expect flag " ++ ("--" ++ flagName))
+                        Cli.Decode.MatchError ("Expect flag " ++ ("--" ++ flagName))
                             |> Err
         }
 
@@ -353,7 +353,7 @@ positionalArg operandDescription =
                     Ok operandValue
 
                 Nothing ->
-                    Err ("Expect operand " ++ operandDescription ++ "at " ++ toString operandsSoFar ++ " but had operands " ++ toString operands)
+                    Cli.Decode.MatchError ("Expect operand " ++ operandDescription ++ "at " ++ toString operandsSoFar ++ " but had operands " ++ toString operands) |> Err
         )
         (Operand operandDescription)
         Cli.Decode.decoder
@@ -380,7 +380,7 @@ optionalKeywordArg optionName =
                     Ok (Just optionArg)
 
                 _ ->
-                    Err ("Expected option " ++ optionName ++ " to have arg but found none.")
+                    Cli.Decode.MatchError ("Expected option " ++ optionName ++ " to have arg but found none.") |> Err
         )
         (Option (OptionWithStringArg optionName) Optional)
         Cli.Decode.decoder
@@ -396,13 +396,13 @@ requiredKeywordArg optionName =
                         (\(Parser.ParsedOption thisOptionName optionKind) -> thisOptionName == optionName)
             of
                 Nothing ->
-                    Err ("Expected to find option " ++ optionName ++ " but only found options " ++ toString options)
+                    Cli.Decode.MatchError ("Expected to find option " ++ optionName ++ " but only found options " ++ toString options) |> Err
 
                 Just (Parser.ParsedOption _ (Parser.OptionWithArg optionArg)) ->
                     Ok optionArg
 
                 _ ->
-                    Err ("Expected option " ++ optionName ++ " to have arg but found none.")
+                    Cli.Decode.MatchError ("Expected option " ++ optionName ++ " to have arg but found none.") |> Err
         )
         (Option (OptionWithStringArg optionName) Required)
         Cli.Decode.decoder
@@ -427,11 +427,6 @@ flag flagName =
 mapNew : (toRaw -> toMapped) -> CliSpec from toRaw -> CliSpec from toMapped
 mapNew mapFn (CliSpec dataGrabber usageSpec ((Cli.Decode.Decoder decodeFn) as decoder)) =
     CliSpec dataGrabber usageSpec (Cli.Decode.map mapFn decoder)
-
-
-validateMap : (to -> Result String toMapped) -> CliSpec from to -> CliSpec from toMapped
-validateMap function tofromCliSpec =
-    Debug.crash ""
 
 
 validate : (to -> ValidationResult) -> CliSpec from to -> CliSpec from to
