@@ -149,24 +149,23 @@ validateMap mapFn (CliSpec dataGrabber usageSpec ((Cli.Decode.Decoder decodeFn) 
         (Cli.Decode.Decoder
             (decodeFn
                 >> (\result ->
-                        Result.map
-                            (\( validationErrors, value ) ->
+                        case result of
+                            Ok ( validationErrors, value ) ->
                                 case mapFn value of
                                     Ok mappedValue ->
-                                        ( validationErrors, mappedValue )
+                                        Ok ( validationErrors, mappedValue )
 
                                     Err invalidReason ->
-                                        ( validationErrors
-                                            ++ [ { name = Cli.UsageSpec.name usageSpec
-                                                 , invalidReason = invalidReason
-                                                 , valueAsString = toString value
-                                                 }
-                                               ]
-                                          -- , value
-                                        , Debug.crash ""
-                                        )
-                            )
-                            result
+                                        Err ("Can't go on because: " ++ invalidReason)
+
+                            {-
+                                                          { name = Cli.UsageSpec.name usageSpec
+                               --                      , invalidReason = invalidReason
+                               --                      , valueAsString = toString value
+                               --                      }
+                            -}
+                            Err error ->
+                                Err error
                    )
             )
         )
