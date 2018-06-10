@@ -1,4 +1,4 @@
-module Cli.Decode exposing (Decoder(Decoder), ValidationError, decoder, map)
+module Cli.Decode exposing (Decoder(Decoder), ProcessingError(..), ValidationError, decoder, map)
 
 
 type alias ValidationError =
@@ -6,6 +6,11 @@ type alias ValidationError =
     , invalidReason : String
     , valueAsString : String
     }
+
+
+type ProcessingError
+    = MatchError String
+    | UnrecoverableValidationError ValidationError
 
 
 type Decoder decodesFrom decodesTo
