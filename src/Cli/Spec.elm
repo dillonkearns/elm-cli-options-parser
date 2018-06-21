@@ -170,6 +170,21 @@ validateMap mapFn (CliSpec dataGrabber usageSpec ((Cli.Decode.Decoder decodeFn) 
         )
 
 
+validateMapMaybe : (to -> Result String toMapped) -> CliSpec (Maybe from) (Maybe to) -> CliSpec (Maybe from) (Maybe toMapped)
+validateMapMaybe mapFn ((CliSpec dataGrabber usageSpec ((Cli.Decode.Decoder decodeFn) as decoder)) as cliSpec) =
+    validateMap
+        (\thing ->
+            case thing of
+                Just actualThing ->
+                    mapFn actualThing
+                        |> Result.map Just
+
+                Nothing ->
+                    Ok Nothing
+        )
+        cliSpec
+
+
 withDefault : to -> CliSpec from (Maybe to) -> CliSpec from to
 withDefault defaultValue (CliSpec dataGrabber usageSpec ((Cli.Decode.Decoder decodeFn) as decoder)) =
     CliSpec dataGrabber usageSpec (Cli.Decode.map (Maybe.withDefault defaultValue) decoder)

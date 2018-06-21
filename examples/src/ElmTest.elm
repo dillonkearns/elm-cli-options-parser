@@ -21,22 +21,7 @@ cli =
         |> Command.toCommand
     , Command.build RunTests
         |> with
-            (Spec.optionalKeywordArg "fuzz"
-                |> Spec.validateMap
-                    (\maybeFuzzString ->
-                        case maybeFuzzString of
-                            Just fuzzString ->
-                                case String.toInt fuzzString of
-                                    Ok value ->
-                                        Ok (Just value)
-
-                                    Err err ->
-                                        Err err
-
-                            Nothing ->
-                                Ok Nothing
-                    )
-            )
+            (Spec.optionalKeywordArg "fuzz" |> Spec.validateMapMaybe String.toInt)
         |> Command.captureRestOperands "TESTFILES"
     , Command.build PrintHelp
         |> Command.expectFlag "help"
