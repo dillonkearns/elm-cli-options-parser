@@ -9,7 +9,7 @@ import Ports
 
 type ElmTestCommand
     = Init ()
-    | RunTests (Maybe String) (List String)
+    | RunTests (Maybe Int) (List String)
     | PrintHelp
     | PrintVersion
 
@@ -20,7 +20,23 @@ cli =
         |> Command.hardcoded ()
         |> Command.toCommand
     , Command.build RunTests
-        |> with (Spec.optionalKeywordArg "fuzz")
+        |> with
+            (Spec.optionalKeywordArg "fuzz"
+                |> Spec.validateMap
+                    (\maybeFuzzString ->
+                        case maybeFuzzString of
+                            Just fuzzString ->
+                                case String.toInt fuzzString of
+                                    Ok value ->
+                                        Ok (Just value)
+
+                                    Err err ->
+                                        Err err
+
+                            Nothing ->
+                                Ok Nothing
+                    )
+            )
         |> Command.captureRestOperands "TESTFILES"
     , Command.build PrintHelp
         |> Command.expectFlag "help"
@@ -75,7 +91,7 @@ init flags =
 
                         RunTests maybeFuzz testFiles ->
                             [ "Running the following test files: " ++ toString testFiles |> Just
-                            , maybeFuzz |> Maybe.map (\fuzz -> "with fuzz: " ++ fuzz)
+                            , maybeFuzz |> Maybe.map (\fuzz -> "with fuzz: " ++ toString fuzz)
                             ]
                                 |> List.filterMap identity
                                 |> String.join "\n"
