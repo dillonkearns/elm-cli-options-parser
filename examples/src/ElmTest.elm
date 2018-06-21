@@ -9,7 +9,7 @@ import Ports
 
 type ElmTestCommand
     = Init ()
-    | RunTests (Maybe Int) Bool (List String)
+    | RunTests (Maybe Int) (Maybe Int) Bool (List String)
     | PrintHelp
     | PrintVersion
 
@@ -22,6 +22,8 @@ cli =
     , Command.build RunTests
         |> with
             (Spec.optionalKeywordArg "fuzz" |> Spec.validateMapMaybe String.toInt)
+        |> with
+            (Spec.optionalKeywordArg "seed" |> Spec.validateMapMaybe String.toInt)
         |> with (Spec.flag "watch")
         |> Command.captureRestOperands "TESTFILES"
     , Command.build PrintHelp
@@ -75,10 +77,11 @@ init flags =
                         Init () ->
                             "Initializing test suite..."
 
-                        RunTests maybeFuzz watch testFiles ->
+                        RunTests maybeFuzz maybeSeed watch testFiles ->
                             [ "Running the following test files: " ++ toString testFiles |> Just
                             , "with watch: " ++ toString watch |> Just
                             , maybeFuzz |> Maybe.map (\fuzz -> "with fuzz: " ++ toString fuzz)
+                            , maybeSeed |> Maybe.map (\seed -> "with seed: " ++ toString seed)
                             ]
                                 |> List.filterMap identity
                                 |> String.join "\n"
