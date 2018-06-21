@@ -253,27 +253,26 @@ all =
                             |> Command.toCommand
                         )
                         123
-
-            -- , test "failed map validation" <|
-            --     \() ->
-            --         Command.tryMatch [ "--fuzz", "abcdefg" ]
-            --             (Command.build identity
-            --                 |> Command.with
-            --                     (Spec.requiredKeywordArg "fuzz"
-            --                         |> Spec.validateMap String.toInt
-            --                     )
-            --                 |> Command.toCommand
-            --             )
-            --             |> Expect.equal
-            --                 (Just
-            --                     (Err
-            --                         [ { name = "fuzz"
-            --                           , invalidReason = "Must be 3 characters long"
-            --                           , valueAsString = toString "Robert"
-            --                           }
-            --                         ]
-            --                     )
-            --                 )
+            , test "failed map validation" <|
+                \() ->
+                    Command.tryMatch [ "--fuzz", "abcdefg" ]
+                        (Command.build identity
+                            |> Command.with
+                                (Spec.requiredKeywordArg "fuzz"
+                                    |> Spec.validateMap String.toInt
+                                )
+                            |> Command.toCommand
+                        )
+                        |> Expect.equal
+                            (Just
+                                (Err
+                                    [ { name = "fuzz"
+                                      , invalidReason = "Must be 3 characters long"
+                                      , valueAsString = toString "Robert"
+                                      }
+                                    ]
+                                )
+                            )
             ]
         , describe "mapping"
             [ test "maps operand" <|

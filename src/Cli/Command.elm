@@ -61,7 +61,12 @@ tryMatch argv ((Command { decoder, usageSpecs, subCommand }) as command) =
                 |> (\result ->
                         case result of
                             Err error ->
-                                Nothing
+                                case error of
+                                    Cli.Decode.MatchError matchError ->
+                                        Nothing
+
+                                    Cli.Decode.UnrecoverableValidationError validationError ->
+                                        Just (Err [ validationError ])
 
                             Ok ( [], value ) ->
                                 Just (Ok value)
