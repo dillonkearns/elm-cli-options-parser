@@ -157,19 +157,12 @@ validateMap mapFn (CliSpec dataGrabber usageSpec ((Cli.Decode.Decoder decodeFn) 
 
                                     Err invalidReason ->
                                         Cli.Decode.UnrecoverableValidationError
-                                            { name = "fuzz"
-                                            , invalidReason = "Must be 3 characters long"
-                                            , valueAsString = toString "Robert"
+                                            { name = Cli.UsageSpec.name usageSpec
+                                            , invalidReason = invalidReason
+                                            , valueAsString = toString value
                                             }
                                             |> Err
 
-                            -- ("Can't go on because: " ++ invalidReason)
-                            {-
-                                                          { name = Cli.UsageSpec.name usageSpec
-                               --                      , invalidReason = invalidReason
-                               --                      , valueAsString = toString value
-                               --                      }
-                            -}
                             Err error ->
                                 Err error
                    )

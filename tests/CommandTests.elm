@@ -267,8 +267,8 @@ all =
                             (Just
                                 (Err
                                     [ { name = "fuzz"
-                                      , invalidReason = "Must be 3 characters long"
-                                      , valueAsString = toString "Robert"
+                                      , invalidReason = "could not convert string 'abcdefg' to an Int"
+                                      , valueAsString = toString "abcdefg"
                                       }
                                     ]
                                 )
