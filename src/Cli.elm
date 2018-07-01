@@ -12,12 +12,16 @@ type MatchResult msg
 
 try : List (Command msg) -> List String -> MatchResult msg
 try commands argv =
-    commands
-        |> List.map
-            (argv
-                |> List.drop 2
-                |> Command.tryMatchNew
-            )
+    let
+        matchResults =
+            commands
+                |> List.map
+                    (argv
+                        |> List.drop 2
+                        |> Command.tryMatchNew
+                    )
+    in
+    matchResults
         |> List.map Command.matchResultToMaybe
         |> oneOf
         |> (\maybeResult ->
