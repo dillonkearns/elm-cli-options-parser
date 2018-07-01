@@ -27,7 +27,7 @@ tryMatch argv ((Command { decoder, usageSpecs, subCommand }) as command) =
         decoder =
             command
                 |> expectedOperandCountOrFail
-                |> failIfUnexpectedOptionsNew
+                |> failIfUnexpectedOptions
                 |> getDecoder
 
         flagsAndOperands =
@@ -136,8 +136,8 @@ getDecoder (Command { decoder }) =
     decoder
 
 
-failIfUnexpectedOptionsNew : Command msg -> Command msg
-failIfUnexpectedOptionsNew ((Command ({ decoder, usageSpecs } as command)) as fullCommand) =
+failIfUnexpectedOptions : Command msg -> Command msg
+failIfUnexpectedOptions ((Command ({ decoder, usageSpecs } as command)) as fullCommand) =
     Command
         { command
             | decoder =
