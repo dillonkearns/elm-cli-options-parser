@@ -20,6 +20,14 @@ try commands argv =
                         |> List.drop 2
                         |> Command.tryMatchNew
                     )
+
+        commonUnmatchedFlags =
+            case matchResults of
+                [ Command.NoMatch unknownFlags ] ->
+                    unknownFlags
+
+                _ ->
+                    []
     in
     matchResults
         |> List.map Command.matchResultToMaybe
@@ -35,7 +43,7 @@ try commands argv =
                                 ValidationErrors validationErrors
 
                     Nothing ->
-                        NoMatch []
+                        NoMatch commonUnmatchedFlags
            )
 
 
