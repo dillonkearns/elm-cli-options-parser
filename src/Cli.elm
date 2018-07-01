@@ -16,8 +16,9 @@ try commands argv =
         |> List.map
             (argv
                 |> List.drop 2
-                |> Command.tryMatch
+                |> Command.tryMatchNew
             )
+        |> List.map Command.matchResultToMaybe
         |> oneOf
         |> (\maybeResult ->
                 case maybeResult of

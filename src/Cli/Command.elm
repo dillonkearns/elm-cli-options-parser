@@ -1,4 +1,4 @@
-module Cli.Command exposing (Command, CommandBuilder, build, buildWithDoc, captureRestOperands, expectFlag, flag, getUsageSpecs, hardcoded, keywordArgList, mapNew, optionalKeywordArg, positionalArg, requiredKeywordArg, subCommand, synopsis, toCommand, tryMatch, validate, validateIfPresent, with, withDefault)
+module Cli.Command exposing (Command, CommandBuilder, build, buildWithDoc, captureRestOperands, expectFlag, flag, getUsageSpecs, hardcoded, keywordArgList, mapNew, matchResultToMaybe, optionalKeywordArg, positionalArg, requiredKeywordArg, subCommand, synopsis, toCommand, tryMatch, tryMatchNew, validate, validateIfPresent, with, withDefault)
 
 import Cli.Decode
 import Cli.Spec exposing (CliSpec(..))
@@ -7,6 +7,21 @@ import Cli.Validate exposing (ValidationResult(Invalid, Valid))
 import List.Extra
 import Occurences exposing (Occurences(..))
 import Parser exposing (ParsedOption)
+
+
+type MatchResult msg
+    = Match (Result (List Cli.Decode.ValidationError) msg)
+    | NoMatch (List String)
+
+
+matchResultToMaybe : MatchResult msg -> Maybe (Result (List Cli.Decode.ValidationError) msg)
+matchResultToMaybe matchResult =
+    case matchResult of
+        Match thing ->
+            Just thing
+
+        NoMatch unknownFlags ->
+            Nothing
 
 
 getUsageSpecs : Command decodesTo -> List UsageSpec
@@ -19,11 +34,6 @@ synopsis programName command =
     command
         |> (\(Command record) -> record)
         |> Cli.UsageSpec.synopsis programName
-
-
-type MatchResult msg
-    = Match (Result (List Cli.Decode.ValidationError) msg)
-    | NoMatch (List String)
 
 
 tryMatchNew : List String -> Command msg -> MatchResult msg
