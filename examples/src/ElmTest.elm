@@ -78,7 +78,7 @@ init flags =
 
         toPrint =
             case matchResult of
-                Cli.NoMatch ->
+                Cli.NoMatch _ ->
                     "\nNo matching command...\n\nUsage:\n\n"
                         ++ Cli.helpText "elm-test" cli
 
