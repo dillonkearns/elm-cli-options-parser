@@ -6,8 +6,12 @@ import Cli.Decode
 
 type MatchResult msg
     = ValidationErrors (List Cli.Decode.ValidationError)
-    | NoMatch
+    | NoMatch (List UnknownFlag)
     | Match msg
+
+
+type UnknownFlag
+    = UnknownFlag String
 
 
 try : List (Command msg) -> List String -> MatchResult msg
@@ -30,7 +34,7 @@ try commands argv =
                                 ValidationErrors validationErrors
 
                     Nothing ->
-                        NoMatch
+                        NoMatch []
            )
 
 
