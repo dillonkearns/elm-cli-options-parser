@@ -2,12 +2,27 @@ module Cli exposing (MatchResult(..), helpText, try)
 
 import Cli.Command as Command exposing (Command)
 import Cli.Decode
+import Set exposing (Set)
 
 
 type MatchResult msg
     = ValidationErrors (List Cli.Decode.ValidationError)
     | NoMatch (List String)
     | Match msg
+
+
+intersection : List (Set comparable) -> Set comparable
+intersection sets =
+    case sets of
+        [] ->
+            Set.empty
+
+        [ set ] ->
+            set
+
+        first :: rest ->
+            intersection rest
+                |> Set.intersect first
 
 
 try : List (Command msg) -> List String -> MatchResult msg
@@ -22,12 +37,18 @@ try commands argv =
                     )
 
         commonUnmatchedFlags =
-            case matchResults of
-                [ Command.NoMatch unknownFlags ] ->
-                    unknownFlags
+            matchResults
+                |> List.map
+                    (\matchResult ->
+                        case matchResult of
+                            Command.NoMatch unknownFlags ->
+                                Set.fromList unknownFlags
 
-                _ ->
-                    []
+                            _ ->
+                                Set.empty
+                    )
+                |> intersection
+                |> Set.toList
     in
     matchResults
         |> List.map Command.matchResultToMaybe

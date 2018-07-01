@@ -42,4 +42,18 @@ all =
                 in
                 Cli.try cli [ "", "", "--unknown-flag" ]
                     |> Expect.equal (Cli.NoMatch [ "unknown-flag" ])
+        , test "unknown flag with multiple usage specs" <|
+            \() ->
+                let
+                    cli =
+                        [ Command.build 123
+                            |> Command.expectFlag "help"
+                            |> Command.toCommand
+                        , Command.build 456
+                            |> Command.expectFlag "version"
+                            |> Command.toCommand
+                        ]
+                in
+                Cli.try cli [ "", "", "--unknown-flag" ]
+                    |> Expect.equal (Cli.NoMatch [ "unknown-flag" ])
         ]
