@@ -141,7 +141,7 @@ failIfUnexpectedOptions ((Command ({ decoder, usageSpecs } as command)) as fullC
     Command
         { command
             | decoder =
-                \({ options } as stuff) ->
+                \({ options } as flagsAndOperands) ->
                     let
                         unexpectedOptions =
                             List.filterMap
@@ -154,7 +154,7 @@ failIfUnexpectedOptions ((Command ({ decoder, usageSpecs } as command)) as fullC
                                 options
                     in
                     if List.isEmpty unexpectedOptions then
-                        decoder stuff
+                        decoder flagsAndOperands
                     else
                         Cli.Decode.MatchError ("Unexpected options " ++ toString unexpectedOptions) |> Err
         }
