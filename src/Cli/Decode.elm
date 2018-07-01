@@ -10,6 +10,7 @@ type alias ValidationError =
 
 type ProcessingError
     = MatchError String
+    | UnexpectedOptions (List String)
     | UnrecoverableValidationError ValidationError
 
 

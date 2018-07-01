@@ -83,6 +83,9 @@ tryMatchNew argv ((Command { decoder, usageSpecs, subCommand }) as command) =
                                     Cli.Decode.UnrecoverableValidationError validationError ->
                                         Match (Err [ validationError ])
 
+                                    Cli.Decode.UnexpectedOptions unexpectedOptions ->
+                                        NoMatch unexpectedOptions
+
                             Ok ( [], value ) ->
                                 Match (Ok value)
 
@@ -140,6 +143,9 @@ tryMatch argv ((Command { decoder, usageSpecs, subCommand }) as command) =
 
                                     Cli.Decode.UnrecoverableValidationError validationError ->
                                         Just (Err [ validationError ])
+
+                                    Cli.Decode.UnexpectedOptions _ ->
+                                        Nothing
 
                             Ok ( [], value ) ->
                                 Just (Ok value)
@@ -229,7 +235,7 @@ failIfUnexpectedOptions ((Command ({ decoder, usageSpecs } as command)) as fullC
                     if List.isEmpty unexpectedOptions then
                         decoder flagsAndOperands
                     else
-                        Cli.Decode.MatchError ("Unexpected options " ++ toString unexpectedOptions) |> Err
+                        Cli.Decode.UnexpectedOptions unexpectedOptions |> Err
         }
 
 
