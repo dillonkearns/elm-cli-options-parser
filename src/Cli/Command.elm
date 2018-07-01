@@ -93,28 +93,6 @@ hasRestArgs usageSpecs =
         usageSpecs
 
 
-checkSubCommandOrFail : Command msg -> Command msg
-checkSubCommandOrFail ((Command ({ decoder, usageSpecs, subCommand } as command)) as fullCommand) =
-    Command
-        { command
-            | decoder =
-                \({ operands } as stuff) ->
-                    case subCommand of
-                        Just subCommandName ->
-                            let
-                                actualSubCommand =
-                                    List.head operands
-                            in
-                            if Just subCommandName == actualSubCommand then
-                                decoder stuff
-                            else
-                                Cli.Decode.MatchError ("Expected " ++ subCommandName ++ " sub command, but was " ++ toString actualSubCommand) |> Err
-
-                        Nothing ->
-                            decoder stuff
-        }
-
-
 expectedOperandCountOrFail : Command msg -> Command msg
 expectedOperandCountOrFail ((Command ({ decoder, usageSpecs } as command)) as fullCommand) =
     Command
