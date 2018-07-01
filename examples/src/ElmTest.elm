@@ -14,6 +14,29 @@ type ElmTestCommand
     | PrintVersion
 
 
+
+{-
+   Usage: elm-test init # Create example tests
+
+   Usage: elm-test TESTFILES # Run TESTFILES, for example tests/**/*.elm
+
+   Usage: elm-test [--fuzz integer] # Run with each fuzz test performing this many iterations
+
+   Usage: elm-test [--version] # Print version string and exit
+
+   Usage: elm-test [--watch] # Run tests on file changes
+
+   Usage: elm-test [--seed integer] # Run with initial fuzzer seed
+
+   Usage: elm-test [--compiler /path/to/compiler] # Run tests
+
+   Usage: elm-test [--add-dependencies path-to-destination-elm-package.json] # Add missing dependencies from current elm-package.json to destination
+
+   TODO Usage: elm-test [--report json, junit, or console (default)] # Print results to stdout in given format
+
+-}
+
+
 cli : List (Command ElmTestCommand)
 cli =
     [ Command.subCommand "init" Init
