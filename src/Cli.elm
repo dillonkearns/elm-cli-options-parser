@@ -6,12 +6,8 @@ import Cli.Decode
 
 type MatchResult msg
     = ValidationErrors (List Cli.Decode.ValidationError)
-    | NoMatch (List UnknownFlag)
+    | NoMatch (List String)
     | Match msg
-
-
-type UnknownFlag
-    = UnknownFlag String
 
 
 try : List (Command msg) -> List String -> MatchResult msg
