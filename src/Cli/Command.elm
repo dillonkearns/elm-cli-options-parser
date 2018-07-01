@@ -21,6 +21,69 @@ synopsis programName command =
         |> Cli.UsageSpec.synopsis programName
 
 
+type MatchResult msg
+    = Match (Result (List Cli.Decode.ValidationError) msg)
+    | NoMatch (List String)
+
+
+tryMatchNew : List String -> Command msg -> MatchResult msg
+tryMatchNew argv ((Command { decoder, usageSpecs, subCommand }) as command) =
+    let
+        decoder =
+            command
+                |> expectedOperandCountOrFail
+                |> failIfUnexpectedOptions
+                |> getDecoder
+
+        flagsAndOperands =
+            Parser.flagsAndOperands usageSpecs argv
+                |> (\record ->
+                        case ( subCommand, record.operands ) of
+                            ( Nothing, _ ) ->
+                                Ok
+                                    { options = record.options
+                                    , operands = record.operands
+                                    , usageSpecs = usageSpecs
+                                    }
+
+                            ( Just subCommandName, actualSubCommand :: remainingOperands ) ->
+                                if actualSubCommand == subCommandName then
+                                    Ok
+                                        { options = record.options
+                                        , operands = remainingOperands
+                                        , usageSpecs = usageSpecs
+                                        }
+                                else
+                                    Err "Sub command does not match"
+
+                            ( Just subCommandName, [] ) ->
+                                Err "No sub command provided"
+                   )
+    in
+    case flagsAndOperands of
+        Ok actualFlagsAndOperands ->
+            decoder actualFlagsAndOperands
+                |> (\result ->
+                        case result of
+                            Err error ->
+                                case error of
+                                    Cli.Decode.MatchError matchError ->
+                                        NoMatch []
+
+                                    Cli.Decode.UnrecoverableValidationError validationError ->
+                                        Match (Err [ validationError ])
+
+                            Ok ( [], value ) ->
+                                Match (Ok value)
+
+                            Ok ( validationErrors, value ) ->
+                                Match (Err validationErrors)
+                   )
+
+        Err _ ->
+            NoMatch []
+
+
 tryMatch : List String -> Command msg -> Maybe (Result (List Cli.Decode.ValidationError) msg)
 tryMatch argv ((Command { decoder, usageSpecs, subCommand }) as command) =
     let
