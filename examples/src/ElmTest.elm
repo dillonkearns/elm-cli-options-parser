@@ -5,6 +5,7 @@ import Cli.Command as Command exposing (Command, with)
 import Cli.Spec as Spec
 import Json.Decode exposing (..)
 import Ports
+import TypoSuggestion exposing (TypoSuggestion)
 
 
 type ElmTestCommand
@@ -83,7 +84,10 @@ init flags =
                         "\nNo matching command...\n\nUsage:\n\n"
                             ++ Cli.helpText "elm-test" cli
                     else
-                        "Unexpected options: " ++ toString unexpectedOptions
+                        -- "Unexpected options: " ++ toString unexpectedOptions
+                        unexpectedOptions
+                            |> List.map (TypoSuggestion.toMessage cli)
+                            |> String.join "\n"
 
                 Cli.ValidationErrors validationErrors ->
                     "Validation errors:\n\n"

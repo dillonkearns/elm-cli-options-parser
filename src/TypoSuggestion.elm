@@ -1,4 +1,4 @@
-module TypoSuggestion exposing (TypoSuggestion(..), getSuggestions)
+module TypoSuggestion exposing (TypoSuggestion(..), getSuggestions, toMessage)
 
 import Cli.Command as Command exposing (Command)
 import Cli.UsageSpec as UsageSpec
@@ -9,6 +9,34 @@ import List.Extra
 type TypoSuggestion
     = Flag String
     | SubCommand String
+
+
+suggestionToString : TypoSuggestion -> String
+suggestionToString typoSuggestion =
+    "`"
+        ++ (case typoSuggestion of
+                Flag flagName ->
+                    "--" ++ flagName
+
+                SubCommand subCommandName ->
+                    subCommandName
+           )
+        ++ "`"
+
+
+toMessage : List (Command msg) -> String -> String
+toMessage commands unexpectedOption =
+    case getSuggestions commands unexpectedOption |> List.head of
+        Just bestSuggestion ->
+            "The `--"
+                ++ unexpectedOption
+                ++ "` flag was not found. Maybe it was one of these typos?\n\n`--"
+                ++ unexpectedOption
+                ++ "` <> "
+                ++ suggestionToString bestSuggestion
+
+        Nothing ->
+            "TODO"
 
 
 name : TypoSuggestion -> String
