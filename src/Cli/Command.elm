@@ -1,4 +1,4 @@
-module Cli.Command exposing (Command, CommandBuilder, MatchResult(..), build, buildWithDoc, captureRestOperands, expectFlag, flag, getUsageSpecs, hardcoded, keywordArgList, mapNew, matchResultToMaybe, optionalKeywordArg, positionalArg, requiredKeywordArg, subCommand, synopsis, toCommand, tryMatch, tryMatchNew, validate, validateIfPresent, with, withDefault)
+module Cli.Command exposing (Command, CommandBuilder, MatchResult(..), build, buildWithDoc, captureRestOperands, expectFlag, flag, getSubCommand, getUsageSpecs, hardcoded, keywordArgList, mapNew, matchResultToMaybe, optionalKeywordArg, positionalArg, requiredKeywordArg, subCommand, synopsis, toCommand, tryMatch, tryMatchNew, validate, validateIfPresent, with, withDefault)
 
 import Cli.Decode
 import Cli.Spec exposing (CliSpec(..))
@@ -34,6 +34,11 @@ synopsis programName command =
     command
         |> (\(Command record) -> record)
         |> Cli.UsageSpec.synopsis programName
+
+
+getSubCommand : Command msg -> Maybe String
+getSubCommand (Command { subCommand }) =
+    subCommand
 
 
 tryMatchNew : List String -> Command msg -> MatchResult msg
