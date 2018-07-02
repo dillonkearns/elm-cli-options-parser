@@ -232,16 +232,16 @@ failIfUnexpectedOptions ((Command ({ decoder, usageSpecs } as command)) as fullC
         }
 
 
-unexpectedOptions_ (Command ({ decoder, usageSpecs } as command)) =
-    \options ->
-        List.filterMap
-            (\(Parser.ParsedOption optionName optionKind) ->
-                if optionExistsNew usageSpecs optionName == Nothing then
-                    Just optionName
-                else
-                    Nothing
-            )
-            options
+unexpectedOptions_ : Command msg -> List ParsedOption -> List String
+unexpectedOptions_ (Command ({ decoder, usageSpecs } as command)) options =
+    List.filterMap
+        (\(Parser.ParsedOption optionName optionKind) ->
+            if optionExistsNew usageSpecs optionName == Nothing then
+                Just optionName
+            else
+                Nothing
+        )
+        options
 
 
 optionExistsNew : List UsageSpec -> String -> Maybe Option
