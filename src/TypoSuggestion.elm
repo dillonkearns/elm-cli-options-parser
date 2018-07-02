@@ -9,7 +9,12 @@ type TypoSuggestion
 
 
 getSuggestions : List (Command msg) -> String -> List TypoSuggestion
-getSuggestions commands string =
+getSuggestions commands unexpectedOption =
+    subCommandSuggestions commands
+
+
+subCommandSuggestions : List (Command msg) -> List TypoSuggestion
+subCommandSuggestions commands =
     commands
         |> List.map Command.getSubCommand
         |> List.filterMap identity
