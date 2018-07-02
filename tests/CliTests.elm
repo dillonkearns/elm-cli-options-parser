@@ -56,4 +56,17 @@ all =
                 in
                 Cli.try cli [ "", "", "--unknown-flag" ]
                     |> Expect.equal (Cli.NoMatch [ "unknown-flag" ])
+        , test "unknown flag with a subcommand spec" <|
+            \() ->
+                let
+                    cli =
+                        [ Command.build 123
+                            |> Command.expectFlag "help"
+                            |> Command.toCommand
+                        , Command.subCommand "sub" 456
+                            |> Command.toCommand
+                        ]
+                in
+                Cli.try cli [ "", "", "--unknown-flag" ]
+                    |> Expect.equal (Cli.NoMatch [ "unknown-flag" ])
         ]

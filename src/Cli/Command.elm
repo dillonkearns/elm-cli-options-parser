@@ -64,10 +64,10 @@ tryMatchNew argv ((Command { decoder, usageSpecs, subCommand }) as command) =
                                         , usageSpecs = usageSpecs
                                         }
                                 else
-                                    Err "Sub command does not match"
+                                    Err { errorMessage = "Sub command does not match", options = record.options }
 
                             ( Just subCommandName, [] ) ->
-                                Err "No sub command provided"
+                                Err { errorMessage = "No sub command provided", options = record.options }
                    )
     in
     case flagsAndOperands of
@@ -93,8 +93,8 @@ tryMatchNew argv ((Command { decoder, usageSpecs, subCommand }) as command) =
                                 Match (Err validationErrors)
                    )
 
-        Err _ ->
-            NoMatch []
+        Err { errorMessage, options } ->
+            NoMatch (unexpectedOptions_ command options)
 
 
 tryMatch : List String -> Command msg -> Maybe (Result (List Cli.Decode.ValidationError) msg)
@@ -220,23 +220,28 @@ failIfUnexpectedOptions ((Command ({ decoder, usageSpecs } as command)) as fullC
     Command
         { command
             | decoder =
-                \({ options } as flagsAndOperands) ->
+                \flagsAndOperands ->
                     let
                         unexpectedOptions =
-                            List.filterMap
-                                (\(Parser.ParsedOption optionName optionKind) ->
-                                    if optionExistsNew usageSpecs optionName == Nothing then
-                                        Just optionName
-                                    else
-                                        Nothing
-                                )
-                                options
+                            unexpectedOptions_ fullCommand flagsAndOperands.options
                     in
                     if List.isEmpty unexpectedOptions then
                         decoder flagsAndOperands
                     else
                         Cli.Decode.UnexpectedOptions unexpectedOptions |> Err
         }
+
+
+unexpectedOptions_ (Command ({ decoder, usageSpecs } as command)) =
+    \options ->
+        List.filterMap
+            (\(Parser.ParsedOption optionName optionKind) ->
+                if optionExistsNew usageSpecs optionName == Nothing then
+                    Just optionName
+                else
+                    Nothing
+            )
+            options
 
 
 optionExistsNew : List UsageSpec -> String -> Maybe Option

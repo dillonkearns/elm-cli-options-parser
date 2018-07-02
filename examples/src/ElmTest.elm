@@ -78,9 +78,12 @@ init flags =
 
         toPrint =
             case matchResult of
-                Cli.NoMatch _ ->
-                    "\nNo matching command...\n\nUsage:\n\n"
-                        ++ Cli.helpText "elm-test" cli
+                Cli.NoMatch unexpectedOptions ->
+                    if unexpectedOptions == [] then
+                        "\nNo matching command...\n\nUsage:\n\n"
+                            ++ Cli.helpText "elm-test" cli
+                    else
+                        "Unexpected options: " ++ toString unexpectedOptions
 
                 Cli.ValidationErrors validationErrors ->
                     "Validation errors:\n\n"
