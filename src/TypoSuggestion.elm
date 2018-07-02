@@ -2,6 +2,7 @@ module TypoSuggestion exposing (TypoSuggestion(..), getSuggestions)
 
 import Cli.Command as Command exposing (Command)
 import Cli.UsageSpec as UsageSpec
+import Fuzzy
 import List.Extra
 
 
@@ -10,9 +11,26 @@ type TypoSuggestion
     | SubCommand String
 
 
+name : TypoSuggestion -> String
+name typoSuggestion =
+    case typoSuggestion of
+        Flag name ->
+            name
+
+        SubCommand name ->
+            name
+
+
 getSuggestions : List (Command msg) -> String -> List TypoSuggestion
 getSuggestions commands unexpectedOption =
-    subCommandSuggestions commands
+    let
+        something needle hay =
+            Fuzzy.match [] [] needle hay |> .score
+    in
+    (subCommandSuggestions commands
+        ++ optionSuggestions commands
+    )
+        |> List.sortBy (name >> something unexpectedOption)
 
 
 subCommandSuggestions : List (Command msg) -> List TypoSuggestion

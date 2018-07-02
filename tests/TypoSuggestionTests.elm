@@ -13,13 +13,31 @@ all =
             \() ->
                 let
                     cli =
-                        [ Command.build 123
-                            |> Command.expectFlag "help"
-                            |> Command.toCommand
-                        , Command.subCommand "sub" 456
+                        [ Command.subCommand "sub" 456
                             |> Command.toCommand
                         ]
                 in
                 TypoSuggestion.getSuggestions cli "sub"
                     |> Expect.equal [ TypoSuggestion.SubCommand "sub" ]
+        , test "letter swapped in flag name" <|
+            \() ->
+                let
+                    cli =
+                        [ Command.build 123
+                            |> Command.expectFlag "unrelated"
+                            |> Command.toCommand
+                        , Command.build 123
+                            |> Command.expectFlag "input"
+                            |> Command.toCommand
+                        , Command.build 123
+                            |> Command.expectFlag "output"
+                            |> Command.toCommand
+                        ]
+                in
+                TypoSuggestion.getSuggestions cli "outupt"
+                    |> Expect.equal
+                        [ TypoSuggestion.Flag "output"
+                        , TypoSuggestion.Flag "input"
+                        , TypoSuggestion.Flag "unrelated"
+                        ]
         ]
