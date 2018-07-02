@@ -1,6 +1,8 @@
 module TypoSuggestion exposing (TypoSuggestion(..), getSuggestions)
 
 import Cli.Command as Command exposing (Command)
+import Cli.UsageSpec as UsageSpec
+import List.Extra
 
 
 type TypoSuggestion
@@ -19,3 +21,13 @@ subCommandSuggestions commands =
         |> List.map Command.getSubCommand
         |> List.filterMap identity
         |> List.map SubCommand
+
+
+optionSuggestions : List (Command msg) -> List TypoSuggestion
+optionSuggestions commands =
+    commands
+        |> List.map Command.getUsageSpecs
+        |> List.concat
+        |> List.Extra.uniqueBy UsageSpec.name
+        |> List.map UsageSpec.name
+        |> List.map Flag
