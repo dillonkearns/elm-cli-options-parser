@@ -6,6 +6,7 @@ import Cli.Spec as Spec
 import Cli.Validate
 import Json.Decode exposing (..)
 import Ports
+import TypoSuggestion exposing (TypoSuggestion)
 
 
 type GraphqelmCommand
@@ -64,9 +65,14 @@ init flags =
 
         toPrint =
             case matchResult of
-                Cli.NoMatch _ ->
-                    "\nNo matching command...\n\nUsage:\n\n"
-                        ++ Cli.helpText "graphqelm" cli
+                Cli.NoMatch unexpectedOptions ->
+                    if unexpectedOptions == [] then
+                        "\nNo matching command...\n\nUsage:\n\n"
+                            ++ Cli.helpText "graphqelm" cli
+                    else
+                        unexpectedOptions
+                            |> List.map (TypoSuggestion.toMessage cli)
+                            |> String.join "\n"
 
                 Cli.ValidationErrors validationErrors ->
                     "Validation errors:\n\n"
