@@ -1,7 +1,7 @@
 module Cli.Spec exposing (..)
 
 import Cli.Decode
-import Cli.UsageSpec exposing (..)
+import Cli.UsageSpec as UsageSpec exposing (..)
 import Cli.Validate as Validate
 import List.Extra
 import Occurences exposing (Occurences(Optional, Required, ZeroOrMore))
@@ -31,7 +31,7 @@ validate validateFunction (CliSpec dataGrabber usageSpec (Cli.Decode.Decoder dec
 
                                     Validate.Invalid invalidReason ->
                                         ( validationErrors
-                                            ++ [ { name = Cli.UsageSpec.name usageSpec
+                                            ++ [ { name = UsageSpec.name usageSpec
                                                  , invalidReason = invalidReason
                                                  , valueAsString = toString value
                                                  }
@@ -73,7 +73,7 @@ positionalArg operandDescription =
                 Nothing ->
                     Cli.Decode.MatchError ("Expect operand " ++ operandDescription ++ "at " ++ toString operandsSoFar ++ " but had operands " ++ toString operands) |> Err
         )
-        (Operand operandDescription)
+        (Operand operandDescription Nothing)
         Cli.Decode.decoder
 
 
@@ -95,7 +95,7 @@ optionalKeywordArg optionName =
                 _ ->
                     Cli.Decode.MatchError ("Expected option " ++ optionName ++ " to have arg but found none.") |> Err
         )
-        (Option (OptionWithStringArg optionName) Optional)
+        (Option (OptionWithStringArg optionName) Nothing Optional)
         Cli.Decode.decoder
 
 
@@ -117,7 +117,7 @@ requiredKeywordArg optionName =
                 _ ->
                     Cli.Decode.MatchError ("Expected option " ++ optionName ++ " to have arg but found none.") |> Err
         )
-        (Option (OptionWithStringArg optionName) Required)
+        (Option (OptionWithStringArg optionName) Nothing Required)
         Cli.Decode.decoder
 
 
@@ -133,7 +133,7 @@ flag flagName =
             else
                 Ok False
         )
-        (Option (Flag flagName) Optional)
+        (Option (Flag flagName) Nothing Optional)
         Cli.Decode.decoder
 
 
@@ -147,7 +147,7 @@ type Thing union
 
 
 oneOf : value -> List (Thing value) -> CliSpec from String -> CliSpec from value
-oneOf default list cliSpec =
+oneOf default list (CliSpec dataGrabber usageSpec ((Cli.Decode.Decoder decodeFn) as decoder)) =
     validateMap
         (\argValue ->
             case
@@ -168,7 +168,28 @@ oneOf default list cliSpec =
                 Just matchingValue ->
                     Ok matchingValue
         )
-        cliSpec
+        (CliSpec dataGrabber
+            (changeUsageSpec
+                (list
+                    |> List.map (\(Thing name value) -> name)
+                )
+                usageSpec
+            )
+            (Cli.Decode.Decoder decodeFn)
+        )
+
+
+changeUsageSpec : List String -> UsageSpec -> UsageSpec
+changeUsageSpec possibleValues usageSpec =
+    case usageSpec of
+        Option option oneOf occurences ->
+            Option option (UsageSpec.OneOf possibleValues |> Just) occurences
+
+        Operand name oneOf ->
+            Operand name (UsageSpec.OneOf possibleValues |> Just)
+
+        _ ->
+            usageSpec
 
 
 validateMap : (to -> Result String toMapped) -> CliSpec from to -> CliSpec from toMapped
@@ -186,7 +207,7 @@ validateMap mapFn (CliSpec dataGrabber usageSpec ((Cli.Decode.Decoder decodeFn) 
 
                                     Err invalidReason ->
                                         Cli.Decode.UnrecoverableValidationError
-                                            { name = Cli.UsageSpec.name usageSpec
+                                            { name = UsageSpec.name usageSpec
                                             , invalidReason = invalidReason
                                             , valueAsString = toString value
                                             }
@@ -239,5 +260,5 @@ keywordArgList flagName =
                     )
                 |> Ok
         )
-        (Option (OptionWithStringArg flagName) ZeroOrMore)
+        (Option (OptionWithStringArg flagName) Nothing ZeroOrMore)
         Cli.Decode.decoder

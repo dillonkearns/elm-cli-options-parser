@@ -190,10 +190,10 @@ expectedOperandCountOrFail ((Command ({ decoder, usageSpecs } as command)) as fu
                                 |> List.filterMap
                                     (\option ->
                                         case option of
-                                            Operand operand ->
+                                            Operand operand oneOf ->
                                                 Just operand
 
-                                            Option _ _ ->
+                                            Option _ _ _ ->
                                                 Nothing
 
                                             RestArgs _ ->
@@ -255,11 +255,11 @@ optionExistsNew usageSpecs thisOptionName =
         |> List.filterMap
             (\usageSpec ->
                 case usageSpec of
-                    Option option occurences ->
+                    Option option oneOf occurences ->
                         option
                             |> Just
 
-                    Operand _ ->
+                    Operand _ _ ->
                         Nothing
 
                     RestArgs _ ->
@@ -357,7 +357,7 @@ expectFlag : String -> CommandBuilder msg -> CommandBuilder msg
 expectFlag flagName (CommandBuilder ({ usageSpecs, decoder } as command)) =
     CommandBuilder
         { command
-            | usageSpecs = usageSpecs ++ [ Option (Flag flagName) Required ]
+            | usageSpecs = usageSpecs ++ [ Option (Flag flagName) Nothing Required ]
             , decoder =
                 \({ options } as stuff) ->
                     if
@@ -377,10 +377,10 @@ operandCount usageSpecs =
         |> List.filterMap
             (\spec ->
                 case spec of
-                    Option _ _ ->
+                    Option _ _ _ ->
                         Nothing
 
-                    Operand operandName ->
+                    Operand operandName oneOf ->
                         Just operandName
 
                     RestArgs _ ->
@@ -409,7 +409,7 @@ keywordArgList flagName =
                     )
                 |> Ok
         )
-        (Option (OptionWithStringArg flagName) ZeroOrMore)
+        (Option (OptionWithStringArg flagName) Nothing ZeroOrMore)
         Cli.Decode.decoder
 
 
@@ -427,7 +427,7 @@ positionalArg operandDescription =
                 Nothing ->
                     Cli.Decode.MatchError ("Expect operand " ++ operandDescription ++ "at " ++ toString operandsSoFar ++ " but had operands " ++ toString operands) |> Err
         )
-        (Operand operandDescription)
+        (Operand operandDescription Nothing)
         Cli.Decode.decoder
 
 
@@ -454,7 +454,7 @@ optionalKeywordArg optionName =
                 _ ->
                     Cli.Decode.MatchError ("Expected option " ++ optionName ++ " to have arg but found none.") |> Err
         )
-        (Option (OptionWithStringArg optionName) Optional)
+        (Option (OptionWithStringArg optionName) Nothing Optional)
         Cli.Decode.decoder
 
 
@@ -476,7 +476,7 @@ requiredKeywordArg optionName =
                 _ ->
                     Cli.Decode.MatchError ("Expected option " ++ optionName ++ " to have arg but found none.") |> Err
         )
-        (Option (OptionWithStringArg optionName) Required)
+        (Option (OptionWithStringArg optionName) Nothing Required)
         Cli.Decode.decoder
 
 
@@ -492,7 +492,7 @@ flag flagName =
             else
                 Ok False
         )
-        (Option (Flag flagName) Optional)
+        (Option (Flag flagName) Nothing Optional)
         Cli.Decode.decoder
 
 

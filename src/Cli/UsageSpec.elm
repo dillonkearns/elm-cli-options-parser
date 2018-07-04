@@ -1,4 +1,4 @@
-module Cli.UsageSpec exposing (Option(..), UsageSpec(..), name, optionHasArg, synopsis)
+module Cli.UsageSpec exposing (OneOf(OneOf), Option(..), UsageSpec(..), name, optionHasArg, synopsis)
 
 import List.Extra
 import Occurences exposing (Occurences(..))
@@ -9,16 +9,20 @@ type Option
     | OptionWithStringArg String
 
 
+type OneOf
+    = OneOf (List String)
+
+
 type UsageSpec
-    = Option Option Occurences
-    | Operand String
+    = Option Option (Maybe OneOf) Occurences
+    | Operand String (Maybe OneOf)
     | RestArgs String
 
 
 name : UsageSpec -> String
 name usageSpec =
     case usageSpec of
-        Option option occurences ->
+        Option option oneOf occurences ->
             case option of
                 Flag name ->
                     name
@@ -26,7 +30,7 @@ name usageSpec =
                 OptionWithStringArg name ->
                     name
 
-        Operand name ->
+        Operand name oneOf ->
             name
 
         RestArgs name ->
@@ -42,10 +46,10 @@ synopsis programName { usageSpecs, description, subCommand } =
                 |> List.map
                     (\spec ->
                         case spec of
-                            Option option occurences ->
-                                optionSynopsis occurences option
+                            Option option oneOf occurences ->
+                                optionSynopsis occurences option oneOf
 
-                            Operand operandName ->
+                            Operand operandName oneOf ->
                                 "<" ++ operandName ++ ">"
 
                             RestArgs description ->
@@ -56,14 +60,19 @@ synopsis programName { usageSpecs, description, subCommand } =
         ++ (description |> Maybe.map (\doc -> " # " ++ doc) |> Maybe.withDefault "")
 
 
-optionSynopsis : Occurences -> Option -> String
-optionSynopsis occurences option =
+optionSynopsis : Occurences -> Option -> Maybe OneOf -> String
+optionSynopsis occurences option oneOf =
     (case option of
         Flag flagName ->
             "--" ++ flagName
 
         OptionWithStringArg optionName ->
-            "--" ++ optionName ++ " <" ++ optionName ++ ">"
+            case oneOf of
+                Just (OneOf oneOf) ->
+                    "--" ++ optionName ++ " <" ++ (oneOf |> String.join "|") ++ ">"
+
+                Nothing ->
+                    "--" ++ optionName ++ " <" ++ optionName ++ ">"
     )
         |> Occurences.qualifySynopsis occurences
 
@@ -75,10 +84,10 @@ optionHasArg options optionNameToCheck =
             |> List.filterMap
                 (\spec ->
                     case spec of
-                        Option option occurences ->
+                        Option option oneOf occurences ->
                             Just option
 
-                        Operand _ ->
+                        Operand _ _ ->
                             Nothing
 
                         RestArgs _ ->

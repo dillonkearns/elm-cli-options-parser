@@ -1,6 +1,7 @@
 module Cli.UsageSpecTests exposing (all)
 
 import Cli.Command as Command
+import Cli.Spec as Spec
 import Expect exposing (Expectation)
 import Test exposing (..)
 
@@ -75,4 +76,30 @@ all =
                     |> Command.toCommand
                     |> Command.synopsis "elm-test"
                     |> Expect.equal "elm-test init"
+        , test "oneOf" <|
+            \() ->
+                Command.build identity
+                    |> Command.with
+                        (Spec.requiredKeywordArg "report"
+                            |> Spec.oneOf 123
+                                [ Spec.Thing "json" 123
+                                , Spec.Thing "junit" 123
+                                , Spec.Thing "console" 123
+                                ]
+                        )
+                    |> Command.toCommand
+                    |> Command.synopsis "elm-test"
+                    |> Expect.equal "elm-test --report <json|junit|console>"
         ]
+
+
+
+--         (Command.build identity
+--     |> Command.with
+--         (Spec.requiredKeywordArg "report"
+--             |> Spec.oneOf Console
+--                 [ Spec.Thing "json" Json
+--                 ]
+--         )
+--     |> Command.toCommand
+-- )
