@@ -10,9 +10,20 @@ import TypoSuggestion exposing (TypoSuggestion)
 
 type ElmTestCommand
     = Init
-    | RunTests (Maybe Int) (Maybe Int) (Maybe String) (Maybe String) Bool Report (List String)
+    | RunTests RunTestsRecord
     | PrintHelp
     | PrintVersion
+
+
+type alias RunTestsRecord =
+    { maybeFuzz : Maybe Int
+    , maybeSeed : Maybe Int
+    , maybeCompilerPath : Maybe String
+    , maybeDependencies : Maybe String
+    , watch : Bool
+    , report : Report
+    , testFiles : List String
+    }
 
 
 
@@ -42,7 +53,7 @@ cli : List (Command ElmTestCommand)
 cli =
     [ Command.subCommand "init" Init
         |> Command.toCommand
-    , Command.build RunTests
+    , Command.build RunTestsRecord
         |> with
             (Spec.optionalKeywordArg "fuzz"
                 |> Spec.validateMapMaybe String.toInt
@@ -64,6 +75,7 @@ cli =
                     ]
             )
         |> Command.captureRestOperands "TESTFILES"
+        |> Command.map RunTests
     , Command.build PrintHelp
         |> Command.expectFlag "help"
         |> Command.toCommand
@@ -126,14 +138,14 @@ init flags =
                         Init ->
                             "Initializing test suite..."
 
-                        RunTests maybeFuzz maybeSeed maybeCompilerPath maybeDependencies watch report testFiles ->
-                            [ "Running the following test files: " ++ toString testFiles |> Just
-                            , "with watch: " ++ toString watch |> Just
-                            , maybeFuzz |> Maybe.map (\fuzz -> "with fuzz: " ++ toString fuzz)
-                            , maybeSeed |> Maybe.map (\seed -> "with seed: " ++ toString seed)
-                            , report |> toString |> Just
-                            , maybeCompilerPath |> Maybe.map (\compilerPath -> "with compiler: " ++ toString compilerPath)
-                            , maybeDependencies |> Maybe.map (\dependencies -> "with dependencies: " ++ toString dependencies)
+                        RunTests options ->
+                            [ "Running the following test files: " ++ toString options.testFiles |> Just
+                            , "watch: " ++ toString options.watch |> Just
+                            , options.maybeFuzz |> Maybe.map (\fuzz -> "fuzz: " ++ toString fuzz)
+                            , options.maybeSeed |> Maybe.map (\seed -> "seed: " ++ toString seed)
+                            , options.report |> toString |> Just
+                            , options.maybeCompilerPath |> Maybe.map (\compilerPath -> "compiler: " ++ toString compilerPath)
+                            , options.maybeDependencies |> Maybe.map (\dependencies -> "dependencies: " ++ toString dependencies)
                             ]
                                 |> List.filterMap identity
                                 |> String.join "\n"
