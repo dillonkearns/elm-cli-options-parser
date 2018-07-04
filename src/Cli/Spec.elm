@@ -150,11 +150,23 @@ oneOf : value -> List (Thing value) -> CliSpec from String -> CliSpec from value
 oneOf default list cliSpec =
     validateMap
         (\argValue ->
-            list
-                |> List.Extra.find (\(Thing name value) -> name == argValue)
-                |> Maybe.map (\(Thing name value) -> value)
-                |> Maybe.withDefault default
-                |> Ok
+            case
+                list
+                    |> List.Extra.find (\(Thing name value) -> name == argValue)
+                    |> Maybe.map (\(Thing name value) -> value)
+            of
+                Nothing ->
+                    Err
+                        ("Must be one of ["
+                            ++ (list
+                                    |> List.map (\(Thing name value) -> name)
+                                    |> String.join ", "
+                               )
+                            ++ "]"
+                        )
+
+                Just matchingValue ->
+                    Ok matchingValue
         )
         cliSpec
 

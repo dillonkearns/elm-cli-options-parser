@@ -259,17 +259,6 @@ all =
                             |> Command.toCommand
                         )
                         123
-            , test "oneOf default" <|
-                \() ->
-                    expectMatch [ "--report", "console" ]
-                        (Command.build identity
-                            |> Command.with
-                                (Spec.requiredKeywordArg "report"
-                                    |> Spec.oneOf Console []
-                                )
-                            |> Command.toCommand
-                        )
-                        Console
             , test "oneOf not default" <|
                 \() ->
                     expectMatch [ "--report", "json" ]
@@ -283,6 +272,19 @@ all =
                             |> Command.toCommand
                         )
                         Json
+            , test "oneOf invalid option" <|
+                \() ->
+                    Command.tryMatch [ "--report", "invalidOption" ]
+                        (Command.build identity
+                            |> Command.with
+                                (Spec.requiredKeywordArg "report"
+                                    |> Spec.oneOf Console
+                                        [ Spec.Thing "json" Json
+                                        ]
+                                )
+                            |> Command.toCommand
+                        )
+                        |> Expect.equal (Just (Err [ { name = "report", invalidReason = "Must be one of [json]", valueAsString = "\"invalidOption\"" } ]))
             , test "failed map validation" <|
                 \() ->
                     Command.tryMatch [ "--fuzz", "abcdefg" ]
