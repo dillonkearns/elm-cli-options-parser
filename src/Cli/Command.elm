@@ -2,7 +2,7 @@ module Cli.Command exposing (Command, CommandBuilder, MatchResult(..), build, bu
 
 import Cli.Decode
 import Cli.Spec exposing (CliSpec(..))
-import Cli.UsageSpec exposing (..)
+import Cli.UsageSpec as UsageSpec exposing (..)
 import Cli.Validate exposing (ValidationResult(Invalid, Valid))
 import List.Extra
 import Occurences exposing (Occurences(..))
@@ -33,7 +33,7 @@ synopsis : String -> Command decodesTo -> String
 synopsis programName command =
     command
         |> (\(Command record) -> record)
-        |> Cli.UsageSpec.synopsis programName
+        |> UsageSpec.synopsis programName
 
 
 getSubCommand : Command msg -> Maybe String
@@ -163,20 +163,6 @@ tryMatch argv ((Command { decoder, usageSpecs, subCommand }) as command) =
             Nothing
 
 
-hasRestArgs : List UsageSpec -> Bool
-hasRestArgs usageSpecs =
-    List.any
-        (\usageSpec ->
-            case usageSpec of
-                RestArgs _ ->
-                    True
-
-                _ ->
-                    False
-        )
-        usageSpecs
-
-
 expectedOperandCountOrFail : Command msg -> Command msg
 expectedOperandCountOrFail ((Command ({ decoder, usageSpecs } as command)) as fullCommand) =
     Command
@@ -184,21 +170,10 @@ expectedOperandCountOrFail ((Command ({ decoder, usageSpecs } as command)) as fu
             | decoder =
                 \({ operands } as stuff) ->
                     if
-                        not (hasRestArgs usageSpecs)
+                        not (UsageSpec.hasRestArgs usageSpecs)
                             && (operands |> List.length)
                             > (usageSpecs
-                                |> List.filterMap
-                                    (\option ->
-                                        case option of
-                                            Operand operand oneOf ->
-                                                Just operand
-
-                                            Option _ _ _ ->
-                                                Nothing
-
-                                            RestArgs _ ->
-                                                Nothing
-                                    )
+                                |> List.filter UsageSpec.isOperand
                                 |> List.length
                               )
                     then
@@ -241,31 +216,12 @@ unexpectedOptions_ : Command msg -> List ParsedOption -> List String
 unexpectedOptions_ (Command ({ decoder, usageSpecs } as command)) options =
     List.filterMap
         (\(Parser.ParsedOption optionName optionKind) ->
-            if optionExistsNew usageSpecs optionName == Nothing then
+            if UsageSpec.optionExists usageSpecs optionName == Nothing then
                 Just optionName
             else
                 Nothing
         )
         options
-
-
-optionExistsNew : List UsageSpec -> String -> Maybe Option
-optionExistsNew usageSpecs thisOptionName =
-    usageSpecs
-        |> List.filterMap
-            (\usageSpec ->
-                case usageSpec of
-                    Option option oneOf occurences ->
-                        option
-                            |> Just
-
-                    Operand _ _ ->
-                        Nothing
-
-                    RestArgs _ ->
-                        Nothing
-            )
-        |> List.Extra.find (\option -> optionName option == thisOptionName)
 
 
 type CommandBuilder msg
@@ -285,14 +241,14 @@ toCommand (CommandBuilder record) =
 captureRestOperands : String -> CommandBuilder (List String -> msg) -> Command msg
 captureRestOperands restOperandsDescription (CommandBuilder ({ usageSpecs, description, decoder } as record)) =
     Command
-        { usageSpecs = usageSpecs ++ [ RestArgs restOperandsDescription ]
+        { usageSpecs = usageSpecs ++ [ UsageSpec.restArgs restOperandsDescription ]
         , description = description
         , decoder =
             \({ operands } as stuff) ->
                 let
                     restOperands =
                         operands
-                            |> List.drop (operandCount usageSpecs)
+                            |> List.drop (UsageSpec.operandCount usageSpecs)
                 in
                 resultMap (\fn -> fn restOperands) (decoder stuff)
         , subCommand = record.subCommand
@@ -357,7 +313,7 @@ expectFlag : String -> CommandBuilder msg -> CommandBuilder msg
 expectFlag flagName (CommandBuilder ({ usageSpecs, decoder } as command)) =
     CommandBuilder
         { command
-            | usageSpecs = usageSpecs ++ [ Option (Flag flagName) Nothing Required ]
+            | usageSpecs = usageSpecs ++ [ UsageSpec.option (Flag flagName) Required ]
             , decoder =
                 \({ options } as stuff) ->
                     if
@@ -369,24 +325,6 @@ expectFlag flagName (CommandBuilder ({ usageSpecs, decoder } as command)) =
                         Cli.Decode.MatchError ("Expect flag " ++ ("--" ++ flagName))
                             |> Err
         }
-
-
-operandCount : List UsageSpec -> Int
-operandCount usageSpecs =
-    usageSpecs
-        |> List.filterMap
-            (\spec ->
-                case spec of
-                    Option _ _ _ ->
-                        Nothing
-
-                    Operand operandName oneOf ->
-                        Just operandName
-
-                    RestArgs _ ->
-                        Nothing
-            )
-        |> List.length
 
 
 keywordArgList : String -> CliSpec (List String) (List String)
@@ -409,7 +347,7 @@ keywordArgList flagName =
                     )
                 |> Ok
         )
-        (Option (OptionWithStringArg flagName) Nothing ZeroOrMore)
+        (UsageSpec.option (OptionWithStringArg flagName) ZeroOrMore)
         Cli.Decode.decoder
 
 
@@ -427,7 +365,7 @@ positionalArg operandDescription =
                 Nothing ->
                     Cli.Decode.MatchError ("Expect operand " ++ operandDescription ++ "at " ++ toString operandsSoFar ++ " but had operands " ++ toString operands) |> Err
         )
-        (Operand operandDescription Nothing)
+        (UsageSpec.operand operandDescription)
         Cli.Decode.decoder
 
 
@@ -454,7 +392,7 @@ optionalKeywordArg optionName =
                 _ ->
                     Cli.Decode.MatchError ("Expected option " ++ optionName ++ " to have arg but found none.") |> Err
         )
-        (Option (OptionWithStringArg optionName) Nothing Optional)
+        (UsageSpec.option (OptionWithStringArg optionName) Optional)
         Cli.Decode.decoder
 
 
@@ -476,7 +414,7 @@ requiredKeywordArg optionName =
                 _ ->
                     Cli.Decode.MatchError ("Expected option " ++ optionName ++ " to have arg but found none.") |> Err
         )
-        (Option (OptionWithStringArg optionName) Nothing Required)
+        (UsageSpec.option (OptionWithStringArg optionName) Required)
         Cli.Decode.decoder
 
 
@@ -492,7 +430,7 @@ flag flagName =
             else
                 Ok False
         )
-        (Option (Flag flagName) Nothing Optional)
+        (UsageSpec.option (Flag flagName) Optional)
         Cli.Decode.decoder
 
 
@@ -516,7 +454,7 @@ validate validateFunction (CliSpec dataGrabber usageSpec (Cli.Decode.Decoder dec
 
                                     Invalid invalidReason ->
                                         ( validationErrors
-                                            ++ [ { name = Cli.UsageSpec.name usageSpec
+                                            ++ [ { name = UsageSpec.name usageSpec
                                                  , invalidReason = invalidReason
                                                  , valueAsString = toString value
                                                  }
@@ -553,7 +491,7 @@ with (CliSpec dataGrabber usageSpec (Cli.Decode.Decoder decodeFn)) ((CommandBuil
                     { options = optionsAndOperands.options
                     , operands = optionsAndOperands.operands
                     , usageSpecs = optionsAndOperands.usageSpecs
-                    , operandsSoFar = operandCount usageSpecs
+                    , operandsSoFar = UsageSpec.operandCount usageSpecs
                     }
                         |> dataGrabber
                         |> Result.andThen decodeFn

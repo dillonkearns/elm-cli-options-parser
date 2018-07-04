@@ -73,7 +73,7 @@ positionalArg operandDescription =
                 Nothing ->
                     Cli.Decode.MatchError ("Expect operand " ++ operandDescription ++ "at " ++ toString operandsSoFar ++ " but had operands " ++ toString operands) |> Err
         )
-        (Operand operandDescription Nothing)
+        (UsageSpec.operand operandDescription)
         Cli.Decode.decoder
 
 
@@ -95,7 +95,7 @@ optionalKeywordArg optionName =
                 _ ->
                     Cli.Decode.MatchError ("Expected option " ++ optionName ++ " to have arg but found none.") |> Err
         )
-        (Option (OptionWithStringArg optionName) Nothing Optional)
+        (UsageSpec.option (OptionWithStringArg optionName) Optional)
         Cli.Decode.decoder
 
 
@@ -117,7 +117,7 @@ requiredKeywordArg optionName =
                 _ ->
                     Cli.Decode.MatchError ("Expected option " ++ optionName ++ " to have arg but found none.") |> Err
         )
-        (Option (OptionWithStringArg optionName) Nothing Required)
+        (UsageSpec.option (OptionWithStringArg optionName) Required)
         Cli.Decode.decoder
 
 
@@ -133,7 +133,7 @@ flag flagName =
             else
                 Ok False
         )
-        (Option (Flag flagName) Nothing Optional)
+        (UsageSpec.option (Flag flagName) Optional)
         Cli.Decode.decoder
 
 
@@ -169,7 +169,7 @@ oneOf default list (CliSpec dataGrabber usageSpec ((Cli.Decode.Decoder decodeFn)
                     Ok matchingValue
         )
         (CliSpec dataGrabber
-            (changeUsageSpec
+            (UsageSpec.changeUsageSpec
                 (list
                     |> List.map (\(Thing name value) -> name)
                 )
@@ -177,19 +177,6 @@ oneOf default list (CliSpec dataGrabber usageSpec ((Cli.Decode.Decoder decodeFn)
             )
             (Cli.Decode.Decoder decodeFn)
         )
-
-
-changeUsageSpec : List String -> UsageSpec -> UsageSpec
-changeUsageSpec possibleValues usageSpec =
-    case usageSpec of
-        Option option oneOf occurences ->
-            Option option (UsageSpec.MutuallyExclusiveValues possibleValues |> Just) occurences
-
-        Operand name oneOf ->
-            Operand name (UsageSpec.MutuallyExclusiveValues possibleValues |> Just)
-
-        _ ->
-            usageSpec
 
 
 validateMap : (to -> Result String toMapped) -> CliSpec from to -> CliSpec from toMapped
@@ -260,5 +247,5 @@ keywordArgList flagName =
                     )
                 |> Ok
         )
-        (Option (OptionWithStringArg flagName) Nothing ZeroOrMore)
+        (UsageSpec.option (OptionWithStringArg flagName) ZeroOrMore)
         Cli.Decode.decoder

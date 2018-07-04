@@ -1,4 +1,4 @@
-module Cli.UsageSpec exposing (MutuallyExclusiveValues(MutuallyExclusiveValues), Option(..), UsageSpec(..), name, optionHasArg, synopsis)
+module Cli.UsageSpec exposing (MutuallyExclusiveValues(MutuallyExclusiveValues), Option(..), UsageSpec, changeUsageSpec, hasRestArgs, isOperand, name, operand, operandCount, option, optionExists, optionHasArg, restArgs, synopsis)
 
 import List.Extra
 import Occurences exposing (Occurences(..))
@@ -17,6 +17,98 @@ type UsageSpec
     = Option Option (Maybe MutuallyExclusiveValues) Occurences
     | Operand String (Maybe MutuallyExclusiveValues)
     | RestArgs String
+
+
+option : Option -> Occurences -> UsageSpec
+option option occurences =
+    Option option Nothing occurences
+
+
+operand : String -> UsageSpec
+operand name =
+    Operand name Nothing
+
+
+restArgs : String -> UsageSpec
+restArgs name =
+    RestArgs name
+
+
+changeUsageSpec : List String -> UsageSpec -> UsageSpec
+changeUsageSpec possibleValues usageSpec =
+    case usageSpec of
+        Option option oneOf occurences ->
+            Option option (MutuallyExclusiveValues possibleValues |> Just) occurences
+
+        Operand name oneOf ->
+            Operand name (MutuallyExclusiveValues possibleValues |> Just)
+
+        _ ->
+            usageSpec
+
+
+operandCount : List UsageSpec -> Int
+operandCount usageSpecs =
+    usageSpecs
+        |> List.filterMap
+            (\spec ->
+                case spec of
+                    Option _ _ _ ->
+                        Nothing
+
+                    Operand operandName oneOf ->
+                        Just operandName
+
+                    RestArgs _ ->
+                        Nothing
+            )
+        |> List.length
+
+
+optionExists : List UsageSpec -> String -> Maybe Option
+optionExists usageSpecs thisOptionName =
+    usageSpecs
+        |> List.filterMap
+            (\usageSpec ->
+                case usageSpec of
+                    Option option oneOf occurences ->
+                        option
+                            |> Just
+
+                    Operand _ _ ->
+                        Nothing
+
+                    RestArgs _ ->
+                        Nothing
+            )
+        |> List.Extra.find (\option -> optionName option == thisOptionName)
+
+
+isOperand : UsageSpec -> Bool
+isOperand option =
+    case option of
+        Operand operand oneOf ->
+            True
+
+        Option _ _ _ ->
+            False
+
+        RestArgs _ ->
+            False
+
+
+hasRestArgs : List UsageSpec -> Bool
+hasRestArgs usageSpecs =
+    List.any
+        (\usageSpec ->
+            case usageSpec of
+                RestArgs _ ->
+                    True
+
+                _ ->
+                    False
+        )
+        usageSpecs
 
 
 name : UsageSpec -> String
