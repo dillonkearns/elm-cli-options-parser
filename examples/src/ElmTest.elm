@@ -45,9 +45,13 @@ cli =
         |> Command.toCommand
     , Command.build RunTests
         |> with
-            (Spec.optionalKeywordArg "fuzz" |> Spec.validateMapMaybe String.toInt)
+            (Spec.optionalKeywordArg "fuzz"
+                |> Spec.validateMapMaybe String.toInt
+            )
         |> with
-            (Spec.optionalKeywordArg "seed" |> Spec.validateMapMaybe String.toInt)
+            (Spec.optionalKeywordArg "seed"
+                |> Spec.validateMapMaybe String.toInt
+            )
         |> with (Spec.optionalKeywordArg "compiler")
         |> with (Spec.optionalKeywordArg "add-dependencies")
         |> with (Spec.flag "watch")
