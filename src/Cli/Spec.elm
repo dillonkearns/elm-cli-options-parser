@@ -142,6 +142,22 @@ map mapFn (CliSpec dataGrabber usageSpec ((Cli.Decode.Decoder decodeFn) as decod
     CliSpec dataGrabber usageSpec (Cli.Decode.map mapFn decoder)
 
 
+type Thing union
+    = Thing String union
+
+
+oneOf default list cliSpec =
+    validateMap
+        (\argValue ->
+            list
+                |> List.Extra.find (\(Thing name value) -> name == argValue)
+                |> Maybe.map (\(Thing name value) -> value)
+                |> Maybe.withDefault default
+                |> Ok
+        )
+        cliSpec
+
+
 validateMap : (to -> Result String toMapped) -> CliSpec from to -> CliSpec from toMapped
 validateMap mapFn (CliSpec dataGrabber usageSpec ((Cli.Decode.Decoder decodeFn) as decoder)) =
     CliSpec dataGrabber

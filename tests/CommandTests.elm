@@ -16,6 +16,12 @@ type Msg
     | FullName String String
 
 
+type Report
+    = Console
+    | Json
+    | Junit
+
+
 all : Test
 all =
     describe "CLI options parser"
@@ -253,6 +259,30 @@ all =
                             |> Command.toCommand
                         )
                         123
+            , test "oneOf default" <|
+                \() ->
+                    expectMatch [ "--report", "console" ]
+                        (Command.build identity
+                            |> Command.with
+                                (Spec.requiredKeywordArg "report"
+                                    |> Spec.oneOf Console []
+                                )
+                            |> Command.toCommand
+                        )
+                        Console
+            , test "oneOf not default" <|
+                \() ->
+                    expectMatch [ "--report", "json" ]
+                        (Command.build identity
+                            |> Command.with
+                                (Spec.requiredKeywordArg "report"
+                                    |> Spec.oneOf Console
+                                        [ Spec.Thing "json" Json
+                                        ]
+                                )
+                            |> Command.toCommand
+                        )
+                        Json
             , test "failed map validation" <|
                 \() ->
                     Command.tryMatch [ "--fuzz", "abcdefg" ]
