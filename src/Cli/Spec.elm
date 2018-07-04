@@ -146,6 +146,7 @@ type Thing union
     = Thing String union
 
 
+oneOf : value -> List (Thing value) -> CliSpec from String -> CliSpec from value
 oneOf default list cliSpec =
     validateMap
         (\argValue ->
