@@ -76,7 +76,7 @@ all =
                     |> Command.toCommand
                     |> Command.synopsis "elm-test"
                     |> Expect.equal "elm-test init"
-        , test "oneOf" <|
+        , test "mutually exclusive keyword arg" <|
             \() ->
                 Command.build identity
                     |> Command.with
@@ -90,16 +90,11 @@ all =
                     |> Command.toCommand
                     |> Command.synopsis "elm-test"
                     |> Expect.equal "elm-test --report <json|junit|console>"
+        , test "sub-command with flag" <|
+            \() ->
+                Command.subCommand "log" identity
+                    |> Command.with (Spec.flag "stat")
+                    |> Command.toCommand
+                    |> Command.synopsis "git"
+                    |> Expect.equal "git log [--stat]"
         ]
-
-
-
---         (Command.build identity
---     |> Command.with
---         (Spec.requiredKeywordArg "report"
---             |> Spec.oneOf Console
---                 [ Spec.Thing "json" Json
---                 ]
---         )
---     |> Command.toCommand
--- )

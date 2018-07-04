@@ -133,20 +133,25 @@ synopsis : String -> { command | usageSpecs : List UsageSpec, description : Mayb
 synopsis programName { usageSpecs, description, subCommand } =
     programName
         ++ " "
-        ++ (subCommand |> Maybe.withDefault "")
-        ++ (usageSpecs
-                |> List.map
-                    (\spec ->
-                        case spec of
-                            Option option oneOf occurences ->
-                                optionSynopsis occurences option oneOf
+        ++ ((subCommand
+                :: (usageSpecs
+                        |> List.map
+                            (\spec ->
+                                (case spec of
+                                    Option option oneOf occurences ->
+                                        optionSynopsis occurences option oneOf
 
-                            Operand operandName oneOf ->
-                                "<" ++ operandName ++ ">"
+                                    Operand operandName oneOf ->
+                                        "<" ++ operandName ++ ">"
 
-                            RestArgs description ->
-                                "<" ++ description ++ ">..."
-                    )
+                                    RestArgs description ->
+                                        "<" ++ description ++ ">..."
+                                )
+                                    |> Just
+                            )
+                   )
+            )
+                |> List.filterMap identity
                 |> String.join " "
            )
         ++ (description |> Maybe.map (\doc -> " # " ++ doc) |> Maybe.withDefault "")
