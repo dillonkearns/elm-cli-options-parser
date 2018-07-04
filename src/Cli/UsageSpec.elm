@@ -1,4 +1,4 @@
-module Cli.UsageSpec exposing (OneOf(OneOf), Option(..), UsageSpec(..), name, optionHasArg, synopsis)
+module Cli.UsageSpec exposing (MutuallyExclusiveValues(MutuallyExclusiveValues), Option(..), UsageSpec(..), name, optionHasArg, synopsis)
 
 import List.Extra
 import Occurences exposing (Occurences(..))
@@ -9,13 +9,13 @@ type Option
     | OptionWithStringArg String
 
 
-type OneOf
-    = OneOf (List String)
+type MutuallyExclusiveValues
+    = MutuallyExclusiveValues (List String)
 
 
 type UsageSpec
-    = Option Option (Maybe OneOf) Occurences
-    | Operand String (Maybe OneOf)
+    = Option Option (Maybe MutuallyExclusiveValues) Occurences
+    | Operand String (Maybe MutuallyExclusiveValues)
     | RestArgs String
 
 
@@ -60,7 +60,7 @@ synopsis programName { usageSpecs, description, subCommand } =
         ++ (description |> Maybe.map (\doc -> " # " ++ doc) |> Maybe.withDefault "")
 
 
-optionSynopsis : Occurences -> Option -> Maybe OneOf -> String
+optionSynopsis : Occurences -> Option -> Maybe MutuallyExclusiveValues -> String
 optionSynopsis occurences option oneOf =
     (case option of
         Flag flagName ->
@@ -68,7 +68,7 @@ optionSynopsis occurences option oneOf =
 
         OptionWithStringArg optionName ->
             case oneOf of
-                Just (OneOf oneOf) ->
+                Just (MutuallyExclusiveValues oneOf) ->
                     "--" ++ optionName ++ " <" ++ (oneOf |> String.join "|") ++ ">"
 
                 Nothing ->

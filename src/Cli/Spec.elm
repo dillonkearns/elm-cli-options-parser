@@ -183,10 +183,10 @@ changeUsageSpec : List String -> UsageSpec -> UsageSpec
 changeUsageSpec possibleValues usageSpec =
     case usageSpec of
         Option option oneOf occurences ->
-            Option option (UsageSpec.OneOf possibleValues |> Just) occurences
+            Option option (UsageSpec.MutuallyExclusiveValues possibleValues |> Just) occurences
 
         Operand name oneOf ->
-            Operand name (UsageSpec.OneOf possibleValues |> Just)
+            Operand name (UsageSpec.MutuallyExclusiveValues possibleValues |> Just)
 
         _ ->
             usageSpec
