@@ -9,7 +9,7 @@ import TypoSuggestion exposing (TypoSuggestion)
 
 
 type ElmTestCommand
-    = Init ()
+    = Init
     | RunTests (Maybe Int) (Maybe Int) (Maybe String) (Maybe String) Bool Report (List String)
     | PrintHelp
     | PrintVersion
@@ -41,7 +41,6 @@ type ElmTestCommand
 cli : List (Command ElmTestCommand)
 cli =
     [ Command.subCommand "init" Init
-        |> Command.hardcoded ()
         |> Command.toCommand
     , Command.build RunTests
         |> with
@@ -124,7 +123,7 @@ init flags =
 
                 Cli.Match msg ->
                     case msg of
-                        Init () ->
+                        Init ->
                             "Initializing test suite..."
 
                         RunTests maybeFuzz maybeSeed maybeCompilerPath maybeDependencies watch report testFiles ->
