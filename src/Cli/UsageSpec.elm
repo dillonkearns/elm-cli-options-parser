@@ -144,10 +144,7 @@ synopsis programName { usageSpecs, description, subCommand } =
                                     Operand operandName mutuallyExclusiveValues ->
                                         "<"
                                             ++ (mutuallyExclusiveValues
-                                                    |> Maybe.map
-                                                        (\(MutuallyExclusiveValues values) ->
-                                                            String.join "|" values
-                                                        )
+                                                    |> Maybe.map mutuallyExclusiveSynopsis
                                                     |> Maybe.withDefault operandName
                                                )
                                             ++ ">"
@@ -165,6 +162,11 @@ synopsis programName { usageSpecs, description, subCommand } =
         ++ (description |> Maybe.map (\doc -> " # " ++ doc) |> Maybe.withDefault "")
 
 
+mutuallyExclusiveSynopsis : MutuallyExclusiveValues -> String
+mutuallyExclusiveSynopsis (MutuallyExclusiveValues values) =
+    String.join "|" values
+
+
 optionSynopsis : Occurences -> Option -> Maybe MutuallyExclusiveValues -> String
 optionSynopsis occurences option mutuallyExclusiveValues =
     (case option of
@@ -173,8 +175,8 @@ optionSynopsis occurences option mutuallyExclusiveValues =
 
         OptionWithStringArg optionName ->
             case mutuallyExclusiveValues of
-                Just (MutuallyExclusiveValues mutuallyExclusiveValues) ->
-                    "--" ++ optionName ++ " <" ++ (mutuallyExclusiveValues |> String.join "|") ++ ">"
+                Just mutuallyExclusiveValues ->
+                    "--" ++ optionName ++ " <" ++ mutuallyExclusiveSynopsis mutuallyExclusiveValues ++ ">"
 
                 Nothing ->
                     "--" ++ optionName ++ " <" ++ optionName ++ ">"
