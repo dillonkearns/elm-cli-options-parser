@@ -90,6 +90,20 @@ all =
                     |> Command.toCommand
                     |> Command.synopsis "elm-test"
                     |> Expect.equal "elm-test --report <json|junit|console>"
+        , test "mutually exclusive positional arg" <|
+            \() ->
+                Command.build identity
+                    |> Command.with
+                        (Spec.positionalArg "report"
+                            |> Spec.oneOf 123
+                                [ Spec.Thing "json" 123
+                                , Spec.Thing "junit" 123
+                                , Spec.Thing "console" 123
+                                ]
+                        )
+                    |> Command.toCommand
+                    |> Command.synopsis "elm-test"
+                    |> Expect.equal "elm-test <json|junit|console>"
         , test "sub-command with flag" <|
             \() ->
                 Command.subCommand "log" identity

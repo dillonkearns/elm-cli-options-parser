@@ -37,10 +37,10 @@ restArgs name =
 changeUsageSpec : List String -> UsageSpec -> UsageSpec
 changeUsageSpec possibleValues usageSpec =
     case usageSpec of
-        Option option oneOf occurences ->
+        Option option mutuallyExclusiveValues occurences ->
             Option option (MutuallyExclusiveValues possibleValues |> Just) occurences
 
-        Operand name oneOf ->
+        Operand name mutuallyExclusiveValues ->
             Operand name (MutuallyExclusiveValues possibleValues |> Just)
 
         _ ->
@@ -56,7 +56,7 @@ operandCount usageSpecs =
                     Option _ _ _ ->
                         Nothing
 
-                    Operand operandName oneOf ->
+                    Operand operandName mutuallyExclusiveValues ->
                         Just operandName
 
                     RestArgs _ ->
@@ -71,7 +71,7 @@ optionExists usageSpecs thisOptionName =
         |> List.filterMap
             (\usageSpec ->
                 case usageSpec of
-                    Option option oneOf occurences ->
+                    Option option mutuallyExclusiveValues occurences ->
                         option
                             |> Just
 
@@ -87,7 +87,7 @@ optionExists usageSpecs thisOptionName =
 isOperand : UsageSpec -> Bool
 isOperand option =
     case option of
-        Operand operand oneOf ->
+        Operand operand mutuallyExclusiveValues ->
             True
 
         Option _ _ _ ->
@@ -114,7 +114,7 @@ hasRestArgs usageSpecs =
 name : UsageSpec -> String
 name usageSpec =
     case usageSpec of
-        Option option oneOf occurences ->
+        Option option mutuallyExclusiveValues occurences ->
             case option of
                 Flag name ->
                     name
@@ -122,7 +122,7 @@ name usageSpec =
                 OptionWithStringArg name ->
                     name
 
-        Operand name oneOf ->
+        Operand name mutuallyExclusiveValues ->
             name
 
         RestArgs name ->
@@ -138,11 +138,19 @@ synopsis programName { usageSpecs, description, subCommand } =
                         |> List.map
                             (\spec ->
                                 (case spec of
-                                    Option option oneOf occurences ->
-                                        optionSynopsis occurences option oneOf
+                                    Option option mutuallyExclusiveValues occurences ->
+                                        optionSynopsis occurences option mutuallyExclusiveValues
 
-                                    Operand operandName oneOf ->
-                                        "<" ++ operandName ++ ">"
+                                    Operand operandName mutuallyExclusiveValues ->
+                                        "<"
+                                            ++ (mutuallyExclusiveValues
+                                                    |> Maybe.map
+                                                        (\(MutuallyExclusiveValues values) ->
+                                                            String.join "|" values
+                                                        )
+                                                    |> Maybe.withDefault operandName
+                                               )
+                                            ++ ">"
 
                                     RestArgs description ->
                                         "<" ++ description ++ ">..."
@@ -158,15 +166,15 @@ synopsis programName { usageSpecs, description, subCommand } =
 
 
 optionSynopsis : Occurences -> Option -> Maybe MutuallyExclusiveValues -> String
-optionSynopsis occurences option oneOf =
+optionSynopsis occurences option mutuallyExclusiveValues =
     (case option of
         Flag flagName ->
             "--" ++ flagName
 
         OptionWithStringArg optionName ->
-            case oneOf of
-                Just (MutuallyExclusiveValues oneOf) ->
-                    "--" ++ optionName ++ " <" ++ (oneOf |> String.join "|") ++ ">"
+            case mutuallyExclusiveValues of
+                Just (MutuallyExclusiveValues mutuallyExclusiveValues) ->
+                    "--" ++ optionName ++ " <" ++ (mutuallyExclusiveValues |> String.join "|") ++ ">"
 
                 Nothing ->
                     "--" ++ optionName ++ " <" ++ optionName ++ ">"
@@ -181,7 +189,7 @@ optionHasArg options optionNameToCheck =
             |> List.filterMap
                 (\spec ->
                     case spec of
-                        Option option oneOf occurences ->
+                        Option option mutuallyExclusiveValues occurences ->
                             Just option
 
                         Operand _ _ ->
