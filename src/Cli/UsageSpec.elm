@@ -1,4 +1,20 @@
-module Cli.UsageSpec exposing (MutuallyExclusiveValues(MutuallyExclusiveValues), Option(..), UsageSpec, changeUsageSpec, hasRestArgs, isOperand, name, operand, operandCount, option, optionExists, optionHasArg, restArgs, synopsis)
+module Cli.UsageSpec
+    exposing
+        ( MutuallyExclusiveValues(MutuallyExclusiveValues)
+        , Option(..)
+        , UsageSpec
+        , changeUsageSpec
+        , hasRestArgs
+        , isOperand
+        , name
+        , operand
+        , operandCount
+        , option
+        , optionExists
+        , optionHasArg
+        , restArgs
+        , synopsis
+        )
 
 import List.Extra
 import Occurences exposing (Occurences(..))
