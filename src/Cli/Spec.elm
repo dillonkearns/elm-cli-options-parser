@@ -1,4 +1,20 @@
-module Cli.Spec exposing (..)
+module Cli.Spec
+    exposing
+        ( CliSpec(CliSpec)
+        , MutuallyExclusiveValue(MutuallyExclusiveValue)
+        , flag
+        , keywordArgList
+        , map
+        , oneOf
+        , optionalKeywordArg
+        , positionalArg
+        , requiredKeywordArg
+        , validate
+        , validateIfPresent
+        , validateMap
+        , validateMapMaybe
+        , withDefault
+        )
 
 import Cli.Decode
 import Cli.UsageSpec as UsageSpec exposing (..)
@@ -142,24 +158,24 @@ map mapFn (CliSpec dataGrabber usageSpec ((Cli.Decode.Decoder decodeFn) as decod
     CliSpec dataGrabber usageSpec (Cli.Decode.map mapFn decoder)
 
 
-type Thing union
-    = Thing String union
+type MutuallyExclusiveValue union
+    = MutuallyExclusiveValue String union
 
 
-oneOf : value -> List (Thing value) -> CliSpec from String -> CliSpec from value
+oneOf : value -> List (MutuallyExclusiveValue value) -> CliSpec from String -> CliSpec from value
 oneOf default list (CliSpec dataGrabber usageSpec ((Cli.Decode.Decoder decodeFn) as decoder)) =
     validateMap
         (\argValue ->
             case
                 list
-                    |> List.Extra.find (\(Thing name value) -> name == argValue)
-                    |> Maybe.map (\(Thing name value) -> value)
+                    |> List.Extra.find (\(MutuallyExclusiveValue name value) -> name == argValue)
+                    |> Maybe.map (\(MutuallyExclusiveValue name value) -> value)
             of
                 Nothing ->
                     Err
                         ("Must be one of ["
                             ++ (list
-                                    |> List.map (\(Thing name value) -> name)
+                                    |> List.map (\(MutuallyExclusiveValue name value) -> name)
                                     |> String.join ", "
                                )
                             ++ "]"
@@ -171,7 +187,7 @@ oneOf default list (CliSpec dataGrabber usageSpec ((Cli.Decode.Decoder decodeFn)
         (CliSpec dataGrabber
             (UsageSpec.changeUsageSpec
                 (list
-                    |> List.map (\(Thing name value) -> name)
+                    |> List.map (\(MutuallyExclusiveValue name value) -> name)
                 )
                 usageSpec
             )

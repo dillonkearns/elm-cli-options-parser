@@ -266,7 +266,7 @@ all =
                             |> Command.with
                                 (Spec.requiredKeywordArg "report"
                                     |> Spec.oneOf Console
-                                        [ Spec.Thing "json" Json
+                                        [ Spec.MutuallyExclusiveValue "json" Json
                                         ]
                                 )
                             |> Command.toCommand
@@ -279,7 +279,7 @@ all =
                             |> Command.with
                                 (Spec.requiredKeywordArg "report"
                                     |> Spec.oneOf Console
-                                        [ Spec.Thing "json" Json
+                                        [ Spec.MutuallyExclusiveValue "json" Json
                                         ]
                                 )
                             |> Command.toCommand

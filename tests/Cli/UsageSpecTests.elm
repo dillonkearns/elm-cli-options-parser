@@ -82,9 +82,9 @@ all =
                     |> Command.with
                         (Spec.requiredKeywordArg "report"
                             |> Spec.oneOf 123
-                                [ Spec.Thing "json" 123
-                                , Spec.Thing "junit" 123
-                                , Spec.Thing "console" 123
+                                [ Spec.MutuallyExclusiveValue "json" 123
+                                , Spec.MutuallyExclusiveValue "junit" 123
+                                , Spec.MutuallyExclusiveValue "console" 123
                                 ]
                         )
                     |> Command.toCommand
@@ -96,9 +96,9 @@ all =
                     |> Command.with
                         (Spec.positionalArg "report"
                             |> Spec.oneOf 123
-                                [ Spec.Thing "json" 123
-                                , Spec.Thing "junit" 123
-                                , Spec.Thing "console" 123
+                                [ Spec.MutuallyExclusiveValue "json" 123
+                                , Spec.MutuallyExclusiveValue "junit" 123
+                                , Spec.MutuallyExclusiveValue "console" 123
                                 ]
                         )
                     |> Command.toCommand

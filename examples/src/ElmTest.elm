@@ -69,9 +69,9 @@ cli =
             (Spec.optionalKeywordArg "report"
                 |> Spec.withDefault "console"
                 |> Spec.oneOf Console
-                    [ Spec.Thing "json" Json
-                    , Spec.Thing "junit" Junit
-                    , Spec.Thing "console" Console
+                    [ Spec.MutuallyExclusiveValue "json" Json
+                    , Spec.MutuallyExclusiveValue "junit" Junit
+                    , Spec.MutuallyExclusiveValue "console" Console
                     ]
             )
         |> Command.captureRestOperands "TESTFILES"
