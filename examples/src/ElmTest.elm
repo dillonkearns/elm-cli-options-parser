@@ -10,7 +10,7 @@ import TypoSuggestion exposing (TypoSuggestion)
 
 type ElmTestCommand
     = Init ()
-    | RunTests (Maybe Int) (Maybe Int) (Maybe String) (Maybe String) Bool (List String)
+    | RunTests (Maybe Int) (Maybe Int) (Maybe String) (Maybe String) Bool Report (List String)
     | PrintHelp
     | PrintVersion
 
@@ -33,7 +33,7 @@ type ElmTestCommand
 
    Usage: elm-test [--add-dependencies path-to-destination-elm-package.json] # Add missing dependencies from current elm-package.json to destination
 
-   TODO Usage: elm-test [--report json, junit, or console (default)] # Print results to stdout in given format
+   Usage: elm-test [--report json, junit, or console (default)] # Print results to stdout in given format
 
 -}
 
@@ -51,6 +51,15 @@ cli =
         |> with (Spec.optionalKeywordArg "compiler")
         |> with (Spec.optionalKeywordArg "add-dependencies")
         |> with (Spec.flag "watch")
+        |> with
+            (Spec.optionalKeywordArg "report"
+                |> Spec.withDefault "console"
+                |> Spec.oneOf Console
+                    [ Spec.Thing "json" Json
+                    , Spec.Thing "junit" Junit
+                    , Spec.Thing "console" Console
+                    ]
+            )
         |> Command.captureRestOperands "TESTFILES"
     , Command.build PrintHelp
         |> Command.expectFlag "help"
@@ -59,6 +68,12 @@ cli =
         |> Command.expectFlag "version"
         |> Command.toCommand
     ]
+
+
+type Report
+    = Json
+    | Junit
+    | Console
 
 
 dummy : Decoder String
@@ -108,11 +123,12 @@ init flags =
                         Init () ->
                             "Initializing test suite..."
 
-                        RunTests maybeFuzz maybeSeed maybeCompilerPath maybeDependencies watch testFiles ->
+                        RunTests maybeFuzz maybeSeed maybeCompilerPath maybeDependencies watch report testFiles ->
                             [ "Running the following test files: " ++ toString testFiles |> Just
                             , "with watch: " ++ toString watch |> Just
                             , maybeFuzz |> Maybe.map (\fuzz -> "with fuzz: " ++ toString fuzz)
                             , maybeSeed |> Maybe.map (\seed -> "with seed: " ++ toString seed)
+                            , report |> toString |> Just
                             , maybeCompilerPath |> Maybe.map (\compilerPath -> "with compiler: " ++ toString compilerPath)
                             , maybeDependencies |> Maybe.map (\dependencies -> "with dependencies: " ++ toString dependencies)
                             ]
