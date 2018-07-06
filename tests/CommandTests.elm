@@ -214,6 +214,28 @@ all =
                             |> Command.toCommand
                         )
                         |> Expect.equal (Just (Err [ { name = "name", invalidReason = "Invalid", valueAsString = toString "Bob" } ]))
+            , test "validate if present when present and invalid" <|
+                \() ->
+                    Command.tryMatch [ "--name", "Bob" ]
+                        (Command.build identity
+                            |> Command.with
+                                (Spec.optionalKeywordArg "name"
+                                    |> Spec.validateIfPresent (\_ -> Validate.Invalid "Invalid")
+                                )
+                            |> Command.toCommand
+                        )
+                        |> Expect.equal (Just (Err [ { name = "name", invalidReason = "Invalid", valueAsString = toString (Just "Bob") } ]))
+            , test "validate if present when absent and invalid" <|
+                \() ->
+                    expectMatch []
+                        (Command.build identity
+                            |> Command.with
+                                (Spec.optionalKeywordArg "name"
+                                    |> Spec.validateIfPresent (\_ -> Validate.Invalid "Invalid")
+                                )
+                            |> Command.toCommand
+                        )
+                        Nothing
             , test "fails when validation function fails" <|
                 \() ->
                     Command.tryMatch [ "--name", "Robert" ]
