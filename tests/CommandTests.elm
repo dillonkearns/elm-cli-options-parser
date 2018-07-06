@@ -205,7 +205,7 @@ all =
         , describe "validation"
             [ test "forced err validation makes it not match" <|
                 \() ->
-                    Command.tryMatch [ "--name", "Bob" ]
+                    expectValidationErrors [ "--name", "Bob" ]
                         (Command.build identity
                             |> Command.with
                                 (Spec.requiredKeywordArg "name"
@@ -213,10 +213,10 @@ all =
                                 )
                             |> Command.toCommand
                         )
-                        |> Expect.equal (Just (Err [ { name = "name", invalidReason = "Invalid", valueAsString = toString "Bob" } ]))
+                        [ { name = "name", invalidReason = "Invalid", valueAsString = toString "Bob" } ]
             , test "validate if present when present and invalid" <|
                 \() ->
-                    Command.tryMatch [ "--name", "Bob" ]
+                    expectValidationErrors [ "--name", "Bob" ]
                         (Command.build identity
                             |> Command.with
                                 (Spec.optionalKeywordArg "name"
@@ -224,7 +224,7 @@ all =
                                 )
                             |> Command.toCommand
                         )
-                        |> Expect.equal (Just (Err [ { name = "name", invalidReason = "Invalid", valueAsString = toString (Just "Bob") } ]))
+                        [ { name = "name", invalidReason = "Invalid", valueAsString = toString (Just "Bob") } ]
             , test "validate if present when absent and invalid" <|
                 \() ->
                     expectMatch []
@@ -238,7 +238,7 @@ all =
                         Nothing
             , test "fails when validation function fails" <|
                 \() ->
-                    Command.tryMatch [ "--name", "Robert" ]
+                    expectValidationErrors [ "--name", "Robert" ]
                         (Command.build identity
                             |> Command.with
                                 (Spec.requiredKeywordArg "name"
@@ -252,7 +252,7 @@ all =
                                 )
                             |> Command.toCommand
                         )
-                        |> Expect.equal (Just (Err [ { name = "name", invalidReason = "Must be 3 characters long", valueAsString = toString "Robert" } ]))
+                        [ { name = "name", invalidReason = "Must be 3 characters long", valueAsString = toString "Robert" } ]
             , test "succeeds when validation function passes" <|
                 \() ->
                     expectMatch [ "--name", "Bob" ]
@@ -296,7 +296,7 @@ all =
                         Json
             , test "oneOf invalid option" <|
                 \() ->
-                    Command.tryMatch [ "--report", "invalidOption" ]
+                    expectValidationErrors [ "--report", "invalidOption" ]
                         (Command.build identity
                             |> Command.with
                                 (Spec.requiredKeywordArg "report"
@@ -306,10 +306,10 @@ all =
                                 )
                             |> Command.toCommand
                         )
-                        |> Expect.equal (Just (Err [ { name = "report", invalidReason = "Must be one of [json]", valueAsString = "\"invalidOption\"" } ]))
+                        [ { name = "report", invalidReason = "Must be one of [json]", valueAsString = "\"invalidOption\"" } ]
             , test "failed map validation" <|
                 \() ->
-                    Command.tryMatch [ "--fuzz", "abcdefg" ]
+                    expectValidationErrors [ "--fuzz", "abcdefg" ]
                         (Command.build identity
                             |> Command.with
                                 (Spec.requiredKeywordArg "fuzz"
@@ -317,16 +317,11 @@ all =
                                 )
                             |> Command.toCommand
                         )
-                        |> Expect.equal
-                            (Just
-                                (Err
-                                    [ { name = "fuzz"
-                                      , invalidReason = "could not convert string 'abcdefg' to an Int"
-                                      , valueAsString = toString "abcdefg"
-                                      }
-                                    ]
-                                )
-                            )
+                        [ { name = "fuzz"
+                          , invalidReason = "could not convert string 'abcdefg' to an Int"
+                          , valueAsString = toString "abcdefg"
+                          }
+                        ]
             ]
         , describe "mapping"
             [ test "maps operand" <|
@@ -382,6 +377,16 @@ expectMatch : List String -> Command.Command a -> a -> Expectation
 expectMatch argv commands expectedValue =
     Command.tryMatch argv commands
         |> Expect.equal (Just (Ok expectedValue))
+
+
+expectValidationErrors :
+    List String
+    -> Command.Command value
+    -> List { invalidReason : String, name : String, valueAsString : String }
+    -> Expectation
+expectValidationErrors argv commands expectedErrors =
+    Command.tryMatch argv commands
+        |> Expect.equal (Just (Err expectedErrors))
 
 
 expectNoMatch : List String -> Command.Command a -> Expectation
