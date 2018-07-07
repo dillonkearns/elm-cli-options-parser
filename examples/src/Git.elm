@@ -56,40 +56,74 @@ type alias Flags =
     List String
 
 
+type ExitStatus
+    = Success
+    | Failure
+
+
+type StuffToDo matchResult
+    = PrintThisAndExit ExitStatus String
+    | NothingFromMe matchResult
+
+
+execute : List (Command msg) -> List String -> StuffToDo msg
+execute cli flags =
+    let
+        matchResult =
+            Cli.try cli flags
+    in
+    case matchResult of
+        Cli.NoMatch unexpectedOptions ->
+            if unexpectedOptions == [] then
+                "\nNo matching command...\n\nUsage:\n\n"
+                    ++ Cli.helpText "elm-test" cli
+                    |> PrintThisAndExit Failure
+            else
+                unexpectedOptions
+                    |> List.map (TypoSuggestion.toMessage cli)
+                    |> String.join "\n"
+                    |> PrintThisAndExit Failure
+
+        Cli.ValidationErrors validationErrors ->
+            ("Validation errors:\n\n"
+                ++ (validationErrors
+                        |> List.map
+                            (\{ name, invalidReason, valueAsString } ->
+                                "`"
+                                    ++ name
+                                    ++ "` failed a validation. "
+                                    ++ invalidReason
+                                    ++ "\nValue was:\n"
+                                    ++ valueAsString
+                            )
+                        |> String.join "\n"
+                   )
+            )
+                |> PrintThisAndExit Failure
+
+        Cli.Match msg ->
+            msg
+                |> NothingFromMe
+
+
 init : Flags -> ( Model, Cmd Msg )
 init flags =
     let
         matchResult =
-            Cli.try cli flags
+            execute cli flags
 
-        toPrint =
+        cmd =
             case matchResult of
-                Cli.NoMatch unexpectedOptions ->
-                    if unexpectedOptions == [] then
-                        "\nNo matching command...\n\nUsage:\n\n"
-                            ++ Cli.helpText "elm-test" cli
-                    else
-                        unexpectedOptions
-                            |> List.map (TypoSuggestion.toMessage cli)
-                            |> String.join "\n"
+                PrintThisAndExit exitStatus message ->
+                    case exitStatus of
+                        Failure ->
+                            Ports.printAndExitFailure message
 
-                Cli.ValidationErrors validationErrors ->
-                    "Validation errors:\n\n"
-                        ++ (validationErrors
-                                |> List.map
-                                    (\{ name, invalidReason, valueAsString } ->
-                                        "`"
-                                            ++ name
-                                            ++ "` failed a validation. "
-                                            ++ invalidReason
-                                            ++ "\nValue was:\n"
-                                            ++ valueAsString
-                                    )
-                                |> String.join "\n"
-                           )
+                        Success ->
+                            Ports.printAndExitSuccess message
 
-                Cli.Match msg ->
-                    case msg of
+                NothingFromMe msg ->
+                    (case msg of
                         Init ->
                             "Initializing test suite..."
 
@@ -101,8 +135,10 @@ init flags =
 
                         PrintVersion ->
                             "You are on version 3.1.4"
+                    )
+                        |> Ports.print
     in
-    ( (), Ports.print toPrint )
+    ( (), cmd )
 
 
 type alias Model =
