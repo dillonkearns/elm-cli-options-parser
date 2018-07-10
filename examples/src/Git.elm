@@ -61,12 +61,12 @@ type ExitStatus
     | Failure
 
 
-type StuffToDo matchResult
-    = PrintThisAndExit ExitStatus String
-    | NothingFromMe matchResult
+type MatchResult match
+    = SystemMessage ExitStatus String
+    | CustomMatch match
 
 
-execute : List (Command msg) -> List String -> StuffToDo msg
+execute : List (Command msg) -> List String -> MatchResult msg
 execute cli flags =
     let
         matchResult =
@@ -77,12 +77,12 @@ execute cli flags =
             if unexpectedOptions == [] then
                 "\nNo matching command...\n\nUsage:\n\n"
                     ++ Cli.helpText "elm-test" cli
-                    |> PrintThisAndExit Failure
+                    |> SystemMessage Failure
             else
                 unexpectedOptions
                     |> List.map (TypoSuggestion.toMessage cli)
                     |> String.join "\n"
-                    |> PrintThisAndExit Failure
+                    |> SystemMessage Failure
 
         Cli.ValidationErrors validationErrors ->
             ("Validation errors:\n\n"
@@ -99,11 +99,11 @@ execute cli flags =
                         |> String.join "\n"
                    )
             )
-                |> PrintThisAndExit Failure
+                |> SystemMessage Failure
 
         Cli.Match msg ->
             msg
-                |> NothingFromMe
+                |> CustomMatch
 
 
 init : Flags -> ( Model, Cmd Msg )
@@ -114,7 +114,7 @@ init flags =
 
         cmd =
             case matchResult of
-                PrintThisAndExit exitStatus message ->
+                SystemMessage exitStatus message ->
                     case exitStatus of
                         Failure ->
                             Ports.printAndExitFailure message
@@ -122,7 +122,7 @@ init flags =
                         Success ->
                             Ports.printAndExitSuccess message
 
-                NothingFromMe msg ->
+                CustomMatch msg ->
                     (case msg of
                         Init ->
                             "Initializing test suite..."
