@@ -4,7 +4,6 @@ import Cli
 import Cli.Command as Command exposing (Command, with)
 import Json.Decode exposing (..)
 import Ports
-import TypoSuggestion exposing (TypoSuggestion)
 
 
 type ElmTestCommand
@@ -56,73 +55,23 @@ type alias Flags =
     List String
 
 
-type ExitStatus
-    = Success
-    | Failure
-
-
-type MatchResult match
-    = SystemMessage ExitStatus String
-    | CustomMatch match
-
-
-execute : List (Command msg) -> List String -> MatchResult msg
-execute cli flags =
-    let
-        matchResult =
-            Cli.try cli flags
-    in
-    case matchResult of
-        Cli.NoMatch unexpectedOptions ->
-            if unexpectedOptions == [] then
-                "\nNo matching command...\n\nUsage:\n\n"
-                    ++ Cli.helpText "elm-test" cli
-                    |> SystemMessage Failure
-            else
-                unexpectedOptions
-                    |> List.map (TypoSuggestion.toMessage cli)
-                    |> String.join "\n"
-                    |> SystemMessage Failure
-
-        Cli.ValidationErrors validationErrors ->
-            ("Validation errors:\n\n"
-                ++ (validationErrors
-                        |> List.map
-                            (\{ name, invalidReason, valueAsString } ->
-                                "`"
-                                    ++ name
-                                    ++ "` failed a validation. "
-                                    ++ invalidReason
-                                    ++ "\nValue was:\n"
-                                    ++ valueAsString
-                            )
-                        |> String.join "\n"
-                   )
-            )
-                |> SystemMessage Failure
-
-        Cli.Match msg ->
-            msg
-                |> CustomMatch
-
-
 init : Flags -> ( Model, Cmd Msg )
 init flags =
     let
         matchResult =
-            execute cli flags
+            Cli.execute cli flags
 
         cmd =
             case matchResult of
-                SystemMessage exitStatus message ->
+                Cli.SystemMessage exitStatus message ->
                     case exitStatus of
-                        Failure ->
+                        Cli.Failure ->
                             Ports.printAndExitFailure message
 
-                        Success ->
+                        Cli.Success ->
                             Ports.printAndExitSuccess message
 
-                CustomMatch msg ->
+                Cli.CustomMatch msg ->
                     (case msg of
                         Init ->
                             "Initializing test suite..."

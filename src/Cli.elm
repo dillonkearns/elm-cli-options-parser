@@ -1,8 +1,59 @@
-module Cli exposing (MatchResult(..), helpText, try)
+module Cli exposing (ExecuteResult(..), ExitStatus(..), MatchResult(..), execute, helpText, try)
 
 import Cli.Command as Command exposing (Command)
 import Cli.Decode
 import Set exposing (Set)
+import TypoSuggestion
+
+
+type ExecuteResult match
+    = SystemMessage ExitStatus String
+    | CustomMatch match
+
+
+type ExitStatus
+    = Success
+    | Failure
+
+
+execute : List (Command msg) -> List String -> ExecuteResult msg
+execute cli flags =
+    let
+        matchResult =
+            try cli flags
+    in
+    case matchResult of
+        NoMatch unexpectedOptions ->
+            if unexpectedOptions == [] then
+                "\nNo matching command...\n\nUsage:\n\n"
+                    ++ helpText "elm-test" cli
+                    |> SystemMessage Failure
+            else
+                unexpectedOptions
+                    |> List.map (TypoSuggestion.toMessage cli)
+                    |> String.join "\n"
+                    |> SystemMessage Failure
+
+        ValidationErrors validationErrors ->
+            ("Validation errors:\n\n"
+                ++ (validationErrors
+                        |> List.map
+                            (\{ name, invalidReason, valueAsString } ->
+                                "`"
+                                    ++ name
+                                    ++ "` failed a validation. "
+                                    ++ invalidReason
+                                    ++ "\nValue was:\n"
+                                    ++ valueAsString
+                            )
+                        |> String.join "\n"
+                   )
+            )
+                |> SystemMessage Failure
+
+        Match msg ->
+            msg
+                |> CustomMatch
 
 
 type MatchResult msg
