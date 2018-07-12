@@ -5,13 +5,11 @@ import Cli.Command as Command exposing (Command, with)
 import Cli.Spec as Spec
 import Json.Decode exposing (..)
 import Ports
-import TypoSuggestion exposing (TypoSuggestion)
 
 
 type ElmTestCommand
     = Init
     | RunTests RunTestsRecord
-    | PrintHelp
     | PrintVersion
 
 
@@ -76,9 +74,6 @@ cli =
             )
         |> Command.captureRestOperands "TESTFILES"
         |> Command.map RunTests
-    , Command.build PrintHelp
-        |> Command.expectFlag "help"
-        |> Command.toCommand
     , Command.build PrintVersion
         |> Command.expectFlag "version"
         |> Command.toCommand
@@ -105,36 +100,20 @@ init : Flags -> ( Model, Cmd Msg )
 init flags =
     let
         matchResult =
-            Cli.try cli flags
+            Cli.execute "elm-test" cli flags
 
         toPrint =
             case matchResult of
-                Cli.NoMatch unexpectedOptions ->
-                    if unexpectedOptions == [] then
-                        "\nNo matching command...\n\nUsage:\n\n"
-                            ++ Cli.helpText "elm-test" cli
-                    else
-                        unexpectedOptions
-                            |> List.map (TypoSuggestion.toMessage cli)
-                            |> String.join "\n"
+                Cli.SystemMessage exitStatus message ->
+                    case exitStatus of
+                        Cli.Failure ->
+                            Ports.printAndExitFailure message
 
-                Cli.ValidationErrors validationErrors ->
-                    "Validation errors:\n\n"
-                        ++ (validationErrors
-                                |> List.map
-                                    (\{ name, invalidReason, valueAsString } ->
-                                        "`"
-                                            ++ name
-                                            ++ "` failed a validation. "
-                                            ++ invalidReason
-                                            ++ "\nValue was:\n"
-                                            ++ valueAsString
-                                    )
-                                |> String.join "\n"
-                           )
+                        Cli.Success ->
+                            Ports.printAndExitSuccess message
 
-                Cli.Match msg ->
-                    case msg of
+                Cli.CustomMatch msg ->
+                    (case msg of
                         Init ->
                             "Initializing test suite..."
 
@@ -150,13 +129,12 @@ init flags =
                                 |> List.filterMap identity
                                 |> String.join "\n"
 
-                        PrintHelp ->
-                            Cli.helpText "elm-test" cli
-
                         PrintVersion ->
                             "You are on version 3.1.4"
+                    )
+                        |> Ports.print
     in
-    ( (), Ports.print toPrint )
+    ( (), toPrint )
 
 
 type alias Model =
