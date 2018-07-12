@@ -1,8 +1,7 @@
-module Cli exposing (ExecuteResult(..), ExitStatus(..), MatchResult(..), execute, helpText, try)
+module Cli exposing (ExecuteResult(..), ExitStatus(..), execute)
 
 import Cli.Command as Command exposing (Command)
-import Cli.Decode
-import Set exposing (Set)
+import Cli.LowLevel
 import TypoSuggestion
 
 
@@ -20,13 +19,13 @@ execute : String -> List (Command msg) -> List String -> ExecuteResult msg
 execute programName cli flags =
     let
         matchResult =
-            try cli flags
+            Cli.LowLevel.try cli flags
     in
     case matchResult of
-        NoMatch unexpectedOptions ->
+        Cli.LowLevel.NoMatch unexpectedOptions ->
             if unexpectedOptions == [] then
                 "\nNo matching command...\n\nUsage:\n\n"
-                    ++ helpText "elm-test" cli
+                    ++ Cli.LowLevel.helpText "elm-test" cli
                     |> SystemMessage Failure
             else
                 unexpectedOptions
@@ -34,7 +33,7 @@ execute programName cli flags =
                     |> String.join "\n"
                     |> SystemMessage Failure
 
-        ValidationErrors validationErrors ->
+        Cli.LowLevel.ValidationErrors validationErrors ->
             ("Validation errors:\n\n"
                 ++ (validationErrors
                         |> List.map
@@ -51,110 +50,10 @@ execute programName cli flags =
             )
                 |> SystemMessage Failure
 
-        Match msg ->
+        Cli.LowLevel.Match msg ->
             msg
                 |> CustomMatch
 
-        ShowHelp ->
-            helpText programName cli
+        Cli.LowLevel.ShowHelp ->
+            Cli.LowLevel.helpText programName cli
                 |> SystemMessage Success
-
-
-type MatchResult msg
-    = ValidationErrors (List Cli.Decode.ValidationError)
-    | NoMatch (List String)
-    | Match msg
-    | ShowHelp
-
-
-intersection : List (Set comparable) -> Set comparable
-intersection sets =
-    case sets of
-        [] ->
-            Set.empty
-
-        [ set ] ->
-            set
-
-        first :: rest ->
-            intersection rest
-                |> Set.intersect first
-
-
-try : List (Command msg) -> List String -> MatchResult msg
-try commands argv =
-    let
-        maybeShowHelpMatch : Maybe (MatchResult msg)
-        maybeShowHelpMatch =
-            Command.build ShowHelp
-                |> Command.expectFlag "help"
-                |> Command.toCommand
-                |> Command.tryMatchNew (argv |> List.drop 2)
-                |> (\matchResult ->
-                        case matchResult of
-                            Command.NoMatch _ ->
-                                Nothing
-
-                            Command.Match _ ->
-                                Just ShowHelp
-                   )
-
-        matchResults =
-            commands
-                |> List.map
-                    (argv
-                        |> List.drop 2
-                        |> Command.tryMatchNew
-                    )
-
-        commonUnmatchedFlags =
-            matchResults
-                |> List.map
-                    (\matchResult ->
-                        case matchResult of
-                            Command.NoMatch unknownFlags ->
-                                Set.fromList unknownFlags
-
-                            _ ->
-                                Set.empty
-                    )
-                |> intersection
-                |> Set.toList
-    in
-    matchResults
-        |> List.map Command.matchResultToMaybe
-        |> oneOf
-        |> (\maybeResult ->
-                case maybeResult of
-                    Just result ->
-                        case result of
-                            Ok msg ->
-                                Match msg
-
-                            Err validationErrors ->
-                                ValidationErrors validationErrors
-
-                    Nothing ->
-                        maybeShowHelpMatch
-                            |> Maybe.withDefault
-                                (NoMatch commonUnmatchedFlags)
-           )
-
-
-oneOf : List (Maybe a) -> Maybe a
-oneOf =
-    List.foldl
-        (\x acc ->
-            if acc /= Nothing then
-                acc
-            else
-                x
-        )
-        Nothing
-
-
-helpText : String -> List (Command msg) -> String
-helpText programName commands =
-    commands
-        |> List.map (Command.synopsis programName)
-        |> String.join "\n"

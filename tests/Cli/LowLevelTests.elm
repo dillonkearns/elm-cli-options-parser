@@ -1,7 +1,7 @@
-module CliTests exposing (all)
+module Cli.LowLevelTests exposing (all)
 
-import Cli
 import Cli.Command as Command
+import Cli.LowLevel
 import Expect exposing (Expectation)
 import Test exposing (..)
 
@@ -18,8 +18,8 @@ all =
                             |> Command.toCommand
                         ]
                 in
-                Cli.try cli [ "", "", "--help" ]
-                    |> Expect.equal (Cli.Match 123)
+                Cli.LowLevel.try cli [ "", "", "--help" ]
+                    |> Expect.equal (Cli.LowLevel.Match 123)
         , test "non-matching command" <|
             \() ->
                 let
@@ -29,8 +29,8 @@ all =
                             |> Command.toCommand
                         ]
                 in
-                Cli.try cli [ "", "" ]
-                    |> Expect.equal (Cli.NoMatch [])
+                Cli.LowLevel.try cli [ "", "" ]
+                    |> Expect.equal (Cli.LowLevel.NoMatch [])
         , test "unknown flag" <|
             \() ->
                 let
@@ -40,8 +40,8 @@ all =
                             |> Command.toCommand
                         ]
                 in
-                Cli.try cli [ "", "", "--unknown-flag" ]
-                    |> Expect.equal (Cli.NoMatch [ "unknown-flag" ])
+                Cli.LowLevel.try cli [ "", "", "--unknown-flag" ]
+                    |> Expect.equal (Cli.LowLevel.NoMatch [ "unknown-flag" ])
         , test "unknown flag with multiple usage specs" <|
             \() ->
                 let
@@ -54,8 +54,8 @@ all =
                             |> Command.toCommand
                         ]
                 in
-                Cli.try cli [ "", "", "--unknown-flag" ]
-                    |> Expect.equal (Cli.NoMatch [ "unknown-flag" ])
+                Cli.LowLevel.try cli [ "", "", "--unknown-flag" ]
+                    |> Expect.equal (Cli.LowLevel.NoMatch [ "unknown-flag" ])
         , test "help" <|
             \() ->
                 let
@@ -65,8 +65,8 @@ all =
                             |> Command.toCommand
                         ]
                 in
-                Cli.try cli [ "", "", "--help" ]
-                    |> Expect.equal Cli.ShowHelp
+                Cli.LowLevel.try cli [ "", "", "--help" ]
+                    |> Expect.equal Cli.LowLevel.ShowHelp
         , test "unknown flag with a subcommand spec" <|
             \() ->
                 let
@@ -78,6 +78,6 @@ all =
                             |> Command.toCommand
                         ]
                 in
-                Cli.try cli [ "", "", "--unknown-flag" ]
-                    |> Expect.equal (Cli.NoMatch [ "unknown-flag" ])
+                Cli.LowLevel.try cli [ "", "", "--unknown-flag" ]
+                    |> Expect.equal (Cli.LowLevel.NoMatch [ "unknown-flag" ])
         ]

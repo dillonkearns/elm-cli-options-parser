@@ -1,4 +1,4 @@
-module Graphqelm exposing (main)
+module Main exposing (main)
 
 import Cli
 import Cli.Command as Command exposing (Command, with)
@@ -6,12 +6,10 @@ import Cli.Spec as Spec
 import Cli.Validate
 import Json.Decode exposing (..)
 import Ports
-import TypoSuggestion exposing (TypoSuggestion)
 
 
 type GraphqelmCommand
     = PrintVersion
-    | PrintHelp
     | FromUrl String (Maybe String) (Maybe String) Bool (List String)
     | FromFile String (Maybe String) (Maybe String) Bool
 
@@ -20,9 +18,6 @@ cli : List (Command GraphqelmCommand)
 cli =
     [ Command.build PrintVersion
         |> Command.expectFlag "version"
-        |> Command.toCommand
-    , Command.build PrintHelp
-        |> Command.expectFlag "help"
         |> Command.toCommand
     , Command.buildWithDoc FromUrl "generate files based on the schema at `url`"
         |> with (Spec.positionalArg "url")
@@ -61,49 +56,32 @@ init : Flags -> ( Model, Cmd Msg )
 init flags =
     let
         matchResult =
-            Cli.try cli flags
+            Cli.execute "graphqelm" cli flags
 
         toPrint =
             case matchResult of
-                Cli.NoMatch unexpectedOptions ->
-                    if unexpectedOptions == [] then
-                        "\nNo matching command...\n\nUsage:\n\n"
-                            ++ Cli.helpText "graphqelm" cli
-                    else
-                        unexpectedOptions
-                            |> List.map (TypoSuggestion.toMessage cli)
-                            |> String.join "\n"
+                Cli.SystemMessage exitStatus message ->
+                    case exitStatus of
+                        Cli.Failure ->
+                            Ports.printAndExitFailure message
 
-                Cli.ValidationErrors validationErrors ->
-                    "Validation errors:\n\n"
-                        ++ (validationErrors
-                                |> List.map
-                                    (\{ name, invalidReason, valueAsString } ->
-                                        "`"
-                                            ++ name
-                                            ++ "` failed a validation. "
-                                            ++ invalidReason
-                                            ++ "\nValue was:\n"
-                                            ++ valueAsString
-                                    )
-                                |> String.join "\n"
-                           )
+                        Cli.Success ->
+                            Ports.printAndExitSuccess message
 
-                Cli.Match msg ->
-                    case msg of
+                Cli.CustomMatch msg ->
+                    (case msg of
                         PrintVersion ->
                             "You are on version 3.1.4"
-
-                        PrintHelp ->
-                            Cli.helpText "graphqelm" cli
 
                         FromUrl url base outputPath excludeDeprecated headers ->
                             "...fetching from url " ++ url ++ "\noptions: " ++ toString ( url, base, outputPath, excludeDeprecated, headers )
 
                         FromFile file base outputPath excludeDeprecated ->
                             "...fetching from file " ++ file ++ "\noptions: " ++ toString ( base, outputPath, excludeDeprecated )
+                    )
+                        |> Ports.print
     in
-    ( (), Ports.print toPrint )
+    ( (), toPrint )
 
 
 type alias Model =

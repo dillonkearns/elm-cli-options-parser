@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-let program = require('./elm.js').ElmTest.worker(process.argv)
+let program = require('./elm.js').Main.worker(process.argv)
 
 program.ports.print.subscribe(message => console.log(message))
 program.ports.printAndExitFailure.subscribe(message => {

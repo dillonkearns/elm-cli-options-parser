@@ -1,4 +1,4 @@
-module ElmTest exposing (main)
+module Main exposing (main)
 
 import Cli
 import Cli.Command as Command exposing (Command, with)
