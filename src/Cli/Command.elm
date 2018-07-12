@@ -7,42 +7,48 @@ module Cli.Command
         , buildWithDoc
         , captureRestOperands
         , expectFlag
-        , flag
         , getSubCommand
         , getUsageSpecs
         , hardcoded
-        , keywordArgList
         , map
         , mapNew
         , matchResultToMaybe
-        , optionalKeywordArg
-        , positionalArg
-        , requiredKeywordArg
         , subCommand
         , synopsis
         , toCommand
         , tryMatch
         , tryMatchNew
-        , validate
-        , validateIfPresent
         , with
         , withDefault
         )
+
+{-| TODO
+@docs Command, MatchResult
+
+@docs build, buildWithDoc, captureRestOperands, expectFlag, getSubCommand, getUsageSpecs, hardcoded, map, mapNew, subCommand, synopsis, toCommand, tryMatch, tryMatchNew, with, withDefault
+
+Low-level???
+@docs CommandBuilder, matchResultToMaybe
+
+-}
 
 import Cli.Decode
 import Cli.Spec exposing (CliSpec(..))
 import Cli.UsageSpec as UsageSpec exposing (..)
 import Cli.Validate exposing (ValidationResult(Invalid, Valid))
-import List.Extra
 import Occurences exposing (Occurences(..))
 import Parser exposing (ParsedOption)
 
 
+{-| TODO
+-}
 type MatchResult msg
     = Match (Result (List Cli.Decode.ValidationError) msg)
     | NoMatch (List String)
 
 
+{-| TODO
+-}
 matchResultToMaybe : MatchResult msg -> Maybe (Result (List Cli.Decode.ValidationError) msg)
 matchResultToMaybe matchResult =
     case matchResult of
@@ -53,11 +59,15 @@ matchResultToMaybe matchResult =
             Nothing
 
 
+{-| TODO
+-}
 getUsageSpecs : Command decodesTo -> List UsageSpec
 getUsageSpecs (Command { usageSpecs }) =
     usageSpecs
 
 
+{-| TODO
+-}
 synopsis : String -> Command decodesTo -> String
 synopsis programName command =
     command
@@ -65,11 +75,15 @@ synopsis programName command =
         |> UsageSpec.synopsis programName
 
 
+{-| TODO
+-}
 getSubCommand : Command msg -> Maybe String
 getSubCommand (Command { subCommand }) =
     subCommand
 
 
+{-| TODO
+-}
 tryMatchNew : List String -> Command msg -> MatchResult msg
 tryMatchNew argv ((Command { decoder, usageSpecs, subCommand }) as command) =
     let
@@ -131,6 +145,8 @@ tryMatchNew argv ((Command { decoder, usageSpecs, subCommand }) as command) =
             NoMatch (unexpectedOptions_ command options)
 
 
+{-| TODO
+-}
 tryMatch : List String -> Command msg -> Maybe (Result (List Cli.Decode.ValidationError) msg)
 tryMatch argv ((Command { decoder, usageSpecs, subCommand }) as command) =
     let
@@ -253,6 +269,8 @@ unexpectedOptions_ (Command ({ decoder, usageSpecs } as command)) options =
         options
 
 
+{-| TODO
+-}
 type CommandBuilder msg
     = CommandBuilder
         { decoder : { usageSpecs : List UsageSpec, options : List ParsedOption, operands : List String } -> Result Cli.Decode.ProcessingError ( List Cli.Decode.ValidationError, msg )
@@ -262,16 +280,22 @@ type CommandBuilder msg
         }
 
 
+{-| TODO
+-}
 toCommand : CommandBuilder msg -> Command msg
 toCommand (CommandBuilder record) =
     Command record
 
 
+{-| TODO
+-}
 map : (msg -> mappedMsg) -> Command msg -> Command mappedMsg
 map mapFunction (Command ({ decoder } as record)) =
     Command { record | decoder = decoder >> Result.map (Tuple.mapSecond mapFunction) }
 
 
+{-| TODO
+-}
 captureRestOperands : String -> CommandBuilder (List String -> msg) -> Command msg
 captureRestOperands restOperandsDescription (CommandBuilder ({ usageSpecs, description, decoder } as record)) =
     Command
@@ -289,6 +313,8 @@ captureRestOperands restOperandsDescription (CommandBuilder ({ usageSpecs, descr
         }
 
 
+{-| TODO
+-}
 type Command msg
     = Command
         { decoder : { usageSpecs : List UsageSpec, options : List ParsedOption, operands : List String } -> Result Cli.Decode.ProcessingError ( List Cli.Decode.ValidationError, msg )
@@ -298,6 +324,8 @@ type Command msg
         }
 
 
+{-| TODO
+-}
 build : msg -> CommandBuilder msg
 build msgConstructor =
     CommandBuilder
@@ -308,6 +336,8 @@ build msgConstructor =
         }
 
 
+{-| TODO
+-}
 subCommand : String -> msg -> CommandBuilder msg
 subCommand subCommandName msgConstructor =
     CommandBuilder
@@ -318,6 +348,8 @@ subCommand subCommandName msgConstructor =
         }
 
 
+{-| TODO
+-}
 buildWithDoc : msg -> String -> CommandBuilder msg
 buildWithDoc msgConstructor docString =
     CommandBuilder
@@ -328,6 +360,8 @@ buildWithDoc msgConstructor docString =
         }
 
 
+{-| TODO
+-}
 hardcoded : value -> CommandBuilder (value -> msg) -> CommandBuilder msg
 hardcoded hardcodedValue (CommandBuilder ({ decoder } as command)) =
     CommandBuilder
@@ -337,12 +371,16 @@ hardcoded hardcodedValue (CommandBuilder ({ decoder } as command)) =
         }
 
 
+{-| TODO
+-}
 resultMap : (a -> value) -> Result Cli.Decode.ProcessingError ( List Cli.Decode.ValidationError, a ) -> Result Cli.Decode.ProcessingError ( List Cli.Decode.ValidationError, value )
 resultMap mapFunction result =
     result
         |> Result.map (\( validationErrors, value ) -> ( validationErrors, mapFunction value ))
 
 
+{-| TODO
+-}
 expectFlag : String -> CommandBuilder msg -> CommandBuilder msg
 expectFlag flagName (CommandBuilder ({ usageSpecs, decoder } as command)) =
     CommandBuilder
@@ -361,118 +399,22 @@ expectFlag flagName (CommandBuilder ({ usageSpecs, decoder } as command)) =
         }
 
 
-keywordArgList : String -> CliSpec (List String) (List String)
-keywordArgList flagName =
-    CliSpec
-        (\{ options } ->
-            options
-                |> List.filterMap
-                    (\(Parser.ParsedOption optionName optionKind) ->
-                        case ( optionName == flagName, optionKind ) of
-                            ( False, _ ) ->
-                                Nothing
-
-                            ( True, Parser.OptionWithArg optionValue ) ->
-                                Just optionValue
-
-                            ( True, _ ) ->
-                                -- TODO this should probably be an error
-                                Nothing
-                    )
-                |> Ok
-        )
-        (UsageSpec.option (OptionWithStringArg flagName) ZeroOrMore)
-        Cli.Decode.decoder
-
-
-positionalArg : String -> CliSpec String String
-positionalArg operandDescription =
-    CliSpec
-        (\{ usageSpecs, operands, operandsSoFar } ->
-            case
-                operands
-                    |> List.Extra.getAt operandsSoFar
-            of
-                Just operandValue ->
-                    Ok operandValue
-
-                Nothing ->
-                    Cli.Decode.MatchError ("Expect operand " ++ operandDescription ++ "at " ++ toString operandsSoFar ++ " but had operands " ++ toString operands) |> Err
-        )
-        (UsageSpec.operand operandDescription)
-        Cli.Decode.decoder
-
-
+{-| TODO
+-}
 withDefault : value -> CliSpec (Maybe value) (Maybe value) -> CliSpec (Maybe value) value
 withDefault defaultValue (CliSpec dataGrabber usageSpec decoder) =
     CliSpec dataGrabber usageSpec (decoder |> Cli.Decode.map (Maybe.withDefault defaultValue))
 
 
-optionalKeywordArg : String -> CliSpec (Maybe String) (Maybe String)
-optionalKeywordArg optionName =
-    CliSpec
-        (\{ operands, options } ->
-            case
-                options
-                    |> List.Extra.find
-                        (\(Parser.ParsedOption thisOptionName optionKind) -> thisOptionName == optionName)
-            of
-                Nothing ->
-                    Ok Nothing
-
-                Just (Parser.ParsedOption _ (Parser.OptionWithArg optionArg)) ->
-                    Ok (Just optionArg)
-
-                _ ->
-                    Cli.Decode.MatchError ("Expected option " ++ optionName ++ " to have arg but found none.") |> Err
-        )
-        (UsageSpec.option (OptionWithStringArg optionName) Optional)
-        Cli.Decode.decoder
-
-
-requiredKeywordArg : String -> CliSpec String String
-requiredKeywordArg optionName =
-    CliSpec
-        (\{ operands, options } ->
-            case
-                options
-                    |> List.Extra.find
-                        (\(Parser.ParsedOption thisOptionName optionKind) -> thisOptionName == optionName)
-            of
-                Nothing ->
-                    Cli.Decode.MatchError ("Expected to find option " ++ optionName ++ " but only found options " ++ toString options) |> Err
-
-                Just (Parser.ParsedOption _ (Parser.OptionWithArg optionArg)) ->
-                    Ok optionArg
-
-                _ ->
-                    Cli.Decode.MatchError ("Expected option " ++ optionName ++ " to have arg but found none.") |> Err
-        )
-        (UsageSpec.option (OptionWithStringArg optionName) Required)
-        Cli.Decode.decoder
-
-
-flag : String -> CliSpec Bool Bool
-flag flagName =
-    CliSpec
-        (\{ options } ->
-            if
-                options
-                    |> List.member (Parser.ParsedOption flagName Parser.Flag)
-            then
-                Ok True
-            else
-                Ok False
-        )
-        (UsageSpec.option (Flag flagName) Optional)
-        Cli.Decode.decoder
-
-
+{-| TODO
+-}
 mapNew : (toRaw -> toMapped) -> CliSpec from toRaw -> CliSpec from toMapped
 mapNew mapFn (CliSpec dataGrabber usageSpec ((Cli.Decode.Decoder decodeFn) as decoder)) =
     CliSpec dataGrabber usageSpec (Cli.Decode.map mapFn decoder)
 
 
+{-| TODO
+-}
 validate : (to -> ValidationResult) -> CliSpec from to -> CliSpec from to
 validate validateFunction (CliSpec dataGrabber usageSpec (Cli.Decode.Decoder decodeFn)) =
     CliSpec dataGrabber
@@ -502,20 +444,8 @@ validate validateFunction (CliSpec dataGrabber usageSpec (Cli.Decode.Decoder dec
         )
 
 
-validateIfPresent : (to -> ValidationResult) -> CliSpec from (Maybe to) -> CliSpec from (Maybe to)
-validateIfPresent validateFunction cliSpec =
-    validate
-        (\maybeValue ->
-            case maybeValue of
-                Just value ->
-                    validateFunction value
-
-                Nothing ->
-                    Valid
-        )
-        cliSpec
-
-
+{-| TODO
+-}
 with : CliSpec from to -> CommandBuilder (to -> msg) -> CommandBuilder msg
 with (CliSpec dataGrabber usageSpec (Cli.Decode.Decoder decodeFn)) ((CommandBuilder ({ decoder, usageSpecs } as command)) as fullCommand) =
     CommandBuilder

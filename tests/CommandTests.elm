@@ -242,7 +242,7 @@ all =
                         (Command.build identity
                             |> Command.with
                                 (Spec.requiredKeywordArg "name"
-                                    |> Command.validate
+                                    |> Spec.validate
                                         (\name ->
                                             if String.length name == 3 then
                                                 Validate.Valid

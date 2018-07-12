@@ -12,8 +12,8 @@ all =
         [ test "synopsis prints options with arguments" <|
             \() ->
                 (Command.build (,)
-                    |> Command.with (Command.requiredKeywordArg "first-name")
-                    |> Command.with (Command.requiredKeywordArg "last-name")
+                    |> Command.with (Spec.requiredKeywordArg "first-name")
+                    |> Command.with (Spec.requiredKeywordArg "last-name")
                     |> Command.toCommand
                 )
                     |> Command.synopsis "greet"
@@ -28,30 +28,30 @@ all =
         , test "print synopsis with optional arg" <|
             \() ->
                 Command.build (,)
-                    |> Command.with (Command.requiredKeywordArg "name")
-                    |> Command.with (Command.optionalKeywordArg "prefix")
+                    |> Command.with (Spec.requiredKeywordArg "name")
+                    |> Command.with (Spec.optionalKeywordArg "prefix")
                     |> Command.toCommand
                     |> Command.synopsis "greet"
                     |> Expect.equal "greet --name <name> [--prefix <prefix>]"
         , test "print synopsis with required operand" <|
             \() ->
                 Command.build identity
-                    |> Command.with (Command.positionalArg "MyApp.elm")
+                    |> Command.with (Spec.positionalArg "MyApp.elm")
                     |> Command.toCommand
                     |> Command.synopsis "elm-interop"
                     |> Expect.equal "elm-interop <MyApp.elm>"
         , test "print synopsis with doc string" <|
             \() ->
                 Command.buildWithDoc (,) "greets somebody in your terminal"
-                    |> Command.with (Command.requiredKeywordArg "name")
-                    |> Command.with (Command.optionalKeywordArg "prefix")
+                    |> Command.with (Spec.requiredKeywordArg "name")
+                    |> Command.with (Spec.optionalKeywordArg "prefix")
                     |> Command.toCommand
                     |> Command.synopsis "greet"
                     |> Expect.equal "greet --name <name> [--prefix <prefix>] # greets somebody in your terminal"
         , test "print synopsis with zero or more arg option" <|
             \() ->
                 (Command.build identity
-                    |> Command.with (Command.keywordArgList "header")
+                    |> Command.with (Spec.keywordArgList "header")
                 )
                     |> Command.toCommand
                     |> Command.synopsis "curl"
@@ -65,7 +65,7 @@ all =
         , test "prints rest args at the end of the synopsis" <|
             \() ->
                 Command.build (,)
-                    |> Command.with (Command.flag "dry-run")
+                    |> Command.with (Spec.flag "dry-run")
                     |> Command.captureRestOperands "files"
                     |> Command.synopsis "rm"
                     |> Expect.equal "rm [--dry-run] <files>..."

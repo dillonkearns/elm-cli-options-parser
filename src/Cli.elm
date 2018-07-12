@@ -1,20 +1,33 @@
 module Cli exposing (ExecuteResult(..), ExitStatus(..), execute)
 
+{-| TODO
+
+@docs ExecuteResult, ExitStatus
+@docs execute
+
+-}
+
 import Cli.Command as Command exposing (Command)
 import Cli.LowLevel
 import TypoSuggestion
 
 
+{-| TODO
+-}
 type ExecuteResult match
     = SystemMessage ExitStatus String
     | CustomMatch match
 
 
+{-| TODO
+-}
 type ExitStatus
     = Success
     | Failure
 
 
+{-| TODO
+-}
 execute : String -> List (Command msg) -> List String -> ExecuteResult msg
 execute programName cli flags =
     let

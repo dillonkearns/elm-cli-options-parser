@@ -1,6 +1,7 @@
 module ParserTests exposing (all)
 
 import Cli.Command as Command
+import Cli.Spec as Spec
 import Expect exposing (Expectation)
 import Parser exposing (ParsedOption(..))
 import Test exposing (..)
@@ -13,8 +14,8 @@ all =
             \() ->
                 expectFlagsAndOperands []
                     (Command.build (,)
-                        |> Command.with (Command.requiredKeywordArg "first-name")
-                        |> Command.with (Command.requiredKeywordArg "last-name")
+                        |> Command.with (Spec.requiredKeywordArg "first-name")
+                        |> Command.with (Spec.requiredKeywordArg "last-name")
                         |> Command.toCommand
                     )
                     { options = [], operands = [] }
@@ -47,8 +48,8 @@ all =
                 expectFlagsAndOperands
                     [ "operand", "--first-name", "Will", "--last-name", "Riker" ]
                     (Command.build (,)
-                        |> Command.with (Command.requiredKeywordArg "first-name")
-                        |> Command.with (Command.requiredKeywordArg "last-name")
+                        |> Command.with (Spec.requiredKeywordArg "first-name")
+                        |> Command.with (Spec.requiredKeywordArg "last-name")
                         |> Command.toCommand
                     )
                     { options = [ ParsedOption "first-name" (Parser.OptionWithArg "Will"), ParsedOption "last-name" (Parser.OptionWithArg "Riker") ]
@@ -59,8 +60,8 @@ all =
                 expectFlagsAndOperands
                     [ "--first-name", "Will", "--last-name", "Riker", "operand" ]
                     (Command.build (,)
-                        |> Command.with (Command.requiredKeywordArg "first-name")
-                        |> Command.with (Command.requiredKeywordArg "last-name")
+                        |> Command.with (Spec.requiredKeywordArg "first-name")
+                        |> Command.with (Spec.requiredKeywordArg "last-name")
                         |> Command.toCommand
                     )
                     { options = [ ParsedOption "first-name" (Parser.OptionWithArg "Will"), ParsedOption "last-name" (Parser.OptionWithArg "Riker") ]
@@ -75,8 +76,8 @@ all =
                     , "Deanna"
                     ]
                     (Command.build (,)
-                        |> Command.with (Command.requiredKeywordArg "first-name")
-                        |> Command.with (Command.requiredKeywordArg "last-name")
+                        |> Command.with (Spec.requiredKeywordArg "first-name")
+                        |> Command.with (Spec.requiredKeywordArg "last-name")
                         |> Command.toCommand
                     )
                     { options = [ ParsedOption "last-name" (Parser.OptionWithArg "Troi"), ParsedOption "first-name" (Parser.OptionWithArg "Deanna") ]
@@ -87,7 +88,7 @@ all =
                 expectFlagsAndOperands
                     [ "operand" ]
                     (Command.build identity
-                        |> Command.with (Command.positionalArg "foo")
+                        |> Command.with (Spec.positionalArg "foo")
                         |> Command.toCommand
                     )
                     { options = []
@@ -97,7 +98,7 @@ all =
             \() ->
                 expectFlagsAndOperands [ "--name=Picard" ]
                     (Command.build identity
-                        |> Command.with (Command.requiredKeywordArg "name")
+                        |> Command.with (Spec.requiredKeywordArg "name")
                         |> Command.toCommand
                     )
                     { options = [ ParsedOption "name" (Parser.OptionWithArg "Picard") ], operands = [] }
