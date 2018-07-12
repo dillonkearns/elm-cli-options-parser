@@ -11,7 +11,6 @@ module Cli.Command
         , getUsageSpecs
         , hardcoded
         , map
-        , mapNew
         , matchResultToMaybe
         , subCommand
         , synopsis
@@ -25,7 +24,7 @@ module Cli.Command
 {-| TODO
 @docs Command, MatchResult
 
-@docs build, buildWithDoc, captureRestOperands, expectFlag, getSubCommand, getUsageSpecs, hardcoded, map, mapNew, subCommand, synopsis, toCommand, tryMatch, tryMatchNew, with, withDefault
+@docs build, buildWithDoc, captureRestOperands, expectFlag, getSubCommand, getUsageSpecs, hardcoded, map, subCommand, synopsis, toCommand, tryMatch, tryMatchNew, with, withDefault
 
 Low-level???
 @docs CommandBuilder, matchResultToMaybe
@@ -404,13 +403,6 @@ expectFlag flagName (CommandBuilder ({ usageSpecs, decoder } as command)) =
 withDefault : value -> CliSpec (Maybe value) (Maybe value) -> CliSpec (Maybe value) value
 withDefault defaultValue (CliSpec dataGrabber usageSpec decoder) =
     CliSpec dataGrabber usageSpec (decoder |> Cli.Decode.map (Maybe.withDefault defaultValue))
-
-
-{-| TODO
--}
-mapNew : (toRaw -> toMapped) -> CliSpec from toRaw -> CliSpec from toMapped
-mapNew mapFn (CliSpec dataGrabber usageSpec ((Cli.Decode.Decoder decodeFn) as decoder)) =
-    CliSpec dataGrabber usageSpec (Cli.Decode.map mapFn decoder)
 
 
 {-| TODO
