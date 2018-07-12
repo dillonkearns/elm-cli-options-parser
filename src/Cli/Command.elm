@@ -10,7 +10,6 @@ module Cli.Command
         , getSubCommand
         , getUsageSpecs
         , hardcoded
-        , map
         , matchResultToMaybe
         , subCommand
         , synopsis
@@ -24,7 +23,7 @@ module Cli.Command
 {-| TODO
 @docs Command, MatchResult
 
-@docs build, buildWithDoc, captureRestOperands, expectFlag, getSubCommand, getUsageSpecs, hardcoded, map, subCommand, synopsis, toCommand, tryMatch, tryMatchNew, with, withDefault
+@docs build, buildWithDoc, captureRestOperands, expectFlag, getSubCommand, getUsageSpecs, hardcoded, subCommand, synopsis, toCommand, tryMatch, tryMatchNew, with, withDefault
 
 Low-level???
 @docs CommandBuilder, matchResultToMaybe
@@ -284,13 +283,6 @@ type CommandBuilder msg
 toCommand : CommandBuilder msg -> Command msg
 toCommand (CommandBuilder record) =
     Command record
-
-
-{-| TODO
--}
-map : (msg -> mappedMsg) -> Command msg -> Command mappedMsg
-map mapFunction (Command ({ decoder } as record)) =
-    Command { record | decoder = decoder >> Result.map (Tuple.mapSecond mapFunction) }
 
 
 {-| TODO
