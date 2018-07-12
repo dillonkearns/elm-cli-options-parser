@@ -2,7 +2,6 @@ module Cli.Command
     exposing
         ( Command
         , CommandBuilder
-        , MatchResult(..)
         , build
         , buildWithDoc
         , captureRestOperands
@@ -10,7 +9,6 @@ module Cli.Command
         , getSubCommand
         , getUsageSpecs
         , hardcoded
-        , matchResultToMaybe
         , subCommand
         , synopsis
         , toCommand
@@ -21,40 +19,22 @@ module Cli.Command
         )
 
 {-| TODO
-@docs Command, MatchResult
+@docs Command
 
 @docs build, buildWithDoc, captureRestOperands, expectFlag, getSubCommand, getUsageSpecs, hardcoded, subCommand, synopsis, toCommand, tryMatch, tryMatchNew, with, withDefault
 
 Low-level???
-@docs CommandBuilder, matchResultToMaybe
+@docs CommandBuilder
 
 -}
 
+import Cli.Command.MatchResult as MatchResult exposing (MatchResult)
 import Cli.Decode
 import Cli.Spec exposing (CliSpec(..))
 import Cli.UsageSpec as UsageSpec exposing (..)
 import Cli.Validate exposing (ValidationResult(Invalid, Valid))
 import Occurences exposing (Occurences(..))
 import Parser exposing (ParsedOption)
-
-
-{-| TODO
--}
-type MatchResult msg
-    = Match (Result (List Cli.Decode.ValidationError) msg)
-    | NoMatch (List String)
-
-
-{-| TODO
--}
-matchResultToMaybe : MatchResult msg -> Maybe (Result (List Cli.Decode.ValidationError) msg)
-matchResultToMaybe matchResult =
-    case matchResult of
-        Match thing ->
-            Just thing
-
-        NoMatch unknownFlags ->
-            Nothing
 
 
 {-| TODO
@@ -124,23 +104,23 @@ tryMatchNew argv ((Command { decoder, usageSpecs, subCommand }) as command) =
                             Err error ->
                                 case error of
                                     Cli.Decode.MatchError matchError ->
-                                        NoMatch []
+                                        MatchResult.NoMatch []
 
                                     Cli.Decode.UnrecoverableValidationError validationError ->
-                                        Match (Err [ validationError ])
+                                        MatchResult.Match (Err [ validationError ])
 
                                     Cli.Decode.UnexpectedOptions unexpectedOptions ->
-                                        NoMatch unexpectedOptions
+                                        MatchResult.NoMatch unexpectedOptions
 
                             Ok ( [], value ) ->
-                                Match (Ok value)
+                                MatchResult.Match (Ok value)
 
                             Ok ( validationErrors, value ) ->
-                                Match (Err validationErrors)
+                                MatchResult.Match (Err validationErrors)
                    )
 
         Err { errorMessage, options } ->
-            NoMatch (unexpectedOptions_ command options)
+            MatchResult.NoMatch (unexpectedOptions_ command options)
 
 
 {-| TODO

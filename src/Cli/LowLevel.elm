@@ -1,6 +1,7 @@
 module Cli.LowLevel exposing (MatchResult(..), helpText, try)
 
 import Cli.Command as Command exposing (Command)
+import Cli.Command.MatchResult as MatchResult exposing (MatchResult)
 import Cli.Decode
 import Set exposing (Set)
 
@@ -37,10 +38,10 @@ try commands argv =
                 |> Command.tryMatchNew (argv |> List.drop 2)
                 |> (\matchResult ->
                         case matchResult of
-                            Command.NoMatch _ ->
+                            MatchResult.NoMatch _ ->
                                 Nothing
 
-                            Command.Match _ ->
+                            MatchResult.Match _ ->
                                 Just ShowHelp
                    )
 
@@ -57,7 +58,7 @@ try commands argv =
                 |> List.map
                     (\matchResult ->
                         case matchResult of
-                            Command.NoMatch unknownFlags ->
+                            MatchResult.NoMatch unknownFlags ->
                                 Set.fromList unknownFlags
 
                             _ ->
@@ -67,7 +68,7 @@ try commands argv =
                 |> Set.toList
     in
     matchResults
-        |> List.map Command.matchResultToMaybe
+        |> List.map MatchResult.matchResultToMaybe
         |> oneOf
         |> (\maybeResult ->
                 case maybeResult of
