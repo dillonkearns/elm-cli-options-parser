@@ -72,7 +72,6 @@ all =
         , test "shows sub commands" <|
             \() ->
                 Command.subCommand "init" identity
-                    |> Command.hardcoded ()
                     |> Command.toCommand
                     |> Command.synopsis "elm-test"
                     |> Expect.equal "elm-test init"

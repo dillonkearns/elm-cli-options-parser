@@ -189,18 +189,16 @@ all =
             [ test "doesn't match if sub command doesn't match" <|
                 \() ->
                     expectNoMatch [ "start" ]
-                        (Command.subCommand "help" identity
-                            |> Command.hardcoded ()
+                        (Command.subCommand "help" 123
                             |> Command.toCommand
                         )
             , test "matches if sub command is first word" <|
                 \() ->
                     expectMatch [ "help" ]
-                        (Command.subCommand "help" identity
-                            |> Command.hardcoded ()
+                        (Command.subCommand "help" 123
                             |> Command.toCommand
                         )
-                        ()
+                        123
             ]
         , describe "validation"
             [ test "forced err validation makes it not match" <|
