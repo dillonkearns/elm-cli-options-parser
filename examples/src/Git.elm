@@ -9,7 +9,6 @@ import Ports
 type ElmTestCommand
     = Init
     | Clone
-    | PrintHelp
     | PrintVersion
 
 
@@ -29,9 +28,6 @@ cli =
     [ Command.subCommand "init" Init
         |> Command.toCommand
     , Command.subCommand "clone" Clone
-        |> Command.toCommand
-    , Command.build PrintHelp
-        |> Command.expectFlag "help"
         |> Command.toCommand
     , Command.build PrintVersion
         |> Command.expectFlag "version"
@@ -59,7 +55,7 @@ init : Flags -> ( Model, Cmd Msg )
 init flags =
     let
         matchResult =
-            Cli.execute cli flags
+            Cli.execute "git" cli flags
 
         cmd =
             case matchResult of
@@ -78,9 +74,6 @@ init flags =
 
                         Clone ->
                             "Cloning..."
-
-                        PrintHelp ->
-                            Cli.helpText "elm-test" cli
 
                         PrintVersion ->
                             "You are on version 3.1.4"

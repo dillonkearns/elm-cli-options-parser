@@ -16,8 +16,8 @@ type ExitStatus
     | Failure
 
 
-execute : List (Command msg) -> List String -> ExecuteResult msg
-execute cli flags =
+execute : String -> List (Command msg) -> List String -> ExecuteResult msg
+execute programName cli flags =
     let
         matchResult =
             try cli flags
@@ -55,11 +55,16 @@ execute cli flags =
             msg
                 |> CustomMatch
 
+        ShowHelp ->
+            helpText programName cli
+                |> SystemMessage Success
+
 
 type MatchResult msg
     = ValidationErrors (List Cli.Decode.ValidationError)
     | NoMatch (List String)
     | Match msg
+    | ShowHelp
 
 
 intersection : List (Set comparable) -> Set comparable
@@ -79,6 +84,21 @@ intersection sets =
 try : List (Command msg) -> List String -> MatchResult msg
 try commands argv =
     let
+        maybeShowHelpMatch : Maybe (MatchResult msg)
+        maybeShowHelpMatch =
+            Command.build ShowHelp
+                |> Command.expectFlag "help"
+                |> Command.toCommand
+                |> Command.tryMatchNew (argv |> List.drop 2)
+                |> (\matchResult ->
+                        case matchResult of
+                            Command.NoMatch _ ->
+                                Nothing
+
+                            Command.Match _ ->
+                                Just ShowHelp
+                   )
+
         matchResults =
             commands
                 |> List.map
@@ -115,7 +135,9 @@ try commands argv =
                                 ValidationErrors validationErrors
 
                     Nothing ->
-                        NoMatch commonUnmatchedFlags
+                        maybeShowHelpMatch
+                            |> Maybe.withDefault
+                                (NoMatch commonUnmatchedFlags)
            )
 
 
