@@ -18,8 +18,8 @@ suggestionToString typoSuggestion =
                 Flag flagName ->
                     "--" ++ flagName
 
-                SubCommand subCommandName ->
-                    subCommandName
+                SubCommand buildSubCommandName ->
+                    buildSubCommandName
            )
         ++ "`"
 
@@ -55,14 +55,14 @@ getSuggestions commands unexpectedOption =
         something needle hay =
             Fuzzy.match [] [] needle hay |> .score
     in
-    (subCommandSuggestions commands
+    (buildSubCommandSuggestions commands
         ++ optionSuggestions commands
     )
         |> List.sortBy (name >> something unexpectedOption)
 
 
-subCommandSuggestions : List (Command msg) -> List TypoSuggestion
-subCommandSuggestions commands =
+buildSubCommandSuggestions : List (Command msg) -> List TypoSuggestion
+buildSubCommandSuggestions commands =
     commands
         |> List.map Command.getSubCommand
         |> List.filterMap identity

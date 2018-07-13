@@ -145,11 +145,11 @@ name usageSpec =
             name
 
 
-synopsis : String -> { command | usageSpecs : List UsageSpec, description : Maybe String, subCommand : Maybe String } -> String
-synopsis programName { usageSpecs, description, subCommand } =
+synopsis : String -> { command | usageSpecs : List UsageSpec, description : Maybe String, buildSubCommand : Maybe String } -> String
+synopsis programName { usageSpecs, description, buildSubCommand } =
     programName
         ++ " "
-        ++ ((subCommand
+        ++ ((buildSubCommand
                 :: (usageSpecs
                         |> List.map
                             (\spec ->

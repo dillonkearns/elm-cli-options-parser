@@ -14,7 +14,7 @@ all =
                 \() ->
                     let
                         cli =
-                            [ Command.subCommand "sub" 456
+                            [ Command.buildSubCommand "sub" 456
                                 |> Command.withoutRestArgs
                             ]
                     in

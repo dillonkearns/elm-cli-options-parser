@@ -71,7 +71,7 @@ all =
                     |> Expect.equal "rm [--dry-run] <files>..."
         , test "shows sub commands" <|
             \() ->
-                Command.subCommand "init" identity
+                Command.buildSubCommand "init" identity
                     |> Command.withoutRestArgs
                     |> Command.synopsis "elm-test"
                     |> Expect.equal "elm-test init"
@@ -105,7 +105,7 @@ all =
                     |> Expect.equal "elm-test <json|junit|console>"
         , test "sub-command with flag" <|
             \() ->
-                Command.subCommand "log" identity
+                Command.buildSubCommand "log" identity
                     |> Command.with (Spec.flag "stat")
                     |> Command.withoutRestArgs
                     |> Command.synopsis "git"

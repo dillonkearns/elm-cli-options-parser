@@ -189,13 +189,13 @@ all =
             [ test "doesn't match if sub command doesn't match" <|
                 \() ->
                     expectNoMatch [ "start" ]
-                        (Command.subCommand "help" 123
+                        (Command.buildSubCommand "help" 123
                             |> Command.withoutRestArgs
                         )
             , test "matches if sub command is first word" <|
                 \() ->
                     expectMatch [ "help" ]
-                        (Command.subCommand "help" 123
+                        (Command.buildSubCommand "help" 123
                             |> Command.withoutRestArgs
                         )
                         123

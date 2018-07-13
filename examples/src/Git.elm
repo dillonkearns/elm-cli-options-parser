@@ -25,9 +25,9 @@ type alias RunTestsRecord =
 
 cli : List (Command ElmTestCommand)
 cli =
-    [ Command.subCommand "init" Init
+    [ Command.buildSubCommand "init" Init
         |> Command.withoutRestArgs
-    , Command.subCommand "clone" Clone
+    , Command.buildSubCommand "clone" Clone
         |> Command.withoutRestArgs
     , Command.build PrintVersion
         |> Command.expectFlag "version"

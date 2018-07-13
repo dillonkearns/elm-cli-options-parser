@@ -3,13 +3,13 @@ module Cli.Command
         ( Command
         , CommandBuilder
         , build
+        , buildSubCommand
         , buildWithDoc
         , expectFlag
         , getSubCommand
         , getUsageSpecs
         , hardcoded
         , map
-        , subCommand
         , synopsis
         , tryMatch
         , tryMatchNew
@@ -24,7 +24,7 @@ module Cli.Command
 
 ## Start Building
 
-@docs build, buildWithDoc, subCommand
+@docs build, buildWithDoc, buildSubCommand
 
 
 ## End Building
@@ -87,14 +87,14 @@ synopsis programName command =
 {-| TODO
 -}
 getSubCommand : Command msg -> Maybe String
-getSubCommand (Command { subCommand }) =
-    subCommand
+getSubCommand (Command { buildSubCommand }) =
+    buildSubCommand
 
 
 {-| TODO
 -}
 tryMatchNew : List String -> Command msg -> MatchResult msg
-tryMatchNew argv ((Command { decoder, usageSpecs, subCommand }) as command) =
+tryMatchNew argv ((Command { decoder, usageSpecs, buildSubCommand }) as command) =
     let
         decoder =
             command
@@ -105,7 +105,7 @@ tryMatchNew argv ((Command { decoder, usageSpecs, subCommand }) as command) =
         flagsAndOperands =
             Tokenizer.flagsAndOperands usageSpecs argv
                 |> (\record ->
-                        case ( subCommand, record.operands ) of
+                        case ( buildSubCommand, record.operands ) of
                             ( Nothing, _ ) ->
                                 Ok
                                     { options = record.options
@@ -113,8 +113,8 @@ tryMatchNew argv ((Command { decoder, usageSpecs, subCommand }) as command) =
                                     , usageSpecs = usageSpecs
                                     }
 
-                            ( Just subCommandName, actualSubCommand :: remainingOperands ) ->
-                                if actualSubCommand == subCommandName then
+                            ( Just buildSubCommandName, actualSubCommand :: remainingOperands ) ->
+                                if actualSubCommand == buildSubCommandName then
                                     Ok
                                         { options = record.options
                                         , operands = remainingOperands
@@ -123,7 +123,7 @@ tryMatchNew argv ((Command { decoder, usageSpecs, subCommand }) as command) =
                                 else
                                     Err { errorMessage = "Sub command does not match", options = record.options }
 
-                            ( Just subCommandName, [] ) ->
+                            ( Just buildSubCommandName, [] ) ->
                                 Err { errorMessage = "No sub command provided", options = record.options }
                    )
     in
@@ -157,7 +157,7 @@ tryMatchNew argv ((Command { decoder, usageSpecs, subCommand }) as command) =
 {-| TODO
 -}
 tryMatch : List String -> Command msg -> Maybe (Result (List Cli.Decode.ValidationError) msg)
-tryMatch argv ((Command { decoder, usageSpecs, subCommand }) as command) =
+tryMatch argv ((Command { decoder, usageSpecs, buildSubCommand }) as command) =
     let
         decoder =
             command
@@ -168,7 +168,7 @@ tryMatch argv ((Command { decoder, usageSpecs, subCommand }) as command) =
         flagsAndOperands =
             Tokenizer.flagsAndOperands usageSpecs argv
                 |> (\record ->
-                        case ( subCommand, record.operands ) of
+                        case ( buildSubCommand, record.operands ) of
                             ( Nothing, _ ) ->
                                 Ok
                                     { options = record.options
@@ -176,8 +176,8 @@ tryMatch argv ((Command { decoder, usageSpecs, subCommand }) as command) =
                                     , usageSpecs = usageSpecs
                                     }
 
-                            ( Just subCommandName, actualSubCommand :: remainingOperands ) ->
-                                if actualSubCommand == subCommandName then
+                            ( Just buildSubCommandName, actualSubCommand :: remainingOperands ) ->
+                                if actualSubCommand == buildSubCommandName then
                                     Ok
                                         { options = record.options
                                         , operands = remainingOperands
@@ -186,7 +186,7 @@ tryMatch argv ((Command { decoder, usageSpecs, subCommand }) as command) =
                                 else
                                     Err "Sub command does not match"
 
-                            ( Just subCommandName, [] ) ->
+                            ( Just buildSubCommandName, [] ) ->
                                 Err "No sub command provided"
                    )
     in
@@ -285,7 +285,7 @@ type CommandBuilder msg
         { decoder : { usageSpecs : List UsageSpec, options : List ParsedOption, operands : List String } -> Result Cli.Decode.ProcessingError ( List Cli.Decode.ValidationError, msg )
         , usageSpecs : List UsageSpec
         , description : Maybe String
-        , subCommand : Maybe String
+        , buildSubCommand : Maybe String
         }
 
 
@@ -311,7 +311,7 @@ withRestArgs restOperandsDescription (CommandBuilder ({ usageSpecs, description,
                             |> List.drop (UsageSpec.operandCount usageSpecs)
                 in
                 resultMap (\fn -> fn restOperands) (decoder stuff)
-        , subCommand = record.subCommand
+        , buildSubCommand = record.buildSubCommand
         }
 
 
@@ -322,7 +322,7 @@ type Command msg
         { decoder : { usageSpecs : List UsageSpec, options : List ParsedOption, operands : List String } -> Result Cli.Decode.ProcessingError ( List Cli.Decode.ValidationError, msg )
         , usageSpecs : List UsageSpec
         , description : Maybe String
-        , subCommand : Maybe String
+        , buildSubCommand : Maybe String
         }
 
 
@@ -334,19 +334,19 @@ build msgConstructor =
         { usageSpecs = []
         , description = Nothing
         , decoder = \_ -> Ok ( [], msgConstructor )
-        , subCommand = Nothing
+        , buildSubCommand = Nothing
         }
 
 
 {-| TODO
 -}
-subCommand : String -> msg -> CommandBuilder msg
-subCommand subCommandName msgConstructor =
+buildSubCommand : String -> msg -> CommandBuilder msg
+buildSubCommand buildSubCommandName msgConstructor =
     CommandBuilder
         { usageSpecs = []
         , description = Nothing
         , decoder = \_ -> Ok ( [], msgConstructor )
-        , subCommand = Just subCommandName
+        , buildSubCommand = Just buildSubCommandName
         }
 
 
@@ -358,7 +358,7 @@ buildWithDoc msgConstructor docString =
         { usageSpecs = []
         , description = Just docString
         , decoder = \_ -> Ok ( [], msgConstructor )
-        , subCommand = Nothing
+        , buildSubCommand = Nothing
         }
 
 
