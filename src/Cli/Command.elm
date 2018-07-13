@@ -14,7 +14,6 @@ module Cli.Command
         , tryMatch
         , tryMatchNew
         , with
-        , withDefault
         , withRestArgs
         , withoutRestArgs
         )
@@ -22,10 +21,41 @@ module Cli.Command
 {-| TODO
 @docs Command
 
-@docs build, buildWithDoc, withRestArgs, expectFlag, getSubCommand, getUsageSpecs, hardcoded, subCommand, synopsis, withoutRestArgs, tryMatch, tryMatchNew, with, withDefault, map
 
-Low-level???
-@docs CommandBuilder
+## Start Building
+
+@docs build, buildWithDoc, subCommand
+
+
+## End Building
+
+@docs withRestArgs, withoutRestArgs
+
+
+## Middle
+
+Start the chain using `with`:
+@docs with
+
+
+## I wish this could be in Spec...
+
+@docs expectFlag
+
+
+## Other Stuff
+
+@docs hardcoded
+
+
+## Mapping
+
+@docs map
+
+
+## Low-Level, can I get rid of these?
+
+@docs getSubCommand, getUsageSpecs, synopsis, tryMatch, tryMatchNew, CommandBuilder
 
 -}
 
@@ -376,13 +406,6 @@ expectFlag flagName (CommandBuilder ({ usageSpecs, decoder } as command)) =
                         Cli.Decode.MatchError ("Expect flag " ++ ("--" ++ flagName))
                             |> Err
         }
-
-
-{-| TODO
--}
-withDefault : value -> CliSpec (Maybe value) (Maybe value) -> CliSpec (Maybe value) value
-withDefault defaultValue (CliSpec dataGrabber usageSpec decoder) =
-    CliSpec dataGrabber usageSpec (decoder |> Cli.Decode.map (Maybe.withDefault defaultValue))
 
 
 {-| TODO
