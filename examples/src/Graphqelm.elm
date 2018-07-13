@@ -18,20 +18,20 @@ cli : List (Command GraphqelmCommand)
 cli =
     [ Command.build PrintVersion
         |> Command.expectFlag "version"
-        |> Command.toCommand
+        |> Command.withoutRestArgs
     , Command.buildWithDoc FromUrl "generate files based on the schema at `url`"
         |> with (Spec.positionalArg "url")
         |> with baseOption
         |> with (Spec.optionalKeywordArg "output")
         |> with (Spec.flag "excludeDeprecated")
         |> with (Spec.keywordArgList "header")
-        |> Command.toCommand
+        |> Command.withoutRestArgs
     , Command.build FromFile
         |> with (Spec.requiredKeywordArg "introspection-file")
         |> with baseOption
         |> with (Spec.optionalKeywordArg "output")
         |> with (Spec.flag "excludeDeprecated")
-        |> Command.toCommand
+        |> Command.withoutRestArgs
     ]
 
 

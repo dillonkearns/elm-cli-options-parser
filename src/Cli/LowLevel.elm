@@ -34,7 +34,7 @@ try commands argv =
         maybeShowHelpMatch =
             Command.build ShowHelp
                 |> Command.expectFlag "help"
-                |> Command.toCommand
+                |> Command.withoutRestArgs
                 |> Command.tryMatchNew (argv |> List.drop 2)
                 |> (\matchResult ->
                         case matchResult of

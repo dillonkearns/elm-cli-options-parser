@@ -11,11 +11,11 @@ cli : List (Command.Command Msg)
 cli =
     [ Command.build PrintVersion
         |> Command.expectFlag "version"
-        |> Command.toCommand
+        |> Command.withoutRestArgs
     , Command.build Greet
         |> Command.with (Spec.requiredKeywordArg "name")
         |> Command.with (Spec.optionalKeywordArg "greeting")
-        |> Command.toCommand
+        |> Command.withoutRestArgs
     ]
 
 

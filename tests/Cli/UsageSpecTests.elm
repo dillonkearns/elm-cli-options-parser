@@ -14,7 +14,7 @@ all =
                 (Command.build (,)
                     |> Command.with (Spec.requiredKeywordArg "first-name")
                     |> Command.with (Spec.requiredKeywordArg "last-name")
-                    |> Command.toCommand
+                    |> Command.withoutRestArgs
                 )
                     |> Command.synopsis "greet"
                     |> Expect.equal "greet --first-name <first-name> --last-name <last-name>"
@@ -22,7 +22,7 @@ all =
             \() ->
                 Command.build (,)
                     |> Command.expectFlag "version"
-                    |> Command.toCommand
+                    |> Command.withoutRestArgs
                     |> Command.synopsis "greet"
                     |> Expect.equal "greet --version"
         , test "print synopsis with optional arg" <|
@@ -30,14 +30,14 @@ all =
                 Command.build (,)
                     |> Command.with (Spec.requiredKeywordArg "name")
                     |> Command.with (Spec.optionalKeywordArg "prefix")
-                    |> Command.toCommand
+                    |> Command.withoutRestArgs
                     |> Command.synopsis "greet"
                     |> Expect.equal "greet --name <name> [--prefix <prefix>]"
         , test "print synopsis with required operand" <|
             \() ->
                 Command.build identity
                     |> Command.with (Spec.positionalArg "MyApp.elm")
-                    |> Command.toCommand
+                    |> Command.withoutRestArgs
                     |> Command.synopsis "elm-interop"
                     |> Expect.equal "elm-interop <MyApp.elm>"
         , test "print synopsis with doc string" <|
@@ -45,7 +45,7 @@ all =
                 Command.buildWithDoc (,) "greets somebody in your terminal"
                     |> Command.with (Spec.requiredKeywordArg "name")
                     |> Command.with (Spec.optionalKeywordArg "prefix")
-                    |> Command.toCommand
+                    |> Command.withoutRestArgs
                     |> Command.synopsis "greet"
                     |> Expect.equal "greet --name <name> [--prefix <prefix>] # greets somebody in your terminal"
         , test "print synopsis with zero or more arg option" <|
@@ -53,26 +53,26 @@ all =
                 (Command.build identity
                     |> Command.with (Spec.keywordArgList "header")
                 )
-                    |> Command.toCommand
+                    |> Command.withoutRestArgs
                     |> Command.synopsis "curl"
                     |> Expect.equal "curl [--header <header>]..."
         , test "print rest operands synopsis" <|
             \() ->
                 Command.build identity
-                    |> Command.captureRestOperands "files"
+                    |> Command.withRestArgs "files"
                     |> Command.synopsis "rm"
                     |> Expect.equal "rm <files>..."
         , test "prints rest args at the end of the synopsis" <|
             \() ->
                 Command.build (,)
                     |> Command.with (Spec.flag "dry-run")
-                    |> Command.captureRestOperands "files"
+                    |> Command.withRestArgs "files"
                     |> Command.synopsis "rm"
                     |> Expect.equal "rm [--dry-run] <files>..."
         , test "shows sub commands" <|
             \() ->
                 Command.subCommand "init" identity
-                    |> Command.toCommand
+                    |> Command.withoutRestArgs
                     |> Command.synopsis "elm-test"
                     |> Expect.equal "elm-test init"
         , test "mutually exclusive keyword arg" <|
@@ -86,7 +86,7 @@ all =
                                 , Spec.MutuallyExclusiveValue "console" 123
                                 ]
                         )
-                    |> Command.toCommand
+                    |> Command.withoutRestArgs
                     |> Command.synopsis "elm-test"
                     |> Expect.equal "elm-test --report <json|junit|console>"
         , test "mutually exclusive positional arg" <|
@@ -100,14 +100,14 @@ all =
                                 , Spec.MutuallyExclusiveValue "console" 123
                                 ]
                         )
-                    |> Command.toCommand
+                    |> Command.withoutRestArgs
                     |> Command.synopsis "elm-test"
                     |> Expect.equal "elm-test <json|junit|console>"
         , test "sub-command with flag" <|
             \() ->
                 Command.subCommand "log" identity
                     |> Command.with (Spec.flag "stat")
-                    |> Command.toCommand
+                    |> Command.withoutRestArgs
                     |> Command.synopsis "git"
                     |> Expect.equal "git log [--stat]"
         ]

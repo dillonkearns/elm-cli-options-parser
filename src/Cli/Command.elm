@@ -4,7 +4,6 @@ module Cli.Command
         , CommandBuilder
         , build
         , buildWithDoc
-        , captureRestOperands
         , expectFlag
         , getSubCommand
         , getUsageSpecs
@@ -12,17 +11,18 @@ module Cli.Command
         , map
         , subCommand
         , synopsis
-        , toCommand
         , tryMatch
         , tryMatchNew
         , with
         , withDefault
+        , withRestArgs
+        , withoutRestArgs
         )
 
 {-| TODO
 @docs Command
 
-@docs build, buildWithDoc, captureRestOperands, expectFlag, getSubCommand, getUsageSpecs, hardcoded, subCommand, synopsis, toCommand, tryMatch, tryMatchNew, with, withDefault, map
+@docs build, buildWithDoc, withRestArgs, expectFlag, getSubCommand, getUsageSpecs, hardcoded, subCommand, synopsis, withoutRestArgs, tryMatch, tryMatchNew, with, withDefault, map
 
 Low-level???
 @docs CommandBuilder
@@ -261,15 +261,15 @@ type CommandBuilder msg
 
 {-| TODO
 -}
-toCommand : CommandBuilder msg -> Command msg
-toCommand (CommandBuilder record) =
+withoutRestArgs : CommandBuilder msg -> Command msg
+withoutRestArgs (CommandBuilder record) =
     Command record
 
 
 {-| TODO
 -}
-captureRestOperands : String -> CommandBuilder (List String -> msg) -> Command msg
-captureRestOperands restOperandsDescription (CommandBuilder ({ usageSpecs, description, decoder } as record)) =
+withRestArgs : String -> CommandBuilder (List String -> msg) -> Command msg
+withRestArgs restOperandsDescription (CommandBuilder ({ usageSpecs, description, decoder } as record)) =
     Command
         { usageSpecs = usageSpecs ++ [ UsageSpec.restArgs restOperandsDescription ]
         , description = description

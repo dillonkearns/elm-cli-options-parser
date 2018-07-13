@@ -27,7 +27,7 @@ type alias RunTestsRecord =
 cli : List (Command ElmTestCommand)
 cli =
     [ Command.subCommand "init" Init
-        |> Command.toCommand
+        |> Command.withoutRestArgs
     , Command.build RunTestsRecord
         |> with
             (Spec.optionalKeywordArg "fuzz"
@@ -49,11 +49,11 @@ cli =
                     , Spec.MutuallyExclusiveValue "console" Console
                     ]
             )
-        |> Command.captureRestOperands "TESTFILES"
+        |> Command.withRestArgs "TESTFILES"
         |> Command.map RunTests
     , Command.build PrintVersion
         |> Command.expectFlag "version"
-        |> Command.toCommand
+        |> Command.withoutRestArgs
     ]
 
 

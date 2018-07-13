@@ -15,7 +15,7 @@ all =
                     let
                         cli =
                             [ Command.subCommand "sub" 456
-                                |> Command.toCommand
+                                |> Command.withoutRestArgs
                             ]
                     in
                     TypoSuggestion.getSuggestions cli "sub"
@@ -26,13 +26,13 @@ all =
                         cli =
                             [ Command.build 123
                                 |> Command.expectFlag "unrelated"
-                                |> Command.toCommand
+                                |> Command.withoutRestArgs
                             , Command.build 123
                                 |> Command.expectFlag "input"
-                                |> Command.toCommand
+                                |> Command.withoutRestArgs
                             , Command.build 123
                                 |> Command.expectFlag "output"
-                                |> Command.toCommand
+                                |> Command.withoutRestArgs
                             ]
                     in
                     TypoSuggestion.getSuggestions cli "outupt"
@@ -48,13 +48,13 @@ all =
                     cli =
                         [ Command.build 123
                             |> Command.expectFlag "unrelated"
-                            |> Command.toCommand
+                            |> Command.withoutRestArgs
                         , Command.build 123
                             |> Command.expectFlag "input"
-                            |> Command.toCommand
+                            |> Command.withoutRestArgs
                         , Command.build 123
                             |> Command.expectFlag "output"
-                            |> Command.toCommand
+                            |> Command.withoutRestArgs
                         ]
                 in
                 TypoSuggestion.toMessage cli "outupt"

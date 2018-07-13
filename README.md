@@ -7,7 +7,7 @@
 
 ## Feedback Wanted On
 
-### Command.toCommand/captureRestOperands
+### Command.withoutRestArgs/withRestArgs
 
 This is needed to enforce the constraint that
 this needs to be called once I have the number of arguments that came before it...

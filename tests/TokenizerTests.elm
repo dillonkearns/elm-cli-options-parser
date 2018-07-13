@@ -16,7 +16,7 @@ all =
                     (Command.build (,)
                         |> Command.with (Spec.requiredKeywordArg "first-name")
                         |> Command.with (Spec.requiredKeywordArg "last-name")
-                        |> Command.toCommand
+                        |> Command.withoutRestArgs
                     )
                     { options = [], operands = [] }
         , test "gets operand from the front" <|
@@ -26,7 +26,7 @@ all =
                     (Command.build (,,)
                         |> Command.expectFlag "verbose"
                         |> Command.expectFlag "dry-run"
-                        |> Command.toCommand
+                        |> Command.withoutRestArgs
                     )
                     { options = [ ParsedOption "verbose" Tokenizer.Flag, ParsedOption "dry-run" Tokenizer.Flag ]
                     , operands = [ "operand" ]
@@ -38,7 +38,7 @@ all =
                     (Command.build (,,)
                         |> Command.expectFlag "verbose"
                         |> Command.expectFlag "dry-run"
-                        |> Command.toCommand
+                        |> Command.withoutRestArgs
                     )
                     { options = [ ParsedOption "verbose" Tokenizer.Flag, ParsedOption "dry-run" Tokenizer.Flag ]
                     , operands = [ "operand" ]
@@ -50,7 +50,7 @@ all =
                     (Command.build (,)
                         |> Command.with (Spec.requiredKeywordArg "first-name")
                         |> Command.with (Spec.requiredKeywordArg "last-name")
-                        |> Command.toCommand
+                        |> Command.withoutRestArgs
                     )
                     { options = [ ParsedOption "first-name" (Tokenizer.KeywordArg "Will"), ParsedOption "last-name" (Tokenizer.KeywordArg "Riker") ]
                     , operands = [ "operand" ]
@@ -62,7 +62,7 @@ all =
                     (Command.build (,)
                         |> Command.with (Spec.requiredKeywordArg "first-name")
                         |> Command.with (Spec.requiredKeywordArg "last-name")
-                        |> Command.toCommand
+                        |> Command.withoutRestArgs
                     )
                     { options = [ ParsedOption "first-name" (Tokenizer.KeywordArg "Will"), ParsedOption "last-name" (Tokenizer.KeywordArg "Riker") ]
                     , operands = [ "operand" ]
@@ -78,7 +78,7 @@ all =
                     (Command.build (,)
                         |> Command.with (Spec.requiredKeywordArg "first-name")
                         |> Command.with (Spec.requiredKeywordArg "last-name")
-                        |> Command.toCommand
+                        |> Command.withoutRestArgs
                     )
                     { options = [ ParsedOption "last-name" (Tokenizer.KeywordArg "Troi"), ParsedOption "first-name" (Tokenizer.KeywordArg "Deanna") ]
                     , operands = []
@@ -89,7 +89,7 @@ all =
                     [ "operand" ]
                     (Command.build identity
                         |> Command.with (Spec.positionalArg "foo")
-                        |> Command.toCommand
+                        |> Command.withoutRestArgs
                     )
                     { options = []
                     , operands = [ "operand" ]
@@ -99,7 +99,7 @@ all =
                 expectFlagsAndOperands [ "--name=Picard" ]
                     (Command.build identity
                         |> Command.with (Spec.requiredKeywordArg "name")
-                        |> Command.toCommand
+                        |> Command.withoutRestArgs
                     )
                     { options = [ ParsedOption "name" (Tokenizer.KeywordArg "Picard") ], operands = [] }
         ]
