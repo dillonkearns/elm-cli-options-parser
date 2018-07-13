@@ -1,7 +1,7 @@
 module Main exposing (main)
 
-import Cli
 import Cli.Command as Command exposing (Command, with)
+import Cli.OptionsParser
 import Cli.Spec as Spec
 import Json.Decode exposing (..)
 import Ports
@@ -100,19 +100,19 @@ init : Flags -> ( Model, Cmd Msg )
 init flags =
     let
         matchResult =
-            Cli.execute "elm-test" cli flags
+            Cli.OptionsParser.execute "elm-test" cli flags
 
         toPrint =
             case matchResult of
-                Cli.SystemMessage exitStatus message ->
+                Cli.OptionsParser.SystemMessage exitStatus message ->
                     case exitStatus of
-                        Cli.Failure ->
+                        Cli.OptionsParser.Failure ->
                             Ports.printAndExitFailure message
 
-                        Cli.Success ->
+                        Cli.OptionsParser.Success ->
                             Ports.printAndExitSuccess message
 
-                Cli.CustomMatch msg ->
+                Cli.OptionsParser.CustomMatch msg ->
                     (case msg of
                         Init ->
                             "Initializing test suite..."

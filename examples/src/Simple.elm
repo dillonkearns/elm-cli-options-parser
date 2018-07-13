@@ -1,7 +1,8 @@
 module Simple exposing (main)
 
-import Cli
 import Cli.Command as Command
+import Cli.OptionsParser
+import Cli.Spec as Spec
 import Json.Decode exposing (..)
 import Ports
 
@@ -11,12 +12,9 @@ cli =
     [ Command.build PrintVersion
         |> Command.expectFlag "version"
         |> Command.toCommand
-    , Command.build PrintHelp
-        |> Command.expectFlag "help"
-        |> Command.toCommand
     , Command.build Greet
-        |> Command.with (Command.requiredKeywordArg "name")
-        |> Command.with (Command.optionalKeywordArg "greeting")
+        |> Command.with (Spec.requiredKeywordArg "name")
+        |> Command.with (Spec.optionalKeywordArg "greeting")
         |> Command.toCommand
     ]
 
@@ -36,7 +34,6 @@ type alias Model =
 
 type Msg
     = PrintVersion
-    | PrintHelp
     | Greet String (Maybe String)
 
 
@@ -44,51 +41,33 @@ init : Flags -> ( Model, Cmd Msg )
 init flags =
     let
         matchResult =
-            Cli.try cli flags
+            Cli.OptionsParser.execute "simple" cli flags
 
         toPrint =
             case matchResult of
-                Cli.NoMatch _ ->
-                    "\nNo matching command...\n\nUsage:\n\n"
-                        ++ Cli.helpText "simple" cli
+                Cli.OptionsParser.SystemMessage exitStatus message ->
+                    case exitStatus of
+                        Cli.OptionsParser.Failure ->
+                            Ports.printAndExitFailure message
 
-                Cli.ValidationErrors validationErrors ->
-                    "Validation errors:\n\n"
-                        ++ (validationErrors
-                                |> List.map
-                                    (\{ name, invalidReason, valueAsString } ->
-                                        "`"
-                                            ++ name
-                                            ++ "` failed a validation. "
-                                            ++ invalidReason
-                                            ++ "\nValue was:\n"
-                                            ++ valueAsString
-                                    )
-                                |> String.join "\n"
-                           )
+                        Cli.OptionsParser.Success ->
+                            Ports.printAndExitSuccess message
 
-                Cli.Match msg ->
-                    handleMsg msg
+                Cli.OptionsParser.CustomMatch msg ->
+                    case msg of
+                        PrintVersion ->
+                            "You are on version 3.1.4"
+                                |> Ports.print
+
+                        Greet name maybePrefix ->
+                            case maybePrefix of
+                                Just greeting ->
+                                    greeting ++ " " ++ name ++ "!" |> Ports.print
+
+                                Nothing ->
+                                    "Hello " ++ name ++ "!" |> Ports.print
     in
-    ( (), Ports.print toPrint )
-
-
-handleMsg : Msg -> String
-handleMsg msg =
-    case msg of
-        PrintVersion ->
-            "You are on version 3.1.4"
-
-        PrintHelp ->
-            Cli.helpText "greet" cli
-
-        Greet name maybePrefix ->
-            case maybePrefix of
-                Just greeting ->
-                    greeting ++ " " ++ name ++ "!"
-
-                Nothing ->
-                    "Hello " ++ name ++ "!"
+    ( (), toPrint )
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )

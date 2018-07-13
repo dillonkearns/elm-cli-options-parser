@@ -1,4 +1,4 @@
-module Cli exposing (ExecuteResult(..), ExitStatus(..), execute)
+module Cli.OptionsParser exposing (ExecuteResult(..), ExitStatus(..), execute)
 
 {-| TODO
 

@@ -9,6 +9,7 @@ module Cli.Command
         , getSubCommand
         , getUsageSpecs
         , hardcoded
+        , map
         , subCommand
         , synopsis
         , toCommand
@@ -21,7 +22,7 @@ module Cli.Command
 {-| TODO
 @docs Command
 
-@docs build, buildWithDoc, captureRestOperands, expectFlag, getSubCommand, getUsageSpecs, hardcoded, subCommand, synopsis, toCommand, tryMatch, tryMatchNew, with, withDefault
+@docs build, buildWithDoc, captureRestOperands, expectFlag, getSubCommand, getUsageSpecs, hardcoded, subCommand, synopsis, toCommand, tryMatch, tryMatchNew, with, withDefault, map
 
 Low-level???
 @docs CommandBuilder
@@ -340,6 +341,13 @@ hardcoded hardcodedValue (CommandBuilder ({ decoder } as command)) =
             | decoder =
                 \stuff -> resultMap (\fn -> fn hardcodedValue) (decoder stuff)
         }
+
+
+{-| TODO
+-}
+map : (msg -> mappedMsg) -> Command msg -> Command mappedMsg
+map mapFunction (Command ({ decoder } as record)) =
+    Command { record | decoder = decoder >> Result.map (Tuple.mapSecond mapFunction) }
 
 
 {-| TODO
