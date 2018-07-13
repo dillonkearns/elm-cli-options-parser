@@ -1,4 +1,4 @@
-module Parser.EqualsSplitter exposing (SplitResult(..), split)
+module Tokenizer.EqualsSplitter exposing (SplitResult(..), split)
 
 
 type SplitResult

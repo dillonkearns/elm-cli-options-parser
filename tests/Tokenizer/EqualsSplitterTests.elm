@@ -1,7 +1,7 @@
-module Parser.EqualsSplitterTests exposing (all)
+module Tokenizer.EqualsSplitterTests exposing (all)
 
 import Expect exposing (Expectation)
-import Parser.EqualsSplitter as EqualsSplitter
+import Tokenizer.EqualsSplitter as EqualsSplitter
 import Test exposing (..)
 
 

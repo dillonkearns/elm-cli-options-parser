@@ -1,7 +1,7 @@
 module Tokenizer exposing (OptionKind(..), ParsedOption(..), flagsAndOperands)
 
 import Cli.UsageSpec exposing (UsageSpec)
-import Parser.EqualsSplitter as EqualsSplitter
+import Tokenizer.EqualsSplitter as EqualsSplitter
 
 
 type ParsedOption
