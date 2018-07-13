@@ -1,4 +1,4 @@
-module Parser exposing (OptionKind(..), ParsedOption(..), flagsAndOperands)
+module Tokenizer exposing (OptionKind(..), ParsedOption(..), flagsAndOperands)
 
 import Cli.UsageSpec exposing (UsageSpec)
 import Parser.EqualsSplitter as EqualsSplitter

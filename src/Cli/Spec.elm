@@ -21,7 +21,7 @@ import Cli.UsageSpec as UsageSpec exposing (..)
 import Cli.Validate as Validate
 import List.Extra
 import Occurences exposing (Occurences(Optional, Required, ZeroOrMore))
-import Parser
+import Tokenizer
 
 
 type CliSpec from to
@@ -29,7 +29,7 @@ type CliSpec from to
 
 
 type alias DataGrabber decodesTo =
-    { usageSpecs : List UsageSpec, operands : List String, options : List Parser.ParsedOption, operandsSoFar : Int } -> Result Cli.Decode.ProcessingError decodesTo
+    { usageSpecs : List UsageSpec, operands : List String, options : List Tokenizer.ParsedOption, operandsSoFar : Int } -> Result Cli.Decode.ProcessingError decodesTo
 
 
 validate : (to -> Validate.ValidationResult) -> CliSpec from to -> CliSpec from to
@@ -100,12 +100,12 @@ optionalKeywordArg optionName =
             case
                 options
                     |> List.Extra.find
-                        (\(Parser.ParsedOption thisOptionName optionKind) -> thisOptionName == optionName)
+                        (\(Tokenizer.ParsedOption thisOptionName optionKind) -> thisOptionName == optionName)
             of
                 Nothing ->
                     Ok Nothing
 
-                Just (Parser.ParsedOption _ (Parser.OptionWithArg optionArg)) ->
+                Just (Tokenizer.ParsedOption _ (Tokenizer.OptionWithArg optionArg)) ->
                     Ok (Just optionArg)
 
                 _ ->
@@ -122,12 +122,12 @@ requiredKeywordArg optionName =
             case
                 options
                     |> List.Extra.find
-                        (\(Parser.ParsedOption thisOptionName optionKind) -> thisOptionName == optionName)
+                        (\(Tokenizer.ParsedOption thisOptionName optionKind) -> thisOptionName == optionName)
             of
                 Nothing ->
                     Cli.Decode.MatchError ("Expected to find option " ++ optionName ++ " but only found options " ++ toString options) |> Err
 
-                Just (Parser.ParsedOption _ (Parser.OptionWithArg optionArg)) ->
+                Just (Tokenizer.ParsedOption _ (Tokenizer.OptionWithArg optionArg)) ->
                     Ok optionArg
 
                 _ ->
@@ -143,7 +143,7 @@ flag flagName =
         (\{ options } ->
             if
                 options
-                    |> List.member (Parser.ParsedOption flagName Parser.Flag)
+                    |> List.member (Tokenizer.ParsedOption flagName Tokenizer.Flag)
             then
                 Ok True
             else
@@ -249,12 +249,12 @@ keywordArgList flagName =
         (\{ options } ->
             options
                 |> List.filterMap
-                    (\(Parser.ParsedOption optionName optionKind) ->
+                    (\(Tokenizer.ParsedOption optionName optionKind) ->
                         case ( optionName == flagName, optionKind ) of
                             ( False, _ ) ->
                                 Nothing
 
-                            ( True, Parser.OptionWithArg optionValue ) ->
+                            ( True, Tokenizer.OptionWithArg optionValue ) ->
                                 Just optionValue
 
                             ( True, _ ) ->

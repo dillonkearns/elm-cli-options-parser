@@ -34,7 +34,7 @@ import Cli.Spec exposing (CliSpec(..))
 import Cli.UsageSpec as UsageSpec exposing (..)
 import Cli.Validate exposing (ValidationResult(Invalid, Valid))
 import Occurences exposing (Occurences(..))
-import Parser exposing (ParsedOption)
+import Tokenizer exposing (ParsedOption)
 
 
 {-| TODO
@@ -72,7 +72,7 @@ tryMatchNew argv ((Command { decoder, usageSpecs, subCommand }) as command) =
                 |> getDecoder
 
         flagsAndOperands =
-            Parser.flagsAndOperands usageSpecs argv
+            Tokenizer.flagsAndOperands usageSpecs argv
                 |> (\record ->
                         case ( subCommand, record.operands ) of
                             ( Nothing, _ ) ->
@@ -135,7 +135,7 @@ tryMatch argv ((Command { decoder, usageSpecs, subCommand }) as command) =
                 |> getDecoder
 
         flagsAndOperands =
-            Parser.flagsAndOperands usageSpecs argv
+            Tokenizer.flagsAndOperands usageSpecs argv
                 |> (\record ->
                         case ( subCommand, record.operands ) of
                             ( Nothing, _ ) ->
@@ -238,7 +238,7 @@ failIfUnexpectedOptions ((Command ({ decoder, usageSpecs } as command)) as fullC
 unexpectedOptions_ : Command msg -> List ParsedOption -> List String
 unexpectedOptions_ (Command ({ decoder, usageSpecs } as command)) options =
     List.filterMap
-        (\(Parser.ParsedOption optionName optionKind) ->
+        (\(Tokenizer.ParsedOption optionName optionKind) ->
             if UsageSpec.optionExists usageSpecs optionName == Nothing then
                 Just optionName
             else
@@ -361,7 +361,7 @@ expectFlag flagName (CommandBuilder ({ usageSpecs, decoder } as command)) =
                 \({ options } as stuff) ->
                     if
                         options
-                            |> List.member (Parser.ParsedOption flagName Parser.Flag)
+                            |> List.member (Tokenizer.ParsedOption flagName Tokenizer.Flag)
                     then
                         decoder stuff
                     else

@@ -1,10 +1,10 @@
-module ParserTests exposing (all)
+module TokenizerTests exposing (all)
 
 import Cli.Command as Command
 import Cli.Spec as Spec
 import Expect exposing (Expectation)
-import Parser exposing (ParsedOption(..))
 import Test exposing (..)
+import Tokenizer exposing (ParsedOption(..))
 
 
 all : Test
@@ -28,7 +28,7 @@ all =
                         |> Command.expectFlag "dry-run"
                         |> Command.toCommand
                     )
-                    { options = [ ParsedOption "verbose" Parser.Flag, ParsedOption "dry-run" Parser.Flag ]
+                    { options = [ ParsedOption "verbose" Tokenizer.Flag, ParsedOption "dry-run" Tokenizer.Flag ]
                     , operands = [ "operand" ]
                     }
         , test "gets operand from the back" <|
@@ -40,7 +40,7 @@ all =
                         |> Command.expectFlag "dry-run"
                         |> Command.toCommand
                     )
-                    { options = [ ParsedOption "verbose" Parser.Flag, ParsedOption "dry-run" Parser.Flag ]
+                    { options = [ ParsedOption "verbose" Tokenizer.Flag, ParsedOption "dry-run" Tokenizer.Flag ]
                     , operands = [ "operand" ]
                     }
         , test "gets operand from the front when args are used" <|
@@ -52,7 +52,7 @@ all =
                         |> Command.with (Spec.requiredKeywordArg "last-name")
                         |> Command.toCommand
                     )
-                    { options = [ ParsedOption "first-name" (Parser.OptionWithArg "Will"), ParsedOption "last-name" (Parser.OptionWithArg "Riker") ]
+                    { options = [ ParsedOption "first-name" (Tokenizer.OptionWithArg "Will"), ParsedOption "last-name" (Tokenizer.OptionWithArg "Riker") ]
                     , operands = [ "operand" ]
                     }
         , test "gets operand from the back when args are present" <|
@@ -64,7 +64,7 @@ all =
                         |> Command.with (Spec.requiredKeywordArg "last-name")
                         |> Command.toCommand
                     )
-                    { options = [ ParsedOption "first-name" (Parser.OptionWithArg "Will"), ParsedOption "last-name" (Parser.OptionWithArg "Riker") ]
+                    { options = [ ParsedOption "first-name" (Tokenizer.OptionWithArg "Will"), ParsedOption "last-name" (Tokenizer.OptionWithArg "Riker") ]
                     , operands = [ "operand" ]
                     }
         , test "new" <|
@@ -80,7 +80,7 @@ all =
                         |> Command.with (Spec.requiredKeywordArg "last-name")
                         |> Command.toCommand
                     )
-                    { options = [ ParsedOption "last-name" (Parser.OptionWithArg "Troi"), ParsedOption "first-name" (Parser.OptionWithArg "Deanna") ]
+                    { options = [ ParsedOption "last-name" (Tokenizer.OptionWithArg "Troi"), ParsedOption "first-name" (Tokenizer.OptionWithArg "Deanna") ]
                     , operands = []
                     }
         , test "gets operand when there are no options" <|
@@ -101,7 +101,7 @@ all =
                         |> Command.with (Spec.requiredKeywordArg "name")
                         |> Command.toCommand
                     )
-                    { options = [ ParsedOption "name" (Parser.OptionWithArg "Picard") ], operands = [] }
+                    { options = [ ParsedOption "name" (Tokenizer.OptionWithArg "Picard") ], operands = [] }
         ]
 
 
@@ -111,6 +111,6 @@ expectFlagsAndOperands :
     -> { options : List ParsedOption, operands : List String }
     -> Expectation
 expectFlagsAndOperands argv command expected =
-    Parser.flagsAndOperands (Command.getUsageSpecs command) argv
+    Tokenizer.flagsAndOperands (Command.getUsageSpecs command) argv
         |> (\{ options, operands } -> { options = options, operands = operands })
         |> Expect.equal expected
