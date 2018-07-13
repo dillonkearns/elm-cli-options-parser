@@ -3,6 +3,7 @@ build/
 documentation.json
 */elm.js
 *graphqelm-metadata.json
+**/index.html
 
 # elm-package generated files
 elm-stuff
