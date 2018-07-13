@@ -1,8 +1,8 @@
-module Cli.OptionsParser exposing (ExecuteResult(..), ExitStatus(..), run)
+module Cli.OptionsParser exposing (ExitStatus(..), RunResult(..), run)
 
 {-| TODO
 
-@docs ExecuteResult, ExitStatus
+@docs RunResult, ExitStatus
 @docs run
 
 -}
@@ -14,7 +14,7 @@ import TypoSuggestion
 
 {-| TODO
 -}
-type ExecuteResult match
+type RunResult match
     = SystemMessage ExitStatus String
     | CustomMatch match
 
@@ -28,7 +28,7 @@ type ExitStatus
 
 {-| TODO
 -}
-run : String -> List (Command msg) -> List String -> ExecuteResult msg
+run : String -> List (Command msg) -> List String -> RunResult msg
 run programName cli flags =
     let
         matchResult =
