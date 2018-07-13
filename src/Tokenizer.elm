@@ -10,7 +10,7 @@ type ParsedOption
 
 type OptionKind
     = Flag
-    | OptionWithArg String
+    | KeywordArg String
 
 
 flagsAndOperands : List UsageSpec -> List String -> { options : List ParsedOption, operands : List String }
@@ -36,7 +36,7 @@ flagsAndOperands_ usageSpecs argv soFar =
                             secondArg :: afterSecondArg ->
                                 flagsAndOperands_ usageSpecs
                                     afterSecondArg
-                                    { options = soFar.options ++ [ ParsedOption optionName (OptionWithArg secondArg) ]
+                                    { options = soFar.options ++ [ ParsedOption optionName (KeywordArg secondArg) ]
                                     , operands = soFar.operands
                                     }
 
@@ -53,10 +53,10 @@ flagsAndOperands_ usageSpecs argv soFar =
                             , operands = soFar.operands
                             }
 
-                EqualsSplitter.OptionWithArg { name, value } ->
+                EqualsSplitter.KeywordArg { name, value } ->
                     flagsAndOperands_ usageSpecs
                         restArgs
-                        { options = soFar.options ++ [ ParsedOption name (OptionWithArg value) ]
+                        { options = soFar.options ++ [ ParsedOption name (KeywordArg value) ]
                         , operands = soFar.operands
                         }
 

@@ -1,8 +1,8 @@
 module Tokenizer.EqualsSplitterTests exposing (all)
 
 import Expect exposing (Expectation)
-import Tokenizer.EqualsSplitter as EqualsSplitter
 import Test exposing (..)
+import Tokenizer.EqualsSplitter as EqualsSplitter
 
 
 type Msg
@@ -32,7 +32,7 @@ all =
                 "--name=Picard"
                     |> EqualsSplitter.split
                     |> Expect.equal
-                        (EqualsSplitter.OptionWithArg
+                        (EqualsSplitter.KeywordArg
                             { name = "name", value = "Picard" }
                         )
         ]

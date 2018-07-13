@@ -105,7 +105,7 @@ optionalKeywordArg optionName =
                 Nothing ->
                     Ok Nothing
 
-                Just (Tokenizer.ParsedOption _ (Tokenizer.OptionWithArg optionArg)) ->
+                Just (Tokenizer.ParsedOption _ (Tokenizer.KeywordArg optionArg)) ->
                     Ok (Just optionArg)
 
                 _ ->
@@ -127,7 +127,7 @@ requiredKeywordArg optionName =
                 Nothing ->
                     Cli.Decode.MatchError ("Expected to find option " ++ optionName ++ " but only found options " ++ toString options) |> Err
 
-                Just (Tokenizer.ParsedOption _ (Tokenizer.OptionWithArg optionArg)) ->
+                Just (Tokenizer.ParsedOption _ (Tokenizer.KeywordArg optionArg)) ->
                     Ok optionArg
 
                 _ ->
@@ -254,7 +254,7 @@ keywordArgList flagName =
                             ( False, _ ) ->
                                 Nothing
 
-                            ( True, Tokenizer.OptionWithArg optionValue ) ->
+                            ( True, Tokenizer.KeywordArg optionValue ) ->
                                 Just optionValue
 
                             ( True, _ ) ->

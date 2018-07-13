@@ -52,7 +52,7 @@ all =
                         |> Command.with (Spec.requiredKeywordArg "last-name")
                         |> Command.toCommand
                     )
-                    { options = [ ParsedOption "first-name" (Tokenizer.OptionWithArg "Will"), ParsedOption "last-name" (Tokenizer.OptionWithArg "Riker") ]
+                    { options = [ ParsedOption "first-name" (Tokenizer.KeywordArg "Will"), ParsedOption "last-name" (Tokenizer.KeywordArg "Riker") ]
                     , operands = [ "operand" ]
                     }
         , test "gets operand from the back when args are present" <|
@@ -64,7 +64,7 @@ all =
                         |> Command.with (Spec.requiredKeywordArg "last-name")
                         |> Command.toCommand
                     )
-                    { options = [ ParsedOption "first-name" (Tokenizer.OptionWithArg "Will"), ParsedOption "last-name" (Tokenizer.OptionWithArg "Riker") ]
+                    { options = [ ParsedOption "first-name" (Tokenizer.KeywordArg "Will"), ParsedOption "last-name" (Tokenizer.KeywordArg "Riker") ]
                     , operands = [ "operand" ]
                     }
         , test "new" <|
@@ -80,7 +80,7 @@ all =
                         |> Command.with (Spec.requiredKeywordArg "last-name")
                         |> Command.toCommand
                     )
-                    { options = [ ParsedOption "last-name" (Tokenizer.OptionWithArg "Troi"), ParsedOption "first-name" (Tokenizer.OptionWithArg "Deanna") ]
+                    { options = [ ParsedOption "last-name" (Tokenizer.KeywordArg "Troi"), ParsedOption "first-name" (Tokenizer.KeywordArg "Deanna") ]
                     , operands = []
                     }
         , test "gets operand when there are no options" <|
@@ -101,7 +101,7 @@ all =
                         |> Command.with (Spec.requiredKeywordArg "name")
                         |> Command.toCommand
                     )
-                    { options = [ ParsedOption "name" (Tokenizer.OptionWithArg "Picard") ], operands = [] }
+                    { options = [ ParsedOption "name" (Tokenizer.KeywordArg "Picard") ], operands = [] }
         ]
 
 

@@ -3,7 +3,7 @@ module Tokenizer.EqualsSplitter exposing (SplitResult(..), split)
 
 type SplitResult
     = Option String
-    | OptionWithArg { name : String, value : String }
+    | KeywordArg { name : String, value : String }
     | NotOption
 
 
@@ -17,7 +17,7 @@ split string =
                         |> Option
 
                 optionName :: splitAfterOptionName ->
-                    OptionWithArg { name = optionName, value = String.concat splitAfterOptionName }
+                    KeywordArg { name = optionName, value = String.concat splitAfterOptionName }
 
                 _ ->
                     optionName
