@@ -9393,7 +9393,7 @@ var _user$project$Cli_OptionsParser$SystemMessage = F2(
 	});
 var _user$project$Cli_OptionsParser$Failure = {ctor: 'Failure'};
 var _user$project$Cli_OptionsParser$Success = {ctor: 'Success'};
-var _user$project$Cli_OptionsParser$execute = F3(
+var _user$project$Cli_OptionsParser$run = F3(
 	function (programName, cli, flags) {
 		var matchResult = A2(_user$project$Cli_LowLevel$try, cli, flags);
 		var _p0 = matchResult;
@@ -9532,7 +9532,7 @@ var _user$project$Main$cli = {
 	}
 };
 var _user$project$Main$init = function (flags) {
-	var matchResult = A3(_user$project$Cli_OptionsParser$execute, 'graphqelm', _user$project$Main$cli, flags);
+	var matchResult = A3(_user$project$Cli_OptionsParser$run, 'graphqelm', _user$project$Main$cli, flags);
 	var toPrint = function () {
 		var _p0 = matchResult;
 		if (_p0.ctor === 'SystemMessage') {
@@ -9632,7 +9632,7 @@ var _user$project$Simple$cli = {
 	}
 };
 var _user$project$Simple$init = function (flags) {
-	var matchResult = A3(_user$project$Cli_OptionsParser$execute, 'simple', _user$project$Simple$cli, flags);
+	var matchResult = A3(_user$project$Cli_OptionsParser$run, 'simple', _user$project$Simple$cli, flags);
 	var toPrint = function () {
 		var _p0 = matchResult;
 		if (_p0.ctor === 'SystemMessage') {

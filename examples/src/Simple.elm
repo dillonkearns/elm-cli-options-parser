@@ -41,7 +41,7 @@ init : Flags -> ( Model, Cmd Msg )
 init flags =
     let
         matchResult =
-            Cli.OptionsParser.execute "simple" cli flags
+            Cli.OptionsParser.run "simple" cli flags
 
         toPrint =
             case matchResult of

@@ -56,7 +56,7 @@ init : Flags -> ( Model, Cmd Msg )
 init flags =
     let
         matchResult =
-            Cli.OptionsParser.execute "graphqelm" cli flags
+            Cli.OptionsParser.run "graphqelm" cli flags
 
         toPrint =
             case matchResult of

@@ -1,9 +1,9 @@
-module Cli.OptionsParser exposing (ExecuteResult(..), ExitStatus(..), execute)
+module Cli.OptionsParser exposing (ExecuteResult(..), ExitStatus(..), run)
 
 {-| TODO
 
 @docs ExecuteResult, ExitStatus
-@docs execute
+@docs run
 
 -}
 
@@ -28,8 +28,8 @@ type ExitStatus
 
 {-| TODO
 -}
-execute : String -> List (Command msg) -> List String -> ExecuteResult msg
-execute programName cli flags =
+run : String -> List (Command msg) -> List String -> ExecuteResult msg
+run programName cli flags =
     let
         matchResult =
             Cli.LowLevel.try cli flags

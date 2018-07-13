@@ -100,7 +100,7 @@ init : Flags -> ( Model, Cmd Msg )
 init flags =
     let
         matchResult =
-            Cli.OptionsParser.execute "elm-test" cli flags
+            Cli.OptionsParser.run "elm-test" cli flags
 
         toPrint =
             case matchResult of

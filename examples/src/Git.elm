@@ -55,7 +55,7 @@ init : Flags -> ( Model, Cmd Msg )
 init flags =
     let
         matchResult =
-            Cli.OptionsParser.execute "git" cli flags
+            Cli.OptionsParser.run "git" cli flags
 
         cmd =
             case matchResult of
