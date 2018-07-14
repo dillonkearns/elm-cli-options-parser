@@ -2,7 +2,7 @@ module Main exposing (main)
 
 import Cli.Command as Command exposing (Command, with)
 import Cli.OptionsParser
-import Cli.Spec as Spec
+import Cli.Option as Option
 import Cli.Validate
 import Json.Decode exposing (..)
 import Ports
@@ -20,25 +20,25 @@ cli =
         |> Command.expectFlag "version"
         |> Command.withoutRestArgs
     , Command.buildWithDoc FromUrl "generate files based on the schema at `url`"
-        |> with (Spec.positionalArg "url")
+        |> with (Option.positionalArg "url")
         |> with baseOption
-        |> with (Spec.optionalKeywordArg "output")
-        |> with (Spec.flag "excludeDeprecated")
-        |> with (Spec.keywordArgList "header")
+        |> with (Option.optionalKeywordArg "output")
+        |> with (Option.flag "excludeDeprecated")
+        |> with (Option.keywordArgList "header")
         |> Command.withoutRestArgs
     , Command.build FromFile
-        |> with (Spec.requiredKeywordArg "introspection-file")
+        |> with (Option.requiredKeywordArg "introspection-file")
         |> with baseOption
-        |> with (Spec.optionalKeywordArg "output")
-        |> with (Spec.flag "excludeDeprecated")
+        |> with (Option.optionalKeywordArg "output")
+        |> with (Option.flag "excludeDeprecated")
         |> Command.withoutRestArgs
     ]
 
 
-baseOption : Spec.CliSpec (Maybe String) (Maybe String)
+baseOption : Option.CliSpec (Maybe String) (Maybe String)
 baseOption =
-    Spec.optionalKeywordArg "base"
-        |> Spec.validateIfPresent
+    Option.optionalKeywordArg "base"
+        |> Option.validateIfPresent
             (Cli.Validate.regex "^[A-Z][A-Za-z_]*(\\.[A-Z][A-Za-z_]*)*$")
 
 

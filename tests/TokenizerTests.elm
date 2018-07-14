@@ -1,7 +1,7 @@
 module TokenizerTests exposing (all)
 
 import Cli.Command as Command
-import Cli.Spec as Spec
+import Cli.Option as Option
 import Expect exposing (Expectation)
 import Test exposing (..)
 import Tokenizer exposing (ParsedOption(..))
@@ -14,8 +14,8 @@ all =
             \() ->
                 expectFlagsAndOperands []
                     (Command.build (,)
-                        |> Command.with (Spec.requiredKeywordArg "first-name")
-                        |> Command.with (Spec.requiredKeywordArg "last-name")
+                        |> Command.with (Option.requiredKeywordArg "first-name")
+                        |> Command.with (Option.requiredKeywordArg "last-name")
                         |> Command.withoutRestArgs
                     )
                     { options = [], operands = [] }
@@ -48,8 +48,8 @@ all =
                 expectFlagsAndOperands
                     [ "operand", "--first-name", "Will", "--last-name", "Riker" ]
                     (Command.build (,)
-                        |> Command.with (Spec.requiredKeywordArg "first-name")
-                        |> Command.with (Spec.requiredKeywordArg "last-name")
+                        |> Command.with (Option.requiredKeywordArg "first-name")
+                        |> Command.with (Option.requiredKeywordArg "last-name")
                         |> Command.withoutRestArgs
                     )
                     { options = [ ParsedOption "first-name" (Tokenizer.KeywordArg "Will"), ParsedOption "last-name" (Tokenizer.KeywordArg "Riker") ]
@@ -60,8 +60,8 @@ all =
                 expectFlagsAndOperands
                     [ "--first-name", "Will", "--last-name", "Riker", "operand" ]
                     (Command.build (,)
-                        |> Command.with (Spec.requiredKeywordArg "first-name")
-                        |> Command.with (Spec.requiredKeywordArg "last-name")
+                        |> Command.with (Option.requiredKeywordArg "first-name")
+                        |> Command.with (Option.requiredKeywordArg "last-name")
                         |> Command.withoutRestArgs
                     )
                     { options = [ ParsedOption "first-name" (Tokenizer.KeywordArg "Will"), ParsedOption "last-name" (Tokenizer.KeywordArg "Riker") ]
@@ -76,8 +76,8 @@ all =
                     , "Deanna"
                     ]
                     (Command.build (,)
-                        |> Command.with (Spec.requiredKeywordArg "first-name")
-                        |> Command.with (Spec.requiredKeywordArg "last-name")
+                        |> Command.with (Option.requiredKeywordArg "first-name")
+                        |> Command.with (Option.requiredKeywordArg "last-name")
                         |> Command.withoutRestArgs
                     )
                     { options = [ ParsedOption "last-name" (Tokenizer.KeywordArg "Troi"), ParsedOption "first-name" (Tokenizer.KeywordArg "Deanna") ]
@@ -88,7 +88,7 @@ all =
                 expectFlagsAndOperands
                     [ "operand" ]
                     (Command.build identity
-                        |> Command.with (Spec.positionalArg "foo")
+                        |> Command.with (Option.positionalArg "foo")
                         |> Command.withoutRestArgs
                     )
                     { options = []
@@ -98,7 +98,7 @@ all =
             \() ->
                 expectFlagsAndOperands [ "--name=Picard" ]
                     (Command.build identity
-                        |> Command.with (Spec.requiredKeywordArg "name")
+                        |> Command.with (Option.requiredKeywordArg "name")
                         |> Command.withoutRestArgs
                     )
                     { options = [ ParsedOption "name" (Tokenizer.KeywordArg "Picard") ], operands = [] }

@@ -11,9 +11,9 @@ type ValidationResult
 {-| Turns a predicate function into a validate function.
 
       Command.build identity
-       |> with (Spec.optionalKeywordArg "pair-programmers"
-       |> Spec.validateMapMaybe String.toInt
-       |> Spec.validateIfPresent (Validate.predicate "Must be even" (\n -> n % 2 == 0))
+       |> with (Option.optionalKeywordArg "pair-programmers"
+       |> Option.validateMapMaybe String.toInt
+       |> Option.validateIfPresent (Validate.predicate "Must be even" (\n -> n % 2 == 0))
 
 -}
 predicate : String -> (a -> Bool) -> (a -> ValidationResult)

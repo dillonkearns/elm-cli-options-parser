@@ -1,7 +1,7 @@
 module Cli.UsageSpecTests exposing (all)
 
 import Cli.Command as Command
-import Cli.Spec as Spec
+import Cli.Option as Option
 import Expect exposing (Expectation)
 import Test exposing (..)
 
@@ -12,8 +12,8 @@ all =
         [ test "synopsis prints options with arguments" <|
             \() ->
                 (Command.build (,)
-                    |> Command.with (Spec.requiredKeywordArg "first-name")
-                    |> Command.with (Spec.requiredKeywordArg "last-name")
+                    |> Command.with (Option.requiredKeywordArg "first-name")
+                    |> Command.with (Option.requiredKeywordArg "last-name")
                     |> Command.withoutRestArgs
                 )
                     |> Command.synopsis "greet"
@@ -28,30 +28,30 @@ all =
         , test "print synopsis with optional arg" <|
             \() ->
                 Command.build (,)
-                    |> Command.with (Spec.requiredKeywordArg "name")
-                    |> Command.with (Spec.optionalKeywordArg "prefix")
+                    |> Command.with (Option.requiredKeywordArg "name")
+                    |> Command.with (Option.optionalKeywordArg "prefix")
                     |> Command.withoutRestArgs
                     |> Command.synopsis "greet"
                     |> Expect.equal "greet --name <name> [--prefix <prefix>]"
         , test "print synopsis with required operand" <|
             \() ->
                 Command.build identity
-                    |> Command.with (Spec.positionalArg "MyApp.elm")
+                    |> Command.with (Option.positionalArg "MyApp.elm")
                     |> Command.withoutRestArgs
                     |> Command.synopsis "elm-interop"
                     |> Expect.equal "elm-interop <MyApp.elm>"
         , test "print synopsis with doc string" <|
             \() ->
                 Command.buildWithDoc (,) "greets somebody in your terminal"
-                    |> Command.with (Spec.requiredKeywordArg "name")
-                    |> Command.with (Spec.optionalKeywordArg "prefix")
+                    |> Command.with (Option.requiredKeywordArg "name")
+                    |> Command.with (Option.optionalKeywordArg "prefix")
                     |> Command.withoutRestArgs
                     |> Command.synopsis "greet"
                     |> Expect.equal "greet --name <name> [--prefix <prefix>] # greets somebody in your terminal"
         , test "print synopsis with zero or more arg option" <|
             \() ->
                 (Command.build identity
-                    |> Command.with (Spec.keywordArgList "header")
+                    |> Command.with (Option.keywordArgList "header")
                 )
                     |> Command.withoutRestArgs
                     |> Command.synopsis "curl"
@@ -65,7 +65,7 @@ all =
         , test "prints rest args at the end of the synopsis" <|
             \() ->
                 Command.build (,)
-                    |> Command.with (Spec.flag "dry-run")
+                    |> Command.with (Option.flag "dry-run")
                     |> Command.withRestArgs "files"
                     |> Command.synopsis "rm"
                     |> Expect.equal "rm [--dry-run] <files>..."
@@ -79,11 +79,11 @@ all =
             \() ->
                 Command.build identity
                     |> Command.with
-                        (Spec.requiredKeywordArg "report"
-                            |> Spec.oneOf 123
-                                [ Spec.MutuallyExclusiveValue "json" 123
-                                , Spec.MutuallyExclusiveValue "junit" 123
-                                , Spec.MutuallyExclusiveValue "console" 123
+                        (Option.requiredKeywordArg "report"
+                            |> Option.oneOf 123
+                                [ Option.MutuallyExclusiveValue "json" 123
+                                , Option.MutuallyExclusiveValue "junit" 123
+                                , Option.MutuallyExclusiveValue "console" 123
                                 ]
                         )
                     |> Command.withoutRestArgs
@@ -93,11 +93,11 @@ all =
             \() ->
                 Command.build identity
                     |> Command.with
-                        (Spec.positionalArg "report"
-                            |> Spec.oneOf 123
-                                [ Spec.MutuallyExclusiveValue "json" 123
-                                , Spec.MutuallyExclusiveValue "junit" 123
-                                , Spec.MutuallyExclusiveValue "console" 123
+                        (Option.positionalArg "report"
+                            |> Option.oneOf 123
+                                [ Option.MutuallyExclusiveValue "json" 123
+                                , Option.MutuallyExclusiveValue "junit" 123
+                                , Option.MutuallyExclusiveValue "console" 123
                                 ]
                         )
                     |> Command.withoutRestArgs
@@ -106,7 +106,7 @@ all =
         , test "sub-command with flag" <|
             \() ->
                 Command.buildSubCommand "log" identity
-                    |> Command.with (Spec.flag "stat")
+                    |> Command.with (Option.flag "stat")
                     |> Command.withoutRestArgs
                     |> Command.synopsis "git"
                     |> Expect.equal "git log [--stat]"

@@ -38,7 +38,7 @@ Start the chain using `with`:
 @docs with
 
 
-## I wish this could be in Spec...
+## I wish this could be in Option...
 
 @docs expectFlag
 
@@ -61,7 +61,7 @@ Start the chain using `with`:
 
 import Cli.Command.MatchResult as MatchResult exposing (MatchResult)
 import Cli.Decode
-import Cli.Spec exposing (CliSpec(..))
+import Cli.Option exposing (CliSpec(..))
 import Cli.UsageSpec as UsageSpec exposing (..)
 import Cli.Validate exposing (ValidationResult(Invalid, Valid))
 import Occurences exposing (Occurences(..))

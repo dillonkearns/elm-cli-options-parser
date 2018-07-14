@@ -13,10 +13,10 @@ This is needed to enforce the constraint that
 this needs to be called once I have the number of arguments that came before it...
 so that they can be dropped from the rest args.
 
-### expectFlag is on Command not Spec
+### expectFlag is on Command not Option
 
 Right now, I need that because it doesn't change the value of the pipeline... is there a simple way to change that?
 
 ### Feedback wanted
 
-Is it confusing to go between Command. and Spec.?
+Is it confusing to go between Command. and Option.?

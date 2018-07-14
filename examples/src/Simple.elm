@@ -2,7 +2,7 @@ module Simple exposing (main)
 
 import Cli.Command as Command
 import Cli.OptionsParser
-import Cli.Spec as Spec
+import Cli.Option as Option
 import Json.Decode exposing (..)
 import Ports
 
@@ -13,8 +13,8 @@ cli =
         |> Command.expectFlag "version"
         |> Command.withoutRestArgs
     , Command.build Greet
-        |> Command.with (Spec.requiredKeywordArg "name")
-        |> Command.with (Spec.optionalKeywordArg "greeting")
+        |> Command.with (Option.requiredKeywordArg "name")
+        |> Command.with (Option.optionalKeywordArg "greeting")
         |> Command.withoutRestArgs
     ]
 

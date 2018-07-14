@@ -1,4 +1,4 @@
-module Cli.Spec
+module Cli.Option
     exposing
         ( CliSpec(CliSpec)
         , MutuallyExclusiveValue(MutuallyExclusiveValue)

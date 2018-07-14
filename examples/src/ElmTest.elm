@@ -1,8 +1,8 @@
 module Main exposing (main)
 
 import Cli.Command as Command exposing (Command, with)
+import Cli.Option as Option
 import Cli.OptionsParser
-import Cli.Spec as Spec
 import Json.Decode exposing (..)
 import Ports
 
@@ -30,23 +30,23 @@ cli =
         |> Command.withoutRestArgs
     , Command.build RunTestsRecord
         |> with
-            (Spec.optionalKeywordArg "fuzz"
-                |> Spec.validateMapMaybe String.toInt
+            (Option.optionalKeywordArg "fuzz"
+                |> Option.validateMapMaybe String.toInt
             )
         |> with
-            (Spec.optionalKeywordArg "seed"
-                |> Spec.validateMapMaybe String.toInt
+            (Option.optionalKeywordArg "seed"
+                |> Option.validateMapMaybe String.toInt
             )
-        |> with (Spec.optionalKeywordArg "compiler")
-        |> with (Spec.optionalKeywordArg "add-dependencies")
-        |> with (Spec.flag "watch")
+        |> with (Option.optionalKeywordArg "compiler")
+        |> with (Option.optionalKeywordArg "add-dependencies")
+        |> with (Option.flag "watch")
         |> with
-            (Spec.optionalKeywordArg "report"
-                |> Spec.withDefault "console"
-                |> Spec.oneOf Console
-                    [ Spec.MutuallyExclusiveValue "json" Json
-                    , Spec.MutuallyExclusiveValue "junit" Junit
-                    , Spec.MutuallyExclusiveValue "console" Console
+            (Option.optionalKeywordArg "report"
+                |> Option.withDefault "console"
+                |> Option.oneOf Console
+                    [ Option.MutuallyExclusiveValue "json" Json
+                    , Option.MutuallyExclusiveValue "junit" Junit
+                    , Option.MutuallyExclusiveValue "console" Console
                     ]
             )
         |> Command.withRestArgs "TESTFILES"
