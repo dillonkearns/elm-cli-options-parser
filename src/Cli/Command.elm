@@ -334,7 +334,7 @@ expectFlag flagName (CommandBuilder ({ usageSpecs, decoder } as command)) =
 {-| TODO
 -}
 with : CliSpec from to -> CommandBuilder (to -> msg) -> CommandBuilder msg
-with (CliSpec dataGrabber usageSpec (Cli.Decode.Decoder decodeFn)) ((CommandBuilder ({ decoder, usageSpecs } as command)) as fullCommand) =
+with (CliSpec dataGrabber usageSpec optionsDecoder) ((CommandBuilder ({ decoder, usageSpecs } as command)) as fullCommand) =
     CommandBuilder
         { command
             | decoder =
@@ -345,7 +345,7 @@ with (CliSpec dataGrabber usageSpec (Cli.Decode.Decoder decodeFn)) ((CommandBuil
                     , operandsSoFar = UsageSpec.operandCount usageSpecs
                     }
                         |> dataGrabber
-                        |> Result.andThen decodeFn
+                        |> Result.andThen (Cli.Decode.decodeFunction optionsDecoder)
                         |> Result.andThen
                             (\( validationErrors, fromValue ) ->
                                 case

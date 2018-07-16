@@ -1,4 +1,14 @@
-module Cli.Decode exposing (Decoder(Decoder), ProcessingError(..), ValidationError, decoder, map, mapProcessingError, mapValidationErrors)
+module Cli.Decode
+    exposing
+        ( Decoder
+        , ProcessingError(..)
+        , ValidationError
+        , decodeFunction
+        , decoder
+        , map
+        , mapProcessingError
+        , mapValidationErrors
+        )
 
 
 type alias ValidationError =
@@ -16,6 +26,14 @@ type ProcessingError
 
 type Decoder decodesFrom decodesTo
     = Decoder (decodesFrom -> Result ProcessingError ( List ValidationError, decodesTo ))
+
+
+decodeFunction :
+    Decoder decodesFrom decodesTo
+    -> decodesFrom
+    -> Result ProcessingError ( List ValidationError, decodesTo )
+decodeFunction (Decoder decodeFn) =
+    decodeFn
 
 
 decoder : Decoder a a
