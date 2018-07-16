@@ -28,7 +28,7 @@ type UsageSpec
 
 type Option
     = Flag String
-    | OptionWithStringArg String
+    | KeywordArg String
 
 
 type MutuallyExclusiveValues
@@ -37,7 +37,7 @@ type MutuallyExclusiveValues
 
 keywordArg : String -> Occurences -> UsageSpec
 keywordArg optionName occurences =
-    Option (OptionWithStringArg optionName) Nothing occurences
+    Option (KeywordArg optionName) Nothing occurences
 
 
 flag : String -> Occurences -> UsageSpec
@@ -140,7 +140,7 @@ name usageSpec =
                 Flag name ->
                     name
 
-                OptionWithStringArg name ->
+                KeywordArg name ->
                     name
 
         Operand name mutuallyExclusiveValues ->
@@ -194,7 +194,7 @@ optionSynopsis occurences option mutuallyExclusiveValues =
         Flag flagName ->
             "--" ++ flagName
 
-        OptionWithStringArg optionName ->
+        KeywordArg optionName ->
             case mutuallyExclusiveValues of
                 Just mutuallyExclusiveValues ->
                     "--" ++ optionName ++ " <" ++ mutuallyExclusiveSynopsis mutuallyExclusiveValues ++ ">"
@@ -229,7 +229,7 @@ optionHasArg options optionNameToCheck =
                 Flag flagName ->
                     False
 
-                OptionWithStringArg optionName ->
+                KeywordArg optionName ->
                     True
 
         Nothing ->
@@ -242,5 +242,5 @@ optionName option =
         Flag flagName ->
             flagName
 
-        OptionWithStringArg optionName ->
+        KeywordArg optionName ->
             optionName
