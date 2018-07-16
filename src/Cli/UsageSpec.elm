@@ -10,7 +10,6 @@ module Cli.UsageSpec
         , name
         , operand
         , operandCount
-        , option
         , optionExists
         , optionHasArg
         , restArgs
@@ -44,11 +43,6 @@ keywordArg optionName occurences =
 flag : String -> Occurences -> UsageSpec
 flag optionName occurences =
     Option (Flag optionName) Nothing occurences
-
-
-option : Option -> Occurences -> UsageSpec
-option option occurences =
-    Option option Nothing occurences
 
 
 operand : String -> UsageSpec
