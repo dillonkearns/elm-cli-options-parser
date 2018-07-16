@@ -62,7 +62,6 @@ import Cli.Command.MatchResult as MatchResult exposing (MatchResult)
 import Cli.Decode
 import Cli.Option exposing (CliSpec(..))
 import Cli.UsageSpec as UsageSpec exposing (..)
-import Cli.Validate exposing (ValidationResult(Invalid, Valid))
 import Occurences exposing (Occurences(..))
 import Tokenizer exposing (ParsedOption)
 
@@ -330,37 +329,6 @@ expectFlag flagName (CommandBuilder ({ usageSpecs, decoder } as command)) =
                         Cli.Decode.MatchError ("Expect flag " ++ ("--" ++ flagName))
                             |> Err
         }
-
-
-{-| TODO
--}
-validate : (to -> ValidationResult) -> CliSpec from to -> CliSpec from to
-validate validateFunction (CliSpec dataGrabber usageSpec (Cli.Decode.Decoder decodeFn)) =
-    CliSpec dataGrabber
-        usageSpec
-        (Cli.Decode.Decoder
-            (decodeFn
-                >> (\result ->
-                        Result.map
-                            (\( validationErrors, value ) ->
-                                case validateFunction value of
-                                    Valid ->
-                                        ( validationErrors, value )
-
-                                    Invalid invalidReason ->
-                                        ( validationErrors
-                                            ++ [ { name = UsageSpec.name usageSpec
-                                                 , invalidReason = invalidReason
-                                                 , valueAsString = toString value
-                                                 }
-                                               ]
-                                        , value
-                                        )
-                            )
-                            result
-                   )
-            )
-        )
 
 
 {-| TODO
