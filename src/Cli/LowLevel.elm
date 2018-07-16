@@ -35,7 +35,7 @@ try commands argv =
             Command.build ShowHelp
                 |> Command.expectFlag "help"
                 |> Command.withoutRestArgs
-                |> Command.tryMatchNew (argv |> List.drop 2)
+                |> Command.tryMatch (argv |> List.drop 2)
                 |> (\matchResult ->
                         case matchResult of
                             MatchResult.NoMatch _ ->
@@ -50,7 +50,7 @@ try commands argv =
                 |> List.map
                     (argv
                         |> List.drop 2
-                        |> Command.tryMatchNew
+                        |> Command.tryMatch
                     )
 
         commonUnmatchedFlags =

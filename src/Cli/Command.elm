@@ -11,7 +11,7 @@ module Cli.Command
         , hardcoded
         , map
         , synopsis
-        , tryMatchNew
+        , tryMatch
         , with
         , withRestArgs
         , withoutRestArgs
@@ -54,7 +54,7 @@ Start the chain using `with`:
 
 ## Low-Level, can I get rid of these?
 
-@docs getSubCommand, getUsageSpecs, synopsis, tryMatchNew, CommandBuilder
+@docs getSubCommand, getUsageSpecs, synopsis, tryMatch, CommandBuilder
 
 -}
 
@@ -92,8 +92,8 @@ getSubCommand (Command { buildSubCommand }) =
 
 {-| TODO
 -}
-tryMatchNew : List String -> Command msg -> MatchResult msg
-tryMatchNew argv ((Command { decoder, usageSpecs, buildSubCommand }) as command) =
+tryMatch : List String -> Command msg -> MatchResult msg
+tryMatch argv ((Command { decoder, usageSpecs, buildSubCommand }) as command) =
     let
         decoder =
             command
