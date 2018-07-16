@@ -21,6 +21,12 @@ import List.Extra
 import Occurences exposing (Occurences(..))
 
 
+type UsageSpec
+    = Option Option (Maybe MutuallyExclusiveValues) Occurences
+    | Operand String (Maybe MutuallyExclusiveValues)
+    | RestArgs String
+
+
 type Option
     = Flag String
     | OptionWithStringArg String
@@ -28,12 +34,6 @@ type Option
 
 type MutuallyExclusiveValues
     = MutuallyExclusiveValues (List String)
-
-
-type UsageSpec
-    = Option Option (Maybe MutuallyExclusiveValues) Occurences
-    | Operand String (Maybe MutuallyExclusiveValues)
-    | RestArgs String
 
 
 keywordArg : String -> Occurences -> UsageSpec
