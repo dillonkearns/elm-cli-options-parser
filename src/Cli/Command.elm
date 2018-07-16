@@ -317,7 +317,7 @@ expectFlag : String -> CommandBuilder msg -> CommandBuilder msg
 expectFlag flagName (CommandBuilder ({ usageSpecs, decoder } as command)) =
     CommandBuilder
         { command
-            | usageSpecs = usageSpecs ++ [ UsageSpec.option (Flag flagName) Required ]
+            | usageSpecs = usageSpecs ++ [ UsageSpec.flag flagName Required ]
             , decoder =
                 \({ options } as stuff) ->
                     if
