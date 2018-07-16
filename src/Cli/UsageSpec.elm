@@ -1,7 +1,6 @@
 module Cli.UsageSpec
     exposing
-        ( MutuallyExclusiveValues(MutuallyExclusiveValues)
-        , Option
+        ( MutuallyExclusiveValues
         , UsageSpec
         , changeUsageSpec
         , flag
