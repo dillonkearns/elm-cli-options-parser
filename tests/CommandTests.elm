@@ -384,11 +384,15 @@ expectValidationErrors :
     -> List { invalidReason : String, name : String, valueAsString : String }
     -> Expectation
 expectValidationErrors argv commands expectedErrors =
-    Command.tryMatch argv commands
-        |> Expect.equal (Just (Err expectedErrors))
+    Command.tryMatchNew argv commands
+        |> Expect.equal (Cli.Command.MatchResult.Match (Err expectedErrors))
 
 
 expectNoMatch : List String -> Command.Command a -> Expectation
 expectNoMatch argv commands =
-    Command.tryMatch argv commands
-        |> Expect.equal Nothing
+    case Command.tryMatchNew argv commands of
+        Cli.Command.MatchResult.NoMatch unexpectedOptions ->
+            Expect.pass
+
+        Cli.Command.MatchResult.Match matchResult ->
+            Expect.fail ("Expected no match but got match:\n\n" ++ toString matchResult)
