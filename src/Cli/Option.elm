@@ -106,7 +106,7 @@ optionalKeywordArg optionName =
                 _ ->
                     Cli.Decode.MatchError ("Expected option " ++ optionName ++ " to have arg but found none.") |> Err
         )
-        (UsageSpec.option (OptionWithStringArg optionName) Optional)
+        (UsageSpec.keywordArg optionName Optional)
         Cli.Decode.decoder
 
 
@@ -128,7 +128,7 @@ requiredKeywordArg optionName =
                 _ ->
                     Cli.Decode.MatchError ("Expected option " ++ optionName ++ " to have arg but found none.") |> Err
         )
-        (UsageSpec.option (OptionWithStringArg optionName) Required)
+        (UsageSpec.keywordArg optionName Required)
         Cli.Decode.decoder
 
 
@@ -255,5 +255,5 @@ keywordArgList flagName =
                     )
                 |> Ok
         )
-        (UsageSpec.option (OptionWithStringArg flagName) ZeroOrMore)
+        (UsageSpec.keywordArg flagName ZeroOrMore)
         Cli.Decode.decoder

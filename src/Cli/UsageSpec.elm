@@ -6,6 +6,7 @@ module Cli.UsageSpec
         , changeUsageSpec
         , hasRestArgs
         , isOperand
+        , keywordArg
         , name
         , operand
         , operandCount
@@ -33,6 +34,11 @@ type UsageSpec
     = Option Option (Maybe MutuallyExclusiveValues) Occurences
     | Operand String (Maybe MutuallyExclusiveValues)
     | RestArgs String
+
+
+keywordArg : String -> Occurences -> UsageSpec
+keywordArg optionName occurences =
+    Option (OptionWithStringArg optionName) Nothing occurences
 
 
 option : Option -> Occurences -> UsageSpec
