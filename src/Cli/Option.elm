@@ -34,6 +34,7 @@ type alias DataGrabber decodesTo =
 validate : (to -> Validate.ValidationResult) -> CliSpec from to -> CliSpec from to
 validate validateFunction (CliSpec dataGrabber usageSpec ((Cli.Decode.Decoder decodeFn) as decoder)) =
     let
+        mappedDecoder : Cli.Decode.Decoder from to
         mappedDecoder =
             Cli.Decode.Decoder
                 (decodeFn
