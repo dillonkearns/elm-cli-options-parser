@@ -6,6 +6,11 @@ import Expect exposing (Expectation)
 import Test exposing (..)
 
 
+(=>) : a -> b -> ( a, b )
+(=>) =
+    (,)
+
+
 all : Test
 all =
     describe "synopsis"
@@ -82,9 +87,9 @@ all =
                     |> Command.with
                         (Option.requiredKeywordArg "report"
                             |> Option.oneOf 123
-                                [ Option.MutuallyExclusiveValue "json" 123
-                                , Option.MutuallyExclusiveValue "junit" 123
-                                , Option.MutuallyExclusiveValue "console" 123
+                                [ "json" => 123
+                                , "junit" => 123
+                                , "console" => 123
                                 ]
                         )
                     |> Command.withoutRestArgs
@@ -96,9 +101,9 @@ all =
                     |> Command.with
                         (Option.positionalArg "report"
                             |> Option.oneOf 123
-                                [ Option.MutuallyExclusiveValue "json" 123
-                                , Option.MutuallyExclusiveValue "junit" 123
-                                , Option.MutuallyExclusiveValue "console" 123
+                                [ "json" => 123
+                                , "junit" => 123
+                                , "console" => 123
                                 ]
                         )
                     |> Command.withoutRestArgs

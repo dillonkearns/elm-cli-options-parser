@@ -13,6 +13,11 @@ type ElmTestCommand
     | PrintVersion
 
 
+(=>) : a -> b -> ( a, b )
+(=>) =
+    (,)
+
+
 type alias RunTestsRecord =
     { maybeFuzz : Maybe Int
     , maybeSeed : Maybe Int
@@ -44,9 +49,9 @@ cli =
             (Option.optionalKeywordArg "report"
                 |> Option.withDefault "console"
                 |> Option.oneOf Console
-                    [ Option.MutuallyExclusiveValue "json" Json
-                    , Option.MutuallyExclusiveValue "junit" Junit
-                    , Option.MutuallyExclusiveValue "console" Console
+                    [ "json" => Json
+                    , "junit" => Junit
+                    , "console" => Console
                     ]
             )
         |> Command.withRestArgs "TESTFILES"
@@ -79,6 +84,12 @@ init argv =
         matchResult =
             Cli.OptionsParser.run "elm-test" cli argv
 
+        -- Cli.OptionsParser.run
+        --     { programName = "elm-test"
+        --     , commands = cli
+        --     , argv = argv
+        --     , version = "3.1.4"
+        --     }
         toPrint =
             case matchResult of
                 Cli.OptionsParser.SystemMessage exitStatus message ->

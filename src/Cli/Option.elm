@@ -1,7 +1,6 @@
 module Cli.Option
     exposing
         ( CliSpec(CliSpec)
-        , MutuallyExclusiveValue(MutuallyExclusiveValue)
         , flag
         , keywordArgList
         , map
@@ -158,8 +157,8 @@ map mapFn (CliSpec dataGrabber usageSpec ((Cli.Decode.Decoder decodeFn) as decod
     CliSpec dataGrabber usageSpec (Cli.Decode.map mapFn decoder)
 
 
-type MutuallyExclusiveValue union
-    = MutuallyExclusiveValue String union
+type alias MutuallyExclusiveValue union =
+    ( String, union )
 
 
 oneOf : value -> List (MutuallyExclusiveValue value) -> CliSpec from String -> CliSpec from value
@@ -168,14 +167,14 @@ oneOf default list (CliSpec dataGrabber usageSpec ((Cli.Decode.Decoder decodeFn)
         (\argValue ->
             case
                 list
-                    |> List.Extra.find (\(MutuallyExclusiveValue name value) -> name == argValue)
-                    |> Maybe.map (\(MutuallyExclusiveValue name value) -> value)
+                    |> List.Extra.find (\( name, value ) -> name == argValue)
+                    |> Maybe.map (\( name, value ) -> value)
             of
                 Nothing ->
                     Err
                         ("Must be one of ["
                             ++ (list
-                                    |> List.map (\(MutuallyExclusiveValue name value) -> name)
+                                    |> List.map (\( name, value ) -> name)
                                     |> String.join ", "
                                )
                             ++ "]"
@@ -187,7 +186,7 @@ oneOf default list (CliSpec dataGrabber usageSpec ((Cli.Decode.Decoder decodeFn)
         (CliSpec dataGrabber
             (UsageSpec.changeUsageSpec
                 (list
-                    |> List.map (\(MutuallyExclusiveValue name value) -> name)
+                    |> List.map (\( name, value ) -> name)
                 )
                 usageSpec
             )

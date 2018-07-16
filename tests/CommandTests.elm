@@ -8,6 +8,11 @@ import Expect exposing (Expectation)
 import Test exposing (..)
 
 
+(=>) : a -> b -> ( a, b )
+(=>) =
+    (,)
+
+
 type Msg
     = Help
     | Version
@@ -287,7 +292,7 @@ all =
                             |> Command.with
                                 (Option.requiredKeywordArg "report"
                                     |> Option.oneOf Console
-                                        [ Option.MutuallyExclusiveValue "json" Json
+                                        [ "json" => Json
                                         ]
                                 )
                             |> Command.withoutRestArgs
@@ -300,7 +305,7 @@ all =
                             |> Command.with
                                 (Option.requiredKeywordArg "report"
                                     |> Option.oneOf Console
-                                        [ Option.MutuallyExclusiveValue "json" Json
+                                        [ "json" => Json
                                         ]
                                 )
                             |> Command.withoutRestArgs
