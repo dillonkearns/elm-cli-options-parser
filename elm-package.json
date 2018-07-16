@@ -1,7 +1,7 @@
 {
     "name": "elm-cli-options-parser",
     "version": "1.0.0",
-    "summary": "Example Project",
+    "summary": "Type-safe command line options parsing.",
     "repository": "https://github.com/dillonkearns/elm-cli-options-parser.git",
     "license": "BSD-3-Clause",
     "source-directories": [
