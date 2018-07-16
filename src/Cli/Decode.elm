@@ -23,6 +23,6 @@ decoder =
     Decoder (\value -> Ok ( [], value ))
 
 
-map : (a -> b) -> Decoder from a -> Decoder from b
+map : (to -> toMapped) -> Decoder from to -> Decoder from toMapped
 map mapFunction (Decoder function) =
     Decoder (function >> (\fn -> Result.map (\( validationErrors, value ) -> ( validationErrors, mapFunction value )) fn))
