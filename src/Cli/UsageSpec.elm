@@ -4,6 +4,7 @@ module Cli.UsageSpec
         , Option(..)
         , UsageSpec
         , changeUsageSpec
+        , flag
         , hasRestArgs
         , isOperand
         , keywordArg
@@ -39,6 +40,11 @@ type UsageSpec
 keywordArg : String -> Occurences -> UsageSpec
 keywordArg optionName occurences =
     Option (OptionWithStringArg optionName) Nothing occurences
+
+
+flag : String -> Occurences -> UsageSpec
+flag optionName occurences =
+    Option (Flag optionName) Nothing occurences
 
 
 option : Option -> Occurences -> UsageSpec

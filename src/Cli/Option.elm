@@ -144,7 +144,7 @@ flag flagName =
             else
                 Ok False
         )
-        (UsageSpec.option (Flag flagName) Optional)
+        (UsageSpec.flag flagName Optional)
         Cli.Decode.decoder
 
 
