@@ -18,7 +18,7 @@ module Cli.Command
         )
 
 {-| TODO
-@docs Command
+@docs Command, CommandBuilder
 
 
 ## Start Building
@@ -54,7 +54,7 @@ Start the chain using `with`:
 
 ## Low-Level, can I get rid of these?
 
-@docs getSubCommand, getUsageSpecs, synopsis, tryMatch, CommandBuilder
+@docs getSubCommand, getUsageSpecs, synopsis, tryMatch
 
 -}
 
