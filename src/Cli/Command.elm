@@ -362,16 +362,6 @@ with (CliSpec dataGrabber usageSpec optionsDecoder) ((CommandBuilder ({ decoder,
         }
 
 
-optionName : Option -> String
-optionName option =
-    case option of
-        Flag flagName ->
-            flagName
-
-        OptionWithStringArg optionName ->
-            optionName
-
-
 {-| TODO
 -}
 withDoc : String -> Command msg -> Command msg
