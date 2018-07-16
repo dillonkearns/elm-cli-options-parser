@@ -1,5 +1,5 @@
 {
-  "name": "elm-cli",
+  "name": "elm-cli-options-parser",
   "version": "0.0.1",
   "description": "Parse CLI options declaritively in Elm.",
   "main": "argv.js",

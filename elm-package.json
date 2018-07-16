@@ -1,7 +1,8 @@
 {
-    "version": "4.0.0",
+    "name": "elm-cli-options-parser",
+    "version": "1.0.0",
     "summary": "Example Project",
-    "repository": "https://github.com/user/project.git",
+    "repository": "https://github.com/dillonkearns/elm-cli-options-parser.git",
     "license": "BSD-3-Clause",
     "source-directories": [
         "src"
