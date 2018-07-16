@@ -32,7 +32,7 @@ type alias DataGrabber decodesTo =
 
 
 validate : (to -> Validate.ValidationResult) -> CliSpec from to -> CliSpec from to
-validate validateFunction (CliSpec dataGrabber usageSpec ((Cli.Decode.Decoder decodeFn) as decoder)) =
+validate validateFunction (CliSpec dataGrabber usageSpec decoder) =
     let
         mappedDecoder : Cli.Decode.Decoder from to
         mappedDecoder =
@@ -149,7 +149,7 @@ flag flagName =
 
 
 map : (toRaw -> toMapped) -> CliSpec from toRaw -> CliSpec from toMapped
-map mapFn (CliSpec dataGrabber usageSpec ((Cli.Decode.Decoder decodeFn) as decoder)) =
+map mapFn (CliSpec dataGrabber usageSpec decoder) =
     CliSpec dataGrabber usageSpec (Cli.Decode.map mapFn decoder)
 
 
@@ -158,7 +158,7 @@ type alias MutuallyExclusiveValue union =
 
 
 oneOf : value -> List (MutuallyExclusiveValue value) -> CliSpec from String -> CliSpec from value
-oneOf default list (CliSpec dataGrabber usageSpec ((Cli.Decode.Decoder decodeFn) as decoder)) =
+oneOf default list (CliSpec dataGrabber usageSpec decoder) =
     validateMap
         (\argValue ->
             case
@@ -186,7 +186,7 @@ oneOf default list (CliSpec dataGrabber usageSpec ((Cli.Decode.Decoder decodeFn)
                 )
                 usageSpec
             )
-            (Cli.Decode.Decoder decodeFn)
+            decoder
         )
 
 
@@ -219,7 +219,7 @@ validateMap mapFn (CliSpec dataGrabber usageSpec ((Cli.Decode.Decoder decodeFn) 
 
 
 validateMapMaybe : (to -> Result String toMapped) -> CliSpec (Maybe from) (Maybe to) -> CliSpec (Maybe from) (Maybe toMapped)
-validateMapMaybe mapFn ((CliSpec dataGrabber usageSpec ((Cli.Decode.Decoder decodeFn) as decoder)) as cliSpec) =
+validateMapMaybe mapFn ((CliSpec dataGrabber usageSpec decoder) as cliSpec) =
     validateMap
         (\thing ->
             case thing of
@@ -234,7 +234,7 @@ validateMapMaybe mapFn ((CliSpec dataGrabber usageSpec ((Cli.Decode.Decoder deco
 
 
 withDefault : to -> CliSpec from (Maybe to) -> CliSpec from to
-withDefault defaultValue (CliSpec dataGrabber usageSpec ((Cli.Decode.Decoder decodeFn) as decoder)) =
+withDefault defaultValue (CliSpec dataGrabber usageSpec decoder) =
     CliSpec dataGrabber usageSpec (Cli.Decode.map (Maybe.withDefault defaultValue) decoder)
 
 
