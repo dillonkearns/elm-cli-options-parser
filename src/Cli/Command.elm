@@ -11,7 +11,6 @@ module Cli.Command
         , hardcoded
         , map
         , synopsis
-        , tryMatch
         , tryMatchNew
         , with
         , withRestArgs
@@ -55,7 +54,7 @@ Start the chain using `with`:
 
 ## Low-Level, can I get rid of these?
 
-@docs getSubCommand, getUsageSpecs, synopsis, tryMatch, tryMatchNew, CommandBuilder
+@docs getSubCommand, getUsageSpecs, synopsis, tryMatchNew, CommandBuilder
 
 -}
 
@@ -152,69 +151,6 @@ tryMatchNew argv ((Command { decoder, usageSpecs, buildSubCommand }) as command)
 
         Err { errorMessage, options } ->
             MatchResult.NoMatch (unexpectedOptions_ command options)
-
-
-{-| TODO
--}
-tryMatch : List String -> Command msg -> Maybe (Result (List Cli.Decode.ValidationError) msg)
-tryMatch argv ((Command { decoder, usageSpecs, buildSubCommand }) as command) =
-    let
-        decoder =
-            command
-                |> expectedOperandCountOrFail
-                |> failIfUnexpectedOptions
-                |> getDecoder
-
-        flagsAndOperands =
-            Tokenizer.flagsAndOperands usageSpecs argv
-                |> (\record ->
-                        case ( buildSubCommand, record.operands ) of
-                            ( Nothing, _ ) ->
-                                Ok
-                                    { options = record.options
-                                    , operands = record.operands
-                                    , usageSpecs = usageSpecs
-                                    }
-
-                            ( Just buildSubCommandName, actualSubCommand :: remainingOperands ) ->
-                                if actualSubCommand == buildSubCommandName then
-                                    Ok
-                                        { options = record.options
-                                        , operands = remainingOperands
-                                        , usageSpecs = usageSpecs
-                                        }
-                                else
-                                    Err "Sub command does not match"
-
-                            ( Just buildSubCommandName, [] ) ->
-                                Err "No sub command provided"
-                   )
-    in
-    case flagsAndOperands of
-        Ok actualFlagsAndOperands ->
-            decoder actualFlagsAndOperands
-                |> (\result ->
-                        case result of
-                            Err error ->
-                                case error of
-                                    Cli.Decode.MatchError matchError ->
-                                        Nothing
-
-                                    Cli.Decode.UnrecoverableValidationError validationError ->
-                                        Just (Err [ validationError ])
-
-                                    Cli.Decode.UnexpectedOptions _ ->
-                                        Nothing
-
-                            Ok ( [], value ) ->
-                                Just (Ok value)
-
-                            Ok ( validationErrors, value ) ->
-                                Just (Err validationErrors)
-                   )
-
-        Err _ ->
-            Nothing
 
 
 expectedOperandCountOrFail : Command msg -> Command msg
