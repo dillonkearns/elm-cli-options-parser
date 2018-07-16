@@ -34,29 +34,34 @@ type alias DataGrabber decodesTo =
 validate : (to -> Validate.ValidationResult) -> CliSpec from to -> CliSpec from to
 validate validateFunction (CliSpec dataGrabber usageSpec ((Cli.Decode.Decoder decodeFn) as decoder)) =
     let
+        validateFn :
+            Result error ( List { invalidReason : String, name : String, valueAsString : String }, to )
+            -> Result error ( List { invalidReason : String, name : String, valueAsString : String }, to )
+        validateFn =
+            \result ->
+                Result.map
+                    (\( validationErrors, value ) ->
+                        case validateFunction value of
+                            Validate.Valid ->
+                                ( validationErrors, value )
+
+                            Validate.Invalid invalidReason ->
+                                ( validationErrors
+                                    ++ [ { name = UsageSpec.name usageSpec
+                                         , invalidReason = invalidReason
+                                         , valueAsString = toString value
+                                         }
+                                       ]
+                                , value
+                                )
+                    )
+                    result
+
         mappedDecoder : Cli.Decode.Decoder from to
         mappedDecoder =
             Cli.Decode.Decoder
                 (decodeFn
-                    >> (\result ->
-                            Result.map
-                                (\( validationErrors, value ) ->
-                                    case validateFunction value of
-                                        Validate.Valid ->
-                                            ( validationErrors, value )
-
-                                        Validate.Invalid invalidReason ->
-                                            ( validationErrors
-                                                ++ [ { name = UsageSpec.name usageSpec
-                                                     , invalidReason = invalidReason
-                                                     , valueAsString = toString value
-                                                     }
-                                                   ]
-                                            , value
-                                            )
-                                )
-                                result
-                       )
+                    >> validateFn
                 )
     in
     CliSpec dataGrabber
