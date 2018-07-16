@@ -21,12 +21,12 @@ import Occurences exposing (Occurences(..))
 
 
 type UsageSpec
-    = Option Option (Maybe MutuallyExclusiveValues) Occurences
+    = FlagOrKeywordArg FlagOrKeywordArg (Maybe MutuallyExclusiveValues) Occurences
     | Operand String (Maybe MutuallyExclusiveValues)
     | RestArgs String
 
 
-type Option
+type FlagOrKeywordArg
     = Flag String
     | KeywordArg String
 
@@ -37,12 +37,12 @@ type MutuallyExclusiveValues
 
 keywordArg : String -> Occurences -> UsageSpec
 keywordArg optionName occurences =
-    Option (KeywordArg optionName) Nothing occurences
+    FlagOrKeywordArg (KeywordArg optionName) Nothing occurences
 
 
 flag : String -> Occurences -> UsageSpec
 flag optionName occurences =
-    Option (Flag optionName) Nothing occurences
+    FlagOrKeywordArg (Flag optionName) Nothing occurences
 
 
 operand : String -> UsageSpec
@@ -58,8 +58,8 @@ restArgs name =
 changeUsageSpec : List String -> UsageSpec -> UsageSpec
 changeUsageSpec possibleValues usageSpec =
     case usageSpec of
-        Option option mutuallyExclusiveValues occurences ->
-            Option option (MutuallyExclusiveValues possibleValues |> Just) occurences
+        FlagOrKeywordArg option mutuallyExclusiveValues occurences ->
+            FlagOrKeywordArg option (MutuallyExclusiveValues possibleValues |> Just) occurences
 
         Operand name mutuallyExclusiveValues ->
             Operand name (MutuallyExclusiveValues possibleValues |> Just)
@@ -74,7 +74,7 @@ operandCount usageSpecs =
         |> List.filterMap
             (\spec ->
                 case spec of
-                    Option _ _ _ ->
+                    FlagOrKeywordArg _ _ _ ->
                         Nothing
 
                     Operand operandName mutuallyExclusiveValues ->
@@ -86,13 +86,13 @@ operandCount usageSpecs =
         |> List.length
 
 
-optionExists : List UsageSpec -> String -> Maybe Option
+optionExists : List UsageSpec -> String -> Maybe FlagOrKeywordArg
 optionExists usageSpecs thisOptionName =
     usageSpecs
         |> List.filterMap
             (\usageSpec ->
                 case usageSpec of
-                    Option option mutuallyExclusiveValues occurences ->
+                    FlagOrKeywordArg option mutuallyExclusiveValues occurences ->
                         option
                             |> Just
 
@@ -111,7 +111,7 @@ isOperand option =
         Operand operand mutuallyExclusiveValues ->
             True
 
-        Option _ _ _ ->
+        FlagOrKeywordArg _ _ _ ->
             False
 
         RestArgs _ ->
@@ -135,7 +135,7 @@ hasRestArgs usageSpecs =
 name : UsageSpec -> String
 name usageSpec =
     case usageSpec of
-        Option option mutuallyExclusiveValues occurences ->
+        FlagOrKeywordArg option mutuallyExclusiveValues occurences ->
             case option of
                 Flag name ->
                     name
@@ -159,7 +159,7 @@ synopsis programName { usageSpecs, description, buildSubCommand } =
                         |> List.map
                             (\spec ->
                                 (case spec of
-                                    Option option mutuallyExclusiveValues occurences ->
+                                    FlagOrKeywordArg option mutuallyExclusiveValues occurences ->
                                         optionSynopsis occurences option mutuallyExclusiveValues
 
                                     Operand operandName mutuallyExclusiveValues ->
@@ -188,7 +188,7 @@ mutuallyExclusiveSynopsis (MutuallyExclusiveValues values) =
     String.join "|" values
 
 
-optionSynopsis : Occurences -> Option -> Maybe MutuallyExclusiveValues -> String
+optionSynopsis : Occurences -> FlagOrKeywordArg -> Maybe MutuallyExclusiveValues -> String
 optionSynopsis occurences option mutuallyExclusiveValues =
     (case option of
         Flag flagName ->
@@ -212,7 +212,7 @@ optionHasArg options optionNameToCheck =
             |> List.filterMap
                 (\spec ->
                     case spec of
-                        Option option mutuallyExclusiveValues occurences ->
+                        FlagOrKeywordArg option mutuallyExclusiveValues occurences ->
                             Just option
 
                         Operand _ _ ->
@@ -236,7 +236,7 @@ optionHasArg options optionNameToCheck =
             False
 
 
-optionName : Option -> String
+optionName : FlagOrKeywordArg -> String
 optionName option =
     case option of
         Flag flagName ->
