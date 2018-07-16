@@ -1,6 +1,7 @@
 module CommandTests exposing (all)
 
 import Cli.Command as Command
+import Cli.Command.MatchResult
 import Cli.Option as Option
 import Cli.Validate as Validate
 import Expect exposing (Expectation)
@@ -373,8 +374,8 @@ all =
 
 expectMatch : List String -> Command.Command a -> a -> Expectation
 expectMatch argv commands expectedValue =
-    Command.tryMatch argv commands
-        |> Expect.equal (Just (Ok expectedValue))
+    Command.tryMatchNew argv commands
+        |> Expect.equal (Cli.Command.MatchResult.Match (Ok expectedValue))
 
 
 expectValidationErrors :
