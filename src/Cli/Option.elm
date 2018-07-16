@@ -191,31 +191,28 @@ oneOf default list (CliSpec dataGrabber usageSpec decoder) =
 
 
 validateMap : (to -> Result String toMapped) -> CliSpec from to -> CliSpec from toMapped
-validateMap mapFn (CliSpec dataGrabber usageSpec ((Cli.Decode.Decoder decodeFn) as decoder)) =
+validateMap mapFn (CliSpec dataGrabber usageSpec decoder) =
+    let
+        mappedDecoder =
+            Cli.Decode.mapProcessingError
+                (\value ->
+                    case mapFn value of
+                        Ok mappedValue ->
+                            Ok mappedValue
+
+                        Err invalidReason ->
+                            Cli.Decode.UnrecoverableValidationError
+                                { name = UsageSpec.name usageSpec
+                                , invalidReason = invalidReason
+                                , valueAsString = toString value
+                                }
+                                |> Err
+                )
+                decoder
+    in
     CliSpec dataGrabber
         usageSpec
-        (Cli.Decode.Decoder
-            (decodeFn
-                >> (\result ->
-                        case result of
-                            Ok ( validationErrors, value ) ->
-                                case mapFn value of
-                                    Ok mappedValue ->
-                                        Ok ( validationErrors, mappedValue )
-
-                                    Err invalidReason ->
-                                        Cli.Decode.UnrecoverableValidationError
-                                            { name = UsageSpec.name usageSpec
-                                            , invalidReason = invalidReason
-                                            , valueAsString = toString value
-                                            }
-                                            |> Err
-
-                            Err error ->
-                                Err error
-                   )
-            )
-        )
+        mappedDecoder
 
 
 validateMapMaybe : (to -> Result String toMapped) -> CliSpec (Maybe from) (Maybe to) -> CliSpec (Maybe from) (Maybe toMapped)
