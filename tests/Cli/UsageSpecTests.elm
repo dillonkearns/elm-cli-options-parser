@@ -42,10 +42,11 @@ all =
                     |> Expect.equal "elm-interop <MyApp.elm>"
         , test "print synopsis with doc string" <|
             \() ->
-                Command.buildWithDoc (,) "greets somebody in your terminal"
+                Command.build (,)
                     |> Command.with (Option.requiredKeywordArg "name")
                     |> Command.with (Option.optionalKeywordArg "prefix")
                     |> Command.withoutRestArgs
+                    |> Command.withDoc "greets somebody in your terminal"
                     |> Command.synopsis "greet"
                     |> Expect.equal "greet --name <name> [--prefix <prefix>] # greets somebody in your terminal"
         , test "print synopsis with zero or more arg option" <|

@@ -1,8 +1,8 @@
 module Main exposing (main)
 
 import Cli.Command as Command exposing (Command, with)
-import Cli.OptionsParser
 import Cli.Option as Option
+import Cli.OptionsParser
 import Cli.Validate
 import Json.Decode exposing (..)
 import Ports
@@ -19,13 +19,14 @@ cli =
     [ Command.build PrintVersion
         |> Command.expectFlag "version"
         |> Command.withoutRestArgs
-    , Command.buildWithDoc FromUrl "generate files based on the schema at `url`"
+    , Command.build FromUrl
         |> with (Option.positionalArg "url")
         |> with baseOption
         |> with (Option.optionalKeywordArg "output")
         |> with (Option.flag "excludeDeprecated")
         |> with (Option.keywordArgList "header")
         |> Command.withoutRestArgs
+        |> Command.withDoc "generate files based on the schema at `url`"
     , Command.build FromFile
         |> with (Option.requiredKeywordArg "introspection-file")
         |> with baseOption

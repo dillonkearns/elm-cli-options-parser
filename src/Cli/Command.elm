@@ -4,7 +4,6 @@ module Cli.Command
         , CommandBuilder
         , build
         , buildSubCommand
-        , buildWithDoc
         , expectFlag
         , getSubCommand
         , getUsageSpecs
@@ -13,6 +12,7 @@ module Cli.Command
         , synopsis
         , tryMatch
         , with
+        , withDoc
         , withRestArgs
         , withoutRestArgs
         )
@@ -23,7 +23,7 @@ module Cli.Command
 
 ## Start Building
 
-@docs build, buildWithDoc, buildSubCommand
+@docs build, buildSubCommand
 
 
 ## End Building
@@ -44,7 +44,7 @@ Start the chain using `with`:
 
 ## Other Stuff
 
-@docs hardcoded
+@docs hardcoded, withDoc
 
 
 ## Mapping
@@ -288,18 +288,6 @@ buildSubCommand buildSubCommandName msgConstructor =
 
 {-| TODO
 -}
-buildWithDoc : msg -> String -> CommandBuilder msg
-buildWithDoc msgConstructor docString =
-    CommandBuilder
-        { usageSpecs = []
-        , description = Just docString
-        , decoder = \_ -> Ok ( [], msgConstructor )
-        , buildSubCommand = Nothing
-        }
-
-
-{-| TODO
--}
 hardcoded : value -> CommandBuilder (value -> msg) -> CommandBuilder msg
 hardcoded hardcodedValue (CommandBuilder ({ decoder } as command)) =
     CommandBuilder
@@ -414,3 +402,13 @@ optionName option =
 
         OptionWithStringArg optionName ->
             optionName
+
+
+{-| TODO
+-}
+withDoc : String -> Command msg -> Command msg
+withDoc docString (Command commandRecord) =
+    Command
+        { commandRecord
+            | description = Just docString
+        }
