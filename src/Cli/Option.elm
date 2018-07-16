@@ -32,32 +32,35 @@ type alias DataGrabber decodesTo =
 
 
 validate : (to -> Validate.ValidationResult) -> CliSpec from to -> CliSpec from to
-validate validateFunction (CliSpec dataGrabber usageSpec (Cli.Decode.Decoder decodeFn)) =
+validate validateFunction (CliSpec dataGrabber usageSpec ((Cli.Decode.Decoder decodeFn) as decoder)) =
+    let
+        mappedDecoder =
+            Cli.Decode.Decoder
+                (decodeFn
+                    >> (\result ->
+                            Result.map
+                                (\( validationErrors, value ) ->
+                                    case validateFunction value of
+                                        Validate.Valid ->
+                                            ( validationErrors, value )
+
+                                        Validate.Invalid invalidReason ->
+                                            ( validationErrors
+                                                ++ [ { name = UsageSpec.name usageSpec
+                                                     , invalidReason = invalidReason
+                                                     , valueAsString = toString value
+                                                     }
+                                                   ]
+                                            , value
+                                            )
+                                )
+                                result
+                       )
+                )
+    in
     CliSpec dataGrabber
         usageSpec
-        (Cli.Decode.Decoder
-            (decodeFn
-                >> (\result ->
-                        Result.map
-                            (\( validationErrors, value ) ->
-                                case validateFunction value of
-                                    Validate.Valid ->
-                                        ( validationErrors, value )
-
-                                    Validate.Invalid invalidReason ->
-                                        ( validationErrors
-                                            ++ [ { name = UsageSpec.name usageSpec
-                                                 , invalidReason = invalidReason
-                                                 , valueAsString = toString value
-                                                 }
-                                               ]
-                                        , value
-                                        )
-                            )
-                            result
-                   )
-            )
-        )
+        mappedDecoder
 
 
 validateIfPresent : (to -> Validate.ValidationResult) -> CliSpec from (Maybe to) -> CliSpec from (Maybe to)
