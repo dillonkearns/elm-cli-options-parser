@@ -36,7 +36,7 @@ cli =
     ]
 
 
-baseOption : Option.CliSpec (Maybe String) (Maybe String)
+baseOption : Option.Option (Maybe String) (Maybe String)
 baseOption =
     Option.optionalKeywordArg "base"
         |> Option.validateIfPresent

@@ -60,7 +60,7 @@ Start the chain using `with`:
 
 import Cli.Command.MatchResult as MatchResult exposing (MatchResult)
 import Cli.Decode
-import Cli.Option exposing (CliSpec(..))
+import Cli.Option exposing (Option(..))
 import Cli.UsageSpec as UsageSpec exposing (..)
 import Occurences exposing (Occurences(..))
 import Tokenizer exposing (ParsedOption)
@@ -333,8 +333,8 @@ expectFlag flagName (CommandBuilder ({ usageSpecs, decoder } as command)) =
 
 {-| TODO
 -}
-with : CliSpec from to -> CommandBuilder (to -> msg) -> CommandBuilder msg
-with (CliSpec dataGrabber usageSpec optionsDecoder) ((CommandBuilder ({ decoder, usageSpecs } as command)) as fullCommand) =
+with : Option from to -> CommandBuilder (to -> msg) -> CommandBuilder msg
+with (Option dataGrabber usageSpec optionsDecoder) ((CommandBuilder ({ decoder, usageSpecs } as command)) as fullCommand) =
     CommandBuilder
         { command
             | decoder =

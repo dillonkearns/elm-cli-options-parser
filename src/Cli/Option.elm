@@ -1,6 +1,6 @@
 module Cli.Option
     exposing
-        ( CliSpec(CliSpec)
+        ( Option(Option)
         , flag
         , keywordArgList
         , map
@@ -23,16 +23,16 @@ import Occurences exposing (Occurences(Optional, Required, ZeroOrMore))
 import Tokenizer
 
 
-type CliSpec from to
-    = CliSpec (DataGrabber from) UsageSpec (Cli.Decode.Decoder from to)
+type Option from to
+    = Option (DataGrabber from) UsageSpec (Cli.Decode.Decoder from to)
 
 
 type alias DataGrabber decodesTo =
     { usageSpecs : List UsageSpec, operands : List String, options : List Tokenizer.ParsedOption, operandsSoFar : Int } -> Result Cli.Decode.ProcessingError decodesTo
 
 
-validate : (to -> Validate.ValidationResult) -> CliSpec from to -> CliSpec from to
-validate validateFunction (CliSpec dataGrabber usageSpec decoder) =
+validate : (to -> Validate.ValidationResult) -> Option from to -> Option from to
+validate validateFunction (Option dataGrabber usageSpec decoder) =
     let
         mappedDecoder : Cli.Decode.Decoder from to
         mappedDecoder =
@@ -51,12 +51,12 @@ validate validateFunction (CliSpec dataGrabber usageSpec decoder) =
                                     }
                     )
     in
-    CliSpec dataGrabber
+    Option dataGrabber
         usageSpec
         mappedDecoder
 
 
-validateIfPresent : (to -> Validate.ValidationResult) -> CliSpec from (Maybe to) -> CliSpec from (Maybe to)
+validateIfPresent : (to -> Validate.ValidationResult) -> Option from (Maybe to) -> Option from (Maybe to)
 validateIfPresent validateFunction cliSpec =
     validate
         (\maybeValue ->
@@ -70,9 +70,9 @@ validateIfPresent validateFunction cliSpec =
         cliSpec
 
 
-positionalArg : String -> CliSpec String String
+positionalArg : String -> Option String String
 positionalArg operandDescription =
-    CliSpec
+    Option
         (\{ usageSpecs, operands, operandsSoFar } ->
             case
                 operands
@@ -88,9 +88,9 @@ positionalArg operandDescription =
         Cli.Decode.decoder
 
 
-optionalKeywordArg : String -> CliSpec (Maybe String) (Maybe String)
+optionalKeywordArg : String -> Option (Maybe String) (Maybe String)
 optionalKeywordArg optionName =
-    CliSpec
+    Option
         (\{ operands, options } ->
             case
                 options
@@ -110,9 +110,9 @@ optionalKeywordArg optionName =
         Cli.Decode.decoder
 
 
-requiredKeywordArg : String -> CliSpec String String
+requiredKeywordArg : String -> Option String String
 requiredKeywordArg optionName =
-    CliSpec
+    Option
         (\{ operands, options } ->
             case
                 options
@@ -132,9 +132,9 @@ requiredKeywordArg optionName =
         Cli.Decode.decoder
 
 
-flag : String -> CliSpec Bool Bool
+flag : String -> Option Bool Bool
 flag flagName =
-    CliSpec
+    Option
         (\{ options } ->
             if
                 options
@@ -148,17 +148,17 @@ flag flagName =
         Cli.Decode.decoder
 
 
-map : (toRaw -> toMapped) -> CliSpec from toRaw -> CliSpec from toMapped
-map mapFn (CliSpec dataGrabber usageSpec decoder) =
-    CliSpec dataGrabber usageSpec (Cli.Decode.map mapFn decoder)
+map : (toRaw -> toMapped) -> Option from toRaw -> Option from toMapped
+map mapFn (Option dataGrabber usageSpec decoder) =
+    Option dataGrabber usageSpec (Cli.Decode.map mapFn decoder)
 
 
 type alias MutuallyExclusiveValue union =
     ( String, union )
 
 
-oneOf : value -> List (MutuallyExclusiveValue value) -> CliSpec from String -> CliSpec from value
-oneOf default list (CliSpec dataGrabber usageSpec decoder) =
+oneOf : value -> List (MutuallyExclusiveValue value) -> Option from String -> Option from value
+oneOf default list (Option dataGrabber usageSpec decoder) =
     validateMap
         (\argValue ->
             case
@@ -179,7 +179,7 @@ oneOf default list (CliSpec dataGrabber usageSpec decoder) =
                 Just matchingValue ->
                     Ok matchingValue
         )
-        (CliSpec dataGrabber
+        (Option dataGrabber
             (UsageSpec.changeUsageSpec
                 (list
                     |> List.map (\( name, value ) -> name)
@@ -190,8 +190,8 @@ oneOf default list (CliSpec dataGrabber usageSpec decoder) =
         )
 
 
-validateMap : (to -> Result String toMapped) -> CliSpec from to -> CliSpec from toMapped
-validateMap mapFn (CliSpec dataGrabber usageSpec decoder) =
+validateMap : (to -> Result String toMapped) -> Option from to -> Option from toMapped
+validateMap mapFn (Option dataGrabber usageSpec decoder) =
     let
         mappedDecoder =
             Cli.Decode.mapProcessingError
@@ -210,13 +210,13 @@ validateMap mapFn (CliSpec dataGrabber usageSpec decoder) =
                 )
                 decoder
     in
-    CliSpec dataGrabber
+    Option dataGrabber
         usageSpec
         mappedDecoder
 
 
-validateMapMaybe : (to -> Result String toMapped) -> CliSpec (Maybe from) (Maybe to) -> CliSpec (Maybe from) (Maybe toMapped)
-validateMapMaybe mapFn ((CliSpec dataGrabber usageSpec decoder) as cliSpec) =
+validateMapMaybe : (to -> Result String toMapped) -> Option (Maybe from) (Maybe to) -> Option (Maybe from) (Maybe toMapped)
+validateMapMaybe mapFn ((Option dataGrabber usageSpec decoder) as cliSpec) =
     validateMap
         (\thing ->
             case thing of
@@ -230,14 +230,14 @@ validateMapMaybe mapFn ((CliSpec dataGrabber usageSpec decoder) as cliSpec) =
         cliSpec
 
 
-withDefault : to -> CliSpec from (Maybe to) -> CliSpec from to
-withDefault defaultValue (CliSpec dataGrabber usageSpec decoder) =
-    CliSpec dataGrabber usageSpec (Cli.Decode.map (Maybe.withDefault defaultValue) decoder)
+withDefault : to -> Option from (Maybe to) -> Option from to
+withDefault defaultValue (Option dataGrabber usageSpec decoder) =
+    Option dataGrabber usageSpec (Cli.Decode.map (Maybe.withDefault defaultValue) decoder)
 
 
-keywordArgList : String -> CliSpec (List String) (List String)
+keywordArgList : String -> Option (List String) (List String)
 keywordArgList flagName =
-    CliSpec
+    Option
         (\{ options } ->
             options
                 |> List.filterMap
