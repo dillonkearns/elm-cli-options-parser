@@ -74,10 +74,10 @@ type alias Flags =
 
 
 init : Flags -> ( Model, Cmd Msg )
-init flags =
+init argv =
     let
         matchResult =
-            Cli.OptionsParser.run "elm-test" cli flags
+            Cli.OptionsParser.run "elm-test" cli argv
 
         toPrint =
             case matchResult of

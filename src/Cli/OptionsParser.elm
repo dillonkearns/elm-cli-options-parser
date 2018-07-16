@@ -29,10 +29,10 @@ type ExitStatus
 {-| TODO
 -}
 run : String -> List (Command msg) -> List String -> RunResult msg
-run programName cli flags =
+run programName cli argv =
     let
         matchResult =
-            Cli.LowLevel.try cli flags
+            Cli.LowLevel.try cli argv
     in
     case matchResult of
         Cli.LowLevel.NoMatch unexpectedOptions ->
