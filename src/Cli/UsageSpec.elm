@@ -242,5 +242,5 @@ optionName option =
         Flag flagName ->
             flagName
 
-        KeywordArg optionName ->
-            optionName
+        KeywordArg keywordArgName ->
+            keywordArgName
