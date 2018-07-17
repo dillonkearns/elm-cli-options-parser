@@ -61,7 +61,7 @@ Start the chain using `with`:
 import Cli.Command.MatchResult as MatchResult exposing (MatchResult)
 import Cli.Decode
 import Cli.Option exposing (Option(Option))
-import Cli.UsageSpec as UsageSpec exposing (..)
+import Cli.UsageSpec as UsageSpec exposing (UsageSpec)
 import Occurences exposing (Occurences(..))
 import Tokenizer exposing (ParsedOption)
 
@@ -92,7 +92,7 @@ getSubCommand (Command { buildSubCommand }) =
 {-| TODO
 -}
 tryMatch : List String -> Command msg -> MatchResult msg
-tryMatch argv ((Command { decoder, usageSpecs, buildSubCommand }) as command) =
+tryMatch argv ((Command { usageSpecs, buildSubCommand }) as command) =
     let
         decoder =
             command
@@ -153,7 +153,7 @@ tryMatch argv ((Command { decoder, usageSpecs, buildSubCommand }) as command) =
 
 
 expectedOperandCountOrFail : Command msg -> Command msg
-expectedOperandCountOrFail ((Command ({ decoder, usageSpecs } as command)) as fullCommand) =
+expectedOperandCountOrFail (Command ({ decoder, usageSpecs } as command)) =
     Command
         { command
             | decoder =
@@ -202,7 +202,7 @@ failIfUnexpectedOptions ((Command ({ decoder, usageSpecs } as command)) as fullC
 
 
 unexpectedOptions_ : Command msg -> List ParsedOption -> List String
-unexpectedOptions_ (Command ({ decoder, usageSpecs } as command)) options =
+unexpectedOptions_ (Command { usageSpecs }) options =
     List.filterMap
         (\(Tokenizer.ParsedOption optionName optionKind) ->
             if UsageSpec.optionExists usageSpecs optionName == Nothing then
