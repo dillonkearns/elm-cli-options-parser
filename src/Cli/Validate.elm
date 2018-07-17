@@ -1,8 +1,15 @@
 module Cli.Validate exposing (ValidationResult(..), predicate, regex)
 
+{-|
+
+@docs predicate, ValidationResult, regex
+
+-}
+
 import Regex
 
 
+{-| -}
 type ValidationResult
     = Valid
     | Invalid String
@@ -27,6 +34,7 @@ predicate message predicate =
            )
 
 
+{-| -}
 regex : String -> String -> ValidationResult
 regex regexPattern checkString =
     if Regex.contains (Regex.regex regexPattern) checkString then
