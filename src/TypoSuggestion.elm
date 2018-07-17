@@ -42,11 +42,11 @@ toMessage commands unexpectedOption =
 name : TypoSuggestion -> String
 name typoSuggestion =
     case typoSuggestion of
-        Flag name ->
-            name
+        Flag suggestionName ->
+            suggestionName
 
-        SubCommand name ->
-            name
+        SubCommand suggestionName ->
+            suggestionName
 
 
 getSuggestions : List (Command msg) -> String -> List TypoSuggestion
