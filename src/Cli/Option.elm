@@ -15,6 +15,42 @@ module Cli.Option
         , withDefault
         )
 
+{-|
+
+@docs Option
+
+
+## Positional Arguments
+
+@docs positionalArg
+
+
+## Keyword Arguments
+
+@docs optionalKeywordArg, requiredKeywordArg, keywordArgList
+
+
+## Flags
+
+@docs flag
+
+
+## Mutually Exclusive Values
+
+@docs oneOf
+
+
+## Validation
+
+@docs validate, validateIfPresent, validateMap, validateMapIfPresent
+
+
+## Mapping/Defaults
+
+@docs map, withDefault
+
+-}
+
 import Cli.Decode
 import Cli.UsageSpec as UsageSpec exposing (UsageSpec)
 import Cli.Validate as Validate
@@ -23,10 +59,14 @@ import Occurences exposing (Occurences(Optional, Required, ZeroOrMore))
 import Tokenizer
 
 
+{-| TODO
+-}
 type Option from to
     = Option (DataGrabber from) UsageSpec (Cli.Decode.Decoder from to)
 
 
+{-| TODO
+-}
 type alias DataGrabber decodesTo =
     { usageSpecs : List UsageSpec
     , operands : List String
@@ -36,6 +76,8 @@ type alias DataGrabber decodesTo =
     -> Result Cli.Decode.ProcessingError decodesTo
 
 
+{-| TODO
+-}
 validate : (to -> Validate.ValidationResult) -> Option from to -> Option from to
 validate validateFunction (Option dataGrabber usageSpec decoder) =
     let
@@ -61,6 +103,8 @@ validate validateFunction (Option dataGrabber usageSpec decoder) =
         mappedDecoder
 
 
+{-| TODO
+-}
 validateIfPresent : (to -> Validate.ValidationResult) -> Option from (Maybe to) -> Option from (Maybe to)
 validateIfPresent validateFunction cliSpec =
     validate
@@ -75,6 +119,8 @@ validateIfPresent validateFunction cliSpec =
         cliSpec
 
 
+{-| TODO
+-}
 positionalArg : String -> Option String String
 positionalArg operandDescription =
     Option
@@ -93,6 +139,8 @@ positionalArg operandDescription =
         Cli.Decode.decoder
 
 
+{-| TODO
+-}
 optionalKeywordArg : String -> Option (Maybe String) (Maybe String)
 optionalKeywordArg optionName =
     Option
@@ -115,6 +163,8 @@ optionalKeywordArg optionName =
         Cli.Decode.decoder
 
 
+{-| TODO
+-}
 requiredKeywordArg : String -> Option String String
 requiredKeywordArg optionName =
     Option
@@ -137,6 +187,8 @@ requiredKeywordArg optionName =
         Cli.Decode.decoder
 
 
+{-| TODO
+-}
 flag : String -> Option Bool Bool
 flag flagName =
     Option
@@ -153,6 +205,8 @@ flag flagName =
         Cli.Decode.decoder
 
 
+{-| TODO
+-}
 map : (toRaw -> toMapped) -> Option from toRaw -> Option from toMapped
 map mapFn (Option dataGrabber usageSpec decoder) =
     Option dataGrabber usageSpec (Cli.Decode.map mapFn decoder)
@@ -162,6 +216,8 @@ type alias MutuallyExclusiveValue union =
     ( String, union )
 
 
+{-| TODO
+-}
 oneOf : value -> List (MutuallyExclusiveValue value) -> Option from String -> Option from value
 oneOf default list (Option dataGrabber usageSpec decoder) =
     validateMap
@@ -195,6 +251,8 @@ oneOf default list (Option dataGrabber usageSpec decoder) =
         )
 
 
+{-| TODO
+-}
 validateMap : (to -> Result String toMapped) -> Option from to -> Option from toMapped
 validateMap mapFn (Option dataGrabber usageSpec decoder) =
     let
@@ -220,6 +278,8 @@ validateMap mapFn (Option dataGrabber usageSpec decoder) =
         mappedDecoder
 
 
+{-| TODO
+-}
 validateMapIfPresent : (to -> Result String toMapped) -> Option (Maybe from) (Maybe to) -> Option (Maybe from) (Maybe toMapped)
 validateMapIfPresent mapFn ((Option dataGrabber usageSpec decoder) as cliSpec) =
     validateMap
@@ -235,11 +295,15 @@ validateMapIfPresent mapFn ((Option dataGrabber usageSpec decoder) as cliSpec) =
         cliSpec
 
 
+{-| TODO
+-}
 withDefault : to -> Option from (Maybe to) -> Option from to
 withDefault defaultValue (Option dataGrabber usageSpec decoder) =
     Option dataGrabber usageSpec (Cli.Decode.map (Maybe.withDefault defaultValue) decoder)
 
 
+{-| TODO
+-}
 keywordArgList : String -> Option (List String) (List String)
 keywordArgList flagName =
     Option

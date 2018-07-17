@@ -9,6 +9,7 @@
     ],
     "exposed-modules": [
       "Cli.OptionsParser",
+      "Cli.Option",
       "Cli.Command",
       "Cli.Validate"
     ],
