@@ -170,8 +170,8 @@ synopsis programName { usageSpecs, description, buildSubCommand } =
                                                )
                                             ++ ">"
 
-                                    RestArgs description ->
-                                        "<" ++ description ++ ">..."
+                                    RestArgs restArgsDescription ->
+                                        "<" ++ restArgsDescription ++ ">..."
                                 )
                                     |> Just
                             )
