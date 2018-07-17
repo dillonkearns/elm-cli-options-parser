@@ -137,17 +137,17 @@ name usageSpec =
     case usageSpec of
         FlagOrKeywordArg option mutuallyExclusiveValues occurences ->
             case option of
-                Flag name ->
-                    name
+                Flag optionName ->
+                    optionName
 
-                KeywordArg name ->
-                    name
+                KeywordArg optionName ->
+                    optionName
 
-        Operand name mutuallyExclusiveValues ->
-            name
+        Operand optionName mutuallyExclusiveValues ->
+            optionName
 
-        RestArgs name ->
-            name
+        RestArgs optionName ->
+            optionName
 
 
 synopsis : String -> { command | usageSpecs : List UsageSpec, description : Maybe String, buildSubCommand : Maybe String } -> String
