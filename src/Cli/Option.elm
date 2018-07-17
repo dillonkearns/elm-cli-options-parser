@@ -16,7 +16,7 @@ module Cli.Option
         )
 
 import Cli.Decode
-import Cli.UsageSpec as UsageSpec exposing (..)
+import Cli.UsageSpec as UsageSpec exposing (UsageSpec)
 import Cli.Validate as Validate
 import List.Extra
 import Occurences exposing (Occurences(Optional, Required, ZeroOrMore))
