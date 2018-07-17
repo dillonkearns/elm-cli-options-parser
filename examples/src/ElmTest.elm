@@ -36,11 +36,11 @@ cli =
     , Command.build RunTestsRecord
         |> with
             (Option.optionalKeywordArg "fuzz"
-                |> Option.validateMapMaybe String.toInt
+                |> Option.validateMapIfPresent String.toInt
             )
         |> with
             (Option.optionalKeywordArg "seed"
-                |> Option.validateMapMaybe String.toInt
+                |> Option.validateMapIfPresent String.toInt
             )
         |> with (Option.optionalKeywordArg "compiler")
         |> with (Option.optionalKeywordArg "add-dependencies")

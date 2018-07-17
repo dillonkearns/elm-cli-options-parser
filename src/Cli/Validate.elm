@@ -12,7 +12,7 @@ type ValidationResult
 
       Command.build identity
        |> with (Option.optionalKeywordArg "pair-programmers"
-       |> Option.validateMapMaybe String.toInt
+       |> Option.validateMapIfPresent String.toInt
        |> Option.validateIfPresent (Validate.predicate "Must be even" (\n -> n % 2 == 0))
 
 -}

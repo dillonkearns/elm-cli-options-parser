@@ -11,7 +11,7 @@ module Cli.Option
         , validate
         , validateIfPresent
         , validateMap
-        , validateMapMaybe
+        , validateMapIfPresent
         , withDefault
         )
 
@@ -215,8 +215,8 @@ validateMap mapFn (Option dataGrabber usageSpec decoder) =
         mappedDecoder
 
 
-validateMapMaybe : (to -> Result String toMapped) -> Option (Maybe from) (Maybe to) -> Option (Maybe from) (Maybe toMapped)
-validateMapMaybe mapFn ((Option dataGrabber usageSpec decoder) as cliSpec) =
+validateMapIfPresent : (to -> Result String toMapped) -> Option (Maybe from) (Maybe to) -> Option (Maybe from) (Maybe toMapped)
+validateMapIfPresent mapFn ((Option dataGrabber usageSpec decoder) as cliSpec) =
     validateMap
         (\thing ->
             case thing of
