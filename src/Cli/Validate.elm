@@ -17,10 +17,19 @@ type ValidationResult
 
 {-| Turns a predicate function into a validate function.
 
-      Command.build identity
-       |> with (Option.optionalKeywordArg "pair-programmers"
-       |> Option.validateMapIfPresent String.toInt
-       |> Option.validateIfPresent (Validate.predicate "Must be even" (\n -> n % 2 == 0))
+    import Cli.Option as Option
+    import Cli.Validate as Validate
+
+    isEven : Int -> Bool
+    isEven n =
+        n % 2 == 0
+
+    pairsOption : Option.Option (Maybe String) (Maybe Int)
+    pairsOption =
+        Option.optionalKeywordArg "pair-programmers"
+            |> Option.validateMapIfPresent String.toInt
+            |> Option.validateIfPresent
+                (Validate.predicate "Must be even" isEven)
 
 -}
 predicate : String -> (a -> Bool) -> (a -> ValidationResult)
@@ -34,7 +43,13 @@ predicate message predicate =
            )
 
 
-{-| -}
+{-| smoething
+
+     Option.optionalKeywordArg "base"
+        |> Option.validateIfPresent
+          (Cli.Validate.regex "^[A-Z][A-Za-z_]*(\\.[A-Z][A-Za-z_]*)*$")
+
+-}
 regex : String -> String -> ValidationResult
 regex regexPattern checkString =
     if Regex.contains (Regex.regex regexPattern) checkString then
