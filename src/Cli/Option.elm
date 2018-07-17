@@ -28,7 +28,12 @@ type Option from to
 
 
 type alias DataGrabber decodesTo =
-    { usageSpecs : List UsageSpec, operands : List String, options : List Tokenizer.ParsedOption, operandsSoFar : Int } -> Result Cli.Decode.ProcessingError decodesTo
+    { usageSpecs : List UsageSpec
+    , operands : List String
+    , options : List Tokenizer.ParsedOption
+    , operandsSoFar : Int
+    }
+    -> Result Cli.Decode.ProcessingError decodesTo
 
 
 validate : (to -> Validate.ValidationResult) -> Option from to -> Option from to
