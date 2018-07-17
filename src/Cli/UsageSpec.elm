@@ -17,7 +17,7 @@ module Cli.UsageSpec
         )
 
 import List.Extra
-import Occurences exposing (Occurences(..))
+import Occurences exposing (Occurences)
 
 
 type UsageSpec
