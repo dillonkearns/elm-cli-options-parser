@@ -60,7 +60,7 @@ Start the chain using `with`:
 
 import Cli.Command.MatchResult as MatchResult exposing (MatchResult)
 import Cli.Decode
-import Cli.Option exposing (Option(..))
+import Cli.Option exposing (Option(Option))
 import Cli.UsageSpec as UsageSpec exposing (..)
 import Occurences exposing (Occurences(..))
 import Tokenizer exposing (ParsedOption)
