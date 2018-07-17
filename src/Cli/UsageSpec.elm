@@ -189,13 +189,13 @@ mutuallyExclusiveSynopsis (MutuallyExclusiveValues values) =
 
 
 optionSynopsis : Occurences -> FlagOrKeywordArg -> Maybe MutuallyExclusiveValues -> String
-optionSynopsis occurences option mutuallyExclusiveValues =
+optionSynopsis occurences option maybeMutuallyExclusiveValues =
     (case option of
         Flag flagName ->
             "--" ++ flagName
 
         KeywordArg optionName ->
-            case mutuallyExclusiveValues of
+            case maybeMutuallyExclusiveValues of
                 Just mutuallyExclusiveValues ->
                     "--" ++ optionName ++ " <" ++ mutuallyExclusiveSynopsis mutuallyExclusiveValues ++ ">"
 
