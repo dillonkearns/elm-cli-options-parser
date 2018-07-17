@@ -12,12 +12,12 @@ split string =
     case String.toList string of
         '-' :: '-' :: optionName ->
             case String.split "=" (optionName |> String.fromList) of
-                [ optionName ] ->
-                    optionName
+                [ singleOptionName ] ->
+                    singleOptionName
                         |> Option
 
-                optionName :: splitAfterOptionName ->
-                    KeywordArg { name = optionName, value = String.concat splitAfterOptionName }
+                firstOptionName :: splitAfterOptionName ->
+                    KeywordArg { name = firstOptionName, value = String.concat splitAfterOptionName }
 
                 _ ->
                     optionName
