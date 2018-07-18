@@ -65,8 +65,6 @@ type Option from to
     = Option (DataGrabber from) UsageSpec (Cli.Decode.Decoder from to)
 
 
-{-| TODO
--}
 type alias DataGrabber decodesTo =
     { usageSpecs : List UsageSpec
     , operands : List String
