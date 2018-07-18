@@ -27,6 +27,7 @@ cli : List (Command ElmTestCommand)
 cli =
     [ Command.buildSubCommand "init" Init
         |> Command.withoutRestArgs
+        |> Command.withDoc "initialize a git repository"
     , Command.buildSubCommand "clone" Clone
         |> Command.withoutRestArgs
     , Command.build PrintVersion

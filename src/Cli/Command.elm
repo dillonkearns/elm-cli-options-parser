@@ -362,7 +362,27 @@ with (Option dataGrabber usageSpec optionsDecoder) ((CommandBuilder ({ decoder, 
         }
 
 
-{-| TODO
+{-| Add documentation for the command.
+The output shows up after a `#` in the help output:
+
+```bash
+$ git --help
+git init # initialize a git repository
+...
+```
+
+      import Cli.Command as Command exposing (Command, with)
+
+      type GitCommand =
+        Init
+        | Clone String
+
+      gitInitCommand : Command GitCommand
+      gitInitCommand =
+        Command.build Init
+         |> Command.withoutRestArgs
+         |> Command.withDoc "initialize a git repository"
+
 -}
 withDoc : String -> Command msg -> Command msg
 withDoc docString (Command commandRecord) =
