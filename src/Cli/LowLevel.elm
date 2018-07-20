@@ -3,6 +3,7 @@ module Cli.LowLevel exposing (MatchResult(..), helpText, try)
 import Cli.Command as Command exposing (Command)
 import Cli.Command.MatchResult as MatchResult exposing (MatchResult)
 import Cli.Decode
+import Maybe.Extra
 import Set exposing (Set)
 
 
@@ -11,6 +12,7 @@ type MatchResult msg
     | NoMatch (List String)
     | Match msg
     | ShowHelp
+    | ShowVersion
 
 
 intersection : List (Set comparable) -> Set comparable
@@ -43,6 +45,21 @@ try commands argv =
 
                             MatchResult.Match _ ->
                                 Just ShowHelp
+                   )
+
+        maybeShowVersionMatch : Maybe (MatchResult msg)
+        maybeShowVersionMatch =
+            Command.build ShowVersion
+                |> Command.expectFlag "version"
+                |> Command.withoutRestArgs
+                |> Command.tryMatch (argv |> List.drop 2)
+                |> (\matchResult ->
+                        case matchResult of
+                            MatchResult.NoMatch _ ->
+                                Nothing
+
+                            MatchResult.Match _ ->
+                                Just ShowVersion
                    )
 
         matchResults =
@@ -82,6 +99,7 @@ try commands argv =
 
                     Nothing ->
                         maybeShowHelpMatch
+                            |> Maybe.Extra.or maybeShowVersionMatch
                             |> Maybe.withDefault
                                 (NoMatch commonUnmatchedFlags)
            )

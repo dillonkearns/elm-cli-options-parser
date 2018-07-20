@@ -70,3 +70,9 @@ run programName cli argv =
         Cli.LowLevel.ShowHelp ->
             Cli.LowLevel.helpText programName cli
                 |> SystemMessage Success
+
+        Cli.LowLevel.ShowVersion ->
+            programName
+                ++ " version "
+                ++ "3.1.4"
+                |> SystemMessage Success

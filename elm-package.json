@@ -1,5 +1,4 @@
 {
-    "name": "elm-cli-options-parser",
     "version": "1.0.0",
     "summary": "Type-safe command line options parsing.",
     "repository": "https://github.com/dillonkearns/elm-cli-options-parser.git",
@@ -8,13 +7,14 @@
         "src"
     ],
     "exposed-modules": [
-      "Cli.OptionsParser",
-      "Cli.Option",
-      "Cli.Command",
-      "Cli.Validate"
+        "Cli.OptionsParser",
+        "Cli.Option",
+        "Cli.Command",
+        "Cli.Validate"
     ],
     "dependencies": {
         "elm-community/list-extra": "7.1.0 <= v < 8.0.0",
+        "elm-community/maybe-extra": "4.0.0 <= v < 5.0.0",
         "elm-lang/core": "5.0.0 <= v < 6.0.0",
         "tripokey/elm-fuzzy": "5.2.0 <= v < 6.0.0"
     },

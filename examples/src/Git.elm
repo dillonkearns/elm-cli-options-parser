@@ -9,7 +9,6 @@ import Ports
 type ElmTestCommand
     = Init
     | Clone
-    | PrintVersion
 
 
 type alias RunTestsRecord =
@@ -29,9 +28,6 @@ cli =
         |> Command.withoutRestArgs
         |> Command.withDoc "initialize a git repository"
     , Command.buildSubCommand "clone" Clone
-        |> Command.withoutRestArgs
-    , Command.build PrintVersion
-        |> Command.expectFlag "version"
         |> Command.withoutRestArgs
     ]
 
@@ -75,9 +71,6 @@ init flags =
 
                         Clone ->
                             "Cloning..."
-
-                        PrintVersion ->
-                            "You are on version 3.1.4"
                     )
                         |> Ports.print
     in

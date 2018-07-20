@@ -67,6 +67,14 @@ all =
                 in
                 Cli.LowLevel.try cli [ "", "", "--help" ]
                     |> Expect.equal Cli.LowLevel.ShowHelp
+        , test "version" <|
+            \() ->
+                let
+                    cli =
+                        []
+                in
+                Cli.LowLevel.try cli [ "", "", "--version" ]
+                    |> Expect.equal Cli.LowLevel.ShowVersion
         , test "unknown flag with a subcommand spec" <|
             \() ->
                 let

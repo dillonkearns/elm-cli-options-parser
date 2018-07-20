@@ -10,7 +10,6 @@ import Ports
 type ElmTestCommand
     = Init
     | RunTests RunTestsRecord
-    | PrintVersion
 
 
 (=>) : a -> b -> ( a, b )
@@ -56,9 +55,6 @@ cli =
             )
         |> Command.withRestArgs "TESTFILES"
         |> Command.map RunTests
-    , Command.build PrintVersion
-        |> Command.expectFlag "version"
-        |> Command.withoutRestArgs
     ]
 
 
@@ -116,9 +112,6 @@ init argv =
                             ]
                                 |> List.filterMap identity
                                 |> String.join "\n"
-
-                        PrintVersion ->
-                            "You are on version 3.1.4"
                     )
                         |> Ports.print
     in
