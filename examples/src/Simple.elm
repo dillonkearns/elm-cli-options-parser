@@ -1,18 +1,23 @@
 module Simple exposing (main)
 
 import Cli.Command as Command
-import Cli.OptionsParser
 import Cli.Option as Option
+import Cli.OptionsParser exposing (OptionsParser)
 import Json.Decode exposing (..)
 import Ports
 
 
-cli : List (Command.Command Msg)
+cli : OptionsParser Msg
 cli =
-    [ Command.build PrintVersion
-        |> Command.expectFlag "version"
-        |> Command.withoutRestArgs
-    , Command.build Greet
+    { programName = "graphqelm"
+    , commands = commands
+    , version = "1.2.3"
+    }
+
+
+commands : List (Command.Command Msg)
+commands =
+    [ Command.build Greet
         |> Command.with (Option.requiredKeywordArg "name")
         |> Command.with (Option.optionalKeywordArg "greeting")
         |> Command.withoutRestArgs
@@ -33,15 +38,14 @@ type alias Model =
 
 
 type Msg
-    = PrintVersion
-    | Greet String (Maybe String)
+    = Greet String (Maybe String)
 
 
 init : Flags -> ( Model, Cmd Msg )
-init flags =
+init argv =
     let
         matchResult =
-            Cli.OptionsParser.run "simple" cli flags
+            Cli.OptionsParser.run cli argv
 
         toPrint =
             case matchResult of
@@ -55,10 +59,6 @@ init flags =
 
                 Cli.OptionsParser.CustomMatch msg ->
                     case msg of
-                        PrintVersion ->
-                            "You are on version 3.1.4"
-                                |> Ports.print
-
                         Greet name maybePrefix ->
                             case maybePrefix of
                                 Just greeting ->

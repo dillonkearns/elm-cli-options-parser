@@ -2,7 +2,7 @@ module Main exposing (main)
 
 import Cli.Command as Command exposing (Command, with)
 import Cli.Option as Option
-import Cli.OptionsParser
+import Cli.OptionsParser exposing (OptionsParser)
 import Cli.Validate
 import Json.Decode exposing (..)
 import Ports
@@ -14,8 +14,16 @@ type GraphqelmCommand
     | FromFile String (Maybe String) (Maybe String) Bool
 
 
-cli : List (Command GraphqelmCommand)
+cli : OptionsParser GraphqelmCommand
 cli =
+    { programName = "graphqelm"
+    , commands = commands
+    , version = "1.2.3"
+    }
+
+
+commands : List (Command GraphqelmCommand)
+commands =
     [ Command.build PrintVersion
         |> Command.expectFlag "version"
         |> Command.withoutRestArgs
@@ -57,7 +65,7 @@ init : Flags -> ( Model, Cmd Msg )
 init flags =
     let
         matchResult =
-            Cli.OptionsParser.run "graphqelm" cli flags
+            Cli.OptionsParser.run cli flags
 
         toPrint =
             case matchResult of

@@ -1,9 +1,9 @@
-module Cli.OptionsParser exposing (ExitStatus(..), OptionsParser, RunResult(..), run, runNew)
+module Cli.OptionsParser exposing (ExitStatus(..), OptionsParser, RunResult(..), run)
 
 {-| TODO
 
 @docs RunResult, ExitStatus, OptionsParser
-@docs run, runNew
+@docs run
 
 -}
 
@@ -37,19 +37,8 @@ type alias OptionsParser msg =
 
 {-| TODO
 -}
-run : String -> List (Command msg) -> List String -> RunResult msg
-run programName commands =
-    runNew
-        { programName = programName
-        , commands = commands
-        , version = "3.1.4"
-        }
-
-
-{-| TODO
--}
-runNew : OptionsParser msg -> List String -> RunResult msg
-runNew { programName, commands, version } argv =
+run : OptionsParser msg -> List String -> RunResult msg
+run { programName, commands, version } argv =
     let
         matchResult =
             Cli.LowLevel.try commands argv
