@@ -1,9 +1,9 @@
-module Cli.OptionsParser exposing (ExitStatus(..), RunResult(..), run)
+module Cli.OptionsParser exposing (ExitStatus(..), OptionsParser, RunResult(..), run, runNew)
 
 {-| TODO
 
-@docs RunResult, ExitStatus
-@docs run
+@docs RunResult, ExitStatus, OptionsParser
+@docs run, runNew
 
 -}
 
@@ -28,21 +28,41 @@ type ExitStatus
 
 {-| TODO
 -}
+type alias OptionsParser msg =
+    { programName : String
+    , commands : List (Command msg)
+    , version : String
+    }
+
+
+{-| TODO
+-}
 run : String -> List (Command msg) -> List String -> RunResult msg
-run programName cli argv =
+run programName commands =
+    runNew
+        { programName = programName
+        , commands = commands
+        , version = "3.1.4"
+        }
+
+
+{-| TODO
+-}
+runNew : OptionsParser msg -> List String -> RunResult msg
+runNew { programName, commands, version } argv =
     let
         matchResult =
-            Cli.LowLevel.try cli argv
+            Cli.LowLevel.try commands argv
     in
     case matchResult of
         Cli.LowLevel.NoMatch unexpectedOptions ->
             if unexpectedOptions == [] then
                 "\nNo matching command...\n\nUsage:\n\n"
-                    ++ Cli.LowLevel.helpText "elm-test" cli
+                    ++ Cli.LowLevel.helpText "elm-test" commands
                     |> SystemMessage Failure
             else
                 unexpectedOptions
-                    |> List.map (TypoSuggestion.toMessage cli)
+                    |> List.map (TypoSuggestion.toMessage commands)
                     |> String.join "\n"
                     |> SystemMessage Failure
 
@@ -68,11 +88,11 @@ run programName cli argv =
                 |> CustomMatch
 
         Cli.LowLevel.ShowHelp ->
-            Cli.LowLevel.helpText programName cli
+            Cli.LowLevel.helpText programName commands
                 |> SystemMessage Success
 
         Cli.LowLevel.ShowVersion ->
             programName
                 ++ " version "
-                ++ "3.1.4"
+                ++ version
                 |> SystemMessage Success

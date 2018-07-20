@@ -2,7 +2,7 @@ module Main exposing (main)
 
 import Cli.Command as Command exposing (Command, with)
 import Cli.Option as Option
-import Cli.OptionsParser
+import Cli.OptionsParser exposing (OptionsParser)
 import Json.Decode exposing (..)
 import Ports
 
@@ -28,8 +28,16 @@ type alias RunTestsRecord =
     }
 
 
-cli : List (Command ElmTestCommand)
+cli : OptionsParser ElmTestCommand
 cli =
+    { programName = "elm-test"
+    , commands = commands
+    , version = "1.2.3"
+    }
+
+
+commands : List (Command ElmTestCommand)
+commands =
     [ Command.buildSubCommand "init" Init
         |> Command.withoutRestArgs
     , Command.build RunTestsRecord
@@ -78,14 +86,8 @@ init : Flags -> ( Model, Cmd Msg )
 init argv =
     let
         matchResult =
-            Cli.OptionsParser.run "elm-test" cli argv
+            Cli.OptionsParser.runNew cli argv
 
-        -- Cli.OptionsParser.run
-        --     { programName = "elm-test"
-        --     , commands = cli
-        --     , argv = argv
-        --     , version = "3.1.4"
-        --     }
         toPrint =
             case matchResult of
                 Cli.OptionsParser.SystemMessage exitStatus message ->
