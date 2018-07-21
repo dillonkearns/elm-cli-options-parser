@@ -89,7 +89,7 @@ getSubCommand (Command { buildSubCommand }) =
     buildSubCommand
 
 
-{-| TODO
+{-| Low-level function, for internal use.
 -}
 tryMatch : List String -> Command msg -> MatchResult msg
 tryMatch argv ((Command { usageSpecs, buildSubCommand }) as command) =
