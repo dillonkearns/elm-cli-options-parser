@@ -216,12 +216,7 @@ unexpectedOptions_ (Command { usageSpecs }) options =
 {-| TODO
 -}
 type CommandBuilder msg
-    = CommandBuilder
-        { decoder : { usageSpecs : List UsageSpec, options : List ParsedOption, operands : List String } -> Result Cli.Decode.ProcessingError ( List Cli.Decode.ValidationError, msg )
-        , usageSpecs : List UsageSpec
-        , description : Maybe String
-        , buildSubCommand : Maybe String
-        }
+    = CommandBuilder (CommandRecord msg)
 
 
 {-| Turn a `CommandBuilder` into a `Command` which can be used with `Cli.OptionsParser.run`.
@@ -288,15 +283,18 @@ withRestArgs restOperandsDescription (CommandBuilder ({ usageSpecs, description,
         }
 
 
+type alias CommandRecord msg =
+    { decoder : { usageSpecs : List UsageSpec, options : List ParsedOption, operands : List String } -> Result Cli.Decode.ProcessingError ( List Cli.Decode.ValidationError, msg )
+    , usageSpecs : List UsageSpec
+    , description : Maybe String
+    , buildSubCommand : Maybe String
+    }
+
+
 {-| TODO
 -}
 type Command msg
-    = Command
-        { decoder : { usageSpecs : List UsageSpec, options : List ParsedOption, operands : List String } -> Result Cli.Decode.ProcessingError ( List Cli.Decode.ValidationError, msg )
-        , usageSpecs : List UsageSpec
-        , description : Maybe String
-        , buildSubCommand : Maybe String
-        }
+    = Command (CommandRecord msg)
 
 
 {-| TODO
