@@ -58,6 +58,8 @@ Start the chain using `with`:
 
 -}
 
+-- TODO OptionsParser.run takes an OptionsParser.Program... Program takes a List of OptionsParser.OptionsParser
+
 import Cli.Command.MatchResult as MatchResult exposing (MatchResult)
 import Cli.Decode
 import Cli.Option exposing (Option(Option))
