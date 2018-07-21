@@ -51,7 +51,17 @@ run { programName, commands, version } argv =
                     |> SystemMessage Failure
             else
                 unexpectedOptions
-                    |> List.map (TypoSuggestion.toMessage commands)
+                    |> List.map
+                        (TypoSuggestion.toMessage
+                            (commands
+                                |> List.map
+                                    (\command ->
+                                        { usageSpecs = Command.getUsageSpecs command
+                                        , subCommand = Command.getSubCommand command
+                                        }
+                                    )
+                            )
+                        )
                     |> String.join "\n"
                     |> SystemMessage Failure
 

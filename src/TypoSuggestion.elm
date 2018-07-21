@@ -1,9 +1,14 @@
-module TypoSuggestion exposing (TypoSuggestion(..), getSuggestions, toMessage)
+module TypoSuggestion exposing (Command, TypoSuggestion(..), getSuggestions, toMessage)
 
-import Cli.Command as Command exposing (Command)
 import Cli.UsageSpec as UsageSpec
 import Fuzzy
 import List.Extra
+
+
+type alias Command =
+    { usageSpecs : List UsageSpec.UsageSpec
+    , subCommand : Maybe String
+    }
 
 
 type TypoSuggestion
@@ -24,7 +29,7 @@ suggestionToString typoSuggestion =
         ++ "`"
 
 
-toMessage : List (Command msg) -> String -> String
+toMessage : List Command -> String -> String
 toMessage commands unexpectedOption =
     case getSuggestions commands unexpectedOption |> List.head of
         Just bestSuggestion ->
@@ -49,7 +54,7 @@ name typoSuggestion =
             suggestionName
 
 
-getSuggestions : List (Command msg) -> String -> List TypoSuggestion
+getSuggestions : List Command -> String -> List TypoSuggestion
 getSuggestions commands unexpectedOption =
     let
         something needle hay =
@@ -61,18 +66,18 @@ getSuggestions commands unexpectedOption =
         |> List.sortBy (name >> something unexpectedOption)
 
 
-buildSubCommandSuggestions : List (Command msg) -> List TypoSuggestion
+buildSubCommandSuggestions : List Command -> List TypoSuggestion
 buildSubCommandSuggestions commands =
     commands
-        |> List.map Command.getSubCommand
+        |> List.map .subCommand
         |> List.filterMap identity
         |> List.map SubCommand
 
 
-optionSuggestions : List (Command msg) -> List TypoSuggestion
+optionSuggestions : List Command -> List TypoSuggestion
 optionSuggestions commands =
     commands
-        |> List.map Command.getUsageSpecs
+        |> List.map .usageSpecs
         |> List.concat
         |> List.Extra.uniqueBy UsageSpec.name
         |> List.map UsageSpec.name
