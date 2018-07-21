@@ -58,7 +58,7 @@ Start the chain using `with`:
 
 -}
 
-import Cli.Command.MatchResult as MatchResult exposing (MatchResult)
+import Cli.Command.MatchResult
 import Cli.Decode
 import Cli.Option exposing (Option(Option))
 import Cli.UsageSpec as UsageSpec exposing (UsageSpec)
@@ -91,7 +91,7 @@ getSubCommand (Command { buildSubCommand }) =
 
 {-| Low-level function, for internal use.
 -}
-tryMatch : List String -> Command msg -> MatchResult msg
+tryMatch : List String -> Command msg -> Cli.Command.MatchResult.MatchResult msg
 tryMatch argv ((Command { usageSpecs, buildSubCommand }) as command) =
     let
         decoder =
@@ -133,23 +133,23 @@ tryMatch argv ((Command { usageSpecs, buildSubCommand }) as command) =
                             Err error ->
                                 case error of
                                     Cli.Decode.MatchError matchError ->
-                                        MatchResult.NoMatch []
+                                        Cli.Command.MatchResult.NoMatch []
 
                                     Cli.Decode.UnrecoverableValidationError validationError ->
-                                        MatchResult.Match (Err [ validationError ])
+                                        Cli.Command.MatchResult.Match (Err [ validationError ])
 
                                     Cli.Decode.UnexpectedOptions unexpectedOptions ->
-                                        MatchResult.NoMatch unexpectedOptions
+                                        Cli.Command.MatchResult.NoMatch unexpectedOptions
 
                             Ok ( [], value ) ->
-                                MatchResult.Match (Ok value)
+                                Cli.Command.MatchResult.Match (Ok value)
 
                             Ok ( validationErrors, value ) ->
-                                MatchResult.Match (Err validationErrors)
+                                Cli.Command.MatchResult.Match (Err validationErrors)
                    )
 
         Err { errorMessage, options } ->
-            MatchResult.NoMatch (unexpectedOptions_ command options)
+            Cli.Command.MatchResult.NoMatch (unexpectedOptions_ command options)
 
 
 expectedOperandCountOrFail : Command msg -> Command msg
