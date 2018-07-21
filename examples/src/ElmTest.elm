@@ -2,7 +2,7 @@ module Main exposing (main)
 
 import Cli.Command as Command exposing (Command, with)
 import Cli.Option as Option
-import Cli.OptionsParser exposing (OptionsParser)
+import Cli.OptionsParser
 import Json.Decode exposing (..)
 import Ports
 
@@ -23,7 +23,7 @@ type alias RunTestsRecord =
     }
 
 
-cli : OptionsParser ElmTestCommand
+cli : Cli.OptionsParser.Program ElmTestCommand
 cli =
     { programName = "elm-test"
     , commands = commands

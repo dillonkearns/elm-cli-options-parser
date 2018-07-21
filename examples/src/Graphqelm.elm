@@ -2,7 +2,7 @@ module Main exposing (main)
 
 import Cli.Command as Command exposing (Command, with)
 import Cli.Option as Option
-import Cli.OptionsParser exposing (OptionsParser)
+import Cli.OptionsParser
 import Cli.Validate
 import Json.Decode exposing (..)
 import Ports
@@ -14,7 +14,7 @@ type GraphqelmCommand
     | FromFile String (Maybe String) (Maybe String) Bool
 
 
-cli : OptionsParser GraphqelmCommand
+cli : Cli.OptionsParser.Program GraphqelmCommand
 cli =
     { programName = "graphqelm"
     , commands = commands
