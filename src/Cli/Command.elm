@@ -224,14 +224,52 @@ type CommandBuilder msg
         }
 
 
-{-| TODO
+{-| Turn a `CommandBuilder` into a `Command` which can be used with `Cli.OptionsParser.run`.
+The command will fail if any unspecific positional arguments are passed in.
+
+    type GitCommand
+        = Init
+        | Clone
+
+    initCommand =
+        Command.buildSubCommand "init" Init
+            |> Command.withoutRestArgs
+
+
+    {-
+       $ git init
+       # matches Init
+       $ git init positionalArg
+       # doesn't match init command
+    -}
+
 -}
 withoutRestArgs : CommandBuilder msg -> Command msg
 withoutRestArgs (CommandBuilder record) =
     Command record
 
 
-{-| TODO
+{-| Turn a `CommandBuilder` into a `Command` which can be used with `Cli.OptionsParser.run`.
+The command will succeed if any unspecific positional arguments are passed in and will capture them in a list.
+
+    type GitCommand
+        = Init
+        | Add (List String)
+
+    addCommand =
+        Command.buildSubCommand "add" Add
+            |> Command.withRestArgs
+
+
+    {-
+       $ git add
+       # matches Add []
+       $ git add new-file1.txt new-file2.txt
+       # matches Add ["new-file1.txt", "new-file2.txt"]
+    -}
+
+If you need at least one positional argument, then just use `Cli.Option.positionalArg`.
+
 -}
 withRestArgs : String -> CommandBuilder (List String -> msg) -> Command msg
 withRestArgs restOperandsDescription (CommandBuilder ({ usageSpecs, description, decoder } as record)) =
