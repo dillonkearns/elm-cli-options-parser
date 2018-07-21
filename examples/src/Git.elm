@@ -2,6 +2,7 @@ module Main exposing (main)
 
 import Cli.Command as Command exposing (Command, with)
 import Cli.ExitStatus
+import Cli.Option
 import Cli.OptionsParser
 import Json.Decode exposing (..)
 import Ports
@@ -9,7 +10,7 @@ import Ports
 
 type GitCommand
     = Init
-    | Clone
+    | Clone String
 
 
 type alias RunTestsRecord =
@@ -37,6 +38,7 @@ commands =
         |> Command.withoutRestArgs
         |> Command.withDoc "initialize a git repository"
     , Command.buildSubCommand "clone" Clone
+        |> with (Cli.Option.positionalArg "repository")
         |> Command.withoutRestArgs
     ]
 
@@ -60,6 +62,7 @@ type alias Flags =
 init : Flags -> ( Model, Cmd Msg )
 init argv =
     let
+        matchResult : Cli.OptionsParser.RunResult GitCommand
         matchResult =
             Cli.OptionsParser.run cli argv
 
@@ -78,8 +81,8 @@ init argv =
                         Init ->
                             "Initializing test suite..."
 
-                        Clone ->
-                            "Cloning..."
+                        Clone url ->
+                            "Cloning `" ++ url ++ "`..."
                     )
                         |> Ports.print
     in
