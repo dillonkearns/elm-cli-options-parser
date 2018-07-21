@@ -12,11 +12,6 @@ type ElmTestCommand
     | RunTests RunTestsRecord
 
 
-(=>) : a -> b -> ( a, b )
-(=>) =
-    (,)
-
-
 type alias RunTestsRecord =
     { maybeFuzz : Maybe Int
     , maybeSeed : Maybe Int
@@ -126,6 +121,11 @@ type alias Model =
 
 type alias Msg =
     ()
+
+
+(=>) : a -> b -> ( a, b )
+(=>) =
+    (,)
 
 
 main : Program Flags Model Msg
