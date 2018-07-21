@@ -1,6 +1,7 @@
 module Main exposing (main)
 
 import Cli.Command as Command exposing (Command, with)
+import Cli.ExitStatus
 import Cli.Option as Option
 import Cli.OptionsParser
 import Json.Decode exposing (..)
@@ -87,10 +88,10 @@ init argv =
             case matchResult of
                 Cli.OptionsParser.SystemMessage exitStatus message ->
                     case exitStatus of
-                        Cli.OptionsParser.Failure ->
+                        Cli.ExitStatus.Failure ->
                             Ports.printAndExitFailure message
 
-                        Cli.OptionsParser.Success ->
+                        Cli.ExitStatus.Success ->
                             Ports.printAndExitSuccess message
 
                 Cli.OptionsParser.CustomMatch msg ->

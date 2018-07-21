@@ -1,13 +1,14 @@
-module Cli.OptionsParser exposing (ExitStatus(..), Program, RunResult(..), run)
+module Cli.OptionsParser exposing (Program, RunResult(..), run)
 
 {-| TODO
 
-@docs RunResult, ExitStatus, Program
+@docs RunResult, Program
 @docs run
 
 -}
 
 import Cli.Command as Command exposing (Command)
+import Cli.ExitStatus exposing (ExitStatus)
 import Cli.LowLevel
 import TypoSuggestion
 
@@ -17,13 +18,6 @@ import TypoSuggestion
 type RunResult match
     = SystemMessage ExitStatus String
     | CustomMatch match
-
-
-{-| TODO
--}
-type ExitStatus
-    = Success
-    | Failure
 
 
 {-| TODO
@@ -48,7 +42,7 @@ run { programName, commands, version } argv =
             if unexpectedOptions == [] then
                 "\nNo matching command...\n\nUsage:\n\n"
                     ++ Cli.LowLevel.helpText "elm-test" commands
-                    |> SystemMessage Failure
+                    |> SystemMessage Cli.ExitStatus.Failure
             else
                 unexpectedOptions
                     |> List.map
@@ -63,7 +57,7 @@ run { programName, commands, version } argv =
                             )
                         )
                     |> String.join "\n"
-                    |> SystemMessage Failure
+                    |> SystemMessage Cli.ExitStatus.Failure
 
         Cli.LowLevel.ValidationErrors validationErrors ->
             ("Validation errors:\n\n"
@@ -80,7 +74,7 @@ run { programName, commands, version } argv =
                         |> String.join "\n"
                    )
             )
-                |> SystemMessage Failure
+                |> SystemMessage Cli.ExitStatus.Failure
 
         Cli.LowLevel.Match msg ->
             msg
@@ -88,10 +82,10 @@ run { programName, commands, version } argv =
 
         Cli.LowLevel.ShowHelp ->
             Cli.LowLevel.helpText programName commands
-                |> SystemMessage Success
+                |> SystemMessage Cli.ExitStatus.Success
 
         Cli.LowLevel.ShowVersion ->
             programName
                 ++ " version "
                 ++ version
-                |> SystemMessage Success
+                |> SystemMessage Cli.ExitStatus.Success
