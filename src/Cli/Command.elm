@@ -73,7 +73,7 @@ getUsageSpecs (Command { usageSpecs }) =
     usageSpecs
 
 
-{-| TODO
+{-| Low-level function, for internal use.
 -}
 synopsis : String -> Command decodesTo -> String
 synopsis programName command =
@@ -82,7 +82,7 @@ synopsis programName command =
         |> UsageSpec.synopsis programName
 
 
-{-| TODO
+{-| Low-level function, for internal use.
 -}
 getSubCommand : Command msg -> Maybe String
 getSubCommand (Command { buildSubCommand }) =

@@ -29,7 +29,34 @@ type alias Program msg =
     }
 
 
-{-| TODO
+{-| Run an OptionsParser.Program. See the `examples` folder for end-to-end examples.
+
+    type GitCommand
+        = Init
+        | Clone String
+
+    cli : Cli.OptionsParser.Program GitCommand
+    cli =
+        { programName = "git"
+        , commands = commands
+        , version = "1.2.3"
+        }
+
+    commands : List (Command.Command GitCommand)
+    commands =
+        [ Command.buildSubCommand "clone" Clone
+            |> with (Cli.Option.positionalArg "repository")
+            |> Command.withoutRestArgs
+        ]
+
+    argv : List String
+    argv =
+        [{- passed in as Flags from JavaScript, see `examples` folder. -}]
+
+    matchResult : Cli.OptionsParser.RunResult GitCommand
+    matchResult =
+        Cli.OptionsParser.run cli argv
+
 -}
 run : Program msg -> List String -> RunResult msg
 run { programName, commands, version } argv =
