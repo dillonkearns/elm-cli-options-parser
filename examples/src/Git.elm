@@ -1,7 +1,7 @@
 module Main exposing (main)
 
 import Cli.Command as Command exposing (Command, with)
-import Cli.OptionsParser
+import Cli.OptionsParser exposing (OptionsParser)
 import Json.Decode exposing (..)
 import Ports
 
@@ -22,8 +22,16 @@ type alias RunTestsRecord =
     }
 
 
-cli : List (Command ElmTestCommand)
+cli : OptionsParser ElmTestCommand
 cli =
+    { programName = "git"
+    , commands = commands
+    , version = "1.2.3"
+    }
+
+
+commands : List (Command ElmTestCommand)
+commands =
     [ Command.buildSubCommand "init" Init
         |> Command.withoutRestArgs
         |> Command.withDoc "initialize a git repository"
@@ -49,10 +57,10 @@ type alias Flags =
 
 
 init : Flags -> ( Model, Cmd Msg )
-init flags =
+init argv =
     let
         matchResult =
-            Cli.OptionsParser.run "git" cli flags
+            Cli.OptionsParser.run cli argv
 
         cmd =
             case matchResult of
