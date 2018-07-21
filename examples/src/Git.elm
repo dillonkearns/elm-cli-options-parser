@@ -1,12 +1,13 @@
 module Main exposing (main)
 
 import Cli.Command as Command exposing (Command, with)
+import Cli.ExitStatus
 import Cli.OptionsParser
 import Json.Decode exposing (..)
 import Ports
 
 
-type ElmTestCommand
+type GitCommand
     = Init
     | Clone
 
@@ -22,7 +23,7 @@ type alias RunTestsRecord =
     }
 
 
-cli : Cli.OptionsParser.Program ElmTestCommand
+cli : Cli.OptionsParser.Program GitCommand
 cli =
     { programName = "git"
     , commands = commands
@@ -30,7 +31,7 @@ cli =
     }
 
 
-commands : List (Command ElmTestCommand)
+commands : List (Command GitCommand)
 commands =
     [ Command.buildSubCommand "init" Init
         |> Command.withoutRestArgs
@@ -66,10 +67,10 @@ init argv =
             case matchResult of
                 Cli.OptionsParser.SystemMessage exitStatus message ->
                     case exitStatus of
-                        Cli.OptionsParser.Failure ->
+                        Cli.ExitStatus.Failure ->
                             Ports.printAndExitFailure message
 
-                        Cli.OptionsParser.Success ->
+                        Cli.ExitStatus.Success ->
                             Ports.printAndExitSuccess message
 
                 Cli.OptionsParser.CustomMatch msg ->
