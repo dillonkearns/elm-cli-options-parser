@@ -367,7 +367,35 @@ expectFlag flagName (CommandBuilder ({ usageSpecs, decoder } as command)) =
         }
 
 
-{-| TODO
+{-| Include an `Option` in your `Command`, see the `Cli.Option` module.
+
+    import Cli.Command as Command exposing (Command, with)
+    import Cli.Option
+
+    type GitCommand
+        = Init
+        | Log LogOptions -- ...
+
+    type alias LogOptions =
+        { maybeAuthorPattern : Maybe String
+        , maybeNumberToDisplay : Maybe Int
+        }
+
+    commands : List (Command GitCommand)
+    commands =
+        [ Command.buildSubCommand "log" LogOptions
+            |> with
+                (Cli.Option.optionalKeywordArg "author")
+            |> with
+                (Cli.Option.optionalKeywordArg "number"
+                    |> Cli.Option.validateMapIfPresent String.toInt
+                )
+            |> Command.withoutRestArgs
+            |> Command.map Log
+
+        -- ...
+        ]
+
 -}
 with : Option from to -> CommandBuilder (to -> msg) -> CommandBuilder msg
 with (Option dataGrabber usageSpec optionsDecoder) ((CommandBuilder ({ decoder, usageSpecs } as command)) as fullCommand) =
