@@ -11,11 +11,12 @@ import Ports
 type GitCommand
     = Init
     | Clone String
-    | Log LogRecord
+    | Log LogOptions
 
 
-type alias LogRecord =
+type alias LogOptions =
     { maybeAuthorPattern : Maybe String
+    , maybeNumberToDisplay : Maybe Int
     }
 
 
@@ -35,8 +36,12 @@ commands =
     , Command.buildSubCommand "clone" Clone
         |> with (Cli.Option.positionalArg "repository")
         |> Command.withoutRestArgs
-    , Command.buildSubCommand "log" LogRecord
+    , Command.buildSubCommand "log" LogOptions
         |> with (Cli.Option.optionalKeywordArg "author")
+        |> with
+            (Cli.Option.optionalKeywordArg "number"
+                |> Cli.Option.validateMapIfPresent String.toInt
+            )
         |> Command.withoutRestArgs
         |> Command.map Log
     ]
@@ -83,13 +88,13 @@ init argv =
                         Clone url ->
                             "Cloning `" ++ url ++ "`..."
 
-                        Log { maybeAuthorPattern } ->
-                            case maybeAuthorPattern of
-                                Just authorPattern ->
-                                    "Logging: `" ++ authorPattern ++ "`..."
-
-                                Nothing ->
-                                    "Logging..."
+                        Log options ->
+                            [ "Logging..." |> Just
+                            , options.maybeAuthorPattern |> Maybe.map (\authorPattern -> "authorPattern: " ++ authorPattern)
+                            , options.maybeNumberToDisplay |> Maybe.map (\numberToDisplay -> "numberToDisplay: " ++ toString numberToDisplay)
+                            ]
+                                |> List.filterMap identity
+                                |> String.join "\n"
                     )
                         |> Ports.print
     in
