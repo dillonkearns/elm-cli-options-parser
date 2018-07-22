@@ -47,12 +47,6 @@ commands =
     ]
 
 
-type Report
-    = Json
-    | Junit
-    | Console
-
-
 dummy : Decoder String
 dummy =
     -- this is a workaround for an Elm compiler bug
