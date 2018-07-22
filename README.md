@@ -47,7 +47,8 @@ commands =
             )
         |> Command.withoutRestArgs
         |> Command.map Log
-      -- , ... more `Command`s here
+      -- ... `Command`s for `Init`, `Clone`, etc. here
+      -- See `examples` folder
     ]
 ```
 
