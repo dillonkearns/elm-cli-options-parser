@@ -11,16 +11,11 @@ import Ports
 type GitCommand
     = Init
     | Clone String
+    | Log LogRecord
 
 
-type alias RunTestsRecord =
-    { maybeFuzz : Maybe Int
-    , maybeSeed : Maybe Int
-    , maybeCompilerPath : Maybe String
-    , maybeDependencies : Maybe String
-    , watch : Bool
-    , report : Report
-    , testFiles : List String
+type alias LogRecord =
+    { maybeAuthorPattern : Maybe String
     }
 
 
@@ -40,6 +35,10 @@ commands =
     , Command.buildSubCommand "clone" Clone
         |> with (Cli.Option.positionalArg "repository")
         |> Command.withoutRestArgs
+    , Command.buildSubCommand "log" LogRecord
+        |> with (Cli.Option.optionalKeywordArg "author")
+        |> Command.withoutRestArgs
+        |> Command.map Log
     ]
 
 
@@ -83,6 +82,14 @@ init argv =
 
                         Clone url ->
                             "Cloning `" ++ url ++ "`..."
+
+                        Log { maybeAuthorPattern } ->
+                            case maybeAuthorPattern of
+                                Just authorPattern ->
+                                    "Logging: `" ++ authorPattern ++ "`..."
+
+                                Nothing ->
+                                    "Logging..."
                     )
                         |> Ports.print
     in
