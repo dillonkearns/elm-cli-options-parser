@@ -96,7 +96,7 @@ tryMatch argv ((Command { usageSpecs, buildSubCommand }) as command) =
     let
         decoder =
             command
-                |> expectedOperandCountOrFail
+                |> expectedPositionalArgCountOrFail
                 |> failIfUnexpectedOptions
                 |> getDecoder
 
@@ -152,8 +152,8 @@ tryMatch argv ((Command { usageSpecs, buildSubCommand }) as command) =
             Cli.Command.MatchResult.NoMatch (unexpectedOptions_ command options)
 
 
-expectedOperandCountOrFail : Command msg -> Command msg
-expectedOperandCountOrFail (Command ({ decoder, usageSpecs } as command)) =
+expectedPositionalArgCountOrFail : Command msg -> Command msg
+expectedPositionalArgCountOrFail (Command ({ decoder, usageSpecs } as command)) =
     Command
         { command
             | decoder =
