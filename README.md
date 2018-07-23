@@ -11,6 +11,8 @@ Take this `git` command:
 git log --author=dillon --max-count=5 --stat a410067
 ```
 
+To parse the above command, we could build an `OptionsParser` as follows (this snippet doesn't include the wiring of the Command-Line options from NodeJS, see the `examples` folder):
+
 ```elm
 import Cli.Command as Command exposing (Command, with)
 import Cli.Option
@@ -50,6 +52,22 @@ commands =
       -- ... `Command`s for `Init`, `Clone`, etc. here
       -- See `examples` folder
     ]
+```
+
+```elm
+{-
+Now running:
+`git log --author=dillon --max-count=5 --stat a410067`
+will yield the following output (with wiring as in the `examples` folder):
+-}
+matchResult : GitCommand
+matchResult =
+    Log
+        { maybeAuthorPattern = Just "dillon"
+        , maybeMaxCount = Just 5
+        , statisticsMode = True
+        , revisionRange = "a410067"
+        }
 ```
 
 ## Options Parser Terminology

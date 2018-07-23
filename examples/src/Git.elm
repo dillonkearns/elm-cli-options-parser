@@ -16,7 +16,9 @@ type GitCommand
 
 type alias LogOptions =
     { maybeAuthorPattern : Maybe String
-    , maybeNumberToDisplay : Maybe Int
+    , maybeMaxCount : Maybe Int
+    , statisticsMode : Bool
+    , revisionRange : String
     }
 
 
@@ -39,9 +41,11 @@ commands =
     , Command.buildSubCommand "log" LogOptions
         |> with (Cli.Option.optionalKeywordArg "author")
         |> with
-            (Cli.Option.optionalKeywordArg "number"
+            (Cli.Option.optionalKeywordArg "max-count"
                 |> Cli.Option.validateMapIfPresent String.toInt
             )
+        |> with (Cli.Option.flag "stat")
+        |> with (Cli.Option.positionalArg "revision range")
         |> Command.withoutRestArgs
         |> Command.map Log
     ]
@@ -85,7 +89,8 @@ init argv =
                         Log options ->
                             [ "Logging..." |> Just
                             , options.maybeAuthorPattern |> Maybe.map (\authorPattern -> "authorPattern: " ++ authorPattern)
-                            , options.maybeNumberToDisplay |> Maybe.map (\numberToDisplay -> "numberToDisplay: " ++ toString numberToDisplay)
+                            , options.maybeMaxCount |> Maybe.map (\maxCount -> "maxCount: " ++ toString maxCount)
+                            , toString options.statisticsMode |> Just
                             ]
                                 |> List.filterMap identity
                                 |> String.join "\n"
