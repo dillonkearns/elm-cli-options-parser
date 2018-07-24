@@ -12,6 +12,7 @@ module Cli.UsageSpec
         , operandCount
         , optionExists
         , optionHasArg
+        , optionalPositionalArg
         , restArgs
         , synopsis
         )
@@ -22,7 +23,7 @@ import Occurences exposing (Occurences)
 
 type UsageSpec
     = FlagOrKeywordArg FlagOrKeywordArg (Maybe MutuallyExclusiveValues) Occurences
-    | Operand String (Maybe MutuallyExclusiveValues)
+    | Operand String (Maybe MutuallyExclusiveValues) Occurences
     | RestArgs String
 
 
@@ -47,7 +48,12 @@ flag optionName occurences =
 
 operand : String -> UsageSpec
 operand name =
-    Operand name Nothing
+    Operand name Nothing Occurences.Required
+
+
+optionalPositionalArg : String -> UsageSpec
+optionalPositionalArg name =
+    Operand name Nothing Occurences.Optional
 
 
 restArgs : String -> UsageSpec
@@ -61,8 +67,8 @@ changeUsageSpec possibleValues usageSpec =
         FlagOrKeywordArg option mutuallyExclusiveValues occurences ->
             FlagOrKeywordArg option (MutuallyExclusiveValues possibleValues |> Just) occurences
 
-        Operand name mutuallyExclusiveValues ->
-            Operand name (MutuallyExclusiveValues possibleValues |> Just)
+        Operand name mutuallyExclusiveValues occurences ->
+            Operand name (MutuallyExclusiveValues possibleValues |> Just) occurences
 
         _ ->
             usageSpec
@@ -77,7 +83,7 @@ operandCount usageSpecs =
                     FlagOrKeywordArg _ _ _ ->
                         Nothing
 
-                    Operand operandName mutuallyExclusiveValues ->
+                    Operand operandName mutuallyExclusiveValues occurences ->
                         Just operandName
 
                     RestArgs _ ->
@@ -96,7 +102,7 @@ optionExists usageSpecs thisOptionName =
                         option
                             |> Just
 
-                    Operand _ _ ->
+                    Operand _ _ _ ->
                         Nothing
 
                     RestArgs _ ->
@@ -108,7 +114,7 @@ optionExists usageSpecs thisOptionName =
 isOperand : UsageSpec -> Bool
 isOperand option =
     case option of
-        Operand operand mutuallyExclusiveValues ->
+        Operand operand mutuallyExclusiveValues occurences ->
             True
 
         FlagOrKeywordArg _ _ _ ->
@@ -143,7 +149,7 @@ name usageSpec =
                 KeywordArg optionName ->
                     optionName
 
-        Operand optionName mutuallyExclusiveValues ->
+        Operand optionName mutuallyExclusiveValues occurences ->
             optionName
 
         RestArgs optionName ->
@@ -162,7 +168,7 @@ synopsis programName { usageSpecs, description, buildSubCommand } =
                                     FlagOrKeywordArg option mutuallyExclusiveValues occurences ->
                                         optionSynopsis occurences option mutuallyExclusiveValues
 
-                                    Operand operandName mutuallyExclusiveValues ->
+                                    Operand operandName mutuallyExclusiveValues occurences ->
                                         "<"
                                             ++ (mutuallyExclusiveValues
                                                     |> Maybe.map mutuallyExclusiveSynopsis
@@ -215,7 +221,7 @@ optionHasArg options optionNameToCheck =
                         FlagOrKeywordArg option mutuallyExclusiveValues occurences ->
                             Just option
 
-                        Operand _ _ ->
+                        Operand _ _ _ ->
                             Nothing
 
                         RestArgs _ ->

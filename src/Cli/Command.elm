@@ -13,6 +13,8 @@ module Cli.Command
         , tryMatch
         , with
         , withDoc
+        , withOptionalPositionalArg
+          -- , withOptionalPositionalArgAndRestArgs
         , withRestArgs
         , withoutRestArgs
         )
@@ -28,7 +30,7 @@ module Cli.Command
 
 ## End Building
 
-@docs withRestArgs, withoutRestArgs
+@docs withRestArgs, withoutRestArgs, withOptionalPositionalArg
 
 
 ## Middle
@@ -62,6 +64,7 @@ import Cli.Command.MatchResult
 import Cli.Decode
 import Cli.Option exposing (Option(Option))
 import Cli.UsageSpec as UsageSpec exposing (UsageSpec)
+import List.Extra
 import Occurences exposing (Occurences(..))
 import Tokenizer exposing (ParsedOption)
 
@@ -281,6 +284,56 @@ withRestArgs restOperandsDescription (CommandBuilder ({ usageSpecs, description,
                 resultMap (\fn -> fn restOperands) (decoder stuff)
         , buildSubCommand = record.buildSubCommand
         }
+
+
+{-| TODO
+-}
+withOptionalPositionalArg : String -> CommandBuilder (Maybe String -> msg) -> Command msg
+withOptionalPositionalArg positionalArgDescription (CommandBuilder ({ usageSpecs, description, decoder } as record)) =
+    Command
+        { usageSpecs = usageSpecs ++ [ UsageSpec.optionalPositionalArg positionalArgDescription ]
+        , description = description
+        , decoder =
+            \flagsAndOperands ->
+                resultMap
+                    (\fn ->
+                        let
+                            operandsSoFar : Int
+                            operandsSoFar =
+                                UsageSpec.operandCount usageSpecs
+
+                            maybeArg : Maybe String
+                            maybeArg =
+                                flagsAndOperands.operands
+                                    |> List.Extra.getAt operandsSoFar
+                        in
+                        fn maybeArg
+                    )
+                    (decoder flagsAndOperands)
+        , buildSubCommand = record.buildSubCommand
+        }
+
+
+{-| TODO
+-}
+
+
+
+-- withOptionalPositionalArgAndRestArgs : String -> String -> CommandBuilder (List String -> msg) -> Command msg
+-- withOptionalPositionalArgAndRestArgs positionalArgDescription restOperandsDescription (CommandBuilder ({ usageSpecs, description, decoder } as record)) =
+--     Command
+--         { usageSpecs = usageSpecs ++ [ UsageSpec.optionalPositionalArg positionalArgDescription, UsageSpec.restArgs restOperandsDescription ]
+--         , description = description
+--         , decoder =
+--             \({ operands } as stuff) ->
+--                 let
+--                     restOperands =
+--                         operands
+--                             |> List.drop (UsageSpec.operandCount usageSpecs)
+--                 in
+--                 resultMap (\fn -> fn restOperands) (decoder stuff)
+--         , buildSubCommand = record.buildSubCommand
+--         }
 
 
 type alias CommandRecord msg =
