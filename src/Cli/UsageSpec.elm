@@ -169,22 +169,18 @@ synopsis programName { usageSpecs, description, buildSubCommand } =
                                         optionSynopsis occurences option mutuallyExclusiveValues
 
                                     Operand operandName mutuallyExclusiveValues occurences ->
+                                        let
+                                            positionalArgSummary =
+                                                mutuallyExclusiveValues
+                                                    |> Maybe.map mutuallyExclusiveSynopsis
+                                                    |> Maybe.withDefault operandName
+                                        in
                                         case occurences of
                                             Occurences.Required ->
-                                                "<"
-                                                    ++ (mutuallyExclusiveValues
-                                                            |> Maybe.map mutuallyExclusiveSynopsis
-                                                            |> Maybe.withDefault operandName
-                                                       )
-                                                    ++ ">"
+                                                "<" ++ positionalArgSummary ++ ">"
 
                                             Occurences.Optional ->
-                                                "[<"
-                                                    ++ (mutuallyExclusiveValues
-                                                            |> Maybe.map mutuallyExclusiveSynopsis
-                                                            |> Maybe.withDefault operandName
-                                                       )
-                                                    ++ ">]"
+                                                "[<" ++ positionalArgSummary ++ ">]"
 
                                             Occurences.ZeroOrMore ->
                                                 "TODO shouldn't reach this case"
