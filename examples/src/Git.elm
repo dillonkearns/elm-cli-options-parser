@@ -18,7 +18,7 @@ type alias LogOptions =
     { maybeAuthorPattern : Maybe String
     , maybeMaxCount : Maybe Int
     , statisticsMode : Bool
-    , revisionRange : String
+    , maybeRevisionRange : Maybe String
     }
 
 
@@ -45,8 +45,7 @@ commands =
                 |> Cli.Option.validateMapIfPresent String.toInt
             )
         |> with (Cli.Option.flag "stat")
-        |> with (Cli.Option.positionalArg "revision range")
-        |> Command.withoutRestArgs
+        |> Command.withOptionalPositionalArg "revision range"
         |> Command.map Log
     ]
 
@@ -91,6 +90,7 @@ init argv =
                             , options.maybeAuthorPattern |> Maybe.map (\authorPattern -> "authorPattern: " ++ authorPattern)
                             , options.maybeMaxCount |> Maybe.map (\maxCount -> "maxCount: " ++ toString maxCount)
                             , toString options.statisticsMode |> Just
+                            , options.maybeRevisionRange |> Maybe.map (\revisionRange -> "revisionRange: " ++ toString revisionRange)
                             ]
                                 |> List.filterMap identity
                                 |> String.join "\n"

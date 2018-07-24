@@ -56,13 +56,20 @@ all =
                             |> Command.withoutRestArgs
                         )
                         (OpenUrl "http://my-domain.com")
-            , test "command with optional positional arg" <|
+            , test "command with optional positional arg present" <|
                 \() ->
                     expectMatch [ "abcdefg" ]
                         (Command.build identity
                             |> Command.withOptionalPositionalArg "revision-range"
                         )
                         (Just "abcdefg")
+            , test "command with optional positional arg not present" <|
+                \() ->
+                    expectMatch []
+                        (Command.build identity
+                            |> Command.withOptionalPositionalArg "revision-range"
+                        )
+                        Nothing
             , test "command with multiple operands" <|
                 \() ->
                     expectMatch [ "http://my-domain.com", "./file.txt" ]
