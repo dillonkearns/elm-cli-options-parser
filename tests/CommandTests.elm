@@ -13,6 +13,11 @@ import Test exposing (..)
     (,)
 
 
+type WatchMode
+    = Watch
+    | NoWatch
+
+
 type Msg
     = Help
     | Version
@@ -366,6 +371,20 @@ all =
                             |> Command.withoutRestArgs
                         )
                         "elm.js"
+            , test "map flag to union" <|
+                \() ->
+                    expectMatch [ "--watch" ]
+                        (Command.build identity
+                            |> Command.with
+                                (Option.flag "watch"
+                                    |> Option.mapFlag
+                                        { present = Watch
+                                        , absent = NoWatch
+                                        }
+                                )
+                            |> Command.withoutRestArgs
+                        )
+                        Watch
             , test "withDefault uses actual option when option is present" <|
                 \() ->
                     expectMatch

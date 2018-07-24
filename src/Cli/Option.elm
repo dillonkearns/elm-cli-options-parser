@@ -4,6 +4,7 @@ module Cli.Option
         , flag
         , keywordArgList
         , map
+        , mapFlag
         , oneOf
         , optionalKeywordArg
         , positionalArg
@@ -47,7 +48,7 @@ module Cli.Option
 
 ## Mapping/Defaults
 
-@docs map, withDefault
+@docs map, mapFlag, withDefault
 
 -}
 
@@ -208,6 +209,20 @@ flag flagName =
 map : (toRaw -> toMapped) -> Option from toRaw -> Option from toMapped
 map mapFn (Option dataGrabber usageSpec decoder) =
     Option dataGrabber usageSpec (Cli.Decode.map mapFn decoder)
+
+
+{-| TODO
+-}
+mapFlag : { present : union, absent : union } -> Option from Bool -> Option from union
+mapFlag { present, absent } option =
+    option
+        |> map
+            (\flag ->
+                if flag then
+                    present
+                else
+                    absent
+            )
 
 
 type alias MutuallyExclusiveValue union =
