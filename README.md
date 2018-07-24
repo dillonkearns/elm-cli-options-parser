@@ -27,7 +27,9 @@ type GitCommand
 
 type alias LogOptions =
     { maybeAuthorPattern : Maybe String
-    , maybeNumberToDisplay : Maybe Int
+    , maybeMaxCount : Maybe Int
+    , statisticsMode : Bool
+    , maybeRevisionRange : Maybe String
     }
 
 
@@ -44,10 +46,11 @@ commands =
     [ Command.buildSubCommand "log" LogOptions
         |> with (Cli.Option.optionalKeywordArg "author")
         |> with
-            (Cli.Option.optionalKeywordArg "number"
+            (Cli.Option.optionalKeywordArg "max-count"
                 |> Cli.Option.validateMapIfPresent String.toInt
             )
-        |> Command.withoutRestArgs
+        |> with (Cli.Option.flag "stat")
+        |> Command.withOptionalPositionalArg "revision range"
         |> Command.map Log
       -- ... `Command`s for `Init`, `Clone`, etc. here
       -- See `examples` folder
@@ -66,9 +69,19 @@ matchResult =
         { maybeAuthorPattern = Just "dillon"
         , maybeMaxCount = Just 5
         , statisticsMode = True
-        , revisionRange = "a410067"
+        , revisionRange = Just "a410067"
         }
 ```
+
+It will also generate the help text for you, so it's guaranteed to be in sync.
+The example code above will generate the following help text:
+
+```
+$ ./git --help
+git log [--author <author>] [--max-count <max-count>] [--stat] [<revision range>]
+```
+
+Note: the `--help` option is a built-in command, so no need to write a `Command` for that.
 
 ## Options Parser Terminology
 
