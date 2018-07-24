@@ -45,6 +45,12 @@ all =
                     |> Command.withoutRestArgs
                     |> Command.synopsis "elm-interop"
                     |> Expect.equal "elm-interop <MyApp.elm>"
+        , test "synopsis for optional positional argument" <|
+            \() ->
+                Command.build identity
+                    |> Command.withOptionalPositionalArg "revision range"
+                    |> Command.synopsis "git"
+                    |> Expect.equal "git [<revision range>]"
         , test "print synopsis with doc string" <|
             \() ->
                 Command.build (,)

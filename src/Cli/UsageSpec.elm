@@ -169,12 +169,25 @@ synopsis programName { usageSpecs, description, buildSubCommand } =
                                         optionSynopsis occurences option mutuallyExclusiveValues
 
                                     Operand operandName mutuallyExclusiveValues occurences ->
-                                        "<"
-                                            ++ (mutuallyExclusiveValues
-                                                    |> Maybe.map mutuallyExclusiveSynopsis
-                                                    |> Maybe.withDefault operandName
-                                               )
-                                            ++ ">"
+                                        case occurences of
+                                            Occurences.Required ->
+                                                "<"
+                                                    ++ (mutuallyExclusiveValues
+                                                            |> Maybe.map mutuallyExclusiveSynopsis
+                                                            |> Maybe.withDefault operandName
+                                                       )
+                                                    ++ ">"
+
+                                            Occurences.Optional ->
+                                                "[<"
+                                                    ++ (mutuallyExclusiveValues
+                                                            |> Maybe.map mutuallyExclusiveSynopsis
+                                                            |> Maybe.withDefault operandName
+                                                       )
+                                                    ++ ">]"
+
+                                            Occurences.ZeroOrMore ->
+                                                "TODO shouldn't reach this case"
 
                                     RestArgs restArgsDescription ->
                                         "<" ++ restArgsDescription ++ ">..."
