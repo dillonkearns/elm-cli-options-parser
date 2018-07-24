@@ -7,7 +7,7 @@ your Elm options parser up through NodeJS so it can receive the command line inp
 
 Take this `git` command:
 
-```shell
+```console
 git log --author=dillon --max-count=5 --stat a410067
 ```
 
@@ -76,7 +76,7 @@ matchResult =
 It will also generate the help text for you, so it's guaranteed to be in sync.
 The example code above will generate the following help text:
 
-```
+```console
 $ ./git --help
 git log [--author <author>] [--max-count <max-count>] [--stat] [<revision range>]
 ```
