@@ -1,6 +1,7 @@
 module Main exposing (main)
 
 import Cli.Command as Command exposing (Command, with)
+import Cli.EndingOption
 import Cli.ExitStatus
 import Cli.Option
 import Cli.OptionsParser
@@ -45,7 +46,7 @@ commands =
                 |> Cli.Option.validateMapIfPresent String.toInt
             )
         |> with (Cli.Option.flag "stat")
-        |> Command.withOptionalPositionalArg "revision range"
+        |> Command.endWith (Cli.EndingOption.optionalPositionalArg "revision range")
         |> Command.map Log
     ]
 

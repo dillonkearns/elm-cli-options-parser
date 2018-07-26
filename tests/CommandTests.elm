@@ -2,6 +2,7 @@ module CommandTests exposing (all)
 
 import Cli.Command as Command
 import Cli.Command.MatchResult
+import Cli.EndingOption
 import Cli.Option as Option
 import Cli.Validate as Validate
 import Expect exposing (Expectation)
@@ -65,14 +66,22 @@ all =
                 \() ->
                     expectMatch [ "abcdefg" ]
                         (Command.build identity
-                            |> Command.withOptionalPositionalArg "revision-range"
+                            |> Command.endWith (Cli.EndingOption.optionalPositionalArg "revision-range")
                         )
                         (Just "abcdefg")
+            , test "command with required and optional positional arg present" <|
+                \() ->
+                    expectMatch [ "required", "optional" ]
+                        (Command.build (,)
+                            |> Command.with (Option.positionalArg "required")
+                            |> Command.endWith (Cli.EndingOption.optionalPositionalArg "revision-range")
+                        )
+                        ( "required", Just "optional" )
             , test "command with optional positional arg not present" <|
                 \() ->
                     expectMatch []
                         (Command.build identity
-                            |> Command.withOptionalPositionalArg "revision-range"
+                            |> Command.endWith (Cli.EndingOption.optionalPositionalArg "revision-range")
                         )
                         Nothing
             , test "command with multiple operands" <|

@@ -4,6 +4,7 @@ module Cli.Command
         , CommandBuilder
         , build
         , buildSubCommand
+        , endWith
         , expectFlag
         , getSubCommand
         , getUsageSpecs
@@ -31,6 +32,10 @@ module Cli.Command
 ## End Building
 
 @docs withRestArgs, withoutRestArgs, withOptionalPositionalArg
+
+The new way:
+
+@docs endWith
 
 
 ## Middle
@@ -62,6 +67,7 @@ Start the chain using `with`:
 
 import Cli.Command.MatchResult
 import Cli.Decode
+import Cli.EndingOption exposing (EndingOption(EndingOption))
 import Cli.Option exposing (Option(Option))
 import Cli.UsageSpec as UsageSpec exposing (UsageSpec)
 import List.Extra
@@ -453,6 +459,37 @@ expectFlag flagName (CommandBuilder ({ usageSpecs, decoder } as command)) =
 with : Option from to -> CommandBuilder (to -> msg) -> CommandBuilder msg
 with (Option dataGrabber usageSpec optionsDecoder) ((CommandBuilder ({ decoder, usageSpecs } as command)) as fullCommand) =
     CommandBuilder
+        { command
+            | decoder =
+                \optionsAndOperands ->
+                    { options = optionsAndOperands.options
+                    , operands = optionsAndOperands.operands
+                    , usageSpecs = optionsAndOperands.usageSpecs
+                    , operandsSoFar = UsageSpec.operandCount usageSpecs
+                    }
+                        |> dataGrabber
+                        |> Result.andThen (Cli.Decode.decodeFunction optionsDecoder)
+                        |> Result.andThen
+                            (\( validationErrors, fromValue ) ->
+                                case
+                                    resultMap (\fn -> fn fromValue)
+                                        (decoder optionsAndOperands)
+                                of
+                                    Ok ( previousValidationErrors, thing ) ->
+                                        Ok ( previousValidationErrors ++ validationErrors, thing )
+
+                                    value ->
+                                        value
+                            )
+            , usageSpecs = usageSpecs ++ [ usageSpec ]
+        }
+
+
+{-| TODO
+-}
+endWith : EndingOption from to -> CommandBuilder (to -> msg) -> Command msg
+endWith (EndingOption dataGrabber usageSpec optionsDecoder) ((CommandBuilder ({ decoder, usageSpecs } as command)) as fullCommand) =
+    Command
         { command
             | decoder =
                 \optionsAndOperands ->
