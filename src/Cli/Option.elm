@@ -245,7 +245,7 @@ type alias MutuallyExclusiveValue union =
 {-| TODO
 -}
 oneOf : value -> List (MutuallyExclusiveValue value) -> Option from String -> Option from value
-oneOf default list (Option { dataGrabber, usageSpec, decoder }) =
+oneOf default list (Option option) =
     validateMap
         (\argValue ->
             case
@@ -267,14 +267,13 @@ oneOf default list (Option { dataGrabber, usageSpec, decoder }) =
                     Ok matchingValue
         )
         (Option
-            { dataGrabber = dataGrabber
-            , usageSpec =
-                UsageSpec.changeUsageSpec
-                    (list
-                        |> List.map (\( name, value ) -> name)
-                    )
-                    usageSpec
-            , decoder = decoder
+            { option
+                | usageSpec =
+                    UsageSpec.changeUsageSpec
+                        (list
+                            |> List.map (\( name, value ) -> name)
+                        )
+                        option.usageSpec
             }
         )
 
