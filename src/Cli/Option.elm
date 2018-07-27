@@ -63,7 +63,14 @@ import Tokenizer
 {-| TODO
 -}
 type Option from to
-    = Option (DataGrabber from) UsageSpec (Cli.Decode.Decoder from to)
+    = Option (InnerOption from to)
+
+
+type alias InnerOption from to =
+    { dataGrabber : DataGrabber from
+    , usageSpec : UsageSpec
+    , decoder : Cli.Decode.Decoder from to
+    }
 
 
 type alias DataGrabber decodesTo =
@@ -78,7 +85,7 @@ type alias DataGrabber decodesTo =
 {-| TODO
 -}
 validate : (to -> Validate.ValidationResult) -> Option from to -> Option from to
-validate validateFunction (Option dataGrabber usageSpec decoder) =
+validate validateFunction (Option { dataGrabber, usageSpec, decoder }) =
     let
         mappedDecoder : Cli.Decode.Decoder from to
         mappedDecoder =
@@ -97,9 +104,11 @@ validate validateFunction (Option dataGrabber usageSpec decoder) =
                                     }
                     )
     in
-    Option dataGrabber
-        usageSpec
-        mappedDecoder
+    Option
+        { dataGrabber = dataGrabber
+        , usageSpec = usageSpec
+        , decoder = mappedDecoder
+        }
 
 
 {-| TODO
@@ -122,7 +131,7 @@ validateIfPresent validateFunction cliSpec =
 -}
 positionalArg : String -> Option String String
 positionalArg operandDescription =
-    Option
+    buildOption
         (\{ usageSpecs, operands, operandsSoFar } ->
             case
                 operands
@@ -135,14 +144,13 @@ positionalArg operandDescription =
                     Cli.Decode.MatchError ("Expect operand " ++ operandDescription ++ "at " ++ toString operandsSoFar ++ " but had operands " ++ toString operands) |> Err
         )
         (UsageSpec.operand operandDescription)
-        Cli.Decode.decoder
 
 
 {-| TODO
 -}
 optionalKeywordArg : String -> Option (Maybe String) (Maybe String)
 optionalKeywordArg optionName =
-    Option
+    buildOption
         (\{ operands, options } ->
             case
                 options
@@ -159,14 +167,13 @@ optionalKeywordArg optionName =
                     Cli.Decode.MatchError ("Expected option " ++ optionName ++ " to have arg but found none.") |> Err
         )
         (UsageSpec.keywordArg optionName Optional)
-        Cli.Decode.decoder
 
 
 {-| TODO
 -}
 requiredKeywordArg : String -> Option String String
 requiredKeywordArg optionName =
-    Option
+    buildOption
         (\{ operands, options } ->
             case
                 options
@@ -183,14 +190,13 @@ requiredKeywordArg optionName =
                     Cli.Decode.MatchError ("Expected option " ++ optionName ++ " to have arg but found none.") |> Err
         )
         (UsageSpec.keywordArg optionName Required)
-        Cli.Decode.decoder
 
 
 {-| TODO
 -}
 flag : String -> Option Bool Bool
 flag flagName =
-    Option
+    buildOption
         (\{ options } ->
             if
                 options
@@ -201,14 +207,22 @@ flag flagName =
                 Ok False
         )
         (UsageSpec.flag flagName Optional)
-        Cli.Decode.decoder
+
+
+buildOption : DataGrabber anything -> UsageSpec -> Option anything anything
+buildOption dataGrabber usageSpec =
+    Option
+        { dataGrabber = dataGrabber
+        , usageSpec = usageSpec
+        , decoder = Cli.Decode.decoder
+        }
 
 
 {-| TODO
 -}
 map : (toRaw -> toMapped) -> Option from toRaw -> Option from toMapped
-map mapFn (Option dataGrabber usageSpec decoder) =
-    Option dataGrabber usageSpec (Cli.Decode.map mapFn decoder)
+map mapFn (Option ({ dataGrabber, usageSpec, decoder } as innerOption)) =
+    Option { innerOption | decoder = Cli.Decode.map mapFn decoder }
 
 
 {-| TODO
@@ -232,7 +246,7 @@ type alias MutuallyExclusiveValue union =
 {-| TODO
 -}
 oneOf : value -> List (MutuallyExclusiveValue value) -> Option from String -> Option from value
-oneOf default list (Option dataGrabber usageSpec decoder) =
+oneOf default list (Option { dataGrabber, usageSpec, decoder }) =
     validateMap
         (\argValue ->
             case
@@ -253,21 +267,23 @@ oneOf default list (Option dataGrabber usageSpec decoder) =
                 Just matchingValue ->
                     Ok matchingValue
         )
-        (Option dataGrabber
-            (UsageSpec.changeUsageSpec
-                (list
-                    |> List.map (\( name, value ) -> name)
-                )
-                usageSpec
-            )
-            decoder
+        (Option
+            { dataGrabber = dataGrabber
+            , usageSpec =
+                UsageSpec.changeUsageSpec
+                    (list
+                        |> List.map (\( name, value ) -> name)
+                    )
+                    usageSpec
+            , decoder = decoder
+            }
         )
 
 
 {-| TODO
 -}
 validateMap : (to -> Result String toMapped) -> Option from to -> Option from toMapped
-validateMap mapFn (Option dataGrabber usageSpec decoder) =
+validateMap mapFn (Option { dataGrabber, usageSpec, decoder }) =
     let
         mappedDecoder =
             Cli.Decode.mapProcessingError
@@ -286,15 +302,17 @@ validateMap mapFn (Option dataGrabber usageSpec decoder) =
                 )
                 decoder
     in
-    Option dataGrabber
-        usageSpec
-        mappedDecoder
+    Option
+        { dataGrabber = dataGrabber
+        , usageSpec = usageSpec
+        , decoder = mappedDecoder
+        }
 
 
 {-| TODO
 -}
 validateMapIfPresent : (to -> Result String toMapped) -> Option (Maybe from) (Maybe to) -> Option (Maybe from) (Maybe toMapped)
-validateMapIfPresent mapFn ((Option dataGrabber usageSpec decoder) as cliSpec) =
+validateMapIfPresent mapFn ((Option { dataGrabber, usageSpec, decoder }) as cliSpec) =
     validateMap
         (\thing ->
             case thing of
@@ -311,8 +329,12 @@ validateMapIfPresent mapFn ((Option dataGrabber usageSpec decoder) as cliSpec) =
 {-| TODO
 -}
 withDefault : to -> Option from (Maybe to) -> Option from to
-withDefault defaultValue (Option dataGrabber usageSpec decoder) =
-    Option dataGrabber usageSpec (Cli.Decode.map (Maybe.withDefault defaultValue) decoder)
+withDefault defaultValue (Option { dataGrabber, usageSpec, decoder }) =
+    Option
+        { dataGrabber = dataGrabber
+        , usageSpec = usageSpec
+        , decoder = Cli.Decode.map (Maybe.withDefault defaultValue) decoder
+        }
 
 
 {-| TODO
@@ -320,22 +342,23 @@ withDefault defaultValue (Option dataGrabber usageSpec decoder) =
 keywordArgList : String -> Option (List String) (List String)
 keywordArgList flagName =
     Option
-        (\{ options } ->
-            options
-                |> List.filterMap
-                    (\(Tokenizer.ParsedOption optionName optionKind) ->
-                        case ( optionName == flagName, optionKind ) of
-                            ( False, _ ) ->
-                                Nothing
+        { dataGrabber =
+            \{ options } ->
+                options
+                    |> List.filterMap
+                        (\(Tokenizer.ParsedOption optionName optionKind) ->
+                            case ( optionName == flagName, optionKind ) of
+                                ( False, _ ) ->
+                                    Nothing
 
-                            ( True, Tokenizer.KeywordArg optionValue ) ->
-                                Just optionValue
+                                ( True, Tokenizer.KeywordArg optionValue ) ->
+                                    Just optionValue
 
-                            ( True, _ ) ->
-                                -- TODO this should probably be an error
-                                Nothing
-                    )
-                |> Ok
-        )
-        (UsageSpec.keywordArg flagName ZeroOrMore)
-        Cli.Decode.decoder
+                                ( True, _ ) ->
+                                    -- TODO this should probably be an error
+                                    Nothing
+                        )
+                    |> Ok
+        , usageSpec = UsageSpec.keywordArg flagName ZeroOrMore
+        , decoder = Cli.Decode.decoder
+        }

@@ -457,7 +457,7 @@ expectFlag flagName (CommandBuilder ({ usageSpecs, decoder } as command)) =
 
 -}
 with : Option from to -> CommandBuilder (to -> msg) -> CommandBuilder msg
-with (Option dataGrabber usageSpec optionsDecoder) ((CommandBuilder ({ decoder, usageSpecs } as command)) as fullCommand) =
+with (Option innerOption) ((CommandBuilder ({ decoder, usageSpecs } as command)) as fullCommand) =
     CommandBuilder
         { command
             | decoder =
@@ -467,8 +467,8 @@ with (Option dataGrabber usageSpec optionsDecoder) ((CommandBuilder ({ decoder, 
                     , usageSpecs = optionsAndOperands.usageSpecs
                     , operandsSoFar = UsageSpec.operandCount usageSpecs
                     }
-                        |> dataGrabber
-                        |> Result.andThen (Cli.Decode.decodeFunction optionsDecoder)
+                        |> innerOption.dataGrabber
+                        |> Result.andThen (Cli.Decode.decodeFunction innerOption.decoder)
                         |> Result.andThen
                             (\( validationErrors, fromValue ) ->
                                 case
@@ -481,7 +481,7 @@ with (Option dataGrabber usageSpec optionsDecoder) ((CommandBuilder ({ decoder, 
                                     value ->
                                         value
                             )
-            , usageSpecs = usageSpecs ++ [ usageSpec ]
+            , usageSpecs = usageSpecs ++ [ innerOption.usageSpec ]
         }
 
 
