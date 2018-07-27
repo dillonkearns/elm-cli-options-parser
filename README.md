@@ -105,7 +105,7 @@ because I found them to be the most intuitive and unambiguous.
 
 ## Feedback Wanted On
 
-### Command.withoutRestArgs/withRestArgs
+### Command.end/endWith
 
 This is needed to enforce the constraint that
 this needs to be called once I have the number of arguments that came before it...

@@ -57,7 +57,7 @@ commands =
                     , "console" => Console
                     ]
             )
-        |> Command.withRestArgs "TESTFILES"
+        |> Command.endWith (Option.restArgs "TESTFILES")
         |> Command.map RunTests
     ]
 
