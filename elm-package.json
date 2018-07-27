@@ -9,7 +9,6 @@
     "exposed-modules": [
         "Cli.OptionsParser",
         "Cli.Option",
-        "Cli.EndingOption",
         "Cli.Command",
         "Cli.Validate",
         "Cli.ExitStatus"
