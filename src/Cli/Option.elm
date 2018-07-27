@@ -340,24 +340,22 @@ withDefault defaultValue (Option { dataGrabber, usageSpec, decoder }) =
 -}
 keywordArgList : String -> Option (List String) (List String)
 keywordArgList flagName =
-    Option
-        { dataGrabber =
-            \{ options } ->
-                options
-                    |> List.filterMap
-                        (\(Tokenizer.ParsedOption optionName optionKind) ->
-                            case ( optionName == flagName, optionKind ) of
-                                ( False, _ ) ->
-                                    Nothing
+    buildOption
+        (\{ options } ->
+            options
+                |> List.filterMap
+                    (\(Tokenizer.ParsedOption optionName optionKind) ->
+                        case ( optionName == flagName, optionKind ) of
+                            ( False, _ ) ->
+                                Nothing
 
-                                ( True, Tokenizer.KeywordArg optionValue ) ->
-                                    Just optionValue
+                            ( True, Tokenizer.KeywordArg optionValue ) ->
+                                Just optionValue
 
-                                ( True, _ ) ->
-                                    -- TODO this should probably be an error
-                                    Nothing
-                        )
-                    |> Ok
-        , usageSpec = UsageSpec.keywordArg flagName ZeroOrMore
-        , decoder = Cli.Decode.decoder
-        }
+                            ( True, _ ) ->
+                                -- TODO this should probably be an error
+                                Nothing
+                    )
+                |> Ok
+        )
+        (UsageSpec.keywordArg flagName ZeroOrMore)
