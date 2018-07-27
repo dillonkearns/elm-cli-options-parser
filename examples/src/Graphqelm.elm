@@ -27,21 +27,21 @@ commands : List (Command GraphqelmCommand)
 commands =
     [ Command.build PrintVersion
         |> Command.expectFlag "version"
-        |> Command.withoutRestArgs
+        |> Command.end
     , Command.build FromUrl
         |> with (Option.positionalArg "url")
         |> with baseOption
         |> with (Option.optionalKeywordArg "output")
         |> with (Option.flag "excludeDeprecated")
         |> with (Option.keywordArgList "header")
-        |> Command.withoutRestArgs
+        |> Command.end
         |> Command.withDoc "generate files based on the schema at `url`"
     , Command.build FromFile
         |> with (Option.requiredKeywordArg "introspection-file")
         |> with baseOption
         |> with (Option.optionalKeywordArg "output")
         |> with (Option.flag "excludeDeprecated")
-        |> Command.withoutRestArgs
+        |> Command.end
     ]
 
 

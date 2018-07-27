@@ -4,6 +4,7 @@ module Cli.Command
         , CommandBuilder
         , build
         , buildSubCommand
+        , end
         , endWith
         , expectFlag
         , getSubCommand
@@ -16,7 +17,6 @@ module Cli.Command
         , withDoc
         , withOptionalPositionalArg
           -- , withOptionalPositionalArgAndRestArgs
-        , withoutRestArgs
         )
 
 {-| TODO
@@ -30,7 +30,7 @@ module Cli.Command
 
 ## End Building
 
-@docs withoutRestArgs, withOptionalPositionalArg
+@docs end, withOptionalPositionalArg
 
 The new way:
 
@@ -235,7 +235,7 @@ The command will fail if any unspecific positional arguments are passed in.
 
     initCommand =
         Command.buildSubCommand "init" Init
-            |> Command.withoutRestArgs
+            |> Command.end
 
 
     {-
@@ -246,8 +246,8 @@ The command will fail if any unspecific positional arguments are passed in.
     -}
 
 -}
-withoutRestArgs : CommandBuilder msg -> Command msg
-withoutRestArgs (CommandBuilder record) =
+end : CommandBuilder msg -> Command msg
+end (CommandBuilder record) =
     Command record
 
 
@@ -408,7 +408,7 @@ expectFlag flagName (CommandBuilder ({ usageSpecs, decoder } as command)) =
                 (Cli.Option.optionalKeywordArg "number"
                     |> Cli.Option.validateMapIfPresent String.toInt
                 )
-            |> Command.withoutRestArgs
+            |> Command.end
             |> Command.map Log
 
         -- ...
@@ -513,7 +513,7 @@ git init # initialize a git repository
       gitInitCommand : Command GitCommand
       gitInitCommand =
         Command.build Init
-         |> Command.withoutRestArgs
+         |> Command.end
          |> Command.withDoc "initialize a git repository"
 
 -}

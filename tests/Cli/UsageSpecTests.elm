@@ -19,7 +19,7 @@ all =
                 (Command.build (,)
                     |> Command.with (Option.requiredKeywordArg "first-name")
                     |> Command.with (Option.requiredKeywordArg "last-name")
-                    |> Command.withoutRestArgs
+                    |> Command.end
                 )
                     |> Command.synopsis "greet"
                     |> Expect.equal "greet --first-name <first-name> --last-name <last-name>"
@@ -27,7 +27,7 @@ all =
             \() ->
                 Command.build (,)
                     |> Command.expectFlag "version"
-                    |> Command.withoutRestArgs
+                    |> Command.end
                     |> Command.synopsis "greet"
                     |> Expect.equal "greet --version"
         , test "print synopsis with optional arg" <|
@@ -35,14 +35,14 @@ all =
                 Command.build (,)
                     |> Command.with (Option.requiredKeywordArg "name")
                     |> Command.with (Option.optionalKeywordArg "prefix")
-                    |> Command.withoutRestArgs
+                    |> Command.end
                     |> Command.synopsis "greet"
                     |> Expect.equal "greet --name <name> [--prefix <prefix>]"
         , test "print synopsis with required operand" <|
             \() ->
                 Command.build identity
                     |> Command.with (Option.positionalArg "MyApp.elm")
-                    |> Command.withoutRestArgs
+                    |> Command.end
                     |> Command.synopsis "elm-interop"
                     |> Expect.equal "elm-interop <MyApp.elm>"
         , test "synopsis for optional positional argument" <|
@@ -56,7 +56,7 @@ all =
                 Command.build (,)
                     |> Command.with (Option.requiredKeywordArg "name")
                     |> Command.with (Option.optionalKeywordArg "prefix")
-                    |> Command.withoutRestArgs
+                    |> Command.end
                     |> Command.withDoc "greets somebody in your terminal"
                     |> Command.synopsis "greet"
                     |> Expect.equal "greet --name <name> [--prefix <prefix>] # greets somebody in your terminal"
@@ -65,7 +65,7 @@ all =
                 (Command.build identity
                     |> Command.with (Option.keywordArgList "header")
                 )
-                    |> Command.withoutRestArgs
+                    |> Command.end
                     |> Command.synopsis "curl"
                     |> Expect.equal "curl [--header <header>]..."
         , test "print rest operands synopsis" <|
@@ -84,7 +84,7 @@ all =
         , test "shows sub commands" <|
             \() ->
                 Command.buildSubCommand "init" identity
-                    |> Command.withoutRestArgs
+                    |> Command.end
                     |> Command.synopsis "elm-test"
                     |> Expect.equal "elm-test init"
         , test "mutually exclusive keyword arg" <|
@@ -98,7 +98,7 @@ all =
                                 , "console" => 123
                                 ]
                         )
-                    |> Command.withoutRestArgs
+                    |> Command.end
                     |> Command.synopsis "elm-test"
                     |> Expect.equal "elm-test --report <json|junit|console>"
         , test "mutually exclusive positional arg" <|
@@ -112,14 +112,14 @@ all =
                                 , "console" => 123
                                 ]
                         )
-                    |> Command.withoutRestArgs
+                    |> Command.end
                     |> Command.synopsis "elm-test"
                     |> Expect.equal "elm-test <json|junit|console>"
         , test "sub-command with flag" <|
             \() ->
                 Command.buildSubCommand "log" identity
                     |> Command.with (Option.flag "stat")
-                    |> Command.withoutRestArgs
+                    |> Command.end
                     |> Command.synopsis "git"
                     |> Expect.equal "git log [--stat]"
         ]

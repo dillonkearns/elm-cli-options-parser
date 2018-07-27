@@ -15,7 +15,7 @@ all =
                     cli =
                         [ Command.build 123
                             |> Command.expectFlag "help"
-                            |> Command.withoutRestArgs
+                            |> Command.end
                         ]
                 in
                 Cli.LowLevel.try cli [ "", "", "--help" ]
@@ -26,7 +26,7 @@ all =
                     cli =
                         [ Command.build 123
                             |> Command.expectFlag "help"
-                            |> Command.withoutRestArgs
+                            |> Command.end
                         ]
                 in
                 Cli.LowLevel.try cli [ "", "" ]
@@ -37,7 +37,7 @@ all =
                     cli =
                         [ Command.build 123
                             |> Command.expectFlag "help"
-                            |> Command.withoutRestArgs
+                            |> Command.end
                         ]
                 in
                 Cli.LowLevel.try cli [ "", "", "--unknown-flag" ]
@@ -48,10 +48,10 @@ all =
                     cli =
                         [ Command.build 123
                             |> Command.expectFlag "help"
-                            |> Command.withoutRestArgs
+                            |> Command.end
                         , Command.build 456
                             |> Command.expectFlag "version"
-                            |> Command.withoutRestArgs
+                            |> Command.end
                         ]
                 in
                 Cli.LowLevel.try cli [ "", "", "--unknown-flag" ]
@@ -62,7 +62,7 @@ all =
                     cli =
                         [ Command.build 123
                             |> Command.expectFlag "version"
-                            |> Command.withoutRestArgs
+                            |> Command.end
                         ]
                 in
                 Cli.LowLevel.try cli [ "", "", "--help" ]
@@ -81,9 +81,9 @@ all =
                     cli =
                         [ Command.build 123
                             |> Command.expectFlag "help"
-                            |> Command.withoutRestArgs
+                            |> Command.end
                         , Command.buildSubCommand "sub" 456
-                            |> Command.withoutRestArgs
+                            |> Command.end
                         ]
                 in
                 Cli.LowLevel.try cli [ "", "", "--unknown-flag" ]

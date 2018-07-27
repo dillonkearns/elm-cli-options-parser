@@ -46,7 +46,7 @@ type alias Program msg =
     commands =
         [ Command.buildSubCommand "clone" Clone
             |> with (Cli.Option.positionalArg "repository")
-            |> Command.withoutRestArgs
+            |> Command.end
         ]
 
     argv : List String

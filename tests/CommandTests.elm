@@ -42,23 +42,23 @@ all =
                     expectMatch [ "--help" ]
                         (Command.build Help
                             |> Command.expectFlag "help"
-                            |> Command.withoutRestArgs
+                            |> Command.end
                         )
                         Help
             , test "version command" <|
                 \() ->
                     expectMatch [ "--version" ]
-                        (Command.build Version |> Command.expectFlag "version" |> Command.withoutRestArgs)
+                        (Command.build Version |> Command.expectFlag "version" |> Command.end)
                         Version
             , test "matching non-first element in list" <|
                 \() ->
-                    expectNoMatch [ "unused", "--version" ] (Command.build Version |> Command.expectFlag "version" |> Command.withoutRestArgs)
+                    expectNoMatch [ "unused", "--version" ] (Command.build Version |> Command.expectFlag "version" |> Command.end)
             , test "command with operand" <|
                 \() ->
                     expectMatch [ "http://my-domain.com" ]
                         (Command.build OpenUrl
                             |> Command.with (Option.positionalArg "url")
-                            |> Command.withoutRestArgs
+                            |> Command.end
                         )
                         (OpenUrl "http://my-domain.com")
             , test "command with optional positional arg present" <|
@@ -89,7 +89,7 @@ all =
                         (Command.build (,)
                             |> Command.with (Option.positionalArg "url")
                             |> Command.with (Option.positionalArg "path/to/file")
-                            |> Command.withoutRestArgs
+                            |> Command.end
                         )
                         ( "http://my-domain.com", "./file.txt" )
             , test "detects that optional flag is absent" <|
@@ -98,7 +98,7 @@ all =
                         (Command.build OpenUrlWithFlag
                             |> Command.with (Option.positionalArg "url")
                             |> Command.with (Option.flag "flag")
-                            |> Command.withoutRestArgs
+                            |> Command.end
                         )
                         (OpenUrlWithFlag "http://my-domain.com" False)
             , test "detects that optional flag is present" <|
@@ -107,7 +107,7 @@ all =
                         (Command.build OpenUrlWithFlag
                             |> Command.with (Option.positionalArg "url")
                             |> Command.with (Option.flag "flag")
-                            |> Command.withoutRestArgs
+                            |> Command.end
                         )
                         (OpenUrlWithFlag "http://my-domain.com" True)
             , test "non-matching option" <|
@@ -115,14 +115,14 @@ all =
                     expectNoMatch [ "--version" ]
                         (Command.build Help
                             |> Command.expectFlag "help"
-                            |> Command.withoutRestArgs
+                            |> Command.end
                         )
             , test "empty args when flag is expected" <|
                 \() ->
                     expectNoMatch []
                         (Command.build Help
                             |> Command.expectFlag "help"
-                            |> Command.withoutRestArgs
+                            |> Command.end
                         )
             , test "option with argument" <|
                 \() ->
@@ -130,7 +130,7 @@ all =
                         (Command.build (,)
                             |> Command.with (Option.requiredKeywordArg "name")
                             |> Command.with (Option.optionalKeywordArg "prefix")
-                            |> Command.withoutRestArgs
+                            |> Command.end
                         )
                         ( "Deanna", Just "Hello" )
             , test "optional option with argument" <|
@@ -138,7 +138,7 @@ all =
                     expectMatch [ "--name", "Deanna" ]
                         (Command.build Name
                             |> Command.with (Option.requiredKeywordArg "name")
-                            |> Command.withoutRestArgs
+                            |> Command.end
                         )
                         (Name "Deanna")
             , test "option with multiple required string arguments" <|
@@ -152,7 +152,7 @@ all =
                         (Command.build FullName
                             |> Command.with (Option.requiredKeywordArg "first-name")
                             |> Command.with (Option.requiredKeywordArg "last-name")
-                            |> Command.withoutRestArgs
+                            |> Command.end
                         )
                         (FullName "Deanna" "Troi")
             , test "doesn't match if operands are present when none are expected" <|
@@ -167,7 +167,7 @@ all =
                         (Command.build FullName
                             |> Command.with (Option.requiredKeywordArg "first-name")
                             |> Command.with (Option.requiredKeywordArg "last-name")
-                            |> Command.withoutRestArgs
+                            |> Command.end
                         )
             , test "extracts multiple params" <|
                 \() ->
@@ -179,7 +179,7 @@ all =
                         ]
                         (Command.build identity
                             |> Command.with (Option.keywordArgList "header")
-                            |> Command.withoutRestArgs
+                            |> Command.end
                         )
                         [ "abc123", "def456" ]
             , test "doesn't match when unexpected options are present" <|
@@ -190,7 +190,7 @@ all =
                         ]
                         (Command.build identity
                             |> Command.with (Option.flag "verbose")
-                            |> Command.withoutRestArgs
+                            |> Command.end
                         )
             , test "rest operands is empty with no operands" <|
                 \() ->
@@ -223,13 +223,13 @@ all =
                 \() ->
                     expectNoMatch [ "start" ]
                         (Command.buildSubCommand "help" 123
-                            |> Command.withoutRestArgs
+                            |> Command.end
                         )
             , test "matches if sub command is first word" <|
                 \() ->
                     expectMatch [ "help" ]
                         (Command.buildSubCommand "help" 123
-                            |> Command.withoutRestArgs
+                            |> Command.end
                         )
                         123
             ]
@@ -242,7 +242,7 @@ all =
                                 (Option.requiredKeywordArg "name"
                                     |> Option.validate (\_ -> Validate.Invalid "Invalid")
                                 )
-                            |> Command.withoutRestArgs
+                            |> Command.end
                         )
                         [ { name = "name", invalidReason = "Invalid", valueAsString = toString "Bob" } ]
             , test "validate if present when present and invalid" <|
@@ -253,7 +253,7 @@ all =
                                 (Option.optionalKeywordArg "name"
                                     |> Option.validateIfPresent (\_ -> Validate.Invalid "Invalid")
                                 )
-                            |> Command.withoutRestArgs
+                            |> Command.end
                         )
                         [ { name = "name", invalidReason = "Invalid", valueAsString = toString (Just "Bob") } ]
             , test "validate if present when absent and invalid" <|
@@ -264,7 +264,7 @@ all =
                                 (Option.optionalKeywordArg "name"
                                     |> Option.validateIfPresent (\_ -> Validate.Invalid "Invalid")
                                 )
-                            |> Command.withoutRestArgs
+                            |> Command.end
                         )
                         Nothing
             , test "fails when validation function fails" <|
@@ -281,7 +281,7 @@ all =
                                                 Validate.Invalid "Must be 3 characters long"
                                         )
                                 )
-                            |> Command.withoutRestArgs
+                            |> Command.end
                         )
                         [ { name = "name", invalidReason = "Must be 3 characters long", valueAsString = toString "Robert" } ]
             , test "succeeds when validation function passes" <|
@@ -298,7 +298,7 @@ all =
                                                 Validate.Invalid "Must be 3 characters long"
                                         )
                                 )
-                            |> Command.withoutRestArgs
+                            |> Command.end
                         )
                         "Bob"
             , test "map validation" <|
@@ -309,7 +309,7 @@ all =
                                 (Option.requiredKeywordArg "fuzz"
                                     |> Option.validateMap String.toInt
                                 )
-                            |> Command.withoutRestArgs
+                            |> Command.end
                         )
                         123
             , test "oneOf not default" <|
@@ -322,7 +322,7 @@ all =
                                         [ "json" => Json
                                         ]
                                 )
-                            |> Command.withoutRestArgs
+                            |> Command.end
                         )
                         Json
             , test "oneOf invalid option" <|
@@ -335,7 +335,7 @@ all =
                                         [ "json" => Json
                                         ]
                                 )
-                            |> Command.withoutRestArgs
+                            |> Command.end
                         )
                         [ { name = "report", invalidReason = "Must be one of [json]", valueAsString = "\"invalidOption\"" } ]
             , test "failed map validation" <|
@@ -346,7 +346,7 @@ all =
                                 (Option.requiredKeywordArg "fuzz"
                                     |> Option.validateMap String.toInt
                                 )
-                            |> Command.withoutRestArgs
+                            |> Command.end
                         )
                         [ { name = "fuzz"
                           , invalidReason = "could not convert string 'abcdefg' to an Int"
@@ -364,7 +364,7 @@ all =
                                 (Option.positionalArg "operand"
                                     |> Option.map String.length
                                 )
-                            |> Command.withoutRestArgs
+                            |> Command.end
                         )
                         5
             , test "uses default when option not present" <|
@@ -376,7 +376,7 @@ all =
                                 (Option.optionalKeywordArg "output"
                                     |> Option.withDefault "elm.js"
                                 )
-                            |> Command.withoutRestArgs
+                            |> Command.end
                         )
                         "elm.js"
             , test "map flag to union" <|
@@ -390,7 +390,7 @@ all =
                                         , absent = NoWatch
                                         }
                                 )
-                            |> Command.withoutRestArgs
+                            |> Command.end
                         )
                         Watch
             , test "withDefault uses actual option when option is present" <|
@@ -402,7 +402,7 @@ all =
                                 (Option.optionalKeywordArg "output"
                                     |> Option.withDefault "elm.js"
                                 )
-                            |> Command.withoutRestArgs
+                            |> Command.end
                         )
                         "bundle.js"
             , test "hardcoded passes value through" <|
@@ -411,7 +411,7 @@ all =
                         []
                         (Command.build identity
                             |> Command.hardcoded "hardcoded value"
-                            |> Command.withoutRestArgs
+                            |> Command.end
                         )
                         "hardcoded value"
             ]

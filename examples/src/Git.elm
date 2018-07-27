@@ -33,11 +33,11 @@ cli =
 commands : List (Command GitCommand)
 commands =
     [ Command.buildSubCommand "init" Init
-        |> Command.withoutRestArgs
+        |> Command.end
         |> Command.withDoc "initialize a git repository"
     , Command.buildSubCommand "clone" Clone
         |> with (Cli.Option.positionalArg "repository")
-        |> Command.withoutRestArgs
+        |> Command.end
     , Command.map Log logCommand
     ]
 

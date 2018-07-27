@@ -35,7 +35,7 @@ cli =
 commands : List (Command ElmTestCommand)
 commands =
     [ Command.buildSubCommand "init" Init
-        |> Command.withoutRestArgs
+        |> Command.end
     , Command.build RunTestsRecord
         |> with
             (Option.optionalKeywordArg "fuzz"

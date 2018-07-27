@@ -36,7 +36,7 @@ try commands argv =
         maybeShowHelpMatch =
             Command.build ShowHelp
                 |> Command.expectFlag "help"
-                |> Command.withoutRestArgs
+                |> Command.end
                 |> Command.tryMatch (argv |> List.drop 2)
                 |> (\matchResult ->
                         case matchResult of
@@ -51,7 +51,7 @@ try commands argv =
         maybeShowVersionMatch =
             Command.build ShowVersion
                 |> Command.expectFlag "version"
-                |> Command.withoutRestArgs
+                |> Command.end
                 |> Command.tryMatch (argv |> List.drop 2)
                 |> (\matchResult ->
                         case matchResult of

@@ -21,7 +21,7 @@ commands =
     [ Command.build Greet
         |> Command.with (Option.requiredKeywordArg "name")
         |> Command.with (Option.optionalKeywordArg "greeting")
-        |> Command.withoutRestArgs
+        |> Command.end
     ]
 
 
