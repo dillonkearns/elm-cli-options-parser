@@ -32,6 +32,18 @@ type alias LogOptions =
     , maybeRevisionRange : Maybe String
     }
 
+logCommand : Command LogOptions
+logCommand =
+    Command.buildSubCommand "log" LogOptions
+        |> with (Cli.Option.optionalKeywordArg "author")
+        |> with
+            (Cli.Option.optionalKeywordArg "max-count"
+                |> Cli.Option.validateMapIfPresent String.toInt
+            )
+        |> with (Cli.Option.flag "stat")
+        |> Command.endWith
+            (Cli.Option.optionalPositionalArg "revision range")
+
 
 cli : Cli.OptionsParser.Program GitCommand
 cli =
@@ -43,16 +55,7 @@ cli =
 
 commands : List (Command GitCommand)
 commands =
-    [ Command.buildSubCommand "log" LogOptions
-        |> with (Option.optionalKeywordArg "author")
-        |> with
-            (Option.optionalKeywordArg "max-count"
-                |> Option.validateMapIfPresent String.toInt
-            )
-        |> with (Option.flag "stat")
-        |> Command.endWith
-            (Option.optionalPositionalArg "revision range")
-        |> Command.map Log
+    [ Command.map Log logCommand
       -- ... `Command`s for `Init`, `Clone`, etc. here
       -- See `examples` folder
     ]
