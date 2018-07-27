@@ -50,7 +50,8 @@ commands =
                 |> Cli.Option.validateMapIfPresent String.toInt
             )
         |> with (Cli.Option.flag "stat")
-        |> Command.withOptionalPositionalArg "revision range"
+        |> Command.endWith
+            (Cli.Option.optionalPositionalArg "revision range")
         |> Command.map Log
       -- ... `Command`s for `Init`, `Clone`, etc. here
       -- See `examples` folder

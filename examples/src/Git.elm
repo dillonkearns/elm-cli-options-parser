@@ -45,7 +45,8 @@ commands =
                 |> Cli.Option.validateMapIfPresent String.toInt
             )
         |> with (Cli.Option.flag "stat")
-        |> Command.endWith (Cli.Option.optionalPositionalArg "revision range")
+        |> Command.endWith
+            (Cli.Option.optionalPositionalArg "revision range")
         |> Command.map Log
     ]
 
