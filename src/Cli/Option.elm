@@ -85,11 +85,11 @@ type alias DataGrabber decodesTo =
 {-| TODO
 -}
 validate : (to -> Validate.ValidationResult) -> Option from to -> Option from to
-validate validateFunction (Option { dataGrabber, usageSpec, decoder }) =
+validate validateFunction (Option option) =
     let
         mappedDecoder : Cli.Decode.Decoder from to
         mappedDecoder =
-            decoder
+            option.decoder
                 |> Cli.Decode.mapValidationErrors
                     (\value ->
                         case validateFunction value of
@@ -98,16 +98,15 @@ validate validateFunction (Option { dataGrabber, usageSpec, decoder }) =
 
                             Validate.Invalid invalidReason ->
                                 Just
-                                    { name = UsageSpec.name usageSpec
+                                    { name = UsageSpec.name option.usageSpec
                                     , invalidReason = invalidReason
                                     , valueAsString = toString value
                                     }
                     )
     in
     Option
-        { dataGrabber = dataGrabber
-        , usageSpec = usageSpec
-        , decoder = mappedDecoder
+        { option
+            | decoder = mappedDecoder
         }
 
 
