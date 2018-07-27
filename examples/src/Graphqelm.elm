@@ -45,7 +45,7 @@ commands =
     ]
 
 
-baseOption : Option.Option (Maybe String) (Maybe String)
+baseOption : Option.Option (Maybe String) (Maybe String) Option.MiddleOption
 baseOption =
     Option.optionalKeywordArg "base"
         |> Option.validateIfPresent
