@@ -9,6 +9,7 @@ module Cli.Option
         , mapFlag
         , oneOf
         , optionalKeywordArg
+        , optionalPositionalArg
         , positionalArg
         , requiredKeywordArg
         , validate
@@ -38,6 +39,11 @@ module Cli.Option
 @docs flag
 
 
+## Ending Options
+
+@docs optionalPositionalArg
+
+
 ## Mutually Exclusive Values
 
 @docs oneOf
@@ -64,7 +70,7 @@ import Tokenizer
 
 {-| TODO
 -}
-type Option from to
+type Option from to middleOrEnding
     = Option (InnerOption from to)
 
 
@@ -104,7 +110,7 @@ type alias DataGrabber decodesTo =
 
 {-| TODO
 -}
-validate : (to -> Validate.ValidationResult) -> Option from to -> Option from to
+validate : (to -> Validate.ValidationResult) -> Option from to anything -> Option from to anything
 validate validateFunction (Option option) =
     let
         mappedDecoder : Cli.Decode.Decoder from to
@@ -132,7 +138,7 @@ validate validateFunction (Option option) =
 
 {-| TODO
 -}
-validateIfPresent : (to -> Validate.ValidationResult) -> Option from (Maybe to) -> Option from (Maybe to)
+validateIfPresent : (to -> Validate.ValidationResult) -> Option from (Maybe to) anything -> Option from (Maybe to) anything
 validateIfPresent validateFunction cliSpec =
     validate
         (\maybeValue ->
@@ -148,7 +154,7 @@ validateIfPresent validateFunction cliSpec =
 
 {-| TODO
 -}
-positionalArg : String -> Option String String
+positionalArg : String -> Option String String MiddleOption
 positionalArg operandDescription =
     buildOption
         (\{ usageSpecs, operands, operandsSoFar } ->
@@ -167,7 +173,7 @@ positionalArg operandDescription =
 
 {-| TODO
 -}
-optionalKeywordArg : String -> Option (Maybe String) (Maybe String)
+optionalKeywordArg : String -> Option (Maybe String) (Maybe String) MiddleOption
 optionalKeywordArg optionName =
     buildOption
         (\{ operands, options } ->
@@ -190,7 +196,7 @@ optionalKeywordArg optionName =
 
 {-| TODO
 -}
-requiredKeywordArg : String -> Option String String
+requiredKeywordArg : String -> Option String String MiddleOption
 requiredKeywordArg optionName =
     buildOption
         (\{ operands, options } ->
@@ -213,7 +219,7 @@ requiredKeywordArg optionName =
 
 {-| TODO
 -}
-flag : String -> Option Bool Bool
+flag : String -> Option Bool Bool MiddleOption
 flag flagName =
     buildOption
         (\{ options } ->
@@ -228,7 +234,7 @@ flag flagName =
         (UsageSpec.flag flagName Optional)
 
 
-buildOption : DataGrabber anything -> UsageSpec -> Option anything anything
+buildOption : DataGrabber a -> UsageSpec -> Option a a anything
 buildOption dataGrabber usageSpec =
     Option
         { dataGrabber = dataGrabber
@@ -239,14 +245,14 @@ buildOption dataGrabber usageSpec =
 
 {-| TODO
 -}
-map : (toRaw -> toMapped) -> Option from toRaw -> Option from toMapped
+map : (toRaw -> toMapped) -> Option from toRaw anything -> Option from toMapped anything
 map mapFn (Option ({ dataGrabber, usageSpec, decoder } as option)) =
     Option { option | decoder = Cli.Decode.map mapFn decoder }
 
 
 {-| TODO
 -}
-mapFlag : { present : union, absent : union } -> Option from Bool -> Option from union
+mapFlag : { present : union, absent : union } -> Option from Bool anything -> Option from union anything
 mapFlag { present, absent } option =
     option
         |> map
@@ -264,7 +270,7 @@ type alias MutuallyExclusiveValue union =
 
 {-| TODO
 -}
-oneOf : value -> List (MutuallyExclusiveValue value) -> Option from String -> Option from value
+oneOf : value -> List (MutuallyExclusiveValue value) -> Option from String anything -> Option from value anything
 oneOf default list (Option option) =
     validateMap
         (\argValue ->
@@ -300,7 +306,7 @@ oneOf default list (Option option) =
 
 {-| TODO
 -}
-validateMap : (to -> Result String toMapped) -> Option from to -> Option from toMapped
+validateMap : (to -> Result String toMapped) -> Option from to anything -> Option from toMapped anything
 validateMap mapFn (Option option) =
     let
         mappedDecoder =
@@ -328,7 +334,7 @@ validateMap mapFn (Option option) =
 
 {-| TODO
 -}
-validateMapIfPresent : (to -> Result String toMapped) -> Option (Maybe from) (Maybe to) -> Option (Maybe from) (Maybe toMapped)
+validateMapIfPresent : (to -> Result String toMapped) -> Option (Maybe from) (Maybe to) anything -> Option (Maybe from) (Maybe toMapped) anything
 validateMapIfPresent mapFn ((Option { dataGrabber, usageSpec, decoder }) as cliSpec) =
     validateMap
         (\thing ->
@@ -345,7 +351,7 @@ validateMapIfPresent mapFn ((Option { dataGrabber, usageSpec, decoder }) as cliS
 
 {-| TODO
 -}
-withDefault : to -> Option from (Maybe to) -> Option from to
+withDefault : to -> Option from (Maybe to) anything -> Option from to anything
 withDefault defaultValue (Option option) =
     Option
         { option
@@ -358,7 +364,7 @@ withDefault defaultValue (Option option) =
 
 {-| TODO
 -}
-keywordArgList : String -> Option (List String) (List String)
+keywordArgList : String -> Option (List String) (List String) MiddleOption
 keywordArgList flagName =
     buildOption
         (\{ options } ->
@@ -379,3 +385,25 @@ keywordArgList flagName =
                 |> Ok
         )
         (UsageSpec.keywordArg flagName ZeroOrMore)
+
+
+{-| TODO
+-}
+optionalPositionalArg : String -> Option (Maybe String) (Maybe String) EndingOption
+optionalPositionalArg operandDescription =
+    buildOption
+        (\flagsAndOperands ->
+            let
+                operandsSoFar : Int
+                operandsSoFar =
+                    UsageSpec.operandCount flagsAndOperands.usageSpecs
+                        - 1
+
+                maybeArg : Maybe String
+                maybeArg =
+                    flagsAndOperands.operands
+                        |> List.Extra.getAt operandsSoFar
+            in
+            Ok maybeArg
+        )
+        (UsageSpec.optionalPositionalArg operandDescription)

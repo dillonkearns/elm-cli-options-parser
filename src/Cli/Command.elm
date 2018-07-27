@@ -67,7 +67,6 @@ Start the chain using `with`:
 
 import Cli.Command.MatchResult
 import Cli.Decode
-import Cli.EndingOption exposing (EndingOption(EndingOption))
 import Cli.Option exposing (Option(Option))
 import Cli.UsageSpec as UsageSpec exposing (UsageSpec)
 import List.Extra
@@ -456,7 +455,7 @@ expectFlag flagName (CommandBuilder ({ usageSpecs, decoder } as command)) =
         ]
 
 -}
-with : Option from to -> CommandBuilder (to -> msg) -> CommandBuilder msg
+with : Option from to Cli.Option.MiddleOption -> CommandBuilder (to -> msg) -> CommandBuilder msg
 with (Option innerOption) ((CommandBuilder ({ decoder, usageSpecs } as command)) as fullCommand) =
     CommandBuilder
         { command
@@ -487,8 +486,8 @@ with (Option innerOption) ((CommandBuilder ({ decoder, usageSpecs } as command))
 
 {-| TODO
 -}
-endWith : EndingOption from to -> CommandBuilder (to -> msg) -> Command msg
-endWith (EndingOption dataGrabber usageSpec optionsDecoder) ((CommandBuilder ({ decoder, usageSpecs } as command)) as fullCommand) =
+endWith : Option from to Cli.Option.EndingOption -> CommandBuilder (to -> msg) -> Command msg
+endWith (Option innerOption) ((CommandBuilder ({ decoder, usageSpecs } as command)) as fullCommand) =
     Command
         { command
             | decoder =
@@ -498,8 +497,8 @@ endWith (EndingOption dataGrabber usageSpec optionsDecoder) ((CommandBuilder ({ 
                     , usageSpecs = optionsAndOperands.usageSpecs
                     , operandsSoFar = UsageSpec.operandCount usageSpecs
                     }
-                        |> dataGrabber
-                        |> Result.andThen (Cli.Decode.decodeFunction optionsDecoder)
+                        |> innerOption.dataGrabber
+                        |> Result.andThen (Cli.Decode.decodeFunction innerOption.decoder)
                         |> Result.andThen
                             (\( validationErrors, fromValue ) ->
                                 case
@@ -512,7 +511,7 @@ endWith (EndingOption dataGrabber usageSpec optionsDecoder) ((CommandBuilder ({ 
                                     value ->
                                         value
                             )
-            , usageSpecs = usageSpecs ++ [ usageSpec ]
+            , usageSpecs = usageSpecs ++ [ innerOption.usageSpec ]
         }
 
 
