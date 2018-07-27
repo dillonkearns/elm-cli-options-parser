@@ -220,8 +220,8 @@ buildOption dataGrabber usageSpec =
 {-| TODO
 -}
 map : (toRaw -> toMapped) -> Option from toRaw -> Option from toMapped
-map mapFn (Option ({ dataGrabber, usageSpec, decoder } as innerOption)) =
-    Option { innerOption | decoder = Cli.Decode.map mapFn decoder }
+map mapFn (Option ({ dataGrabber, usageSpec, decoder } as option)) =
+    Option { option | decoder = Cli.Decode.map mapFn decoder }
 
 
 {-| TODO
