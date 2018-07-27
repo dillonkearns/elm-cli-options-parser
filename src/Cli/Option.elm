@@ -282,7 +282,7 @@ oneOf default list (Option { dataGrabber, usageSpec, decoder }) =
 {-| TODO
 -}
 validateMap : (to -> Result String toMapped) -> Option from to -> Option from toMapped
-validateMap mapFn (Option { dataGrabber, usageSpec, decoder }) =
+validateMap mapFn (Option option) =
     let
         mappedDecoder =
             Cli.Decode.mapProcessingError
@@ -293,18 +293,17 @@ validateMap mapFn (Option { dataGrabber, usageSpec, decoder }) =
 
                         Err invalidReason ->
                             Cli.Decode.UnrecoverableValidationError
-                                { name = UsageSpec.name usageSpec
+                                { name = UsageSpec.name option.usageSpec
                                 , invalidReason = invalidReason
                                 , valueAsString = toString value
                                 }
                                 |> Err
                 )
-                decoder
+                option.decoder
     in
     Option
-        { dataGrabber = dataGrabber
-        , usageSpec = usageSpec
-        , decoder = mappedDecoder
+        { option
+            | decoder = mappedDecoder
         }
 
 
