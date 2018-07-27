@@ -328,11 +328,13 @@ validateMapIfPresent mapFn ((Option { dataGrabber, usageSpec, decoder }) as cliS
 {-| TODO
 -}
 withDefault : to -> Option from (Maybe to) -> Option from to
-withDefault defaultValue (Option { dataGrabber, usageSpec, decoder }) =
+withDefault defaultValue (Option option) =
     Option
-        { dataGrabber = dataGrabber
-        , usageSpec = usageSpec
-        , decoder = Cli.Decode.map (Maybe.withDefault defaultValue) decoder
+        { option
+            | decoder =
+                Cli.Decode.map
+                    (Maybe.withDefault defaultValue)
+                    option.decoder
         }
 
 
