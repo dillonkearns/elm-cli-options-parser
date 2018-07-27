@@ -12,6 +12,7 @@ module Cli.Option
         , optionalPositionalArg
         , positionalArg
         , requiredKeywordArg
+        , restArgs
         , validate
         , validateIfPresent
         , validateMap
@@ -41,7 +42,7 @@ module Cli.Option
 
 ## Ending Options
 
-@docs optionalPositionalArg
+@docs optionalPositionalArg, restArgs
 
 
 ## Mutually Exclusive Values
@@ -407,3 +408,19 @@ optionalPositionalArg operandDescription =
             Ok maybeArg
         )
         (UsageSpec.optionalPositionalArg operandDescription)
+
+
+{-| TODO
+-}
+restArgs : String -> Option (List String) (List String) EndingOption
+restArgs restArgsDescription =
+    buildOption
+        (\({ operands, usageSpecs } as stuff) ->
+            let
+                restArgs =
+                    operands
+                        |> List.drop (UsageSpec.operandCount usageSpecs)
+            in
+            Ok restArgs
+        )
+        (UsageSpec.restArgs restArgsDescription)

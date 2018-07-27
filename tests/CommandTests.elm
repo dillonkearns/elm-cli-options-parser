@@ -197,7 +197,7 @@ all =
                     expectMatch [ "--verbose" ]
                         (Command.build identity
                             |> Command.expectFlag "verbose"
-                            |> Command.withRestArgs "files"
+                            |> Command.endWith (Option.restArgs "files")
                         )
                         []
             , test "rest operands has all operands when there are no required operands" <|
@@ -205,7 +205,7 @@ all =
                     expectMatch [ "--verbose", "rest1", "rest2" ]
                         (Command.build identity
                             |> Command.expectFlag "verbose"
-                            |> Command.withRestArgs "files"
+                            |> Command.endWith (Option.restArgs "files")
                         )
                         [ "rest1", "rest2" ]
             , test "rest operands has all operands when there is a required operand" <|
@@ -214,7 +214,7 @@ all =
                         (Command.build (,)
                             |> Command.expectFlag "something"
                             |> Command.with (Option.positionalArg "operand")
-                            |> Command.withRestArgs "files"
+                            |> Command.endWith (Option.restArgs "files")
                         )
                         ( "operand1", [ "rest1", "rest2" ] )
             ]
