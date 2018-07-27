@@ -48,7 +48,7 @@ all =
         , test "synopsis for optional positional argument" <|
             \() ->
                 Command.build identity
-                    |> Command.withOptionalPositionalArg "revision range"
+                    |> Command.endWith (Option.optionalPositionalArg "revision range")
                     |> Command.synopsis "git"
                     |> Expect.equal "git [<revision range>]"
         , test "print synopsis with doc string" <|
