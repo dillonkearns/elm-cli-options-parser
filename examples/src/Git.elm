@@ -38,7 +38,13 @@ commands =
     , Command.buildSubCommand "clone" Clone
         |> with (Cli.Option.positionalArg "repository")
         |> Command.withoutRestArgs
-    , Command.buildSubCommand "log" LogOptions
+    , Command.map Log logCommand
+    ]
+
+
+logCommand : Command LogOptions
+logCommand =
+    Command.buildSubCommand "log" LogOptions
         |> with (Cli.Option.optionalKeywordArg "author")
         |> with
             (Cli.Option.optionalKeywordArg "max-count"
@@ -47,8 +53,6 @@ commands =
         |> with (Cli.Option.flag "stat")
         |> Command.endWith
             (Cli.Option.optionalPositionalArg "revision range")
-        |> Command.map Log
-    ]
 
 
 dummy : Decoder String
