@@ -1,6 +1,8 @@
 module Cli.Option
     exposing
-        ( Option(Option)
+        ( EndingOption
+        , MiddleOption
+        , Option(Option)
         , flag
         , keywordArgList
         , map
@@ -18,7 +20,7 @@ module Cli.Option
 
 {-|
 
-@docs Option
+@docs Option, MiddleOption, EndingOption
 
 
 ## Positional Arguments
@@ -64,6 +66,24 @@ import Tokenizer
 -}
 type Option from to
     = Option (InnerOption from to)
+
+
+{-| `MiddleOption`s can only be used with `Command.with`.
+
+`EndingOption`s can only be used with `Command.endWith`.
+
+-}
+type MiddleOption
+    = MiddleOption
+
+
+{-| `MiddleOption`s can only be used with `Command.with`.
+
+`EndingOption`s can only be used with `Command.endWith`.
+
+-}
+type EndingOption
+    = EndingOption
 
 
 type alias InnerOption from to =
