@@ -15,7 +15,7 @@ To parse the above command, we could build an `OptionsParser` as follows (this s
 
 ```elm
 import Cli.Command as Command exposing (Command, with)
-import Cli.Option
+import Cli.Option as Option
 import Cli.OptionsParser
 
 
@@ -44,14 +44,14 @@ cli =
 commands : List (Command GitCommand)
 commands =
     [ Command.buildSubCommand "log" LogOptions
-        |> with (Cli.Option.optionalKeywordArg "author")
+        |> with (Option.optionalKeywordArg "author")
         |> with
-            (Cli.Option.optionalKeywordArg "max-count"
-                |> Cli.Option.validateMapIfPresent String.toInt
+            (Option.optionalKeywordArg "max-count"
+                |> Option.validateMapIfPresent String.toInt
             )
-        |> with (Cli.Option.flag "stat")
+        |> with (Option.flag "stat")
         |> Command.endWith
-            (Cli.Option.optionalPositionalArg "revision range")
+            (Option.optionalPositionalArg "revision range")
         |> Command.map Log
       -- ... `Command`s for `Init`, `Clone`, etc. here
       -- See `examples` folder
