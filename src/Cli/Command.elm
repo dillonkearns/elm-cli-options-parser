@@ -17,7 +17,15 @@ module Cli.Command
         , withDoc
         )
 
-{-| TODO
+{-|
+
+
+## Types
+
+You start building with a `CommandBuilder`. At the end,
+turn your `CommandBuilder` into a `Command` by calling
+`Command.end` or `Command.endWith`.
+
 @docs Command, CommandBuilder
 
 
