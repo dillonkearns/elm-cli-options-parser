@@ -1,6 +1,6 @@
 module Cli.LowLevel exposing (MatchResult(..), helpText, try)
 
-import Cli.Command as Command exposing (Command)
+import Cli.Command as Command exposing (ActualCommand)
 import Cli.Command.MatchResult as MatchResult exposing (MatchResult)
 import Cli.Decode
 import Maybe.Extra
@@ -29,7 +29,7 @@ intersection sets =
                 |> Set.intersect first
 
 
-try : List (Command msg) -> List String -> MatchResult msg
+try : List (Command.ActualCommand msg builderStatus) -> List String -> MatchResult msg
 try commands argv =
     let
         maybeShowHelpMatch : Maybe (MatchResult msg)
@@ -117,7 +117,7 @@ oneOf =
         Nothing
 
 
-helpText : String -> List (Command msg) -> String
+helpText : String -> List (ActualCommand msg builderStatus) -> String
 helpText programName commands =
     commands
         |> List.map (Command.synopsis programName)

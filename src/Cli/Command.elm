@@ -1,7 +1,10 @@
 module Cli.Command
     exposing
-        ( Command
+        ( ActualCommand
+        , Command
         , CommandBuilder
+        , CompletedBuilder
+        , InProgressBuilder
         , build
         , buildSubCommand
         , end
@@ -26,7 +29,7 @@ You start building with a `CommandBuilder`. At the end,
 turn your `CommandBuilder` into a `Command` by calling
 `Command.end` or `Command.endWith`.
 
-@docs Command, CommandBuilder
+@docs Command, CommandBuilder, ActualCommand, CompletedBuilder, InProgressBuilder
 
 
 ## Start Building
@@ -80,31 +83,31 @@ import Tokenizer exposing (ParsedOption)
 
 {-| TODO
 -}
-getUsageSpecs : Command decodesTo -> List UsageSpec
-getUsageSpecs (Command { usageSpecs }) =
+getUsageSpecs : ActualCommand decodesTo builderStatus -> List UsageSpec
+getUsageSpecs (ActualCommand { usageSpecs }) =
     usageSpecs
 
 
 {-| Low-level function, for internal use.
 -}
-synopsis : String -> Command decodesTo -> String
+synopsis : String -> ActualCommand decodesTo builderStatus -> String
 synopsis programName command =
     command
-        |> (\(Command record) -> record)
+        |> (\(ActualCommand record) -> record)
         |> UsageSpec.synopsis programName
 
 
 {-| Low-level function, for internal use.
 -}
-getSubCommand : Command msg -> Maybe String
-getSubCommand (Command { buildSubCommand }) =
+getSubCommand : ActualCommand msg builderStatus -> Maybe String
+getSubCommand (ActualCommand { buildSubCommand }) =
     buildSubCommand
 
 
 {-| Low-level function, for internal use.
 -}
-tryMatch : List String -> Command msg -> Cli.Command.MatchResult.MatchResult msg
-tryMatch argv ((Command { usageSpecs, buildSubCommand }) as command) =
+tryMatch : List String -> ActualCommand msg builderStatus -> Cli.Command.MatchResult.MatchResult msg
+tryMatch argv ((ActualCommand { usageSpecs, buildSubCommand }) as command) =
     let
         decoder =
             command
@@ -164,9 +167,9 @@ tryMatch argv ((Command { usageSpecs, buildSubCommand }) as command) =
             Cli.Command.MatchResult.NoMatch (unexpectedOptions_ command options)
 
 
-expectedPositionalArgCountOrFail : Command msg -> Command msg
-expectedPositionalArgCountOrFail (Command ({ decoder, usageSpecs } as command)) =
-    Command
+expectedPositionalArgCountOrFail : ActualCommand msg builderStatus -> Command msg
+expectedPositionalArgCountOrFail (ActualCommand ({ decoder, usageSpecs } as command)) =
+    ActualCommand
         { command
             | decoder =
                 \({ operands } as stuff) ->
@@ -192,13 +195,13 @@ getDecoder :
         , usageSpecs : List UsageSpec
         }
     -> Result Cli.Decode.ProcessingError ( List Cli.Decode.ValidationError, msg )
-getDecoder (Command { decoder }) =
+getDecoder (ActualCommand { decoder }) =
     decoder
 
 
 failIfUnexpectedOptions : Command msg -> Command msg
-failIfUnexpectedOptions ((Command ({ decoder, usageSpecs } as command)) as fullCommand) =
-    Command
+failIfUnexpectedOptions ((ActualCommand ({ decoder, usageSpecs } as command)) as fullCommand) =
+    ActualCommand
         { command
             | decoder =
                 \flagsAndOperands ->
@@ -213,8 +216,8 @@ failIfUnexpectedOptions ((Command ({ decoder, usageSpecs } as command)) as fullC
         }
 
 
-unexpectedOptions_ : Command msg -> List ParsedOption -> List String
-unexpectedOptions_ (Command { usageSpecs }) options =
+unexpectedOptions_ : ActualCommand msg builderStatus -> List ParsedOption -> List String
+unexpectedOptions_ (ActualCommand { usageSpecs }) options =
     List.filterMap
         (\(Tokenizer.ParsedOption optionName optionKind) ->
             if UsageSpec.optionExists usageSpecs optionName == Nothing then
@@ -225,10 +228,20 @@ unexpectedOptions_ (Command { usageSpecs }) options =
         options
 
 
+{-| -}
+type InProgressBuilder
+    = InProgressBuilder
+
+
+{-| -}
+type CompletedBuilder
+    = CompletedBuilder
+
+
 {-| TODO
 -}
-type CommandBuilder msg
-    = CommandBuilder (CommandRecord msg)
+type ActualCommand msg builderStatus
+    = ActualCommand (CommandRecord msg)
 
 
 {-| Turn a `CommandBuilder` into a `Command` which can be used with `Cli.OptionsParser.run`.
@@ -252,8 +265,8 @@ The command will fail if any unspecific positional arguments are passed in.
 
 -}
 end : CommandBuilder msg -> Command msg
-end (CommandBuilder record) =
-    Command record
+end (ActualCommand record) =
+    ActualCommand record
 
 
 type alias CommandRecord msg =
@@ -266,15 +279,21 @@ type alias CommandRecord msg =
 
 {-| TODO
 -}
-type Command msg
-    = Command (CommandRecord msg)
+type alias Command msg =
+    ActualCommand msg CompletedBuilder
+
+
+{-| TODO
+-}
+type alias CommandBuilder msg =
+    ActualCommand msg InProgressBuilder
 
 
 {-| TODO
 -}
 build : msg -> CommandBuilder msg
 build msgConstructor =
-    CommandBuilder
+    ActualCommand
         { usageSpecs = []
         , description = Nothing
         , decoder = \_ -> Ok ( [], msgConstructor )
@@ -286,7 +305,7 @@ build msgConstructor =
 -}
 buildSubCommand : String -> msg -> CommandBuilder msg
 buildSubCommand buildSubCommandName msgConstructor =
-    CommandBuilder
+    ActualCommand
         { usageSpecs = []
         , description = Nothing
         , decoder = \_ -> Ok ( [], msgConstructor )
@@ -297,8 +316,8 @@ buildSubCommand buildSubCommandName msgConstructor =
 {-| TODO
 -}
 hardcoded : value -> CommandBuilder (value -> msg) -> CommandBuilder msg
-hardcoded hardcodedValue (CommandBuilder ({ decoder } as command)) =
-    CommandBuilder
+hardcoded hardcodedValue (ActualCommand ({ decoder } as command)) =
+    ActualCommand
         { command
             | decoder =
                 \stuff -> resultMap (\fn -> fn hardcodedValue) (decoder stuff)
@@ -308,8 +327,8 @@ hardcoded hardcodedValue (CommandBuilder ({ decoder } as command)) =
 {-| TODO
 -}
 map : (msg -> mappedMsg) -> Command msg -> Command mappedMsg
-map mapFunction (Command ({ decoder } as record)) =
-    Command { record | decoder = decoder >> Result.map (Tuple.mapSecond mapFunction) }
+map mapFunction (ActualCommand ({ decoder } as record)) =
+    ActualCommand { record | decoder = decoder >> Result.map (Tuple.mapSecond mapFunction) }
 
 
 {-| TODO
@@ -323,8 +342,8 @@ resultMap mapFunction result =
 {-| TODO
 -}
 expectFlag : String -> CommandBuilder msg -> CommandBuilder msg
-expectFlag flagName (CommandBuilder ({ usageSpecs, decoder } as command)) =
-    CommandBuilder
+expectFlag flagName (ActualCommand ({ usageSpecs, decoder } as command)) =
+    ActualCommand
         { command
             | usageSpecs = usageSpecs ++ [ UsageSpec.flag flagName Required ]
             , decoder =
@@ -371,8 +390,8 @@ expectFlag flagName (CommandBuilder ({ usageSpecs, decoder } as command)) =
 
 -}
 with : Option from to Cli.Option.MiddleOption -> CommandBuilder (to -> msg) -> CommandBuilder msg
-with (Option innerOption) ((CommandBuilder ({ decoder, usageSpecs } as command)) as fullCommand) =
-    CommandBuilder
+with (Option innerOption) ((ActualCommand ({ decoder, usageSpecs } as command)) as fullCommand) =
+    ActualCommand
         { command
             | decoder =
                 \optionsAndOperands ->
@@ -422,8 +441,8 @@ If you need at least one positional argument, then just use `Cli.Option.position
 
 -}
 endWith : Option from to Cli.Option.EndingOption -> CommandBuilder (to -> msg) -> Command msg
-endWith (Option innerOption) ((CommandBuilder ({ decoder, usageSpecs } as command)) as fullCommand) =
-    Command
+endWith (Option innerOption) ((ActualCommand ({ decoder, usageSpecs } as command)) as fullCommand) =
+    ActualCommand
         { command
             | decoder =
                 \optionsAndOperands ->
@@ -473,8 +492,8 @@ git init # initialize a git repository
 
 -}
 withDoc : String -> Command msg -> Command msg
-withDoc docString (Command commandRecord) =
-    Command
+withDoc docString (ActualCommand commandRecord) =
+    ActualCommand
         { commandRecord
             | description = Just docString
         }

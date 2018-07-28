@@ -7,7 +7,7 @@ module Cli.OptionsParser exposing (Program, RunResult(..), run)
 
 -}
 
-import Cli.Command as Command exposing (Command)
+import Cli.Command as Command exposing (ActualCommand, Command)
 import Cli.ExitStatus exposing (ExitStatus)
 import Cli.LowLevel
 import TypoSuggestion
@@ -24,7 +24,7 @@ type RunResult match
 -}
 type alias Program msg =
     { programName : String
-    , commands : List (Command msg)
+    , commands : List (ActualCommand msg Command.CompletedBuilder)
     , version : String
     }
 
