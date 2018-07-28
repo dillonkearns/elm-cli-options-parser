@@ -264,7 +264,7 @@ The command will fail if any unspecific positional arguments are passed in.
     -}
 
 -}
-end : CommandBuilder msg -> Command msg
+end : ActualCommand msg anything -> Command msg
 end (ActualCommand record) =
     ActualCommand record
 
@@ -491,7 +491,7 @@ git init # initialize a git repository
          |> Command.withDoc "initialize a git repository"
 
 -}
-withDoc : String -> Command msg -> Command msg
+withDoc : String -> ActualCommand msg anything -> ActualCommand msg anything
 withDoc docString (ActualCommand commandRecord) =
     ActualCommand
         { commandRecord

@@ -24,22 +24,19 @@ type alias LogOptions =
 
 cli : Cli.OptionsParser.Program GitCommand
 cli =
-    { programName = "git"
-    , commands = commands
-    , version = "1.2.3"
-    }
-
-
-commands : List (Command GitCommand)
-commands =
-    [ Command.buildSubCommand "init" Init
-        |> Command.end
-        |> Command.withDoc "initialize a git repository"
-    , Command.buildSubCommand "clone" Clone
-        |> with (Cli.Option.positionalArg "repository")
-        |> Command.end
-    , Command.map Log logCommand
-    ]
+    Cli.OptionsParser.empty
+        { programName = "git"
+        , version = "1.2.3"
+        }
+        |> Cli.OptionsParser.add
+            (Command.buildSubCommand "init" Init
+                |> Command.withDoc "initialize a git repository"
+            )
+        |> Cli.OptionsParser.add
+            (Command.buildSubCommand "clone" Clone
+                |> with (Cli.Option.positionalArg "repository")
+            )
+        |> Cli.OptionsParser.add (Command.map Log logCommand)
 
 
 logCommand : Command LogOptions

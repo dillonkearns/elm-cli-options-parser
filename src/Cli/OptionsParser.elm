@@ -1,9 +1,11 @@
-module Cli.OptionsParser exposing (Program, RunResult(..), run)
+module Cli.OptionsParser exposing (Program, RunResult(..), add, empty, run)
 
 {-| TODO
 
 @docs RunResult, Program
 @docs run
+@docs add
+@docs empty
 
 -}
 
@@ -26,6 +28,23 @@ type alias Program msg =
     { programName : String
     , commands : List (ActualCommand msg Command.CompletedBuilder)
     , version : String
+    }
+
+
+{-| -}
+empty : { programName : String, version : String } -> Program decodesTo
+empty { programName, version } =
+    { programName = programName
+    , version = version
+    , commands = []
+    }
+
+
+{-| -}
+add : ActualCommand msg anything -> Program msg -> Program msg
+add command ({ commands } as program) =
+    { program
+        | commands = commands ++ [ Command.end command ]
     }
 
 
