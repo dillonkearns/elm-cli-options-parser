@@ -3,7 +3,7 @@ module Main exposing (main)
 import Cli.Command as Command exposing (Command, with)
 import Cli.ExitStatus
 import Cli.Option as Option
-import Cli.OptionsParser
+import Cli.Program
 import Cli.Validate
 import Json.Decode exposing (..)
 import Ports
@@ -15,7 +15,7 @@ type GraphqelmCommand
     | FromFile String (Maybe String) (Maybe String) Bool
 
 
-cli : Cli.OptionsParser.Program GraphqelmCommand
+cli : Cli.Program.Program GraphqelmCommand
 cli =
     { programName = "graphqelm"
     , commands = commands
@@ -66,11 +66,11 @@ init : Flags -> ( Model, Cmd Msg )
 init flags =
     let
         matchResult =
-            Cli.OptionsParser.run cli flags
+            Cli.Program.run cli flags
 
         toPrint =
             case matchResult of
-                Cli.OptionsParser.SystemMessage exitStatus message ->
+                Cli.Program.SystemMessage exitStatus message ->
                     case exitStatus of
                         Cli.ExitStatus.Failure ->
                             Ports.printAndExitFailure message
@@ -78,7 +78,7 @@ init flags =
                         Cli.ExitStatus.Success ->
                             Ports.printAndExitSuccess message
 
-                Cli.OptionsParser.CustomMatch msg ->
+                Cli.Program.CustomMatch msg ->
                     (case msg of
                         PrintVersion ->
                             "You are on version 3.1.4"

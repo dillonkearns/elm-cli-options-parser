@@ -3,7 +3,7 @@ module Main exposing (main)
 import Cli.Command as Command exposing (Command, with)
 import Cli.ExitStatus
 import Cli.Option as Option
-import Cli.OptionsParser
+import Cli.Program
 import Json.Decode exposing (..)
 import Ports
 
@@ -24,17 +24,17 @@ type alias RunTestsRecord =
     }
 
 
-cli : Cli.OptionsParser.Program ElmTestCommand
+cli : Cli.Program.Program ElmTestCommand
 cli =
     { programName = "elm-test"
     , version = "1.2.3"
     }
-        |> Cli.OptionsParser.program
-        |> Cli.OptionsParser.add
+        |> Cli.Program.program
+        |> Cli.Program.add
             (Command.buildSubCommand "init" Init
                 |> Command.end
             )
-        |> Cli.OptionsParser.add
+        |> Cli.Program.add
             (Command.build RunTestsRecord
                 |> with
                     (Option.optionalKeywordArg "fuzz"
@@ -81,11 +81,11 @@ init : Flags -> ( Model, Cmd Msg )
 init argv =
     let
         matchResult =
-            Cli.OptionsParser.run cli argv
+            Cli.Program.run cli argv
 
         toPrint =
             case matchResult of
-                Cli.OptionsParser.SystemMessage exitStatus message ->
+                Cli.Program.SystemMessage exitStatus message ->
                     case exitStatus of
                         Cli.ExitStatus.Failure ->
                             Ports.printAndExitFailure message
@@ -93,7 +93,7 @@ init argv =
                         Cli.ExitStatus.Success ->
                             Ports.printAndExitSuccess message
 
-                Cli.OptionsParser.CustomMatch msg ->
+                Cli.Program.CustomMatch msg ->
                     (case msg of
                         Init ->
                             "Initializing test suite..."

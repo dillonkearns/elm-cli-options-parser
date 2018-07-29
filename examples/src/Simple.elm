@@ -3,12 +3,12 @@ module Simple exposing (main)
 import Cli.Command as Command
 import Cli.ExitStatus
 import Cli.Option as Option
-import Cli.OptionsParser
+import Cli.Program
 import Json.Decode exposing (..)
 import Ports
 
 
-cli : Cli.OptionsParser.Program Msg
+cli : Cli.Program.Program Msg
 cli =
     { programName = "graphqelm"
     , commands = commands
@@ -46,11 +46,11 @@ init : Flags -> ( Model, Cmd Msg )
 init argv =
     let
         matchResult =
-            Cli.OptionsParser.run cli argv
+            Cli.Program.run cli argv
 
         toPrint =
             case matchResult of
-                Cli.OptionsParser.SystemMessage exitStatus message ->
+                Cli.Program.SystemMessage exitStatus message ->
                     case exitStatus of
                         Cli.ExitStatus.Failure ->
                             Ports.printAndExitFailure message
@@ -58,7 +58,7 @@ init argv =
                         Cli.ExitStatus.Success ->
                             Ports.printAndExitSuccess message
 
-                Cli.OptionsParser.CustomMatch msg ->
+                Cli.Program.CustomMatch msg ->
                     case msg of
                         Greet name maybePrefix ->
                             case maybePrefix of

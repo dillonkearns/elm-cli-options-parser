@@ -3,7 +3,7 @@ module Main exposing (main)
 import Cli.Command as Command exposing (Command, with)
 import Cli.ExitStatus
 import Cli.Option
-import Cli.OptionsParser
+import Cli.Program
 import Json.Decode exposing (..)
 import Ports
 
@@ -23,21 +23,21 @@ type alias LogOptions =
     }
 
 
-cli : Cli.OptionsParser.Program GitCommand
+cli : Cli.Program.Program GitCommand
 cli =
-    Cli.OptionsParser.program
+    Cli.Program.program
         { programName = "git"
         , version = "1.2.3"
         }
-        |> Cli.OptionsParser.add
+        |> Cli.Program.add
             (Command.buildSubCommand "init" Init
                 |> Command.withDoc "initialize a git repository"
             )
-        |> Cli.OptionsParser.add
+        |> Cli.Program.add
             (Command.buildSubCommand "clone" Clone
                 |> with (Cli.Option.positionalArg "repository")
             )
-        |> Cli.OptionsParser.add (Command.map Log logCommand)
+        |> Cli.Program.add (Command.map Log logCommand)
 
 
 logCommand : Command.TerminalCommand LogOptions
@@ -68,13 +68,13 @@ type alias Flags =
 init : Flags -> ( Model, Cmd Msg )
 init argv =
     let
-        matchResult : Cli.OptionsParser.RunResult GitCommand
+        matchResult : Cli.Program.RunResult GitCommand
         matchResult =
-            Cli.OptionsParser.run cli argv
+            Cli.Program.run cli argv
 
         cmd =
             case matchResult of
-                Cli.OptionsParser.SystemMessage exitStatus message ->
+                Cli.Program.SystemMessage exitStatus message ->
                     case exitStatus of
                         Cli.ExitStatus.Failure ->
                             Ports.printAndExitFailure message
@@ -82,7 +82,7 @@ init argv =
                         Cli.ExitStatus.Success ->
                             Ports.printAndExitSuccess message
 
-                Cli.OptionsParser.CustomMatch msg ->
+                Cli.Program.CustomMatch msg ->
                     (case msg of
                         Init ->
                             "Initializing test suite..."

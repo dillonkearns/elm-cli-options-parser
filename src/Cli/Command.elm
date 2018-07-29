@@ -235,7 +235,7 @@ type ActualCommand msg builderStatus
     = ActualCommand (CommandRecord msg)
 
 
-{-| Turn a `CommandBuilder` into a `Command` which can be used with `Cli.OptionsParser.run`.
+{-| Turn a `CommandBuilder` into a `Command` which can be used with `Cli.Program.run`.
 The command will fail if any unspecific positional arguments are passed in.
 
     type GitCommand
@@ -420,7 +420,7 @@ withCommon (Option innerOption) ((ActualCommand ({ decoder, usageSpecs } as comm
         }
 
 
-{-| Turn a `CommandBuilder` into a `Command` which can be used with `Cli.OptionsParser.run`.
+{-| Turn a `CommandBuilder` into a `Command` which can be used with `Cli.Program.run`.
 The command will succeed if any unspecific positional arguments are passed in and will capture them in a list.
 
     type GitCommand

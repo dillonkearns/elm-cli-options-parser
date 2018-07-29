@@ -11,12 +11,12 @@ Take this `git` command:
 git log --author=dillon --max-count=5 --stat a410067
 ```
 
-To parse the above command, we could build an `OptionsParser` as follows (this snippet doesn't include the wiring of the Command-Line options from NodeJS, see the `examples` folder):
+To parse the above command, we could build a `Program` as follows (this snippet doesn't include the wiring of the Command-Line options from NodeJS, see the `examples` folder):
 
 ```elm
 import Cli.Command as Command exposing (Command, with)
 import Cli.Option as Option
-import Cli.OptionsParser
+import Cli.Program
 
 
 type GitCommand
@@ -45,7 +45,7 @@ logCommand =
             (Cli.Option.optionalPositionalArg "revision range")
 
 
-cli : Cli.OptionsParser.Program GitCommand
+cli : Cli.Program.Program GitCommand
 cli =
     { programName = "git"
     , commands = commands

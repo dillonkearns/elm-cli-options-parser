@@ -1,4 +1,4 @@
-module Cli.OptionsParser exposing (Program, RunResult(..), add, program, run)
+module Cli.Program exposing (Program, RunResult(..), add, program, run)
 
 {-| TODO
 
@@ -49,13 +49,13 @@ add command ({ commands } as program) =
     }
 
 
-{-| Run an OptionsParser.Program. See the `examples` folder for end-to-end examples.
+{-| Run an Program.Program. See the `examples` folder for end-to-end examples.
 
     type GitCommand
         = Init
         | Clone String
 
-    cli : Cli.OptionsParser.Program GitCommand
+    cli : Cli.Program.Program GitCommand
     cli =
         { programName = "git"
         , commands = commands
@@ -73,9 +73,9 @@ add command ({ commands } as program) =
     argv =
         [{- passed in as Flags from JavaScript, see `examples` folder. -}]
 
-    matchResult : Cli.OptionsParser.RunResult GitCommand
+    matchResult : Cli.Program.RunResult GitCommand
     matchResult =
-        Cli.OptionsParser.run cli argv
+        Cli.Program.run cli argv
 
 -}
 run : Program msg -> List String -> RunResult msg
