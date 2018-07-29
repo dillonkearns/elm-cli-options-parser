@@ -29,7 +29,7 @@ cli =
     { programName = "elm-test"
     , version = "1.2.3"
     }
-        |> Cli.OptionsParser.empty
+        |> Cli.OptionsParser.program
         |> Cli.OptionsParser.add
             (Command.buildSubCommand "init" Init
                 |> Command.end

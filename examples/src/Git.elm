@@ -25,7 +25,7 @@ type alias LogOptions =
 
 cli : Cli.OptionsParser.Program GitCommand
 cli =
-    Cli.OptionsParser.empty
+    Cli.OptionsParser.program
         { programName = "git"
         , version = "1.2.3"
         }

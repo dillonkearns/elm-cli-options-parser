@@ -1,11 +1,11 @@
-module Cli.OptionsParser exposing (Program, RunResult(..), add, empty, run)
+module Cli.OptionsParser exposing (Program, RunResult(..), add, program, run)
 
 {-| TODO
 
 @docs RunResult, Program
 @docs run
 @docs add
-@docs empty
+@docs program
 
 -}
 
@@ -33,8 +33,8 @@ type alias Program msg =
 
 
 {-| -}
-empty : { programName : String, version : String } -> Program decodesTo
-empty { programName, version } =
+program : { programName : String, version : String } -> Program decodesTo
+program { programName, version } =
     { programName = programName
     , version = version
     , commands = []
