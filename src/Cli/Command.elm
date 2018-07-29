@@ -3,8 +3,6 @@ module Cli.Command
         ( ActualCommand
         , Command
         , CommandBuilder
-        , CompletedBuilder
-        , InProgressBuilder
         , build
         , buildSubCommand
         , end
@@ -29,7 +27,7 @@ You start building with a `CommandBuilder`. At the end,
 turn your `CommandBuilder` into a `Command` by calling
 `Command.end` or `Command.endWith`.
 
-@docs Command, CommandBuilder, ActualCommand, CompletedBuilder, InProgressBuilder
+@docs Command, CommandBuilder, ActualCommand
 
 
 ## Start Building
@@ -73,6 +71,7 @@ Start the chain using `with`:
 
 -}
 
+import Cli.Command.BuilderState as BuilderState
 import Cli.Command.MatchResult
 import Cli.Decode
 import Cli.Option exposing (Option(Option))
@@ -228,16 +227,6 @@ unexpectedOptions_ (ActualCommand { usageSpecs }) options =
         options
 
 
-{-| -}
-type InProgressBuilder
-    = InProgressBuilder
-
-
-{-| -}
-type CompletedBuilder
-    = CompletedBuilder
-
-
 {-| TODO
 -}
 type ActualCommand msg builderStatus
@@ -280,13 +269,13 @@ type alias CommandRecord msg =
 {-| TODO
 -}
 type alias Command msg =
-    ActualCommand msg CompletedBuilder
+    ActualCommand msg BuilderState.Terminal
 
 
 {-| TODO
 -}
 type alias CommandBuilder msg =
-    ActualCommand msg InProgressBuilder
+    ActualCommand msg BuilderState.AnyOptions
 
 
 {-| TODO
@@ -326,7 +315,7 @@ hardcoded hardcodedValue (ActualCommand ({ decoder } as command)) =
 
 {-| TODO
 -}
-map : (msg -> mappedMsg) -> Command msg -> Command mappedMsg
+map : (msg -> mappedMsg) -> ActualCommand msg builderState -> ActualCommand mappedMsg builderState
 map mapFunction (ActualCommand ({ decoder } as record)) =
     ActualCommand { record | decoder = decoder >> Result.map (Tuple.mapSecond mapFunction) }
 
