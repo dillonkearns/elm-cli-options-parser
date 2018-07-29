@@ -1,8 +1,8 @@
 module Main exposing (main)
 
-import Cli.OptionsParser as OptionsParser exposing (OptionsParser, with)
 import Cli.ExitStatus
 import Cli.Option
+import Cli.OptionsParser as OptionsParser exposing (OptionsParser, with)
 import Cli.Program
 import Json.Decode exposing (..)
 import Ports
@@ -25,10 +25,10 @@ type alias LogOptions =
 
 cli : Cli.Program.Program GitOptionsParser
 cli =
-    Cli.Program.program
-        { programName = "git"
-        , version = "1.2.3"
-        }
+    { programName = "git"
+    , version = "1.2.3"
+    }
+        |> Cli.Program.program
         |> Cli.Program.add
             (OptionsParser.buildSubCommand "init" Init
                 |> OptionsParser.withDoc "initialize a git repository"
