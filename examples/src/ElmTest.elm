@@ -32,7 +32,7 @@ cli =
     }
 
 
-commands : List (Command ElmTestCommand)
+commands : List (Command.TerminalCommand ElmTestCommand)
 commands =
     [ Command.buildSubCommand "init" Init
         |> Command.end
@@ -57,7 +57,7 @@ commands =
                     , "console" => Console
                     ]
             )
-        |> Command.endWith (Option.restArgs "TESTFILES")
+        |> Command.finally (Option.restArgs "TESTFILES")
         |> Command.map RunTests
     ]
 

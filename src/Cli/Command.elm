@@ -3,11 +3,13 @@ module Cli.Command
         ( ActualCommand
         , Command
         , CommandBuilder
+        , TerminalCommand
         , build
         , buildSubCommand
         , end
         , endWith
         , expectFlag
+        , finally
         , getSubCommand
         , getUsageSpecs
         , hardcoded
@@ -27,7 +29,7 @@ You start building with a `CommandBuilder`. At the end,
 turn your `CommandBuilder` into a `Command` by calling
 `Command.end` or `Command.endWith`.
 
-@docs Command, CommandBuilder, ActualCommand
+@docs Command, CommandBuilder, ActualCommand, TerminalCommand
 
 
 ## Start Building
@@ -41,7 +43,7 @@ turn your `CommandBuilder` into a `Command` by calling
 
 The new way:
 
-@docs endWith
+@docs endWith, finally
 
 
 ## Middle
@@ -253,7 +255,7 @@ The command will fail if any unspecific positional arguments are passed in.
     -}
 
 -}
-end : ActualCommand msg anything -> Command msg
+end : ActualCommand msg anything -> TerminalCommand msg
 end (ActualCommand record) =
     ActualCommand record
 
@@ -269,13 +271,19 @@ type alias CommandRecord msg =
 {-| TODO
 -}
 type alias Command msg =
-    ActualCommand msg BuilderState.Terminal
+    ActualCommand msg BuilderState.EndOptionsOnly
 
 
 {-| TODO
 -}
 type alias CommandBuilder msg =
     ActualCommand msg BuilderState.AnyOptions
+
+
+{-| TODO
+-}
+type alias TerminalCommand msg =
+    ActualCommand msg BuilderState.Terminal
 
 
 {-| TODO
@@ -436,6 +444,13 @@ If you need at least one positional argument, then just use `Cli.Option.position
 -}
 endWith : Option from to Cli.Option.EndingOption -> CommandBuilder (to -> msg) -> Command msg
 endWith =
+    withCommon
+
+
+{-| For chaining on `Cli.Option.restArgs`.
+-}
+finally : Option from to Cli.Option.TerminalOption -> ActualCommand (to -> msg) startingBuilderState -> TerminalCommand msg
+finally =
     withCommon
 
 

@@ -23,7 +23,7 @@ cli =
     }
 
 
-commands : List (Command GraphqelmCommand)
+commands : List (Command.TerminalCommand GraphqelmCommand)
 commands =
     [ Command.build PrintVersion
         |> Command.expectFlag "version"

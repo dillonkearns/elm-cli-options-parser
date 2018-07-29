@@ -19,6 +19,7 @@ type alias LogOptions =
     , maybeMaxCount : Maybe Int
     , statisticsMode : Bool
     , maybeRevisionRange : Maybe String
+    , restArgs : List String
     }
 
 
@@ -39,7 +40,7 @@ cli =
         |> Cli.OptionsParser.add (Command.map Log logCommand)
 
 
-logCommand : Command LogOptions
+logCommand : Command.TerminalCommand LogOptions
 logCommand =
     Command.buildSubCommand "log" LogOptions
         |> with (Cli.Option.optionalKeywordArg "author")
@@ -50,6 +51,8 @@ logCommand =
         |> with (Cli.Option.flag "stat")
         |> Command.endWith
             (Cli.Option.optionalPositionalArg "revision range")
+        |> Command.finally
+            (Cli.Option.restArgs "rest args")
 
 
 dummy : Decoder String

@@ -107,7 +107,7 @@ all =
 
 expectFlagsAndOperands :
     List String
-    -> Command.Command decodesTo
+    -> Command.ActualCommand decodesTo anything
     -> { options : List ParsedOption, operands : List String }
     -> Expectation
 expectFlagsAndOperands argv command expected =

@@ -3,6 +3,7 @@ module Cli.Option
         ( EndingOption
         , MiddleOption
         , Option(Option)
+        , TerminalOption
         , flag
         , keywordArgList
         , map
@@ -22,7 +23,7 @@ module Cli.Option
 
 {-|
 
-@docs Option, MiddleOption, EndingOption
+@docs Option, MiddleOption, EndingOption, TerminalOption
 
 
 ## Positional Arguments
@@ -82,6 +83,12 @@ type Option from to middleOrEnding
 -}
 type MiddleOption
     = MiddleOption
+
+
+{-| TODO
+-}
+type TerminalOption
+    = TerminalOption
 
 
 {-| `MiddleOption`s can only be used with `Command.with`.
@@ -412,7 +419,7 @@ optionalPositionalArg operandDescription =
 
 {-| TODO
 -}
-restArgs : String -> Option (List String) (List String) EndingOption
+restArgs : String -> Option (List String) (List String) TerminalOption
 restArgs restArgsDescription =
     buildOption
         (\({ operands, usageSpecs } as stuff) ->

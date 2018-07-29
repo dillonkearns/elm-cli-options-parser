@@ -71,14 +71,14 @@ all =
         , test "print rest operands synopsis" <|
             \() ->
                 Command.build identity
-                    |> Command.endWith (Option.restArgs "files")
+                    |> Command.finally (Option.restArgs "files")
                     |> Command.synopsis "rm"
                     |> Expect.equal "rm <files>..."
         , test "prints rest args at the end of the synopsis" <|
             \() ->
                 Command.build (,)
                     |> Command.with (Option.flag "dry-run")
-                    |> Command.endWith (Option.restArgs "files")
+                    |> Command.finally (Option.restArgs "files")
                     |> Command.synopsis "rm"
                     |> Expect.equal "rm [--dry-run] <files>..."
         , test "shows sub commands" <|

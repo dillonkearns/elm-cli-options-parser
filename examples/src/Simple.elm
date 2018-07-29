@@ -16,7 +16,7 @@ cli =
     }
 
 
-commands : List (Command.Command Msg)
+commands : List (Command.TerminalCommand Msg)
 commands =
     [ Command.build Greet
         |> Command.with (Option.requiredKeywordArg "name")

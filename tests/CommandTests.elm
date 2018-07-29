@@ -197,7 +197,7 @@ all =
                     expectMatch [ "--verbose" ]
                         (Command.build identity
                             |> Command.expectFlag "verbose"
-                            |> Command.endWith (Option.restArgs "files")
+                            |> Command.finally (Option.restArgs "files")
                         )
                         []
             , test "rest operands has all operands when there are no required operands" <|
@@ -205,7 +205,7 @@ all =
                     expectMatch [ "--verbose", "rest1", "rest2" ]
                         (Command.build identity
                             |> Command.expectFlag "verbose"
-                            |> Command.endWith (Option.restArgs "files")
+                            |> Command.finally (Option.restArgs "files")
                         )
                         [ "rest1", "rest2" ]
             , test "rest operands has all operands when there is a required operand" <|
@@ -214,7 +214,7 @@ all =
                         (Command.build (,)
                             |> Command.expectFlag "something"
                             |> Command.with (Option.positionalArg "operand")
-                            |> Command.endWith (Option.restArgs "files")
+                            |> Command.finally (Option.restArgs "files")
                         )
                         ( "operand1", [ "rest1", "rest2" ] )
             ]
@@ -418,7 +418,7 @@ all =
         ]
 
 
-expectMatch : List String -> Command.Command a -> a -> Expectation
+expectMatch : List String -> Command.ActualCommand a builderState -> a -> Expectation
 expectMatch argv commands expectedValue =
     Command.tryMatch argv commands
         |> Expect.equal (Cli.Command.MatchResult.Match (Ok expectedValue))
@@ -426,7 +426,7 @@ expectMatch argv commands expectedValue =
 
 expectValidationErrors :
     List String
-    -> Command.Command value
+    -> Command.ActualCommand value builderState
     -> List { invalidReason : String, name : String, valueAsString : String }
     -> Expectation
 expectValidationErrors argv commands expectedErrors =
@@ -434,7 +434,7 @@ expectValidationErrors argv commands expectedErrors =
         |> Expect.equal (Cli.Command.MatchResult.Match (Err expectedErrors))
 
 
-expectNoMatch : List String -> Command.Command a -> Expectation
+expectNoMatch : List String -> Command.ActualCommand a builderState -> Expectation
 expectNoMatch argv commands =
     case Command.tryMatch argv commands of
         Cli.Command.MatchResult.NoMatch unexpectedOptions ->
