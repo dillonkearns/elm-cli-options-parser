@@ -1,9 +1,9 @@
 module Main exposing (main)
 
 import Cli.ExitStatus
-import Cli.Option
+import Cli.Option as Option
 import Cli.OptionsParser as OptionsParser exposing (OptionsParser, with)
-import Cli.Program
+import Cli.Program as Program
 import Json.Decode exposing (..)
 import Ports
 
@@ -23,36 +23,36 @@ type alias LogOptions =
     }
 
 
-cli : Cli.Program.Program GitOptionsParser
+cli : Program.Program GitOptionsParser
 cli =
     { programName = "git"
     , version = "1.2.3"
     }
-        |> Cli.Program.program
-        |> Cli.Program.add
+        |> Program.program
+        |> Program.add
             (OptionsParser.buildSubCommand "init" Init
                 |> OptionsParser.withDoc "initialize a git repository"
             )
-        |> Cli.Program.add
+        |> Program.add
             (OptionsParser.buildSubCommand "clone" Clone
-                |> with (Cli.Option.positionalArg "repository")
+                |> with (Option.positionalArg "repository")
             )
-        |> Cli.Program.add (OptionsParser.map Log logOptionsParser)
+        |> Program.add (OptionsParser.map Log logOptionsParser)
 
 
 logOptionsParser : OptionsParser.TerminalOptionsParser LogOptions
 logOptionsParser =
     OptionsParser.buildSubCommand "log" LogOptions
-        |> with (Cli.Option.optionalKeywordArg "author")
+        |> with (Option.optionalKeywordArg "author")
         |> with
-            (Cli.Option.optionalKeywordArg "max-count"
-                |> Cli.Option.validateMapIfPresent String.toInt
+            (Option.optionalKeywordArg "max-count"
+                |> Option.validateMapIfPresent String.toInt
             )
-        |> with (Cli.Option.flag "stat")
+        |> with (Option.flag "stat")
         |> OptionsParser.endWith
-            (Cli.Option.optionalPositionalArg "revision range")
+            (Option.optionalPositionalArg "revision range")
         |> OptionsParser.finally
-            (Cli.Option.restArgs "rest args")
+            (Option.restArgs "rest args")
 
 
 dummy : Decoder String
@@ -68,13 +68,13 @@ type alias Flags =
 init : Flags -> ( Model, Cmd Msg )
 init argv =
     let
-        matchResult : Cli.Program.RunResult GitOptionsParser
+        matchResult : Program.RunResult GitOptionsParser
         matchResult =
-            Cli.Program.run cli argv
+            Program.run cli argv
 
         cmd =
             case matchResult of
-                Cli.Program.SystemMessage exitStatus message ->
+                Program.SystemMessage exitStatus message ->
                     case exitStatus of
                         Cli.ExitStatus.Failure ->
                             Ports.printAndExitFailure message
@@ -82,7 +82,7 @@ init argv =
                         Cli.ExitStatus.Success ->
                             Ports.printAndExitSuccess message
 
-                Cli.Program.CustomMatch msg ->
+                Program.CustomMatch msg ->
                     (case msg of
                         Init ->
                             "Initializing test suite..."
@@ -113,7 +113,7 @@ type alias Msg =
     ()
 
 
-main : Program Flags Model Msg
+main : Platform.Program Flags Model Msg
 main =
     Platform.programWithFlags
         { init = init
