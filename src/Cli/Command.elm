@@ -379,7 +379,12 @@ expectFlag flagName (ActualCommand ({ usageSpecs, decoder } as command)) =
 
 -}
 with : Option from to Cli.Option.MiddleOption -> CommandBuilder (to -> msg) -> CommandBuilder msg
-with (Option innerOption) ((ActualCommand ({ decoder, usageSpecs } as command)) as fullCommand) =
+with =
+    withCommon
+
+
+withCommon : Option from to optionConstraint -> ActualCommand (to -> msg) startCommandBuilderState -> ActualCommand msg endCommandBuilderState
+withCommon (Option innerOption) ((ActualCommand ({ decoder, usageSpecs } as command)) as fullCommand) =
     ActualCommand
         { command
             | decoder =
@@ -430,32 +435,8 @@ If you need at least one positional argument, then just use `Cli.Option.position
 
 -}
 endWith : Option from to Cli.Option.EndingOption -> CommandBuilder (to -> msg) -> Command msg
-endWith (Option innerOption) ((ActualCommand ({ decoder, usageSpecs } as command)) as fullCommand) =
-    ActualCommand
-        { command
-            | decoder =
-                \optionsAndOperands ->
-                    { options = optionsAndOperands.options
-                    , operands = optionsAndOperands.operands
-                    , usageSpecs = optionsAndOperands.usageSpecs
-                    , operandsSoFar = UsageSpec.operandCount usageSpecs
-                    }
-                        |> innerOption.dataGrabber
-                        |> Result.andThen (Cli.Decode.decodeFunction innerOption.decoder)
-                        |> Result.andThen
-                            (\( validationErrors, fromValue ) ->
-                                case
-                                    resultMap (\fn -> fn fromValue)
-                                        (decoder optionsAndOperands)
-                                of
-                                    Ok ( previousValidationErrors, thing ) ->
-                                        Ok ( previousValidationErrors ++ validationErrors, thing )
-
-                                    value ->
-                                        value
-                            )
-            , usageSpecs = usageSpecs ++ [ innerOption.usageSpec ]
-        }
+endWith =
+    withCommon
 
 
 {-| Add documentation for the command.
