@@ -27,39 +27,38 @@ type alias RunTestsRecord =
 cli : Cli.OptionsParser.Program ElmTestCommand
 cli =
     { programName = "elm-test"
-    , commands = commands
     , version = "1.2.3"
     }
-
-
-commands : List (Command.TerminalCommand ElmTestCommand)
-commands =
-    [ Command.buildSubCommand "init" Init
-        |> Command.end
-    , Command.build RunTestsRecord
-        |> with
-            (Option.optionalKeywordArg "fuzz"
-                |> Option.validateMapIfPresent String.toInt
+        |> Cli.OptionsParser.empty
+        |> Cli.OptionsParser.add
+            (Command.buildSubCommand "init" Init
+                |> Command.end
             )
-        |> with
-            (Option.optionalKeywordArg "seed"
-                |> Option.validateMapIfPresent String.toInt
+        |> Cli.OptionsParser.add
+            (Command.build RunTestsRecord
+                |> with
+                    (Option.optionalKeywordArg "fuzz"
+                        |> Option.validateMapIfPresent String.toInt
+                    )
+                |> with
+                    (Option.optionalKeywordArg "seed"
+                        |> Option.validateMapIfPresent String.toInt
+                    )
+                |> with (Option.optionalKeywordArg "compiler")
+                |> with (Option.optionalKeywordArg "add-dependencies")
+                |> with (Option.flag "watch")
+                |> with
+                    (Option.optionalKeywordArg "report"
+                        |> Option.withDefault "console"
+                        |> Option.oneOf Console
+                            [ "json" => Json
+                            , "junit" => Junit
+                            , "console" => Console
+                            ]
+                    )
+                |> Command.finally (Option.restArgs "TESTFILES")
+                |> Command.map RunTests
             )
-        |> with (Option.optionalKeywordArg "compiler")
-        |> with (Option.optionalKeywordArg "add-dependencies")
-        |> with (Option.flag "watch")
-        |> with
-            (Option.optionalKeywordArg "report"
-                |> Option.withDefault "console"
-                |> Option.oneOf Console
-                    [ "json" => Json
-                    , "junit" => Junit
-                    , "console" => Console
-                    ]
-            )
-        |> Command.finally (Option.restArgs "TESTFILES")
-        |> Command.map RunTests
-    ]
 
 
 type Report
