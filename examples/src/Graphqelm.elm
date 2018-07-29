@@ -1,6 +1,6 @@
 module Main exposing (main)
 
-import Cli.Command as Command exposing (Command, with)
+import Cli.OptionsParser as OptionsParser exposing (OptionsParser, with)
 import Cli.ExitStatus
 import Cli.Option as Option
 import Cli.Program
@@ -9,39 +9,39 @@ import Json.Decode exposing (..)
 import Ports
 
 
-type GraphqelmCommand
+type GraphqelmOptionsParser
     = PrintVersion
     | FromUrl String (Maybe String) (Maybe String) Bool (List String)
     | FromFile String (Maybe String) (Maybe String) Bool
 
 
-cli : Cli.Program.Program GraphqelmCommand
+cli : Cli.Program.Program GraphqelmOptionsParser
 cli =
     { programName = "graphqelm"
-    , commands = commands
+    , optionsParsers = optionsParsers
     , version = "1.2.3"
     }
 
 
-commands : List (Command.TerminalCommand GraphqelmCommand)
-commands =
-    [ Command.build PrintVersion
-        |> Command.expectFlag "version"
-        |> Command.end
-    , Command.build FromUrl
+optionsParsers : List (OptionsParser.TerminalOptionsParser GraphqelmOptionsParser)
+optionsParsers =
+    [ OptionsParser.build PrintVersion
+        |> OptionsParser.expectFlag "version"
+        |> OptionsParser.end
+    , OptionsParser.build FromUrl
         |> with (Option.positionalArg "url")
         |> with baseOption
         |> with (Option.optionalKeywordArg "output")
         |> with (Option.flag "excludeDeprecated")
         |> with (Option.keywordArgList "header")
-        |> Command.end
-        |> Command.withDoc "generate files based on the schema at `url`"
-    , Command.build FromFile
+        |> OptionsParser.end
+        |> OptionsParser.withDoc "generate files based on the schema at `url`"
+    , OptionsParser.build FromFile
         |> with (Option.requiredKeywordArg "introspection-file")
         |> with baseOption
         |> with (Option.optionalKeywordArg "output")
         |> with (Option.flag "excludeDeprecated")
-        |> Command.end
+        |> OptionsParser.end
     ]
 
 

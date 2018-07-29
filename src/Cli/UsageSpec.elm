@@ -156,7 +156,7 @@ name usageSpec =
             optionName
 
 
-synopsis : String -> { command | usageSpecs : List UsageSpec, description : Maybe String, buildSubCommand : Maybe String } -> String
+synopsis : String -> { optionsParser | usageSpecs : List UsageSpec, description : Maybe String, buildSubCommand : Maybe String } -> String
 synopsis programName { usageSpecs, description, buildSubCommand } =
     programName
         ++ " "

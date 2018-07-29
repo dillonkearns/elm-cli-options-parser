@@ -1,6 +1,6 @@
 module Main exposing (main)
 
-import Cli.Command as Command exposing (Command, with)
+import Cli.OptionsParser as OptionsParser exposing (OptionsParser, with)
 import Cli.ExitStatus
 import Cli.Option
 import Cli.Program
@@ -8,7 +8,7 @@ import Json.Decode exposing (..)
 import Ports
 
 
-type GitCommand
+type GitOptionsParser
     = Init
     | Clone String
     | Log LogOptions
@@ -23,35 +23,35 @@ type alias LogOptions =
     }
 
 
-cli : Cli.Program.Program GitCommand
+cli : Cli.Program.Program GitOptionsParser
 cli =
     Cli.Program.program
         { programName = "git"
         , version = "1.2.3"
         }
         |> Cli.Program.add
-            (Command.buildSubCommand "init" Init
-                |> Command.withDoc "initialize a git repository"
+            (OptionsParser.buildSubCommand "init" Init
+                |> OptionsParser.withDoc "initialize a git repository"
             )
         |> Cli.Program.add
-            (Command.buildSubCommand "clone" Clone
+            (OptionsParser.buildSubCommand "clone" Clone
                 |> with (Cli.Option.positionalArg "repository")
             )
-        |> Cli.Program.add (Command.map Log logCommand)
+        |> Cli.Program.add (OptionsParser.map Log logOptionsParser)
 
 
-logCommand : Command.TerminalCommand LogOptions
-logCommand =
-    Command.buildSubCommand "log" LogOptions
+logOptionsParser : OptionsParser.TerminalOptionsParser LogOptions
+logOptionsParser =
+    OptionsParser.buildSubCommand "log" LogOptions
         |> with (Cli.Option.optionalKeywordArg "author")
         |> with
             (Cli.Option.optionalKeywordArg "max-count"
                 |> Cli.Option.validateMapIfPresent String.toInt
             )
         |> with (Cli.Option.flag "stat")
-        |> Command.endWith
+        |> OptionsParser.endWith
             (Cli.Option.optionalPositionalArg "revision range")
-        |> Command.finally
+        |> OptionsParser.finally
             (Cli.Option.restArgs "rest args")
 
 
@@ -68,7 +68,7 @@ type alias Flags =
 init : Flags -> ( Model, Cmd Msg )
 init argv =
     let
-        matchResult : Cli.Program.RunResult GitCommand
+        matchResult : Cli.Program.RunResult GitOptionsParser
         matchResult =
             Cli.Program.run cli argv
 

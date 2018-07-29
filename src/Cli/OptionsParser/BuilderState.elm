@@ -1,4 +1,4 @@
-module Cli.Command.BuilderState exposing (AnyOptions, EndOptionsOnly, Terminal)
+module Cli.OptionsParser.BuilderState exposing (AnyOptions, EndOptionsOnly, Terminal)
 
 
 type AnyOptions

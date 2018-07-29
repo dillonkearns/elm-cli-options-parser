@@ -1,6 +1,6 @@
 module Simple exposing (main)
 
-import Cli.Command as Command
+import Cli.OptionsParser as OptionsParser
 import Cli.ExitStatus
 import Cli.Option as Option
 import Cli.Program
@@ -11,17 +11,17 @@ import Ports
 cli : Cli.Program.Program Msg
 cli =
     { programName = "graphqelm"
-    , commands = commands
+    , optionsParsers = optionsParsers
     , version = "1.2.3"
     }
 
 
-commands : List (Command.TerminalCommand Msg)
-commands =
-    [ Command.build Greet
-        |> Command.with (Option.requiredKeywordArg "name")
-        |> Command.with (Option.optionalKeywordArg "greeting")
-        |> Command.end
+optionsParsers : List (OptionsParser.TerminalOptionsParser Msg)
+optionsParsers =
+    [ OptionsParser.build Greet
+        |> OptionsParser.with (Option.requiredKeywordArg "name")
+        |> OptionsParser.with (Option.optionalKeywordArg "greeting")
+        |> OptionsParser.end
     ]
 
 

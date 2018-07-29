@@ -1,7 +1,7 @@
 module Cli.LowLevel exposing (MatchResult(..), helpText, try)
 
-import Cli.Command as Command exposing (ActualCommand)
-import Cli.Command.MatchResult as MatchResult exposing (MatchResult)
+import Cli.OptionsParser as OptionsParser exposing (ActualOptionsParser)
+import Cli.OptionsParser.MatchResult as MatchResult exposing (MatchResult)
 import Cli.Decode
 import Maybe.Extra
 import Set exposing (Set)
@@ -29,15 +29,15 @@ intersection sets =
                 |> Set.intersect first
 
 
-try : List (Command.ActualCommand msg builderStatus) -> List String -> MatchResult msg
-try commands argv =
+try : List (OptionsParser.ActualOptionsParser msg builderStatus) -> List String -> MatchResult msg
+try optionsParsers argv =
     let
         maybeShowHelpMatch : Maybe (MatchResult msg)
         maybeShowHelpMatch =
-            Command.build ShowHelp
-                |> Command.expectFlag "help"
-                |> Command.end
-                |> Command.tryMatch (argv |> List.drop 2)
+            OptionsParser.build ShowHelp
+                |> OptionsParser.expectFlag "help"
+                |> OptionsParser.end
+                |> OptionsParser.tryMatch (argv |> List.drop 2)
                 |> (\matchResult ->
                         case matchResult of
                             MatchResult.NoMatch _ ->
@@ -49,10 +49,10 @@ try commands argv =
 
         maybeShowVersionMatch : Maybe (MatchResult msg)
         maybeShowVersionMatch =
-            Command.build ShowVersion
-                |> Command.expectFlag "version"
-                |> Command.end
-                |> Command.tryMatch (argv |> List.drop 2)
+            OptionsParser.build ShowVersion
+                |> OptionsParser.expectFlag "version"
+                |> OptionsParser.end
+                |> OptionsParser.tryMatch (argv |> List.drop 2)
                 |> (\matchResult ->
                         case matchResult of
                             MatchResult.NoMatch _ ->
@@ -63,11 +63,11 @@ try commands argv =
                    )
 
         matchResults =
-            commands
+            optionsParsers
                 |> List.map
                     (argv
                         |> List.drop 2
-                        |> Command.tryMatch
+                        |> OptionsParser.tryMatch
                     )
 
         commonUnmatchedFlags =
@@ -117,8 +117,8 @@ oneOf =
         Nothing
 
 
-helpText : String -> List (ActualCommand msg builderStatus) -> String
-helpText programName commands =
-    commands
-        |> List.map (Command.synopsis programName)
+helpText : String -> List (ActualOptionsParser msg builderStatus) -> String
+helpText programName optionsParsers =
+    optionsParsers
+        |> List.map (OptionsParser.synopsis programName)
         |> String.join "\n"

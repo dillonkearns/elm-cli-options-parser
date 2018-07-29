@@ -1,7 +1,7 @@
-module CommandTests exposing (all)
+module OptionsParserTests exposing (all)
 
-import Cli.Command as Command
-import Cli.Command.MatchResult
+import Cli.OptionsParser as OptionsParser
+import Cli.OptionsParser.MatchResult
 import Cli.Option as Option
 import Cli.Validate as Validate
 import Expect exposing (Expectation)
@@ -37,108 +37,108 @@ all : Test
 all =
     describe "CLI options parser"
         [ describe "matching"
-            [ test "help command" <|
+            [ test "help optionsParser" <|
                 \() ->
                     expectMatch [ "--help" ]
-                        (Command.build Help
-                            |> Command.expectFlag "help"
-                            |> Command.end
+                        (OptionsParser.build Help
+                            |> OptionsParser.expectFlag "help"
+                            |> OptionsParser.end
                         )
                         Help
-            , test "version command" <|
+            , test "version optionsParser" <|
                 \() ->
                     expectMatch [ "--version" ]
-                        (Command.build Version |> Command.expectFlag "version" |> Command.end)
+                        (OptionsParser.build Version |> OptionsParser.expectFlag "version" |> OptionsParser.end)
                         Version
             , test "matching non-first element in list" <|
                 \() ->
-                    expectNoMatch [ "unused", "--version" ] (Command.build Version |> Command.expectFlag "version" |> Command.end)
-            , test "command with operand" <|
+                    expectNoMatch [ "unused", "--version" ] (OptionsParser.build Version |> OptionsParser.expectFlag "version" |> OptionsParser.end)
+            , test "optionsParser with operand" <|
                 \() ->
                     expectMatch [ "http://my-domain.com" ]
-                        (Command.build OpenUrl
-                            |> Command.with (Option.positionalArg "url")
-                            |> Command.end
+                        (OptionsParser.build OpenUrl
+                            |> OptionsParser.with (Option.positionalArg "url")
+                            |> OptionsParser.end
                         )
                         (OpenUrl "http://my-domain.com")
-            , test "command with optional positional arg present" <|
+            , test "optionsParser with optional positional arg present" <|
                 \() ->
                     expectMatch [ "abcdefg" ]
-                        (Command.build identity
-                            |> Command.endWith (Option.optionalPositionalArg "revision-range")
+                        (OptionsParser.build identity
+                            |> OptionsParser.endWith (Option.optionalPositionalArg "revision-range")
                         )
                         (Just "abcdefg")
-            , test "command with required and optional positional arg present" <|
+            , test "optionsParser with required and optional positional arg present" <|
                 \() ->
                     expectMatch [ "required", "optional" ]
-                        (Command.build (,)
-                            |> Command.with (Option.positionalArg "required")
-                            |> Command.endWith (Option.optionalPositionalArg "revision-range")
+                        (OptionsParser.build (,)
+                            |> OptionsParser.with (Option.positionalArg "required")
+                            |> OptionsParser.endWith (Option.optionalPositionalArg "revision-range")
                         )
                         ( "required", Just "optional" )
-            , test "command with optional positional arg not present" <|
+            , test "optionsParser with optional positional arg not present" <|
                 \() ->
                     expectMatch []
-                        (Command.build identity
-                            |> Command.endWith (Option.optionalPositionalArg "revision-range")
+                        (OptionsParser.build identity
+                            |> OptionsParser.endWith (Option.optionalPositionalArg "revision-range")
                         )
                         Nothing
-            , test "command with multiple operands" <|
+            , test "optionsParser with multiple operands" <|
                 \() ->
                     expectMatch [ "http://my-domain.com", "./file.txt" ]
-                        (Command.build (,)
-                            |> Command.with (Option.positionalArg "url")
-                            |> Command.with (Option.positionalArg "path/to/file")
-                            |> Command.end
+                        (OptionsParser.build (,)
+                            |> OptionsParser.with (Option.positionalArg "url")
+                            |> OptionsParser.with (Option.positionalArg "path/to/file")
+                            |> OptionsParser.end
                         )
                         ( "http://my-domain.com", "./file.txt" )
             , test "detects that optional flag is absent" <|
                 \() ->
                     expectMatch [ "http://my-domain.com" ]
-                        (Command.build OpenUrlWithFlag
-                            |> Command.with (Option.positionalArg "url")
-                            |> Command.with (Option.flag "flag")
-                            |> Command.end
+                        (OptionsParser.build OpenUrlWithFlag
+                            |> OptionsParser.with (Option.positionalArg "url")
+                            |> OptionsParser.with (Option.flag "flag")
+                            |> OptionsParser.end
                         )
                         (OpenUrlWithFlag "http://my-domain.com" False)
             , test "detects that optional flag is present" <|
                 \() ->
                     expectMatch [ "http://my-domain.com", "--flag" ]
-                        (Command.build OpenUrlWithFlag
-                            |> Command.with (Option.positionalArg "url")
-                            |> Command.with (Option.flag "flag")
-                            |> Command.end
+                        (OptionsParser.build OpenUrlWithFlag
+                            |> OptionsParser.with (Option.positionalArg "url")
+                            |> OptionsParser.with (Option.flag "flag")
+                            |> OptionsParser.end
                         )
                         (OpenUrlWithFlag "http://my-domain.com" True)
             , test "non-matching option" <|
                 \() ->
                     expectNoMatch [ "--version" ]
-                        (Command.build Help
-                            |> Command.expectFlag "help"
-                            |> Command.end
+                        (OptionsParser.build Help
+                            |> OptionsParser.expectFlag "help"
+                            |> OptionsParser.end
                         )
             , test "empty args when flag is expected" <|
                 \() ->
                     expectNoMatch []
-                        (Command.build Help
-                            |> Command.expectFlag "help"
-                            |> Command.end
+                        (OptionsParser.build Help
+                            |> OptionsParser.expectFlag "help"
+                            |> OptionsParser.end
                         )
             , test "option with argument" <|
                 \() ->
                     expectMatch [ "--name", "Deanna", "--prefix", "Hello" ]
-                        (Command.build (,)
-                            |> Command.with (Option.requiredKeywordArg "name")
-                            |> Command.with (Option.optionalKeywordArg "prefix")
-                            |> Command.end
+                        (OptionsParser.build (,)
+                            |> OptionsParser.with (Option.requiredKeywordArg "name")
+                            |> OptionsParser.with (Option.optionalKeywordArg "prefix")
+                            |> OptionsParser.end
                         )
                         ( "Deanna", Just "Hello" )
             , test "optional option with argument" <|
                 \() ->
                     expectMatch [ "--name", "Deanna" ]
-                        (Command.build Name
-                            |> Command.with (Option.requiredKeywordArg "name")
-                            |> Command.end
+                        (OptionsParser.build Name
+                            |> OptionsParser.with (Option.requiredKeywordArg "name")
+                            |> OptionsParser.end
                         )
                         (Name "Deanna")
             , test "option with multiple required string arguments" <|
@@ -149,10 +149,10 @@ all =
                         , "--first-name"
                         , "Deanna"
                         ]
-                        (Command.build FullName
-                            |> Command.with (Option.requiredKeywordArg "first-name")
-                            |> Command.with (Option.requiredKeywordArg "last-name")
-                            |> Command.end
+                        (OptionsParser.build FullName
+                            |> OptionsParser.with (Option.requiredKeywordArg "first-name")
+                            |> OptionsParser.with (Option.requiredKeywordArg "last-name")
+                            |> OptionsParser.end
                         )
                         (FullName "Deanna" "Troi")
             , test "doesn't match if operands are present when none are expected" <|
@@ -164,10 +164,10 @@ all =
                         , "Deanna"
                         , "unexpectedOperand"
                         ]
-                        (Command.build FullName
-                            |> Command.with (Option.requiredKeywordArg "first-name")
-                            |> Command.with (Option.requiredKeywordArg "last-name")
-                            |> Command.end
+                        (OptionsParser.build FullName
+                            |> OptionsParser.with (Option.requiredKeywordArg "first-name")
+                            |> OptionsParser.with (Option.requiredKeywordArg "last-name")
+                            |> OptionsParser.end
                         )
             , test "extracts multiple params" <|
                 \() ->
@@ -177,9 +177,9 @@ all =
                         , "--header"
                         , "def456"
                         ]
-                        (Command.build identity
-                            |> Command.with (Option.keywordArgList "header")
-                            |> Command.end
+                        (OptionsParser.build identity
+                            |> OptionsParser.with (Option.keywordArgList "header")
+                            |> OptionsParser.end
                         )
                         [ "abc123", "def456" ]
             , test "doesn't match when unexpected options are present" <|
@@ -188,48 +188,48 @@ all =
                         [ "--verbose"
                         , "--unexpected-option"
                         ]
-                        (Command.build identity
-                            |> Command.with (Option.flag "verbose")
-                            |> Command.end
+                        (OptionsParser.build identity
+                            |> OptionsParser.with (Option.flag "verbose")
+                            |> OptionsParser.end
                         )
             , test "rest operands is empty with no operands" <|
                 \() ->
                     expectMatch [ "--verbose" ]
-                        (Command.build identity
-                            |> Command.expectFlag "verbose"
-                            |> Command.finally (Option.restArgs "files")
+                        (OptionsParser.build identity
+                            |> OptionsParser.expectFlag "verbose"
+                            |> OptionsParser.finally (Option.restArgs "files")
                         )
                         []
             , test "rest operands has all operands when there are no required operands" <|
                 \() ->
                     expectMatch [ "--verbose", "rest1", "rest2" ]
-                        (Command.build identity
-                            |> Command.expectFlag "verbose"
-                            |> Command.finally (Option.restArgs "files")
+                        (OptionsParser.build identity
+                            |> OptionsParser.expectFlag "verbose"
+                            |> OptionsParser.finally (Option.restArgs "files")
                         )
                         [ "rest1", "rest2" ]
             , test "rest operands has all operands when there is a required operand" <|
                 \() ->
                     expectMatch [ "--something", "operand1", "rest1", "rest2" ]
-                        (Command.build (,)
-                            |> Command.expectFlag "something"
-                            |> Command.with (Option.positionalArg "operand")
-                            |> Command.finally (Option.restArgs "files")
+                        (OptionsParser.build (,)
+                            |> OptionsParser.expectFlag "something"
+                            |> OptionsParser.with (Option.positionalArg "operand")
+                            |> OptionsParser.finally (Option.restArgs "files")
                         )
                         ( "operand1", [ "rest1", "rest2" ] )
             ]
-        , describe "sub commands"
-            [ test "doesn't match if sub command doesn't match" <|
+        , describe "sub optionsParsers"
+            [ test "doesn't match if sub optionsParser doesn't match" <|
                 \() ->
                     expectNoMatch [ "start" ]
-                        (Command.buildSubCommand "help" 123
-                            |> Command.end
+                        (OptionsParser.buildSubCommand "help" 123
+                            |> OptionsParser.end
                         )
-            , test "matches if sub command is first word" <|
+            , test "matches if sub optionsParser is first word" <|
                 \() ->
                     expectMatch [ "help" ]
-                        (Command.buildSubCommand "help" 123
-                            |> Command.end
+                        (OptionsParser.buildSubCommand "help" 123
+                            |> OptionsParser.end
                         )
                         123
             ]
@@ -237,41 +237,41 @@ all =
             [ test "forced err validation makes it not match" <|
                 \() ->
                     expectValidationErrors [ "--name", "Bob" ]
-                        (Command.build identity
-                            |> Command.with
+                        (OptionsParser.build identity
+                            |> OptionsParser.with
                                 (Option.requiredKeywordArg "name"
                                     |> Option.validate (\_ -> Validate.Invalid "Invalid")
                                 )
-                            |> Command.end
+                            |> OptionsParser.end
                         )
                         [ { name = "name", invalidReason = "Invalid", valueAsString = toString "Bob" } ]
             , test "validate if present when present and invalid" <|
                 \() ->
                     expectValidationErrors [ "--name", "Bob" ]
-                        (Command.build identity
-                            |> Command.with
+                        (OptionsParser.build identity
+                            |> OptionsParser.with
                                 (Option.optionalKeywordArg "name"
                                     |> Option.validateIfPresent (\_ -> Validate.Invalid "Invalid")
                                 )
-                            |> Command.end
+                            |> OptionsParser.end
                         )
                         [ { name = "name", invalidReason = "Invalid", valueAsString = toString (Just "Bob") } ]
             , test "validate if present when absent and invalid" <|
                 \() ->
                     expectMatch []
-                        (Command.build identity
-                            |> Command.with
+                        (OptionsParser.build identity
+                            |> OptionsParser.with
                                 (Option.optionalKeywordArg "name"
                                     |> Option.validateIfPresent (\_ -> Validate.Invalid "Invalid")
                                 )
-                            |> Command.end
+                            |> OptionsParser.end
                         )
                         Nothing
             , test "fails when validation function fails" <|
                 \() ->
                     expectValidationErrors [ "--name", "Robert" ]
-                        (Command.build identity
-                            |> Command.with
+                        (OptionsParser.build identity
+                            |> OptionsParser.with
                                 (Option.requiredKeywordArg "name"
                                     |> Option.validate
                                         (\name ->
@@ -281,14 +281,14 @@ all =
                                                 Validate.Invalid "Must be 3 characters long"
                                         )
                                 )
-                            |> Command.end
+                            |> OptionsParser.end
                         )
                         [ { name = "name", invalidReason = "Must be 3 characters long", valueAsString = toString "Robert" } ]
             , test "succeeds when validation function passes" <|
                 \() ->
                     expectMatch [ "--name", "Bob" ]
-                        (Command.build identity
-                            |> Command.with
+                        (OptionsParser.build identity
+                            |> OptionsParser.with
                                 (Option.requiredKeywordArg "name"
                                     |> Option.validate
                                         (\name ->
@@ -298,55 +298,55 @@ all =
                                                 Validate.Invalid "Must be 3 characters long"
                                         )
                                 )
-                            |> Command.end
+                            |> OptionsParser.end
                         )
                         "Bob"
             , test "map validation" <|
                 \() ->
                     expectMatch [ "--fuzz", "123" ]
-                        (Command.build identity
-                            |> Command.with
+                        (OptionsParser.build identity
+                            |> OptionsParser.with
                                 (Option.requiredKeywordArg "fuzz"
                                     |> Option.validateMap String.toInt
                                 )
-                            |> Command.end
+                            |> OptionsParser.end
                         )
                         123
             , test "oneOf not default" <|
                 \() ->
                     expectMatch [ "--report", "json" ]
-                        (Command.build identity
-                            |> Command.with
+                        (OptionsParser.build identity
+                            |> OptionsParser.with
                                 (Option.requiredKeywordArg "report"
                                     |> Option.oneOf Console
                                         [ "json" => Json
                                         ]
                                 )
-                            |> Command.end
+                            |> OptionsParser.end
                         )
                         Json
             , test "oneOf invalid option" <|
                 \() ->
                     expectValidationErrors [ "--report", "invalidOption" ]
-                        (Command.build identity
-                            |> Command.with
+                        (OptionsParser.build identity
+                            |> OptionsParser.with
                                 (Option.requiredKeywordArg "report"
                                     |> Option.oneOf Console
                                         [ "json" => Json
                                         ]
                                 )
-                            |> Command.end
+                            |> OptionsParser.end
                         )
                         [ { name = "report", invalidReason = "Must be one of [json]", valueAsString = "\"invalidOption\"" } ]
             , test "failed map validation" <|
                 \() ->
                     expectValidationErrors [ "--fuzz", "abcdefg" ]
-                        (Command.build identity
-                            |> Command.with
+                        (OptionsParser.build identity
+                            |> OptionsParser.with
                                 (Option.requiredKeywordArg "fuzz"
                                     |> Option.validateMap String.toInt
                                 )
-                            |> Command.end
+                            |> OptionsParser.end
                         )
                         [ { name = "fuzz"
                           , invalidReason = "could not convert string 'abcdefg' to an Int"
@@ -359,86 +359,86 @@ all =
                 \() ->
                     expectMatch
                         [ "hello" ]
-                        (Command.build identity
-                            |> Command.with
+                        (OptionsParser.build identity
+                            |> OptionsParser.with
                                 (Option.positionalArg "operand"
                                     |> Option.map String.length
                                 )
-                            |> Command.end
+                            |> OptionsParser.end
                         )
                         5
             , test "uses default when option not present" <|
                 \() ->
                     expectMatch
                         []
-                        (Command.build identity
-                            |> Command.with
+                        (OptionsParser.build identity
+                            |> OptionsParser.with
                                 (Option.optionalKeywordArg "output"
                                     |> Option.withDefault "elm.js"
                                 )
-                            |> Command.end
+                            |> OptionsParser.end
                         )
                         "elm.js"
             , test "map flag to union" <|
                 \() ->
                     expectMatch [ "--watch" ]
-                        (Command.build identity
-                            |> Command.with
+                        (OptionsParser.build identity
+                            |> OptionsParser.with
                                 (Option.flag "watch"
                                     |> Option.mapFlag
                                         { present = Watch
                                         , absent = NoWatch
                                         }
                                 )
-                            |> Command.end
+                            |> OptionsParser.end
                         )
                         Watch
             , test "withDefault uses actual option when option is present" <|
                 \() ->
                     expectMatch
                         [ "--output=bundle.js" ]
-                        (Command.build identity
-                            |> Command.with
+                        (OptionsParser.build identity
+                            |> OptionsParser.with
                                 (Option.optionalKeywordArg "output"
                                     |> Option.withDefault "elm.js"
                                 )
-                            |> Command.end
+                            |> OptionsParser.end
                         )
                         "bundle.js"
             , test "hardcoded passes value through" <|
                 \() ->
                     expectMatch
                         []
-                        (Command.build identity
-                            |> Command.hardcoded "hardcoded value"
-                            |> Command.end
+                        (OptionsParser.build identity
+                            |> OptionsParser.hardcoded "hardcoded value"
+                            |> OptionsParser.end
                         )
                         "hardcoded value"
             ]
         ]
 
 
-expectMatch : List String -> Command.ActualCommand a builderState -> a -> Expectation
-expectMatch argv commands expectedValue =
-    Command.tryMatch argv commands
-        |> Expect.equal (Cli.Command.MatchResult.Match (Ok expectedValue))
+expectMatch : List String -> OptionsParser.ActualOptionsParser a builderState -> a -> Expectation
+expectMatch argv optionsParsers expectedValue =
+    OptionsParser.tryMatch argv optionsParsers
+        |> Expect.equal (Cli.OptionsParser.MatchResult.Match (Ok expectedValue))
 
 
 expectValidationErrors :
     List String
-    -> Command.ActualCommand value builderState
+    -> OptionsParser.ActualOptionsParser value builderState
     -> List { invalidReason : String, name : String, valueAsString : String }
     -> Expectation
-expectValidationErrors argv commands expectedErrors =
-    Command.tryMatch argv commands
-        |> Expect.equal (Cli.Command.MatchResult.Match (Err expectedErrors))
+expectValidationErrors argv optionsParsers expectedErrors =
+    OptionsParser.tryMatch argv optionsParsers
+        |> Expect.equal (Cli.OptionsParser.MatchResult.Match (Err expectedErrors))
 
 
-expectNoMatch : List String -> Command.ActualCommand a builderState -> Expectation
-expectNoMatch argv commands =
-    case Command.tryMatch argv commands of
-        Cli.Command.MatchResult.NoMatch unexpectedOptions ->
+expectNoMatch : List String -> OptionsParser.ActualOptionsParser a builderState -> Expectation
+expectNoMatch argv optionsParsers =
+    case OptionsParser.tryMatch argv optionsParsers of
+        Cli.OptionsParser.MatchResult.NoMatch unexpectedOptions ->
             Expect.pass
 
-        Cli.Command.MatchResult.Match matchResult ->
+        Cli.OptionsParser.MatchResult.Match matchResult ->
             Expect.fail ("Expected no match but got match:\n\n" ++ toString matchResult)

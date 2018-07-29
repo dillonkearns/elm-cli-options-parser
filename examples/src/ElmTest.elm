@@ -1,6 +1,6 @@
 module Main exposing (main)
 
-import Cli.Command as Command exposing (Command, with)
+import Cli.OptionsParser as OptionsParser exposing (OptionsParser, with)
 import Cli.ExitStatus
 import Cli.Option as Option
 import Cli.Program
@@ -8,7 +8,7 @@ import Json.Decode exposing (..)
 import Ports
 
 
-type ElmTestCommand
+type ElmTestOptionsParser
     = Init
     | RunTests RunTestsRecord
 
@@ -24,18 +24,18 @@ type alias RunTestsRecord =
     }
 
 
-cli : Cli.Program.Program ElmTestCommand
+cli : Cli.Program.Program ElmTestOptionsParser
 cli =
     { programName = "elm-test"
     , version = "1.2.3"
     }
         |> Cli.Program.program
         |> Cli.Program.add
-            (Command.buildSubCommand "init" Init
-                |> Command.end
+            (OptionsParser.buildSubCommand "init" Init
+                |> OptionsParser.end
             )
         |> Cli.Program.add
-            (Command.build RunTestsRecord
+            (OptionsParser.build RunTestsRecord
                 |> with
                     (Option.optionalKeywordArg "fuzz"
                         |> Option.validateMapIfPresent String.toInt
@@ -56,8 +56,8 @@ cli =
                             , "console" => Console
                             ]
                     )
-                |> Command.finally (Option.restArgs "TESTFILES")
-                |> Command.map RunTests
+                |> OptionsParser.finally (Option.restArgs "TESTFILES")
+                |> OptionsParser.map RunTests
             )
 
 

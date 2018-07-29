@@ -1,4 +1,4 @@
-module Cli.Command.MatchResult
+module Cli.OptionsParser.MatchResult
     exposing
         ( MatchResult(..)
         , matchResultToMaybe

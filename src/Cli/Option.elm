@@ -76,9 +76,9 @@ type Option from to middleOrEnding
     = Option (InnerOption from to)
 
 
-{-| `MiddleOption`s can only be used with `Command.with`.
+{-| `MiddleOption`s can only be used with `OptionsParser.with`.
 
-`EndingOption`s can only be used with `Command.endWith`.
+`EndingOption`s can only be used with `OptionsParser.endWith`.
 
 -}
 type MiddleOption
@@ -91,9 +91,9 @@ type TerminalOption
     = TerminalOption
 
 
-{-| `MiddleOption`s can only be used with `Command.with`.
+{-| `MiddleOption`s can only be used with `OptionsParser.with`.
 
-`EndingOption`s can only be used with `Command.endWith`.
+`EndingOption`s can only be used with `OptionsParser.endWith`.
 
 -}
 type EndingOption

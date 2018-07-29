@@ -1,6 +1,6 @@
 module TokenizerTests exposing (all)
 
-import Cli.Command as Command
+import Cli.OptionsParser as OptionsParser
 import Cli.Option as Option
 import Expect exposing (Expectation)
 import Test exposing (..)
@@ -13,20 +13,20 @@ all =
         [ test "recognizes empty operands and flags" <|
             \() ->
                 expectFlagsAndOperands []
-                    (Command.build (,)
-                        |> Command.with (Option.requiredKeywordArg "first-name")
-                        |> Command.with (Option.requiredKeywordArg "last-name")
-                        |> Command.end
+                    (OptionsParser.build (,)
+                        |> OptionsParser.with (Option.requiredKeywordArg "first-name")
+                        |> OptionsParser.with (Option.requiredKeywordArg "last-name")
+                        |> OptionsParser.end
                     )
                     { options = [], operands = [] }
         , test "gets operand from the front" <|
             \() ->
                 expectFlagsAndOperands
                     [ "operand", "--verbose", "--dry-run" ]
-                    (Command.build (,,)
-                        |> Command.expectFlag "verbose"
-                        |> Command.expectFlag "dry-run"
-                        |> Command.end
+                    (OptionsParser.build (,,)
+                        |> OptionsParser.expectFlag "verbose"
+                        |> OptionsParser.expectFlag "dry-run"
+                        |> OptionsParser.end
                     )
                     { options = [ ParsedOption "verbose" Tokenizer.Flag, ParsedOption "dry-run" Tokenizer.Flag ]
                     , operands = [ "operand" ]
@@ -35,10 +35,10 @@ all =
             \() ->
                 expectFlagsAndOperands
                     [ "--verbose", "--dry-run", "operand" ]
-                    (Command.build (,,)
-                        |> Command.expectFlag "verbose"
-                        |> Command.expectFlag "dry-run"
-                        |> Command.end
+                    (OptionsParser.build (,,)
+                        |> OptionsParser.expectFlag "verbose"
+                        |> OptionsParser.expectFlag "dry-run"
+                        |> OptionsParser.end
                     )
                     { options = [ ParsedOption "verbose" Tokenizer.Flag, ParsedOption "dry-run" Tokenizer.Flag ]
                     , operands = [ "operand" ]
@@ -47,10 +47,10 @@ all =
             \() ->
                 expectFlagsAndOperands
                     [ "operand", "--first-name", "Will", "--last-name", "Riker" ]
-                    (Command.build (,)
-                        |> Command.with (Option.requiredKeywordArg "first-name")
-                        |> Command.with (Option.requiredKeywordArg "last-name")
-                        |> Command.end
+                    (OptionsParser.build (,)
+                        |> OptionsParser.with (Option.requiredKeywordArg "first-name")
+                        |> OptionsParser.with (Option.requiredKeywordArg "last-name")
+                        |> OptionsParser.end
                     )
                     { options = [ ParsedOption "first-name" (Tokenizer.KeywordArg "Will"), ParsedOption "last-name" (Tokenizer.KeywordArg "Riker") ]
                     , operands = [ "operand" ]
@@ -59,10 +59,10 @@ all =
             \() ->
                 expectFlagsAndOperands
                     [ "--first-name", "Will", "--last-name", "Riker", "operand" ]
-                    (Command.build (,)
-                        |> Command.with (Option.requiredKeywordArg "first-name")
-                        |> Command.with (Option.requiredKeywordArg "last-name")
-                        |> Command.end
+                    (OptionsParser.build (,)
+                        |> OptionsParser.with (Option.requiredKeywordArg "first-name")
+                        |> OptionsParser.with (Option.requiredKeywordArg "last-name")
+                        |> OptionsParser.end
                     )
                     { options = [ ParsedOption "first-name" (Tokenizer.KeywordArg "Will"), ParsedOption "last-name" (Tokenizer.KeywordArg "Riker") ]
                     , operands = [ "operand" ]
@@ -75,10 +75,10 @@ all =
                     , "--first-name"
                     , "Deanna"
                     ]
-                    (Command.build (,)
-                        |> Command.with (Option.requiredKeywordArg "first-name")
-                        |> Command.with (Option.requiredKeywordArg "last-name")
-                        |> Command.end
+                    (OptionsParser.build (,)
+                        |> OptionsParser.with (Option.requiredKeywordArg "first-name")
+                        |> OptionsParser.with (Option.requiredKeywordArg "last-name")
+                        |> OptionsParser.end
                     )
                     { options = [ ParsedOption "last-name" (Tokenizer.KeywordArg "Troi"), ParsedOption "first-name" (Tokenizer.KeywordArg "Deanna") ]
                     , operands = []
@@ -87,9 +87,9 @@ all =
             \() ->
                 expectFlagsAndOperands
                     [ "operand" ]
-                    (Command.build identity
-                        |> Command.with (Option.positionalArg "foo")
-                        |> Command.end
+                    (OptionsParser.build identity
+                        |> OptionsParser.with (Option.positionalArg "foo")
+                        |> OptionsParser.end
                     )
                     { options = []
                     , operands = [ "operand" ]
@@ -97,9 +97,9 @@ all =
         , test "gets options with --option=value syntax" <|
             \() ->
                 expectFlagsAndOperands [ "--name=Picard" ]
-                    (Command.build identity
-                        |> Command.with (Option.requiredKeywordArg "name")
-                        |> Command.end
+                    (OptionsParser.build identity
+                        |> OptionsParser.with (Option.requiredKeywordArg "name")
+                        |> OptionsParser.end
                     )
                     { options = [ ParsedOption "name" (Tokenizer.KeywordArg "Picard") ], operands = [] }
         ]
@@ -107,10 +107,10 @@ all =
 
 expectFlagsAndOperands :
     List String
-    -> Command.ActualCommand decodesTo anything
+    -> OptionsParser.ActualOptionsParser decodesTo anything
     -> { options : List ParsedOption, operands : List String }
     -> Expectation
-expectFlagsAndOperands argv command expected =
-    Tokenizer.flagsAndOperands (Command.getUsageSpecs command) argv
+expectFlagsAndOperands argv optionsParser expected =
+    Tokenizer.flagsAndOperands (OptionsParser.getUsageSpecs optionsParser) argv
         |> (\{ options, operands } -> { options = options, operands = operands })
         |> Expect.equal expected

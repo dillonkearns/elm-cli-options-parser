@@ -11,15 +11,15 @@ Take this `git` command:
 git log --author=dillon --max-count=5 --stat a410067
 ```
 
-To parse the above command, we could build a `Program` as follows (this snippet doesn't include the wiring of the Command-Line options from NodeJS, see the `examples` folder):
+To parse the above command, we could build a `Program` as follows (this snippet doesn't include the wiring of the OptionsParser-Line options from NodeJS, see the `examples` folder):
 
 ```elm
-import Cli.Command as Command exposing (Command, with)
+import Cli.OptionsParser as OptionsParser exposing (OptionsParser, with)
 import Cli.Option as Option
 import Cli.Program
 
 
-type GitCommand
+type GitOptionsParser
     = Init
     | Clone String
     | Log LogOptions
@@ -32,20 +32,20 @@ type alias LogOptions =
     , maybeRevisionRange : Maybe String
     }
 
-logCommand : Command LogOptions
-logCommand =
-    Command.buildSubCommand "log" LogOptions
+logOptionsParser : OptionsParser LogOptions
+logOptionsParser =
+    OptionsParser.buildSubOptionsParser "log" LogOptions
         |> with (Cli.Option.optionalKeywordArg "author")
         |> with
             (Cli.Option.optionalKeywordArg "max-count"
                 |> Cli.Option.validateMapIfPresent String.toInt
             )
         |> with (Cli.Option.flag "stat")
-        |> Command.endWith
+        |> OptionsParser.endWith
             (Cli.Option.optionalPositionalArg "revision range")
 
 
-cli : Cli.Program.Program GitCommand
+cli : Cli.Program.Program GitOptionsParser
 cli =
     { programName = "git"
     , commands = commands
@@ -53,10 +53,10 @@ cli =
     }
 
 
-commands : List (Command GitCommand)
+commands : List (OptionsParser GitOptionsParser)
 commands =
-    [ Command.map Log logCommand
-      -- ... `Command`s for `Init`, `Clone`, etc. here
+    [ OptionsParser.map Log logOptionsParser
+      -- ... `OptionsParser`s for `Init`, `Clone`, etc. here
       -- See `examples` folder
     ]
 ```
@@ -67,7 +67,7 @@ Now running:
 `git log --author=dillon --max-count=5 --stat a410067`
 will yield the following output (with wiring as in the `examples` folder):
 -}
-matchResult : GitCommand
+matchResult : GitOptionsParser
 matchResult =
     Log
         { maybeAuthorPattern = Just "dillon"
@@ -85,7 +85,7 @@ $ ./git --help
 git log [--author <author>] [--max-count <max-count>] [--stat] [<revision range>]
 ```
 
-Note: the `--help` option is a built-in command, so no need to write a `Command` for that.
+Note: the `--help` option is a built-in command, so no need to write a `OptionsParser` for that.
 
 ## Options Parser Terminology
 
@@ -105,16 +105,16 @@ because I found them to be the most intuitive and unambiguous.
 
 ## Feedback Wanted On
 
-### Command.end/endWith
+### OptionsParser.end/endWith
 
 This is needed to enforce the constraint that
 this needs to be called once I have the number of arguments that came before it...
 so that they can be dropped from the rest args.
 
-### expectFlag is on Command not Option
+### expectFlag is on OptionsParser not Option
 
 Right now, I need that because it doesn't change the value of the pipeline... is there a simple way to change that?
 
 ### Feedback wanted
 
-Is it confusing to go between Command. and Option.?
+Is it confusing to go between OptionsParser. and Option.?

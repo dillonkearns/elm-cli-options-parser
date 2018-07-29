@@ -9,8 +9,8 @@ module Cli.Program exposing (Program, RunResult(..), add, program, run)
 
 -}
 
-import Cli.Command as Command exposing (ActualCommand, Command)
-import Cli.Command.BuilderState as BuilderState
+import Cli.OptionsParser as OptionsParser exposing (ActualOptionsParser, OptionsParser)
+import Cli.OptionsParser.BuilderState as BuilderState
 import Cli.ExitStatus exposing (ExitStatus)
 import Cli.LowLevel
 import TypoSuggestion
@@ -27,7 +27,7 @@ type RunResult match
 -}
 type alias Program msg =
     { programName : String
-    , commands : List (ActualCommand msg BuilderState.Terminal)
+    , optionsParsers : List (ActualOptionsParser msg BuilderState.Terminal)
     , version : String
     }
 
@@ -37,68 +37,68 @@ program : { programName : String, version : String } -> Program decodesTo
 program { programName, version } =
     { programName = programName
     , version = version
-    , commands = []
+    , optionsParsers = []
     }
 
 
 {-| -}
-add : ActualCommand msg anything -> Program msg -> Program msg
-add command ({ commands } as program) =
+add : ActualOptionsParser msg anything -> Program msg -> Program msg
+add optionsParser ({ optionsParsers } as program) =
     { program
-        | commands = commands ++ [ Command.end command ]
+        | optionsParsers = optionsParsers ++ [ OptionsParser.end optionsParser ]
     }
 
 
 {-| Run an Program.Program. See the `examples` folder for end-to-end examples.
 
-    type GitCommand
+    type GitOptionsParser
         = Init
         | Clone String
 
-    cli : Cli.Program.Program GitCommand
+    cli : Cli.Program.Program GitOptionsParser
     cli =
         { programName = "git"
-        , commands = commands
+        , optionsParsers = optionsParsers
         , version = "1.2.3"
         }
 
-    commands : List (Command.Command GitCommand)
-    commands =
-        [ Command.buildSubCommand "clone" Clone
+    optionsParsers : List (OptionsParser.OptionsParser GitOptionsParser)
+    optionsParsers =
+        [ OptionsParser.buildSubCommand "clone" Clone
             |> with (Cli.Option.positionalArg "repository")
-            |> Command.end
+            |> OptionsParser.end
         ]
 
     argv : List String
     argv =
         [{- passed in as Flags from JavaScript, see `examples` folder. -}]
 
-    matchResult : Cli.Program.RunResult GitCommand
+    matchResult : Cli.Program.RunResult GitOptionsParser
     matchResult =
         Cli.Program.run cli argv
 
 -}
 run : Program msg -> List String -> RunResult msg
-run { programName, commands, version } argv =
+run { programName, optionsParsers, version } argv =
     let
         matchResult =
-            Cli.LowLevel.try commands argv
+            Cli.LowLevel.try optionsParsers argv
     in
     case matchResult of
         Cli.LowLevel.NoMatch unexpectedOptions ->
             if unexpectedOptions == [] then
-                "\nNo matching command...\n\nUsage:\n\n"
-                    ++ Cli.LowLevel.helpText "elm-test" commands
+                "\nNo matching optionsParser...\n\nUsage:\n\n"
+                    ++ Cli.LowLevel.helpText "elm-test" optionsParsers
                     |> SystemMessage Cli.ExitStatus.Failure
             else
                 unexpectedOptions
                     |> List.map
                         (TypoSuggestion.toMessage
-                            (commands
+                            (optionsParsers
                                 |> List.map
-                                    (\command ->
-                                        { usageSpecs = Command.getUsageSpecs command
-                                        , subCommand = Command.getSubCommand command
+                                    (\optionsParser ->
+                                        { usageSpecs = OptionsParser.getUsageSpecs optionsParser
+                                        , subCommand = OptionsParser.getSubCommand optionsParser
                                         }
                                     )
                             )
@@ -128,7 +128,7 @@ run { programName, commands, version } argv =
                 |> CustomMatch
 
         Cli.LowLevel.ShowHelp ->
-            Cli.LowLevel.helpText programName commands
+            Cli.LowLevel.helpText programName optionsParsers
                 |> SystemMessage Cli.ExitStatus.Success
 
         Cli.LowLevel.ShowVersion ->

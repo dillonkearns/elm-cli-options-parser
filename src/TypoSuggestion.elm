@@ -1,11 +1,11 @@
-module TypoSuggestion exposing (Command, TypoSuggestion(..), getSuggestions, toMessage)
+module TypoSuggestion exposing (OptionsParser, TypoSuggestion(..), getSuggestions, toMessage)
 
 import Cli.UsageSpec as UsageSpec
 import Fuzzy
 import List.Extra
 
 
-type alias Command =
+type alias OptionsParser =
     { usageSpecs : List UsageSpec.UsageSpec
     , subCommand : Maybe String
     }
@@ -29,9 +29,9 @@ suggestionToString typoSuggestion =
         ++ "`"
 
 
-toMessage : List Command -> String -> String
-toMessage commands unexpectedOption =
-    case getSuggestions commands unexpectedOption |> List.head of
+toMessage : List OptionsParser -> String -> String
+toMessage optionsParsers unexpectedOption =
+    case getSuggestions optionsParsers unexpectedOption |> List.head of
         Just bestSuggestion ->
             "The `--"
                 ++ unexpectedOption
@@ -54,29 +54,29 @@ name typoSuggestion =
             suggestionName
 
 
-getSuggestions : List Command -> String -> List TypoSuggestion
-getSuggestions commands unexpectedOption =
+getSuggestions : List OptionsParser -> String -> List TypoSuggestion
+getSuggestions optionsParsers unexpectedOption =
     let
         something needle hay =
             Fuzzy.match [] [] needle hay |> .score
     in
-    (buildSubCommandSuggestions commands
-        ++ optionSuggestions commands
+    (buildSubCommandSuggestions optionsParsers
+        ++ optionSuggestions optionsParsers
     )
         |> List.sortBy (name >> something unexpectedOption)
 
 
-buildSubCommandSuggestions : List Command -> List TypoSuggestion
-buildSubCommandSuggestions commands =
-    commands
+buildSubCommandSuggestions : List OptionsParser -> List TypoSuggestion
+buildSubCommandSuggestions optionsParsers =
+    optionsParsers
         |> List.map .subCommand
         |> List.filterMap identity
         |> List.map SubCommand
 
 
-optionSuggestions : List Command -> List TypoSuggestion
-optionSuggestions commands =
-    commands
+optionSuggestions : List OptionsParser -> List TypoSuggestion
+optionSuggestions optionsParsers =
+    optionsParsers
         |> List.map .usageSpecs
         |> List.concat
         |> List.Extra.uniqueBy UsageSpec.name

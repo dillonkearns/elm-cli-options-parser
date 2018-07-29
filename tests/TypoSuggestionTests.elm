@@ -11,7 +11,7 @@ all : Test
 all =
     describe "typo suggestions"
         [ describe "ordering"
-            [ test "exact matching subcommand" <|
+            [ test "exact matching suboptionsParser" <|
                 \() ->
                     let
                         cli =
@@ -24,9 +24,9 @@ all =
                 \() ->
                     let
                         cli =
-                            [ requiredFlagCommand "unrelated"
-                            , requiredFlagCommand "input"
-                            , requiredFlagCommand "output"
+                            [ requiredFlagOptionsParser "unrelated"
+                            , requiredFlagOptionsParser "input"
+                            , requiredFlagOptionsParser "output"
                             ]
                     in
                     TypoSuggestion.getSuggestions cli "outupt"
@@ -40,9 +40,9 @@ all =
             \() ->
                 let
                     cli =
-                        [ requiredFlagCommand "unrelated"
-                        , requiredFlagCommand "input"
-                        , requiredFlagCommand "output"
+                        [ requiredFlagOptionsParser "unrelated"
+                        , requiredFlagOptionsParser "input"
+                        , requiredFlagOptionsParser "output"
                         ]
                 in
                 TypoSuggestion.toMessage cli "outupt"
@@ -50,14 +50,14 @@ all =
         ]
 
 
-requiredFlagCommand : String -> TypoSuggestion.Command
-requiredFlagCommand flagName =
+requiredFlagOptionsParser : String -> TypoSuggestion.OptionsParser
+requiredFlagOptionsParser flagName =
     { subCommand = Nothing
     , usageSpecs = [ UsageSpec.flag flagName Required ]
     }
 
 
-subCommand : String -> TypoSuggestion.Command
+subCommand : String -> TypoSuggestion.OptionsParser
 subCommand subCommandName =
     { subCommand = Just subCommandName
     , usageSpecs = []

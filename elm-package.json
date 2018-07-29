@@ -9,7 +9,7 @@
     "exposed-modules": [
         "Cli.Program",
         "Cli.Option",
-        "Cli.Command",
+        "Cli.OptionsParser",
         "Cli.Validate",
         "Cli.ExitStatus"
     ],
