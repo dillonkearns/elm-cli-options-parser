@@ -1,18 +1,18 @@
-module Cli.Program exposing (Program, RunResult(..), add, program, run)
+module Cli.Program exposing (Program, ProgramNew, RunResult(..), add, program, programNew, run)
 
 {-| TODO
 
-@docs RunResult, Program
+@docs RunResult, Program, ProgramNew
 @docs run
 @docs add
-@docs program
+@docs program, programNew
 
 -}
 
-import Cli.OptionsParser as OptionsParser exposing (ActualOptionsParser, OptionsParser)
-import Cli.OptionsParser.BuilderState as BuilderState
 import Cli.ExitStatus exposing (ExitStatus)
 import Cli.LowLevel
+import Cli.OptionsParser as OptionsParser exposing (ActualOptionsParser, OptionsParser)
+import Cli.OptionsParser.BuilderState as BuilderState
 import TypoSuggestion
 
 
@@ -39,6 +39,51 @@ program { programName, version } =
     , version = version
     , optionsParsers = []
     }
+
+
+{-| TODO
+-}
+type alias ProgramNew decodesTo =
+    Platform.Program (List String) () decodesTo
+
+
+{-| -}
+programNew : (options -> Cmd msg) -> Program options -> ProgramOptions msg -> ProgramNew msg
+programNew matchFunction program options =
+    Platform.programWithFlags
+        { init = init matchFunction options program
+        , update = \msg model -> ( (), Cmd.none )
+        , subscriptions = \_ -> Sub.none
+        }
+
+
+type alias ProgramOptions msg =
+    { printAndExitFailure : String -> Cmd msg
+    , printAndExitSuccess : String -> Cmd msg
+    }
+
+
+init : (options -> Cmd msg) -> ProgramOptions msg -> Program options -> List String -> ( (), Cmd msg )
+init match options program argv =
+    let
+        matchResult : RunResult options
+        matchResult =
+            run program argv
+
+        cmd =
+            case matchResult of
+                SystemMessage exitStatus message ->
+                    case exitStatus of
+                        Cli.ExitStatus.Failure ->
+                            options.printAndExitFailure message
+
+                        Cli.ExitStatus.Success ->
+                            options.printAndExitSuccess message
+
+                CustomMatch msg ->
+                    match msg
+    in
+    ( (), cmd )
 
 
 {-| -}
