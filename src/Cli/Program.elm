@@ -48,27 +48,29 @@ type alias ProgramNew decodesTo =
 
 
 {-| -}
-programNew : (options -> Cmd msg) -> Program options -> ProgramOptions msg -> ProgramNew msg
-programNew matchFunction program options =
+programNew : ProgramOptions msg options -> ProgramNew msg
+programNew options =
     Platform.programWithFlags
-        { init = init matchFunction options program
+        { init = init options
         , update = \msg model -> ( (), Cmd.none )
         , subscriptions = \_ -> Sub.none
         }
 
 
-type alias ProgramOptions msg =
-    { printAndExitFailure : String -> Cmd msg
-    , printAndExitSuccess : String -> Cmd msg
+type alias ProgramOptions decodesTo options =
+    { printAndExitFailure : String -> Cmd decodesTo
+    , printAndExitSuccess : String -> Cmd decodesTo
+    , match : options -> Cmd decodesTo
+    , program : Program options
     }
 
 
-init : (options -> Cmd msg) -> ProgramOptions msg -> Program options -> List String -> ( (), Cmd msg )
-init match options program argv =
+init : ProgramOptions msg options -> List String -> ( (), Cmd msg )
+init options argv =
     let
         matchResult : RunResult options
         matchResult =
-            run program argv
+            run options.program argv
 
         cmd =
             case matchResult of
@@ -81,7 +83,7 @@ init match options program argv =
                             options.printAndExitSuccess message
 
                 CustomMatch msg ->
-                    match msg
+                    options.match msg
     in
     ( (), cmd )
 

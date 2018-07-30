@@ -86,8 +86,8 @@ match =
 main : Program.ProgramNew msg
 main =
     Program.programNew
-        match
-        cli
         { printAndExitFailure = Ports.printAndExitFailure
         , printAndExitSuccess = Ports.printAndExitSuccess
+        , match = match
+        , program = cli
         }
