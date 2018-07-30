@@ -7,7 +7,7 @@ import Json.Decode exposing (..)
 import Ports
 
 
-program : Program.Program Msg
+program : Program.Program GreetOptions
 program =
     { programName = "greet"
     , version = "1.2.3"
@@ -26,11 +26,11 @@ dummy =
     Json.Decode.string
 
 
-type Msg
+type GreetOptions
     = Greet String (Maybe String)
 
 
-init : Msg -> Cmd Never
+init : GreetOptions -> Cmd Never
 init msg =
     (case msg of
         Greet name maybePrefix ->
