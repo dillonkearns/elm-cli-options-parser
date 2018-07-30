@@ -105,6 +105,29 @@ init argv =
     ( (), cmd )
 
 
+init2 : (options -> Cmd msg) -> Program.Program options -> List String -> ( (), Cmd msg )
+init2 match program argv =
+    let
+        matchResult : Program.RunResult options
+        matchResult =
+            Program.run program argv
+
+        cmd =
+            case matchResult of
+                Program.SystemMessage exitStatus message ->
+                    case exitStatus of
+                        Cli.ExitStatus.Failure ->
+                            Ports.printAndExitFailure message
+
+                        Cli.ExitStatus.Success ->
+                            Ports.printAndExitSuccess message
+
+                Program.CustomMatch msg ->
+                    match msg
+    in
+    ( (), cmd )
+
+
 type alias Model =
     ()
 
@@ -113,10 +136,47 @@ type alias Msg =
     ()
 
 
+type alias CliProgramOptions msg =
+    { printAndExitFailurePort : String -> Cmd msg
+    , printAndExitSuccessPort : String -> Cmd msg
+    }
+
+
+cliProgram : Program.Program options -> CliProgramOptions msg -> Platform.Program (List String) () msg
+cliProgram cliProgram options =
+    Platform.programWithFlags
+        { init =
+            init2
+                (\msg ->
+                    (case msg of
+                        Init ->
+                            "Initializing test suite..."
+
+                        Clone url ->
+                            "Cloning `" ++ url ++ "`..."
+
+                        Log options ->
+                            [ "Logging..." |> Just
+                            , options.maybeAuthorPattern |> Maybe.map (\authorPattern -> "authorPattern: " ++ authorPattern)
+                            , options.maybeMaxCount |> Maybe.map (\maxCount -> "maxCount: " ++ toString maxCount)
+                            , toString options.statisticsMode |> Just
+                            , options.maybeRevisionRange |> Maybe.map (\revisionRange -> "revisionRange: " ++ toString revisionRange)
+                            ]
+                                |> List.filterMap identity
+                                |> String.join "\n"
+                    )
+                        |> Ports.print
+                )
+                cli
+        , update = \msg model -> ( (), Cmd.none )
+        , subscriptions = \_ -> Sub.none
+        }
+
+
 main : Platform.Program Flags Model Msg
 main =
-    Platform.programWithFlags
-        { init = init
-        , update = \msg model -> ( model, Cmd.none )
-        , subscriptions = \_ -> Sub.none
+    cliProgram
+        cli
+        { printAndExitFailurePort = Ports.printAndExitFailure
+        , printAndExitSuccessPort = Ports.printAndExitSuccess
         }
