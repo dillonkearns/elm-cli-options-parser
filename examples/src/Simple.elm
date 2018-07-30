@@ -33,13 +33,9 @@ type alias GreetOptions =
 
 init : GreetOptions -> Cmd Never
 init { name, maybeGreeting } =
-    (case maybeGreeting of
-        Just greeting ->
-            greeting ++ " " ++ name ++ "!"
-
-        Nothing ->
-            "Hello " ++ name ++ "!"
-    )
+    maybeGreeting
+        |> Maybe.withDefault "Hello"
+        |> (++) (" " ++ name ++ "!")
         |> Ports.print
 
 
