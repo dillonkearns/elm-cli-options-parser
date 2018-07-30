@@ -17,7 +17,6 @@ program =
             (OptionsParser.build GreetOptions
                 |> OptionsParser.with (Option.requiredKeywordArg "name")
                 |> OptionsParser.with (Option.optionalKeywordArg "greeting")
-                |> OptionsParser.end
             )
 
 
