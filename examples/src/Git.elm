@@ -54,12 +54,6 @@ logOptionsParser =
             (Option.restArgs "rest args")
 
 
-dummy : Decoder String
-dummy =
-    -- this is a workaround for an Elm compiler bug
-    Json.Decode.string
-
-
 match : GitOptionsParser -> Cmd msg
 match msg =
     (case msg of
@@ -80,6 +74,12 @@ match msg =
                 |> String.join "\n"
     )
         |> Ports.print
+
+
+dummy : Decoder String
+dummy =
+    -- this is a workaround for an Elm compiler bug
+    Json.Decode.string
 
 
 main : Program.ProgramNew msg
