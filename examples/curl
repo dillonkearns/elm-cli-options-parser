@@ -1,0 +1,2 @@
+# /bin/bash
+elm-make src/Curl.elm --output src/elm.js > /dev/null && ./src/elm-test.js $@
