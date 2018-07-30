@@ -61,26 +61,25 @@ dummy =
 
 
 match : GitOptionsParser -> Cmd msg
-match =
-    \msg ->
-        (case msg of
-            Init ->
-                "Initializing test suite..."
+match msg =
+    (case msg of
+        Init ->
+            "Initializing test suite..."
 
-            Clone url ->
-                "Cloning `" ++ url ++ "`..."
+        Clone url ->
+            "Cloning `" ++ url ++ "`..."
 
-            Log options ->
-                [ "Logging..." |> Just
-                , options.maybeAuthorPattern |> Maybe.map (\authorPattern -> "authorPattern: " ++ authorPattern)
-                , options.maybeMaxCount |> Maybe.map (\maxCount -> "maxCount: " ++ toString maxCount)
-                , toString options.statisticsMode |> Just
-                , options.maybeRevisionRange |> Maybe.map (\revisionRange -> "revisionRange: " ++ toString revisionRange)
-                ]
-                    |> List.filterMap identity
-                    |> String.join "\n"
-        )
-            |> Ports.print
+        Log options ->
+            [ "Logging..." |> Just
+            , options.maybeAuthorPattern |> Maybe.map (\authorPattern -> "authorPattern: " ++ authorPattern)
+            , options.maybeMaxCount |> Maybe.map (\maxCount -> "maxCount: " ++ toString maxCount)
+            , toString options.statisticsMode |> Just
+            , options.maybeRevisionRange |> Maybe.map (\revisionRange -> "revisionRange: " ++ toString revisionRange)
+            ]
+                |> List.filterMap identity
+                |> String.join "\n"
+    )
+        |> Ports.print
 
 
 main : Program.ProgramNew msg
