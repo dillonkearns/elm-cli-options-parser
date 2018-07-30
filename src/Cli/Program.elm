@@ -1,10 +1,10 @@
-module Cli.Program exposing (Program, ProgramNew, add, program, programNew)
+module Cli.Program exposing (Program, ProgramNew, add, program, programNew, stateful)
 
 {-| TODO
 
 @docs Program, ProgramNew
 @docs add
-@docs program, programNew
+@docs program, programNew, stateful
 
 -}
 
@@ -56,6 +56,35 @@ programNew options =
         }
 
 
+{-| TODO
+-}
+stateful :
+    { printAndExitFailure : String -> Cmd msg
+    , printAndExitSuccess : String -> Cmd msg
+    , init : options -> ( model, Cmd msg )
+    , update : msg -> model -> ( model, Cmd msg )
+    , program : Program options
+    }
+    -> Platform.Program (List String) (StatefulProgramModel model) msg
+stateful options =
+    Platform.programWithFlags
+        { init = initWithModel options
+        , update =
+            \msg model ->
+                case model of
+                    UserModel actualModel ->
+                        let
+                            ( model, cmd ) =
+                                options.update msg actualModel
+                        in
+                        ( UserModel model, cmd )
+
+                    ShowSystemMessage ->
+                        ( ShowSystemMessage, Cmd.none )
+        , subscriptions = \_ -> Sub.none
+        }
+
+
 type alias ProgramOptions decodesTo options =
     { printAndExitFailure : String -> Cmd decodesTo
     , printAndExitSuccess : String -> Cmd decodesTo
@@ -64,7 +93,15 @@ type alias ProgramOptions decodesTo options =
     }
 
 
-init : ProgramOptions msg options -> List String -> ( (), Cmd msg )
+init :
+    { config
+        | printAndExitFailure : String -> Cmd msg
+        , printAndExitSuccess : String -> Cmd msg
+        , init : options -> Cmd msg
+        , program : Program options
+    }
+    -> List String
+    -> ( (), Cmd msg )
 init options argv =
     let
         matchResult : RunResult options
@@ -85,6 +122,46 @@ init options argv =
                     options.init msg
     in
     ( (), cmd )
+
+
+type StatefulProgramModel model
+    = ShowSystemMessage
+    | UserModel model
+
+
+initWithModel :
+    { config
+        | printAndExitFailure : String -> Cmd msg
+        , printAndExitSuccess : String -> Cmd msg
+        , init : options -> ( model, Cmd msg )
+        , program : Program options
+    }
+    -> List String
+    -> ( StatefulProgramModel model, Cmd msg )
+initWithModel options argv =
+    let
+        matchResult : RunResult options
+        matchResult =
+            run options.program argv
+
+        cmd =
+            case matchResult of
+                SystemMessage exitStatus message ->
+                    case exitStatus of
+                        Cli.ExitStatus.Failure ->
+                            ( ShowSystemMessage, options.printAndExitFailure message )
+
+                        Cli.ExitStatus.Success ->
+                            ( ShowSystemMessage, options.printAndExitSuccess message )
+
+                CustomMatch msg ->
+                    let
+                        ( model, cmd ) =
+                            options.init msg
+                    in
+                    ( UserModel model, cmd )
+    in
+    cmd
 
 
 {-| -}
