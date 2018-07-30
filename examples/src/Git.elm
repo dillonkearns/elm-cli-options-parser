@@ -54,8 +54,8 @@ logOptionsParser =
             (Option.restArgs "rest args")
 
 
-match : GitOptionsParser -> Cmd msg
-match msg =
+init : GitOptionsParser -> Cmd msg
+init msg =
     (case msg of
         Init ->
             "Initializing test suite..."
@@ -87,6 +87,6 @@ main =
     Program.programNew
         { printAndExitFailure = Ports.printAndExitFailure
         , printAndExitSuccess = Ports.printAndExitSuccess
-        , match = match
+        , init = init
         , program = cli
         }

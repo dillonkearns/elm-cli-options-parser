@@ -60,7 +60,7 @@ programNew options =
 type alias ProgramOptions decodesTo options =
     { printAndExitFailure : String -> Cmd decodesTo
     , printAndExitSuccess : String -> Cmd decodesTo
-    , match : options -> Cmd decodesTo
+    , init : options -> Cmd decodesTo
     , program : Program options
     }
 
@@ -83,7 +83,7 @@ init options argv =
                             options.printAndExitSuccess message
 
                 CustomMatch msg ->
-                    options.match msg
+                    options.init msg
     in
     ( (), cmd )
 
