@@ -9,19 +9,16 @@ import Ports
 
 program : Program.Program Msg
 program =
-    { programName = "graphqelm"
-    , optionsParsers = optionsParsers
+    { programName = "greet"
     , version = "1.2.3"
     }
-
-
-optionsParsers : List (OptionsParser.TerminalOptionsParser Msg)
-optionsParsers =
-    [ OptionsParser.build Greet
-        |> OptionsParser.with (Option.requiredKeywordArg "name")
-        |> OptionsParser.with (Option.optionalKeywordArg "greeting")
-        |> OptionsParser.end
-    ]
+        |> Program.program
+        |> Program.add
+            (OptionsParser.build Greet
+                |> OptionsParser.with (Option.requiredKeywordArg "name")
+                |> OptionsParser.with (Option.optionalKeywordArg "greeting")
+                |> OptionsParser.end
+            )
 
 
 dummy : Decoder String
