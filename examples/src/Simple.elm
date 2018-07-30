@@ -20,11 +20,6 @@ program =
             )
 
 
-dummy : Decoder String
-dummy =
-    Json.Decode.string
-
-
 type alias GreetOptions =
     { name : String
     , maybeGreeting : Maybe String
@@ -37,6 +32,11 @@ init { name, maybeGreeting } =
         |> Maybe.withDefault "Hello"
         |> (++) (" " ++ name ++ "!")
         |> Ports.print
+
+
+dummy : Decoder String
+dummy =
+    Json.Decode.string
 
 
 main : Program.ProgramNew Never
