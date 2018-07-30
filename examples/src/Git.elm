@@ -22,8 +22,8 @@ type alias LogOptions =
     }
 
 
-cli : Program.Program GitOptionsParser
-cli =
+program : Program.Program GitOptionsParser
+program =
     { programName = "git"
     , version = "1.2.3"
     }
@@ -88,5 +88,5 @@ main =
         { printAndExitFailure = Ports.printAndExitFailure
         , printAndExitSuccess = Ports.printAndExitSuccess
         , init = init
-        , program = cli
+        , program = program
         }
