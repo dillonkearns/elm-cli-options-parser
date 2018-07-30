@@ -14,7 +14,7 @@ program =
     }
         |> Program.program
         |> Program.add
-            (OptionsParser.build Greet
+            (OptionsParser.build GreetOptions
                 |> OptionsParser.with (Option.requiredKeywordArg "name")
                 |> OptionsParser.with (Option.optionalKeywordArg "greeting")
                 |> OptionsParser.end
@@ -26,20 +26,20 @@ dummy =
     Json.Decode.string
 
 
-type GreetOptions
-    = Greet String (Maybe String)
+type alias GreetOptions =
+    { name : String
+    , maybeGreeting : Maybe String
+    }
 
 
 init : GreetOptions -> Cmd Never
-init msg =
-    (case msg of
-        Greet name maybePrefix ->
-            case maybePrefix of
-                Just greeting ->
-                    greeting ++ " " ++ name ++ "!"
+init { name, maybeGreeting } =
+    (case maybeGreeting of
+        Just greeting ->
+            greeting ++ " " ++ name ++ "!"
 
-                Nothing ->
-                    "Hello " ++ name ++ "!"
+        Nothing ->
+            "Hello " ++ name ++ "!"
     )
         |> Ports.print
 
