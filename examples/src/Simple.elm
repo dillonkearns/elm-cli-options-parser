@@ -1,15 +1,14 @@
 module Simple exposing (main)
 
-import Cli.OptionsParser as OptionsParser
-import Cli.ExitStatus
 import Cli.Option as Option
-import Cli.Program
+import Cli.OptionsParser as OptionsParser
+import Cli.Program as Program
 import Json.Decode exposing (..)
 import Ports
 
 
-cli : Cli.Program.Program Msg
-cli =
+program : Program.Program Msg
+program =
     { programName = "graphqelm"
     , optionsParsers = optionsParsers
     , version = "1.2.3"
@@ -30,56 +29,29 @@ dummy =
     Json.Decode.string
 
 
-type alias Flags =
-    List String
-
-
-type alias Model =
-    ()
-
-
 type Msg
     = Greet String (Maybe String)
 
 
-init : Flags -> ( Model, Cmd Msg )
-init argv =
-    let
-        matchResult =
-            Cli.Program.run cli argv
+init : Msg -> Cmd Never
+init msg =
+    (case msg of
+        Greet name maybePrefix ->
+            case maybePrefix of
+                Just greeting ->
+                    greeting ++ " " ++ name ++ "!"
 
-        toPrint =
-            case matchResult of
-                Cli.Program.SystemMessage exitStatus message ->
-                    case exitStatus of
-                        Cli.ExitStatus.Failure ->
-                            Ports.printAndExitFailure message
-
-                        Cli.ExitStatus.Success ->
-                            Ports.printAndExitSuccess message
-
-                Cli.Program.CustomMatch msg ->
-                    case msg of
-                        Greet name maybePrefix ->
-                            case maybePrefix of
-                                Just greeting ->
-                                    greeting ++ " " ++ name ++ "!" |> Ports.print
-
-                                Nothing ->
-                                    "Hello " ++ name ++ "!" |> Ports.print
-    in
-    ( (), toPrint )
+                Nothing ->
+                    "Hello " ++ name ++ "!"
+    )
+        |> Ports.print
 
 
-update : Msg -> Model -> ( Model, Cmd Msg )
-update msg model =
-    ( (), Cmd.none )
-
-
-main : Program Flags Model Msg
+main : Program.ProgramNew Never
 main =
-    Platform.programWithFlags
-        { init = init
-        , update = update
-        , subscriptions = \_ -> Sub.none
+    Program.programNew
+        { printAndExitFailure = Ports.printAndExitFailure
+        , printAndExitSuccess = Ports.printAndExitSuccess
+        , init = init
+        , program = program
         }

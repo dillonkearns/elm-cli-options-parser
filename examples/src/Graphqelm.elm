@@ -1,9 +1,8 @@
 module Main exposing (main)
 
-import Cli.OptionsParser as OptionsParser exposing (OptionsParser, with)
-import Cli.ExitStatus
 import Cli.Option as Option
-import Cli.Program
+import Cli.OptionsParser as OptionsParser exposing (OptionsParser, with)
+import Cli.Program as Program
 import Cli.Validate
 import Json.Decode exposing (..)
 import Ports
@@ -15,8 +14,8 @@ type GraphqelmOptionsParser
     | FromFile String (Maybe String) (Maybe String) Bool
 
 
-cli : Cli.Program.Program GraphqelmOptionsParser
-cli =
+program : Program.Program GraphqelmOptionsParser
+program =
     { programName = "graphqelm"
     , optionsParsers = optionsParsers
     , version = "1.2.3"
@@ -62,50 +61,26 @@ type alias Flags =
     List String
 
 
-init : Flags -> ( Model, Cmd Msg )
-init flags =
-    let
-        matchResult =
-            Cli.Program.run cli flags
+init : GraphqelmOptionsParser -> Cmd Never
+init msg =
+    (case msg of
+        PrintVersion ->
+            "You are on version 3.1.4"
 
-        toPrint =
-            case matchResult of
-                Cli.Program.SystemMessage exitStatus message ->
-                    case exitStatus of
-                        Cli.ExitStatus.Failure ->
-                            Ports.printAndExitFailure message
+        FromUrl url base outputPath excludeDeprecated headers ->
+            "...fetching from url " ++ url ++ "\noptions: " ++ toString ( url, base, outputPath, excludeDeprecated, headers )
 
-                        Cli.ExitStatus.Success ->
-                            Ports.printAndExitSuccess message
-
-                Cli.Program.CustomMatch msg ->
-                    (case msg of
-                        PrintVersion ->
-                            "You are on version 3.1.4"
-
-                        FromUrl url base outputPath excludeDeprecated headers ->
-                            "...fetching from url " ++ url ++ "\noptions: " ++ toString ( url, base, outputPath, excludeDeprecated, headers )
-
-                        FromFile file base outputPath excludeDeprecated ->
-                            "...fetching from file " ++ file ++ "\noptions: " ++ toString ( base, outputPath, excludeDeprecated )
-                    )
-                        |> Ports.print
-    in
-    ( (), toPrint )
+        FromFile file base outputPath excludeDeprecated ->
+            "...fetching from file " ++ file ++ "\noptions: " ++ toString ( base, outputPath, excludeDeprecated )
+    )
+        |> Ports.print
 
 
-type alias Model =
-    ()
-
-
-type alias Msg =
-    ()
-
-
-main : Program Flags Model Msg
+main : Program.ProgramNew Never
 main =
-    Platform.programWithFlags
-        { init = init
-        , update = \msg model -> ( model, Cmd.none )
-        , subscriptions = \_ -> Sub.none
+    Program.programNew
+        { printAndExitFailure = Ports.printAndExitFailure
+        , printAndExitSuccess = Ports.printAndExitSuccess
+        , init = init
+        , program = program
         }

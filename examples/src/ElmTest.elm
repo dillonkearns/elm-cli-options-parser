@@ -1,9 +1,8 @@
 module Main exposing (main)
 
-import Cli.OptionsParser as OptionsParser exposing (OptionsParser, with)
-import Cli.ExitStatus
 import Cli.Option as Option
-import Cli.Program
+import Cli.OptionsParser as OptionsParser exposing (OptionsParser, with)
+import Cli.Program as Program
 import Json.Decode exposing (..)
 import Ports
 
@@ -24,17 +23,17 @@ type alias RunTestsRecord =
     }
 
 
-cli : Cli.Program.Program ElmTestOptionsParser
-cli =
+program : Program.Program ElmTestOptionsParser
+program =
     { programName = "elm-test"
     , version = "1.2.3"
     }
-        |> Cli.Program.program
-        |> Cli.Program.add
+        |> Program.program
+        |> Program.add
             (OptionsParser.buildSubCommand "init" Init
                 |> OptionsParser.end
             )
-        |> Cli.Program.add
+        |> Program.add
             (OptionsParser.build RunTestsRecord
                 |> with
                     (Option.optionalKeywordArg "fuzz"
@@ -73,54 +72,29 @@ dummy =
     Json.Decode.string
 
 
-type alias Flags =
-    List String
+
+-- init : Flags -> ( Model, Cmd Msg )
 
 
-init : Flags -> ( Model, Cmd Msg )
-init argv =
-    let
-        matchResult =
-            Cli.Program.run cli argv
+init : ElmTestOptionsParser -> Cmd Never
+init msg =
+    (case msg of
+        Init ->
+            "Initializing test suite..."
 
-        toPrint =
-            case matchResult of
-                Cli.Program.SystemMessage exitStatus message ->
-                    case exitStatus of
-                        Cli.ExitStatus.Failure ->
-                            Ports.printAndExitFailure message
-
-                        Cli.ExitStatus.Success ->
-                            Ports.printAndExitSuccess message
-
-                Cli.Program.CustomMatch msg ->
-                    (case msg of
-                        Init ->
-                            "Initializing test suite..."
-
-                        RunTests options ->
-                            [ "Running the following test files: " ++ toString options.testFiles |> Just
-                            , "watch: " ++ toString options.watch |> Just
-                            , options.maybeFuzz |> Maybe.map (\fuzz -> "fuzz: " ++ toString fuzz)
-                            , options.maybeSeed |> Maybe.map (\seed -> "seed: " ++ toString seed)
-                            , options.report |> toString |> Just
-                            , options.maybeCompilerPath |> Maybe.map (\compilerPath -> "compiler: " ++ toString compilerPath)
-                            , options.maybeDependencies |> Maybe.map (\dependencies -> "dependencies: " ++ toString dependencies)
-                            ]
-                                |> List.filterMap identity
-                                |> String.join "\n"
-                    )
-                        |> Ports.print
-    in
-    ( (), toPrint )
-
-
-type alias Model =
-    ()
-
-
-type alias Msg =
-    ()
+        RunTests options ->
+            [ "Running the following test files: " ++ toString options.testFiles |> Just
+            , "watch: " ++ toString options.watch |> Just
+            , options.maybeFuzz |> Maybe.map (\fuzz -> "fuzz: " ++ toString fuzz)
+            , options.maybeSeed |> Maybe.map (\seed -> "seed: " ++ toString seed)
+            , options.report |> toString |> Just
+            , options.maybeCompilerPath |> Maybe.map (\compilerPath -> "compiler: " ++ toString compilerPath)
+            , options.maybeDependencies |> Maybe.map (\dependencies -> "dependencies: " ++ toString dependencies)
+            ]
+                |> List.filterMap identity
+                |> String.join "\n"
+    )
+        |> Ports.print
 
 
 (=>) : a -> b -> ( a, b )
@@ -128,10 +102,11 @@ type alias Msg =
     (,)
 
 
-main : Program Flags Model Msg
+main : Program.ProgramNew Never
 main =
-    Platform.programWithFlags
-        { init = init
-        , update = \msg model -> ( model, Cmd.none )
-        , subscriptions = \_ -> Sub.none
+    Program.programNew
+        { printAndExitFailure = Ports.printAndExitFailure
+        , printAndExitSuccess = Ports.printAndExitSuccess
+        , init = init
+        , program = program
         }

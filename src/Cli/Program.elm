@@ -1,9 +1,8 @@
-module Cli.Program exposing (Program, ProgramNew, RunResult(..), add, program, programNew, run)
+module Cli.Program exposing (Program, ProgramNew, add, program, programNew)
 
 {-| TODO
 
-@docs RunResult, Program, ProgramNew
-@docs run
+@docs Program, ProgramNew
 @docs add
 @docs program, programNew
 
