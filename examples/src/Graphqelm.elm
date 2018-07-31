@@ -9,18 +9,13 @@ import Ports
 
 
 type GraphqelmOptionsParser
-    = PrintVersion
-    | FromUrl String (Maybe String) (Maybe String) Bool (List String)
+    = FromUrl String (Maybe String) (Maybe String) Bool (List String)
     | FromFile String (Maybe String) (Maybe String) Bool
 
 
 program : Program.Program GraphqelmOptionsParser
 program =
     Program.program { version = "1.2.3" }
-        |> Program.add
-            (OptionsParser.build PrintVersion
-                |> OptionsParser.expectFlag "version"
-            )
         |> Program.add
             (OptionsParser.build FromUrl
                 |> with (Option.positionalArg "url")
@@ -55,9 +50,6 @@ dummy =
 init : GraphqelmOptionsParser -> Cmd Never
 init msg =
     (case msg of
-        PrintVersion ->
-            "You are on version 3.1.4"
-
         FromUrl url base outputPath excludeDeprecated headers ->
             "...fetching from url " ++ url ++ "\noptions: " ++ toString ( url, base, outputPath, excludeDeprecated, headers )
 
