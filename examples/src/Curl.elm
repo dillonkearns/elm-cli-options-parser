@@ -3,12 +3,13 @@ module Main exposing (main)
 import Cli.Option as Option
 import Cli.OptionsParser as OptionsParser exposing (with)
 import Cli.Program as Program
+import Http
 import Json.Decode exposing (..)
 import Ports
 
 
 type Msg
-    = NoOp
+    = GotResponse (Result Http.Error String)
 
 
 type alias Model =
@@ -35,15 +36,26 @@ type alias CliOptions =
 init : CliOptions -> ( Model, Cmd Msg )
 init { url } =
     ( ()
-    , "Fetching from url: "
-        ++ url
-        |> Ports.print
+    , Cmd.batch
+        [ "Fetching from url: " ++ url |> Ports.print
+        , url |> Http.getString |> Http.send GotResponse
+        ]
     )
 
 
 dummy : Decoder String
 dummy =
     Json.Decode.string
+
+
+update : Msg -> Model -> ( Model, Cmd Msg )
+update (GotResponse httpResult) model =
+    case httpResult of
+        Ok httpResponse ->
+            ( model, Ports.print httpResponse )
+
+        Err error ->
+            ( model, error |> toString |> Ports.print )
 
 
 main : Program.StatefulProgram Model Msg
@@ -55,8 +67,3 @@ main =
         , program = program
         , update = update
         }
-
-
-update : Msg -> Model -> ( Model, Cmd Msg )
-update msg model =
-    ( model, Cmd.none )
