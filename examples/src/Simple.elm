@@ -9,9 +9,7 @@ import Ports
 
 program : Program.Program GreetOptions
 program =
-    { version = "1.2.3"
-    }
-        |> Program.program
+    Program.program { version = "1.2.3" }
         |> Program.add
             (OptionsParser.build GreetOptions
                 |> OptionsParser.with (Option.requiredKeywordArg "name")

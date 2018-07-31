@@ -24,9 +24,7 @@ type alias LogOptions =
 
 program : Program.Program CliOptions
 program =
-    { version = "1.2.3"
-    }
-        |> Program.program
+    Program.program { version = "1.2.3" }
         |> Program.add
             (OptionsParser.buildSubCommand "init" Init
                 |> OptionsParser.withDoc "initialize a git repository"

@@ -25,9 +25,7 @@ type alias RunTestsRecord =
 
 program : Program.Program ElmTestOptionsParser
 program =
-    { version = "1.2.3"
-    }
-        |> Program.program
+    Program.program { version = "1.2.3" }
         |> Program.add
             (OptionsParser.buildSubCommand "init" Init
                 |> OptionsParser.end
