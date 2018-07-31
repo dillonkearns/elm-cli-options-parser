@@ -8,12 +8,12 @@ import Json.Decode exposing (..)
 import Ports
 
 
-type GraphqelmOptionsParser
+type CliOptions
     = FromUrl String (Maybe String) (Maybe String) Bool (List String)
     | FromFile String (Maybe String) (Maybe String) Bool
 
 
-program : Program.Program GraphqelmOptionsParser
+program : Program.Program CliOptions
 program =
     Program.program { version = "1.2.3" }
         |> Program.add
@@ -47,7 +47,7 @@ dummy =
     Json.Decode.string
 
 
-init : GraphqelmOptionsParser -> Cmd Never
+init : CliOptions -> Cmd Never
 init msg =
     (case msg of
         FromUrl url base outputPath excludeDeprecated headers ->
