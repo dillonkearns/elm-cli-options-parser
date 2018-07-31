@@ -53,5 +53,10 @@ main =
         , printAndExitSuccess = Ports.printAndExitSuccess
         , init = init
         , program = program
-        , update = \msg model -> ( model, Cmd.none )
+        , update = update
         }
+
+
+update : Msg -> Model -> ( Model, Cmd Msg )
+update msg model =
+    ( model, Cmd.none )
