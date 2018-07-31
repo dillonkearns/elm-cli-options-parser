@@ -16,31 +16,27 @@ type GraphqelmOptionsParser
 
 program : Program.Program GraphqelmOptionsParser
 program =
-    { optionsParsers = optionsParsers
-    , version = "1.2.3"
-    }
-
-
-optionsParsers : List (OptionsParser.TerminalOptionsParser GraphqelmOptionsParser)
-optionsParsers =
-    [ OptionsParser.build PrintVersion
-        |> OptionsParser.expectFlag "version"
-        |> OptionsParser.end
-    , OptionsParser.build FromUrl
-        |> with (Option.positionalArg "url")
-        |> with baseOption
-        |> with (Option.optionalKeywordArg "output")
-        |> with (Option.flag "excludeDeprecated")
-        |> with (Option.keywordArgList "header")
-        |> OptionsParser.end
-        |> OptionsParser.withDoc "generate files based on the schema at `url`"
-    , OptionsParser.build FromFile
-        |> with (Option.requiredKeywordArg "introspection-file")
-        |> with baseOption
-        |> with (Option.optionalKeywordArg "output")
-        |> with (Option.flag "excludeDeprecated")
-        |> OptionsParser.end
-    ]
+    Program.program { version = "1.2.3" }
+        |> Program.add
+            (OptionsParser.build PrintVersion
+                |> OptionsParser.expectFlag "version"
+            )
+        |> Program.add
+            (OptionsParser.build FromUrl
+                |> with (Option.positionalArg "url")
+                |> with baseOption
+                |> with (Option.optionalKeywordArg "output")
+                |> with (Option.flag "excludeDeprecated")
+                |> with (Option.keywordArgList "header")
+                |> OptionsParser.withDoc "generate files based on the schema at `url`"
+            )
+        |> Program.add
+            (OptionsParser.build FromFile
+                |> with (Option.requiredKeywordArg "introspection-file")
+                |> with baseOption
+                |> with (Option.optionalKeywordArg "output")
+                |> with (Option.flag "excludeDeprecated")
+            )
 
 
 baseOption : Option.Option (Maybe String) (Maybe String) Option.MiddleOption
