@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+console.log(__filename)
 let program = require('./elm.js').Main.worker(process.argv)
 XMLHttpRequest = require('xmlhttprequest').XMLHttpRequest
 

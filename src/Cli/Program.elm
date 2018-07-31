@@ -12,6 +12,7 @@ import Cli.ExitStatus exposing (ExitStatus)
 import Cli.LowLevel
 import Cli.OptionsParser as OptionsParser exposing (ActualOptionsParser, OptionsParser)
 import Cli.OptionsParser.BuilderState as BuilderState
+import List.Extra
 import TypoSuggestion
 
 
@@ -112,7 +113,7 @@ init options argv =
     let
         matchResult : RunResult options
         matchResult =
-            run options.program argv
+            run options.program (argv |> Debug.log "argv")
 
         cmd =
             case matchResult of
@@ -208,8 +209,22 @@ add optionsParser ({ optionsParsers } as program) =
 
 -}
 run : Program msg -> List String -> RunResult msg
-run { programName, optionsParsers, version } argv =
+run { optionsParsers, version } argv =
     let
+        programName =
+            case argv of
+                first :: programPath :: _ ->
+                    programPath
+                        |> String.split "/"
+                        |> List.Extra.last
+                        |> Maybe.withDefault errorMessage
+
+                _ ->
+                    errorMessage
+
+        errorMessage =
+            "TODO - show error message explaining that user needs to pass unmodified `process.argv` from node here."
+
         matchResult =
             Cli.LowLevel.try optionsParsers argv
     in

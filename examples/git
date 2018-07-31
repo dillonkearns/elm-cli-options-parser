@@ -1,2 +1,1 @@
-# /bin/bash
-elm-make src/Git.elm --output src/elm.js > /dev/null && ./src/elm-test.js $@
+src/elm-test.js
