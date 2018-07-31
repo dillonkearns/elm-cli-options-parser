@@ -16,8 +16,7 @@ type GraphqelmOptionsParser
 
 program : Program.Program GraphqelmOptionsParser
 program =
-    { programName = "graphqelm"
-    , optionsParsers = optionsParsers
+    { optionsParsers = optionsParsers
     , version = "1.2.3"
     }
 

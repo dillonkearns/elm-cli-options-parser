@@ -9,8 +9,7 @@ import Ports
 
 program : Program.Program GreetOptions
 program =
-    { programName = "greet"
-    , version = "1.2.3"
+    { version = "1.2.3"
     }
         |> Program.program
         |> Program.add

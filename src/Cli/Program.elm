@@ -26,17 +26,15 @@ type RunResult match
 {-| TODO
 -}
 type alias Program msg =
-    { programName : String
-    , optionsParsers : List (ActualOptionsParser msg BuilderState.Terminal)
+    { optionsParsers : List (ActualOptionsParser msg BuilderState.Terminal)
     , version : String
     }
 
 
 {-| -}
-program : { programName : String, version : String } -> Program decodesTo
-program { programName, version } =
-    { programName = programName
-    , version = version
+program : { version : String } -> Program decodesTo
+program { version } =
+    { version = version
     , optionsParsers = []
     }
 
@@ -187,8 +185,7 @@ add optionsParser ({ optionsParsers } as program) =
 
     cli : Cli.Program.Program GitOptionsParser
     cli =
-        { programName = "git"
-        , optionsParsers = optionsParsers
+        { optionsParsers = optionsParsers
         , version = "1.2.3"
         }
 
@@ -232,7 +229,7 @@ run { optionsParsers, version } argv =
         Cli.LowLevel.NoMatch unexpectedOptions ->
             if unexpectedOptions == [] then
                 "\nNo matching optionsParser...\n\nUsage:\n\n"
-                    ++ Cli.LowLevel.helpText "elm-test" optionsParsers
+                    ++ Cli.LowLevel.helpText programName optionsParsers
                     |> SystemMessage Cli.ExitStatus.Failure
             else
                 unexpectedOptions

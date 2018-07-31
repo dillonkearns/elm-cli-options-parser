@@ -18,8 +18,7 @@ type alias Model =
 
 program : Program.Program CliOptions
 program =
-    { programName = "curl"
-    , version = "1.2.3"
+    { version = "1.2.3"
     }
         |> Program.program
         |> Program.add

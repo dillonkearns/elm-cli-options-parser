@@ -25,8 +25,7 @@ type alias RunTestsRecord =
 
 program : Program.Program ElmTestOptionsParser
 program =
-    { programName = "elm-test"
-    , version = "1.2.3"
+    { version = "1.2.3"
     }
         |> Program.program
         |> Program.add

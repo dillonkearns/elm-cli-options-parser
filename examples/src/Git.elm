@@ -24,8 +24,7 @@ type alias LogOptions =
 
 program : Program.Program CliOptions
 program =
-    { programName = "git"
-    , version = "1.2.3"
+    { version = "1.2.3"
     }
         |> Program.program
         |> Program.add
