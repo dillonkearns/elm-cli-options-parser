@@ -52,10 +52,6 @@ dummy =
     Json.Decode.string
 
 
-type alias Flags =
-    List String
-
-
 init : GraphqelmOptionsParser -> Cmd Never
 init msg =
     (case msg of
