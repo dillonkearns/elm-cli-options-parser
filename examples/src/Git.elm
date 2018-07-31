@@ -7,7 +7,7 @@ import Json.Decode exposing (..)
 import Ports
 
 
-type GitOptionsParser
+type CliOptions
     = Init
     | Clone String
     | Log LogOptions
@@ -22,7 +22,7 @@ type alias LogOptions =
     }
 
 
-program : Program.Program GitOptionsParser
+program : Program.Program CliOptions
 program =
     { programName = "git"
     , version = "1.2.3"
@@ -54,7 +54,7 @@ logOptionsParser =
             (Option.restArgs "rest args")
 
 
-init : GitOptionsParser -> Cmd msg
+init : CliOptions -> Cmd msg
 init msg =
     (case msg of
         Init ->
@@ -67,7 +67,7 @@ init msg =
             [ "Logging..." |> Just
             , options.maybeAuthorPattern |> Maybe.map (\authorPattern -> "authorPattern: " ++ authorPattern)
             , options.maybeMaxCount |> Maybe.map (\maxCount -> "maxCount: " ++ toString maxCount)
-            , toString options.statisticsMode |> Just
+            , "stat: " ++ toString options.statisticsMode |> Just
             , options.maybeRevisionRange |> Maybe.map (\revisionRange -> "revisionRange: " ++ toString revisionRange)
             ]
                 |> List.filterMap identity
