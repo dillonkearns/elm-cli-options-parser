@@ -1,10 +1,10 @@
-module Cli.Program exposing (Program, ProgramNew, StatefulProgram, add, program, programNew, stateful)
+module Cli.Program exposing (Program, ProgramNew, StatefulProgram, add, program, stateful, stateless)
 
 {-| TODO
 
 @docs Program, ProgramNew, StatefulProgram
 @docs add
-@docs program, programNew, stateful
+@docs program, stateless, stateful
 
 -}
 
@@ -46,8 +46,8 @@ type alias ProgramNew decodesTo =
 
 
 {-| -}
-programNew : ProgramOptions msg options -> ProgramNew msg
-programNew options =
+stateless : ProgramOptions msg options -> ProgramNew msg
+stateless options =
     Platform.programWithFlags
         { init = init options
         , update = \msg model -> ( (), Cmd.none )

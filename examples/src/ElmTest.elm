@@ -101,7 +101,7 @@ init msg =
 
 main : Program.ProgramNew Never
 main =
-    Program.programNew
+    Program.stateless
         { printAndExitFailure = Ports.printAndExitFailure
         , printAndExitSuccess = Ports.printAndExitSuccess
         , init = init
