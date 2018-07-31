@@ -68,6 +68,7 @@ stateful :
     , printAndExitSuccess : String -> Cmd msg
     , init : options -> ( model, Cmd msg )
     , update : msg -> model -> ( model, Cmd msg )
+    , subscriptions : model -> Sub msg
     , program : Program options
     }
     -> Platform.Program (List String) (StatefulProgramModel model) msg
@@ -86,7 +87,14 @@ stateful options =
 
                     ShowSystemMessage ->
                         ( ShowSystemMessage, Cmd.none )
-        , subscriptions = \_ -> Sub.none
+        , subscriptions =
+            \model ->
+                case model of
+                    UserModel actualModel ->
+                        options.subscriptions actualModel
+
+                    ShowSystemMessage ->
+                        Sub.none
         }
 
 

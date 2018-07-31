@@ -5,7 +5,7 @@
   "main": "argv.js",
   "scripts": {
     "test": "elm-test",
-    "approve": "elm-make --docs=documentation.json && cd examples && elm-make src/ElmTest.elm && elm-make src/Git.elm && elm-make src/Graphqelm.elm src/Simple.elm && cd -",
+    "approve": "elm-make --docs=documentation.json && cd examples && elm-make src/ElmTest.elm && elm-make src/Git.elm && elm-make src/Graphqelm.elm src/Simple.elm src/Curl.elm && cd -",
     "build": "cd examples && elm-make src/*.elm --output src/elm.js && cd -"
   },
   "author": "Dillon Kearns",
