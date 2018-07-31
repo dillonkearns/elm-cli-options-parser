@@ -1,8 +1,8 @@
-module Cli.Program exposing (Program, ProgramNew, add, program, programNew, stateful)
+module Cli.Program exposing (Program, ProgramNew, StatefulProgram, add, program, programNew, stateful)
 
 {-| TODO
 
-@docs Program, ProgramNew
+@docs Program, ProgramNew, StatefulProgram
 @docs add
 @docs program, programNew, stateful
 
@@ -54,6 +54,12 @@ programNew options =
         , update = \msg model -> ( (), Cmd.none )
         , subscriptions = \_ -> Sub.none
         }
+
+
+{-| TODO
+-}
+type alias StatefulProgram model msg =
+    Platform.Program (List String) (StatefulProgramModel model) msg
 
 
 {-| TODO

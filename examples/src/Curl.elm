@@ -7,6 +7,14 @@ import Json.Decode exposing (..)
 import Ports
 
 
+type Msg
+    = NoOp
+
+
+type alias Model =
+    ()
+
+
 program : Program.Program CliOptions
 program =
     { programName = "curl"
@@ -24,11 +32,13 @@ type alias CliOptions =
     }
 
 
-init : CliOptions -> Cmd Never
+init : CliOptions -> ( Model, Cmd Msg )
 init { url } =
-    "Fetching from url: "
+    ( ()
+    , "Fetching from url: "
         ++ url
         |> Ports.print
+    )
 
 
 dummy : Decoder String
@@ -36,11 +46,12 @@ dummy =
     Json.Decode.string
 
 
-main : Program.ProgramNew Never
+main : Program.StatefulProgram Model Msg
 main =
-    Program.programNew
+    Program.stateful
         { printAndExitFailure = Ports.printAndExitFailure
         , printAndExitSuccess = Ports.printAndExitSuccess
         , init = init
         , program = program
+        , update = \msg model -> ( model, Cmd.none )
         }
