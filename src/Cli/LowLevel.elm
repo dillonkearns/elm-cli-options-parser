@@ -29,7 +29,7 @@ intersection sets =
                 |> Set.intersect first
 
 
-try : List (OptionsParser.OptionsParser msg builderStatus) -> List String -> MatchResult msg
+try : List (OptionsParser.OptionsParser msg builderState) -> List String -> MatchResult msg
 try optionsParsers argv =
     let
         maybeShowHelpMatch : Maybe (MatchResult msg)
@@ -117,7 +117,7 @@ oneOf =
         Nothing
 
 
-helpText : String -> List (OptionsParser msg builderStatus) -> String
+helpText : String -> List (OptionsParser msg builderState) -> String
 helpText programName optionsParsers =
     optionsParsers
         |> List.map (OptionsParser.synopsis programName)

@@ -81,14 +81,14 @@ import Tokenizer exposing (ParsedOption)
 
 {-| TODO
 -}
-getUsageSpecs : OptionsParser decodesTo builderStatus -> List UsageSpec
+getUsageSpecs : OptionsParser decodesTo builderState -> List UsageSpec
 getUsageSpecs (OptionsParser { usageSpecs }) =
     usageSpecs
 
 
 {-| Low-level function, for internal use.
 -}
-synopsis : String -> OptionsParser decodesTo builderStatus -> String
+synopsis : String -> OptionsParser decodesTo builderState -> String
 synopsis programName optionsParser =
     optionsParser
         |> (\(OptionsParser record) -> record)
@@ -97,14 +97,14 @@ synopsis programName optionsParser =
 
 {-| Low-level function, for internal use.
 -}
-getSubCommand : OptionsParser msg builderStatus -> Maybe String
+getSubCommand : OptionsParser msg builderState -> Maybe String
 getSubCommand (OptionsParser { buildSubCommand }) =
     buildSubCommand
 
 
 {-| Low-level function, for internal use.
 -}
-tryMatch : List String -> OptionsParser msg builderStatus -> Cli.OptionsParser.MatchResult.MatchResult msg
+tryMatch : List String -> OptionsParser msg builderState -> Cli.OptionsParser.MatchResult.MatchResult msg
 tryMatch argv ((OptionsParser { usageSpecs, buildSubCommand }) as optionsParser) =
     let
         decoder =
@@ -214,7 +214,7 @@ failIfUnexpectedOptions ((OptionsParser ({ decoder, usageSpecs } as optionsParse
         }
 
 
-unexpectedOptions_ : OptionsParser msg builderStatus -> List ParsedOption -> List String
+unexpectedOptions_ : OptionsParser msg builderState -> List ParsedOption -> List String
 unexpectedOptions_ (OptionsParser { usageSpecs }) options =
     List.filterMap
         (\(Tokenizer.ParsedOption optionName optionKind) ->
@@ -228,7 +228,7 @@ unexpectedOptions_ (OptionsParser { usageSpecs }) options =
 
 {-| TODO
 -}
-type OptionsParser msg builderStatus
+type OptionsParser msg builderState
     = OptionsParser (OptionsParserRecord msg)
 
 
