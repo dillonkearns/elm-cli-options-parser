@@ -1,8 +1,8 @@
-module Cli.OptionsParser.BuilderState exposing (AnyOptions, EndOptionsOnly, Terminal)
+module Cli.OptionsParser.BuilderState exposing (AnyOptions, NoBeginningOptions, NoMoreOptions)
 
 {-|
 
-@docs AnyOptions, EndOptionsOnly, Terminal
+@docs AnyOptions, NoBeginningOptions, NoMoreOptions
 
 -}
 
@@ -15,11 +15,11 @@ type AnyOptions
 
 {-| A state where you can add anything but beginning options (i.e. middle or terminal)
 -}
-type EndOptionsOnly
-    = EndOptionsOnly
+type NoBeginningOptions
+    = NoBeginningOptions
 
 
 {-| A state where you can no longer add any options
 -}
-type Terminal
-    = Terminal
+type NoMoreOptions
+    = NoMoreOptions

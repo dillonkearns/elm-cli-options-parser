@@ -252,7 +252,7 @@ The optionsParser will fail if any unspecific positional arguments are passed in
     -}
 
 -}
-end : OptionsParser msg anything -> OptionsParser msg BuilderState.Terminal
+end : OptionsParser msg anything -> OptionsParser msg BuilderState.NoMoreOptions
 end (OptionsParser record) =
     OptionsParser record
 
@@ -421,14 +421,14 @@ The optionsParser will succeed if any unspecific positional arguments are passed
 If you need at least one positional argument, then just use `Cli.Option.positionalArg`.
 
 -}
-optionalPositionalArg : Option from to Cli.Option.MiddleOption -> OptionsParser (to -> msg) BuilderState.AnyOptions -> OptionsParser msg BuilderState.EndOptionsOnly
+optionalPositionalArg : Option from to Cli.Option.MiddleOption -> OptionsParser (to -> msg) BuilderState.AnyOptions -> OptionsParser msg BuilderState.NoBeginningOptions
 optionalPositionalArg =
     withCommon
 
 
 {-| For chaining on `Cli.Option.restArgs`.
 -}
-restArgs : Option from to Cli.Option.TerminalOption -> OptionsParser (to -> msg) startingBuilderState -> OptionsParser msg BuilderState.Terminal
+restArgs : Option from to Cli.Option.TerminalOption -> OptionsParser (to -> msg) startingBuilderState -> OptionsParser msg BuilderState.NoMoreOptions
 restArgs =
     withCommon
 

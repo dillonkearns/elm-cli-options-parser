@@ -26,7 +26,7 @@ type RunResult match
 {-| TODO
 -}
 type alias Program msg =
-    { optionsParsers : List (OptionsParser msg BuilderState.Terminal)
+    { optionsParsers : List (OptionsParser msg BuilderState.NoMoreOptions)
     , version : String
     }
 

@@ -37,7 +37,7 @@ program =
         |> Program.add (OptionsParser.map Log logOptionsParser)
 
 
-logOptionsParser : OptionsParser.OptionsParser LogOptions BuilderState.Terminal
+logOptionsParser : OptionsParser.OptionsParser LogOptions BuilderState.NoMoreOptions
 logOptionsParser =
     OptionsParser.buildSubCommand "log" LogOptions
         |> with (Option.optionalKeywordArg "author")
