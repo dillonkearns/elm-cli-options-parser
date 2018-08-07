@@ -7,13 +7,13 @@ module Cli.OptionsParser
         , build
         , buildSubCommand
         , end
-        , endWith
         , expectFlag
-        , restArgs
         , getSubCommand
         , getUsageSpecs
         , hardcoded
         , map
+        , optionalPositionalArg
+        , restArgs
         , synopsis
         , tryMatch
         , with
@@ -27,7 +27,7 @@ module Cli.OptionsParser
 
 You start building with a `OptionsParserBuilder`. At the end,
 turn your `OptionsParserBuilder` into a `OptionsParser` by calling
-`OptionsParser.end` or `OptionsParser.endWith`.
+`OptionsParser.end` or `OptionsParser.optionalPositionalArg`.
 
 @docs OptionsParser, OptionsParserBuilder, ActualOptionsParser, TerminalOptionsParser
 
@@ -43,7 +43,7 @@ turn your `OptionsParserBuilder` into a `OptionsParser` by calling
 
 The new way:
 
-@docs endWith, restArgs
+@docs optionalPositionalArg, restArgs
 
 
 ## Middle
@@ -429,7 +429,7 @@ The optionsParser will succeed if any unspecific positional arguments are passed
 
     addOptionsParser =
         OptionsParser.buildSubCommand "add" Add
-            |> OptionsParser.endWith (Option.restArgs "files")
+            |> OptionsParser.optionalPositionalArg (Option.restArgs "files")
 
 
     {-
@@ -442,8 +442,8 @@ The optionsParser will succeed if any unspecific positional arguments are passed
 If you need at least one positional argument, then just use `Cli.Option.positionalArg`.
 
 -}
-endWith : Option from to Cli.Option.EndingOption -> OptionsParserBuilder (to -> msg) -> OptionsParser msg
-endWith =
+optionalPositionalArg : Option from to Cli.Option.EndingOption -> OptionsParserBuilder (to -> msg) -> OptionsParser msg
+optionalPositionalArg =
     withCommon
 
 

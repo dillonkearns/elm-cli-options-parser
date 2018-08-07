@@ -65,7 +65,7 @@ all =
                 \() ->
                     expectMatch [ "abcdefg" ]
                         (OptionsParser.build identity
-                            |> OptionsParser.endWith (Option.optionalPositionalArg "revision-range")
+                            |> OptionsParser.optionalPositionalArg (Option.optionalPositionalArg "revision-range")
                         )
                         (Just "abcdefg")
             , test "optionsParser with required and optional positional arg present" <|
@@ -73,14 +73,14 @@ all =
                     expectMatch [ "required", "optional" ]
                         (OptionsParser.build (,)
                             |> OptionsParser.with (Option.positionalArg "required")
-                            |> OptionsParser.endWith (Option.optionalPositionalArg "revision-range")
+                            |> OptionsParser.optionalPositionalArg (Option.optionalPositionalArg "revision-range")
                         )
                         ( "required", Just "optional" )
             , test "optionsParser with optional positional arg not present" <|
                 \() ->
                     expectMatch []
                         (OptionsParser.build identity
-                            |> OptionsParser.endWith (Option.optionalPositionalArg "revision-range")
+                            |> OptionsParser.optionalPositionalArg (Option.optionalPositionalArg "revision-range")
                         )
                         Nothing
             , test "optionsParser with multiple operands" <|

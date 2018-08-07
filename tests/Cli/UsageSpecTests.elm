@@ -48,7 +48,7 @@ all =
         , test "synopsis for optional positional argument" <|
             \() ->
                 OptionsParser.build identity
-                    |> OptionsParser.endWith (Option.optionalPositionalArg "revision range")
+                    |> OptionsParser.optionalPositionalArg (Option.optionalPositionalArg "revision range")
                     |> OptionsParser.synopsis "git"
                     |> Expect.equal "git [<revision range>]"
         , test "print synopsis with doc string" <|

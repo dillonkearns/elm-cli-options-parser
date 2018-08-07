@@ -78,7 +78,7 @@ type Option from to middleOrEnding
 
 {-| `MiddleOption`s can only be used with `OptionsParser.with`.
 
-`EndingOption`s can only be used with `OptionsParser.endWith`.
+`EndingOption`s can only be used with `OptionsParser.optionalPositionalArg`.
 
 -}
 type MiddleOption
@@ -93,7 +93,7 @@ type TerminalOption
 
 {-| `MiddleOption`s can only be used with `OptionsParser.with`.
 
-`EndingOption`s can only be used with `OptionsParser.endWith`.
+`EndingOption`s can only be used with `OptionsParser.optionalPositionalArg`.
 
 -}
 type EndingOption

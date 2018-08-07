@@ -45,7 +45,7 @@ logOptionsParser =
                 |> Option.validateMapIfPresent String.toInt
             )
         |> with (Option.flag "stat")
-        |> OptionsParser.endWith
+        |> OptionsParser.optionalPositionalArg
             (Option.optionalPositionalArg "revision range")
         |> OptionsParser.restArgs
             (Option.restArgs "rest args")
