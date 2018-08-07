@@ -107,7 +107,7 @@ all =
 
 expectFlagsAndOperands :
     List String
-    -> OptionsParser.ActualOptionsParser decodesTo anything
+    -> OptionsParser.OptionsParser decodesTo anything
     -> { options : List ParsedOption, operands : List String }
     -> Expectation
 expectFlagsAndOperands argv optionsParser expected =

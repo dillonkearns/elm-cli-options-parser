@@ -1,6 +1,6 @@
 module Cli.OptionsParser
     exposing
-        ( ActualOptionsParser
+        ( OptionsParser
         , build
         , buildSubCommand
         , end
@@ -26,7 +26,7 @@ You start building with a `OptionsParserBuilder`. At the end,
 turn your `OptionsParserBuilder` into a `OptionsParser` by calling
 `OptionsParser.end` or `OptionsParser.optionalPositionalArg`.
 
-@docs ActualOptionsParser
+@docs OptionsParser
 
 
 ## Start Building
@@ -81,31 +81,31 @@ import Tokenizer exposing (ParsedOption)
 
 {-| TODO
 -}
-getUsageSpecs : ActualOptionsParser decodesTo builderStatus -> List UsageSpec
-getUsageSpecs (ActualOptionsParser { usageSpecs }) =
+getUsageSpecs : OptionsParser decodesTo builderStatus -> List UsageSpec
+getUsageSpecs (OptionsParser { usageSpecs }) =
     usageSpecs
 
 
 {-| Low-level function, for internal use.
 -}
-synopsis : String -> ActualOptionsParser decodesTo builderStatus -> String
+synopsis : String -> OptionsParser decodesTo builderStatus -> String
 synopsis programName optionsParser =
     optionsParser
-        |> (\(ActualOptionsParser record) -> record)
+        |> (\(OptionsParser record) -> record)
         |> UsageSpec.synopsis programName
 
 
 {-| Low-level function, for internal use.
 -}
-getSubCommand : ActualOptionsParser msg builderStatus -> Maybe String
-getSubCommand (ActualOptionsParser { buildSubCommand }) =
+getSubCommand : OptionsParser msg builderStatus -> Maybe String
+getSubCommand (OptionsParser { buildSubCommand }) =
     buildSubCommand
 
 
 {-| Low-level function, for internal use.
 -}
-tryMatch : List String -> ActualOptionsParser msg builderStatus -> Cli.OptionsParser.MatchResult.MatchResult msg
-tryMatch argv ((ActualOptionsParser { usageSpecs, buildSubCommand }) as optionsParser) =
+tryMatch : List String -> OptionsParser msg builderStatus -> Cli.OptionsParser.MatchResult.MatchResult msg
+tryMatch argv ((OptionsParser { usageSpecs, buildSubCommand }) as optionsParser) =
     let
         decoder =
             optionsParser
@@ -165,9 +165,9 @@ tryMatch argv ((ActualOptionsParser { usageSpecs, buildSubCommand }) as optionsP
             Cli.OptionsParser.MatchResult.NoMatch (unexpectedOptions_ optionsParser options)
 
 
-expectedPositionalArgCountOrFail : ActualOptionsParser msg builderState -> ActualOptionsParser msg builderState
-expectedPositionalArgCountOrFail (ActualOptionsParser ({ decoder, usageSpecs } as optionsParser)) =
-    ActualOptionsParser
+expectedPositionalArgCountOrFail : OptionsParser msg builderState -> OptionsParser msg builderState
+expectedPositionalArgCountOrFail (OptionsParser ({ decoder, usageSpecs } as optionsParser)) =
+    OptionsParser
         { optionsParser
             | decoder =
                 \({ operands } as stuff) ->
@@ -186,20 +186,20 @@ expectedPositionalArgCountOrFail (ActualOptionsParser ({ decoder, usageSpecs } a
 
 
 getDecoder :
-    ActualOptionsParser msg builderState
+    OptionsParser msg builderState
     ->
         { operands : List String
         , options : List ParsedOption
         , usageSpecs : List UsageSpec
         }
     -> Result Cli.Decode.ProcessingError ( List Cli.Decode.ValidationError, msg )
-getDecoder (ActualOptionsParser { decoder }) =
+getDecoder (OptionsParser { decoder }) =
     decoder
 
 
-failIfUnexpectedOptions : ActualOptionsParser msg builderState -> ActualOptionsParser msg builderState
-failIfUnexpectedOptions ((ActualOptionsParser ({ decoder, usageSpecs } as optionsParser)) as fullOptionsParser) =
-    ActualOptionsParser
+failIfUnexpectedOptions : OptionsParser msg builderState -> OptionsParser msg builderState
+failIfUnexpectedOptions ((OptionsParser ({ decoder, usageSpecs } as optionsParser)) as fullOptionsParser) =
+    OptionsParser
         { optionsParser
             | decoder =
                 \flagsAndOperands ->
@@ -214,8 +214,8 @@ failIfUnexpectedOptions ((ActualOptionsParser ({ decoder, usageSpecs } as option
         }
 
 
-unexpectedOptions_ : ActualOptionsParser msg builderStatus -> List ParsedOption -> List String
-unexpectedOptions_ (ActualOptionsParser { usageSpecs }) options =
+unexpectedOptions_ : OptionsParser msg builderStatus -> List ParsedOption -> List String
+unexpectedOptions_ (OptionsParser { usageSpecs }) options =
     List.filterMap
         (\(Tokenizer.ParsedOption optionName optionKind) ->
             if UsageSpec.optionExists usageSpecs optionName == Nothing then
@@ -228,8 +228,8 @@ unexpectedOptions_ (ActualOptionsParser { usageSpecs }) options =
 
 {-| TODO
 -}
-type ActualOptionsParser msg builderStatus
-    = ActualOptionsParser (OptionsParserRecord msg)
+type OptionsParser msg builderStatus
+    = OptionsParser (OptionsParserRecord msg)
 
 
 {-| Turn a `OptionsParserBuilder` into a `OptionsParser` which can be used with `Cli.Program.run`.
@@ -252,9 +252,9 @@ The optionsParser will fail if any unspecific positional arguments are passed in
     -}
 
 -}
-end : ActualOptionsParser msg anything -> ActualOptionsParser msg BuilderState.Terminal
-end (ActualOptionsParser record) =
-    ActualOptionsParser record
+end : OptionsParser msg anything -> OptionsParser msg BuilderState.Terminal
+end (OptionsParser record) =
+    OptionsParser record
 
 
 type alias OptionsParserRecord msg =
@@ -267,9 +267,9 @@ type alias OptionsParserRecord msg =
 
 {-| TODO
 -}
-build : msg -> ActualOptionsParser msg BuilderState.AnyOptions
+build : msg -> OptionsParser msg BuilderState.AnyOptions
 build msgConstructor =
-    ActualOptionsParser
+    OptionsParser
         { usageSpecs = []
         , description = Nothing
         , decoder = \_ -> Ok ( [], msgConstructor )
@@ -279,9 +279,9 @@ build msgConstructor =
 
 {-| TODO
 -}
-buildSubCommand : String -> msg -> ActualOptionsParser msg BuilderState.AnyOptions
+buildSubCommand : String -> msg -> OptionsParser msg BuilderState.AnyOptions
 buildSubCommand buildSubCommandName msgConstructor =
-    ActualOptionsParser
+    OptionsParser
         { usageSpecs = []
         , description = Nothing
         , decoder = \_ -> Ok ( [], msgConstructor )
@@ -291,9 +291,9 @@ buildSubCommand buildSubCommandName msgConstructor =
 
 {-| TODO
 -}
-hardcoded : value -> ActualOptionsParser (value -> msg) BuilderState.AnyOptions -> ActualOptionsParser msg BuilderState.AnyOptions
-hardcoded hardcodedValue (ActualOptionsParser ({ decoder } as optionsParser)) =
-    ActualOptionsParser
+hardcoded : value -> OptionsParser (value -> msg) BuilderState.AnyOptions -> OptionsParser msg BuilderState.AnyOptions
+hardcoded hardcodedValue (OptionsParser ({ decoder } as optionsParser)) =
+    OptionsParser
         { optionsParser
             | decoder =
                 \stuff -> resultMap (\fn -> fn hardcodedValue) (decoder stuff)
@@ -302,9 +302,9 @@ hardcoded hardcodedValue (ActualOptionsParser ({ decoder } as optionsParser)) =
 
 {-| TODO
 -}
-map : (msg -> mappedMsg) -> ActualOptionsParser msg builderState -> ActualOptionsParser mappedMsg builderState
-map mapFunction (ActualOptionsParser ({ decoder } as record)) =
-    ActualOptionsParser { record | decoder = decoder >> Result.map (Tuple.mapSecond mapFunction) }
+map : (msg -> mappedMsg) -> OptionsParser msg builderState -> OptionsParser mappedMsg builderState
+map mapFunction (OptionsParser ({ decoder } as record)) =
+    OptionsParser { record | decoder = decoder >> Result.map (Tuple.mapSecond mapFunction) }
 
 
 {-| TODO
@@ -317,9 +317,9 @@ resultMap mapFunction result =
 
 {-| TODO
 -}
-expectFlag : String -> ActualOptionsParser msg BuilderState.AnyOptions -> ActualOptionsParser msg BuilderState.AnyOptions
-expectFlag flagName (ActualOptionsParser ({ usageSpecs, decoder } as optionsParser)) =
-    ActualOptionsParser
+expectFlag : String -> OptionsParser msg BuilderState.AnyOptions -> OptionsParser msg BuilderState.AnyOptions
+expectFlag flagName (OptionsParser ({ usageSpecs, decoder } as optionsParser)) =
+    OptionsParser
         { optionsParser
             | usageSpecs = usageSpecs ++ [ UsageSpec.flag flagName Required ]
             , decoder =
@@ -365,14 +365,14 @@ expectFlag flagName (ActualOptionsParser ({ usageSpecs, decoder } as optionsPars
         ]
 
 -}
-with : Option from to Cli.Option.BeginningOption -> ActualOptionsParser (to -> msg) BuilderState.AnyOptions -> ActualOptionsParser msg BuilderState.AnyOptions
+with : Option from to Cli.Option.BeginningOption -> OptionsParser (to -> msg) BuilderState.AnyOptions -> OptionsParser msg BuilderState.AnyOptions
 with =
     withCommon
 
 
-withCommon : Option from to optionConstraint -> ActualOptionsParser (to -> msg) startOptionsParserBuilderState -> ActualOptionsParser msg endOptionsParserBuilderState
-withCommon (Option innerOption) ((ActualOptionsParser ({ decoder, usageSpecs } as optionsParser)) as fullOptionsParser) =
-    ActualOptionsParser
+withCommon : Option from to optionConstraint -> OptionsParser (to -> msg) startOptionsParserBuilderState -> OptionsParser msg endOptionsParserBuilderState
+withCommon (Option innerOption) ((OptionsParser ({ decoder, usageSpecs } as optionsParser)) as fullOptionsParser) =
+    OptionsParser
         { optionsParser
             | decoder =
                 \optionsAndOperands ->
@@ -421,14 +421,14 @@ The optionsParser will succeed if any unspecific positional arguments are passed
 If you need at least one positional argument, then just use `Cli.Option.positionalArg`.
 
 -}
-optionalPositionalArg : Option from to Cli.Option.MiddleOption -> ActualOptionsParser (to -> msg) BuilderState.AnyOptions -> ActualOptionsParser msg BuilderState.EndOptionsOnly
+optionalPositionalArg : Option from to Cli.Option.MiddleOption -> OptionsParser (to -> msg) BuilderState.AnyOptions -> OptionsParser msg BuilderState.EndOptionsOnly
 optionalPositionalArg =
     withCommon
 
 
 {-| For chaining on `Cli.Option.restArgs`.
 -}
-restArgs : Option from to Cli.Option.TerminalOption -> ActualOptionsParser (to -> msg) startingBuilderState -> ActualOptionsParser msg BuilderState.Terminal
+restArgs : Option from to Cli.Option.TerminalOption -> OptionsParser (to -> msg) startingBuilderState -> OptionsParser msg BuilderState.Terminal
 restArgs =
     withCommon
 
@@ -455,9 +455,9 @@ git init # initialize a git repository
          |> OptionsParser.withDoc "initialize a git repository"
 
 -}
-withDoc : String -> ActualOptionsParser msg anything -> ActualOptionsParser msg anything
-withDoc docString (ActualOptionsParser optionsParserRecord) =
-    ActualOptionsParser
+withDoc : String -> OptionsParser msg anything -> OptionsParser msg anything
+withDoc docString (OptionsParser optionsParserRecord) =
+    OptionsParser
         { optionsParserRecord
             | description = Just docString
         }

@@ -418,7 +418,7 @@ all =
         ]
 
 
-expectMatch : List String -> OptionsParser.ActualOptionsParser a builderState -> a -> Expectation
+expectMatch : List String -> OptionsParser.OptionsParser a builderState -> a -> Expectation
 expectMatch argv optionsParsers expectedValue =
     OptionsParser.tryMatch argv optionsParsers
         |> Expect.equal (Cli.OptionsParser.MatchResult.Match (Ok expectedValue))
@@ -426,7 +426,7 @@ expectMatch argv optionsParsers expectedValue =
 
 expectValidationErrors :
     List String
-    -> OptionsParser.ActualOptionsParser value builderState
+    -> OptionsParser.OptionsParser value builderState
     -> List { invalidReason : String, name : String, valueAsString : String }
     -> Expectation
 expectValidationErrors argv optionsParsers expectedErrors =
@@ -434,7 +434,7 @@ expectValidationErrors argv optionsParsers expectedErrors =
         |> Expect.equal (Cli.OptionsParser.MatchResult.Match (Err expectedErrors))
 
 
-expectNoMatch : List String -> OptionsParser.ActualOptionsParser a builderState -> Expectation
+expectNoMatch : List String -> OptionsParser.OptionsParser a builderState -> Expectation
 expectNoMatch argv optionsParsers =
     case OptionsParser.tryMatch argv optionsParsers of
         Cli.OptionsParser.MatchResult.NoMatch unexpectedOptions ->

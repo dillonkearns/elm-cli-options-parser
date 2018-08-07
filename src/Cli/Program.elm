@@ -10,7 +10,7 @@ module Cli.Program exposing (Program, ProgramNew, StatefulProgram, add, program,
 
 import Cli.ExitStatus exposing (ExitStatus)
 import Cli.LowLevel
-import Cli.OptionsParser as OptionsParser exposing (ActualOptionsParser)
+import Cli.OptionsParser as OptionsParser exposing (OptionsParser)
 import Cli.OptionsParser.BuilderState as BuilderState
 import List.Extra
 import TypoSuggestion
@@ -26,7 +26,7 @@ type RunResult match
 {-| TODO
 -}
 type alias Program msg =
-    { optionsParsers : List (ActualOptionsParser msg BuilderState.Terminal)
+    { optionsParsers : List (OptionsParser msg BuilderState.Terminal)
     , version : String
     }
 
@@ -178,7 +178,7 @@ initWithModel options argv =
 
 
 {-| -}
-add : ActualOptionsParser msg anything -> Program msg -> Program msg
+add : OptionsParser msg anything -> Program msg -> Program msg
 add optionsParser ({ optionsParsers } as program) =
     { program
         | optionsParsers = optionsParsers ++ [ OptionsParser.end optionsParser ]

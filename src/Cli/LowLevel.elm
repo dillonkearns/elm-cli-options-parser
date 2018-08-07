@@ -1,6 +1,6 @@
 module Cli.LowLevel exposing (MatchResult(..), helpText, try)
 
-import Cli.OptionsParser as OptionsParser exposing (ActualOptionsParser)
+import Cli.OptionsParser as OptionsParser exposing (OptionsParser)
 import Cli.OptionsParser.MatchResult as MatchResult exposing (MatchResult)
 import Cli.Decode
 import Maybe.Extra
@@ -29,7 +29,7 @@ intersection sets =
                 |> Set.intersect first
 
 
-try : List (OptionsParser.ActualOptionsParser msg builderStatus) -> List String -> MatchResult msg
+try : List (OptionsParser.OptionsParser msg builderStatus) -> List String -> MatchResult msg
 try optionsParsers argv =
     let
         maybeShowHelpMatch : Maybe (MatchResult msg)
@@ -117,7 +117,7 @@ oneOf =
         Nothing
 
 
-helpText : String -> List (ActualOptionsParser msg builderStatus) -> String
+helpText : String -> List (OptionsParser msg builderStatus) -> String
 helpText programName optionsParsers =
     optionsParsers
         |> List.map (OptionsParser.synopsis programName)
