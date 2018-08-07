@@ -442,7 +442,7 @@ The optionsParser will succeed if any unspecific positional arguments are passed
 If you need at least one positional argument, then just use `Cli.Option.positionalArg`.
 
 -}
-optionalPositionalArg : Option from to Cli.Option.EndingOption -> OptionsParserBuilder (to -> msg) -> OptionsParser msg
+optionalPositionalArg : Option from to Cli.Option.MiddleOption -> OptionsParserBuilder (to -> msg) -> OptionsParser msg
 optionalPositionalArg =
     withCommon
 

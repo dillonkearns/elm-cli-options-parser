@@ -1,7 +1,7 @@
 module Cli.Option
     exposing
         ( BeginningOption
-        , EndingOption
+        , MiddleOption
         , Option(Option)
         , TerminalOption
         , flag
@@ -23,7 +23,7 @@ module Cli.Option
 
 {-|
 
-@docs Option, BeginningOption, EndingOption, TerminalOption
+@docs Option, BeginningOption, MiddleOption, TerminalOption
 
 
 ## Positional Arguments
@@ -78,7 +78,7 @@ type Option from to middleOrEnding
 
 {-| `BeginningOption`s can only be used with `OptionsParser.with`.
 
-`EndingOption`s can only be used with `OptionsParser.optionalPositionalArg`.
+`MiddleOption`s can only be used with `OptionsParser.optionalPositionalArg`.
 
 -}
 type BeginningOption
@@ -93,11 +93,11 @@ type TerminalOption
 
 {-| `BeginningOption`s can only be used with `OptionsParser.with`.
 
-`EndingOption`s can only be used with `OptionsParser.optionalPositionalArg`.
+`MiddleOption`s can only be used with `OptionsParser.optionalPositionalArg`.
 
 -}
-type EndingOption
-    = EndingOption
+type MiddleOption
+    = MiddleOption
 
 
 type alias InnerOption from to =
@@ -397,7 +397,7 @@ keywordArgList flagName =
 
 {-| TODO
 -}
-optionalPositionalArg : String -> Option (Maybe String) (Maybe String) EndingOption
+optionalPositionalArg : String -> Option (Maybe String) (Maybe String) MiddleOption
 optionalPositionalArg operandDescription =
     buildOption
         (\flagsAndOperands ->
