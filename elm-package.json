@@ -11,6 +11,7 @@
         "Cli.Option",
         "Cli.OptionsParser",
         "Cli.Validate",
+        "Cli.OptionsParser.BuilderState",
         "Cli.ExitStatus"
     ],
     "dependencies": {
