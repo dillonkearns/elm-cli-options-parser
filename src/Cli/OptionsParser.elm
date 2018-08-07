@@ -165,7 +165,7 @@ tryMatch argv ((ActualOptionsParser { usageSpecs, buildSubCommand }) as optionsP
             Cli.OptionsParser.MatchResult.NoMatch (unexpectedOptions_ optionsParser options)
 
 
-expectedPositionalArgCountOrFail : ActualOptionsParser msg builderStatus -> OptionsParser msg
+expectedPositionalArgCountOrFail : ActualOptionsParser msg builderState -> ActualOptionsParser msg builderState
 expectedPositionalArgCountOrFail (ActualOptionsParser ({ decoder, usageSpecs } as optionsParser)) =
     ActualOptionsParser
         { optionsParser
@@ -186,7 +186,7 @@ expectedPositionalArgCountOrFail (ActualOptionsParser ({ decoder, usageSpecs } a
 
 
 getDecoder :
-    OptionsParser msg
+    ActualOptionsParser msg builderState
     ->
         { operands : List String
         , options : List ParsedOption
@@ -197,7 +197,7 @@ getDecoder (ActualOptionsParser { decoder }) =
     decoder
 
 
-failIfUnexpectedOptions : OptionsParser msg -> OptionsParser msg
+failIfUnexpectedOptions : ActualOptionsParser msg builderState -> ActualOptionsParser msg builderState
 failIfUnexpectedOptions ((ActualOptionsParser ({ decoder, usageSpecs } as optionsParser)) as fullOptionsParser) =
     ActualOptionsParser
         { optionsParser
@@ -263,24 +263,6 @@ type alias OptionsParserRecord msg =
     , description : Maybe String
     , buildSubCommand : Maybe String
     }
-
-
-{-| TODO
--}
-type alias OptionsParser msg =
-    ActualOptionsParser msg BuilderState.EndOptionsOnly
-
-
-{-| TODO
--}
-type alias OptionsParserBuilder msg =
-    ActualOptionsParser msg BuilderState.AnyOptions
-
-
-{-| TODO
--}
-type alias TerminalOptionsParser msg =
-    ActualOptionsParser msg BuilderState.Terminal
 
 
 {-| TODO
