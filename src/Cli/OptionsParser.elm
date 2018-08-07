@@ -255,7 +255,7 @@ The optionsParser will fail if any unspecific positional arguments are passed in
     -}
 
 -}
-end : ActualOptionsParser msg anything -> TerminalOptionsParser msg
+end : ActualOptionsParser msg anything -> ActualOptionsParser msg BuilderState.Terminal
 end (ActualOptionsParser record) =
     ActualOptionsParser record
 
@@ -288,7 +288,7 @@ type alias TerminalOptionsParser msg =
 
 {-| TODO
 -}
-build : msg -> OptionsParserBuilder msg
+build : msg -> ActualOptionsParser msg BuilderState.AnyOptions
 build msgConstructor =
     ActualOptionsParser
         { usageSpecs = []
@@ -300,7 +300,7 @@ build msgConstructor =
 
 {-| TODO
 -}
-buildSubCommand : String -> msg -> OptionsParserBuilder msg
+buildSubCommand : String -> msg -> ActualOptionsParser msg BuilderState.AnyOptions
 buildSubCommand buildSubCommandName msgConstructor =
     ActualOptionsParser
         { usageSpecs = []
@@ -312,7 +312,7 @@ buildSubCommand buildSubCommandName msgConstructor =
 
 {-| TODO
 -}
-hardcoded : value -> OptionsParserBuilder (value -> msg) -> OptionsParserBuilder msg
+hardcoded : value -> ActualOptionsParser (value -> msg) BuilderState.AnyOptions -> ActualOptionsParser msg BuilderState.AnyOptions
 hardcoded hardcodedValue (ActualOptionsParser ({ decoder } as optionsParser)) =
     ActualOptionsParser
         { optionsParser
@@ -338,7 +338,7 @@ resultMap mapFunction result =
 
 {-| TODO
 -}
-expectFlag : String -> OptionsParserBuilder msg -> OptionsParserBuilder msg
+expectFlag : String -> ActualOptionsParser msg BuilderState.AnyOptions -> ActualOptionsParser msg BuilderState.AnyOptions
 expectFlag flagName (ActualOptionsParser ({ usageSpecs, decoder } as optionsParser)) =
     ActualOptionsParser
         { optionsParser
@@ -386,7 +386,7 @@ expectFlag flagName (ActualOptionsParser ({ usageSpecs, decoder } as optionsPars
         ]
 
 -}
-with : Option from to Cli.Option.BeginningOption -> OptionsParserBuilder (to -> msg) -> OptionsParserBuilder msg
+with : Option from to Cli.Option.BeginningOption -> ActualOptionsParser (to -> msg) BuilderState.AnyOptions -> ActualOptionsParser msg BuilderState.AnyOptions
 with =
     withCommon
 
@@ -442,14 +442,14 @@ The optionsParser will succeed if any unspecific positional arguments are passed
 If you need at least one positional argument, then just use `Cli.Option.positionalArg`.
 
 -}
-optionalPositionalArg : Option from to Cli.Option.MiddleOption -> OptionsParserBuilder (to -> msg) -> OptionsParser msg
+optionalPositionalArg : Option from to Cli.Option.MiddleOption -> ActualOptionsParser (to -> msg) BuilderState.AnyOptions -> ActualOptionsParser msg BuilderState.EndOptionsOnly
 optionalPositionalArg =
     withCommon
 
 
 {-| For chaining on `Cli.Option.restArgs`.
 -}
-restArgs : Option from to Cli.Option.TerminalOption -> ActualOptionsParser (to -> msg) startingBuilderState -> TerminalOptionsParser msg
+restArgs : Option from to Cli.Option.TerminalOption -> ActualOptionsParser (to -> msg) startingBuilderState -> ActualOptionsParser msg BuilderState.Terminal
 restArgs =
     withCommon
 
