@@ -1,7 +1,7 @@
 module Cli.Option
     exposing
-        ( EndingOption
-        , MiddleOption
+        ( BeginningOption
+        , EndingOption
         , Option(Option)
         , TerminalOption
         , flag
@@ -23,7 +23,7 @@ module Cli.Option
 
 {-|
 
-@docs Option, MiddleOption, EndingOption, TerminalOption
+@docs Option, BeginningOption, EndingOption, TerminalOption
 
 
 ## Positional Arguments
@@ -76,13 +76,13 @@ type Option from to middleOrEnding
     = Option (InnerOption from to)
 
 
-{-| `MiddleOption`s can only be used with `OptionsParser.with`.
+{-| `BeginningOption`s can only be used with `OptionsParser.with`.
 
 `EndingOption`s can only be used with `OptionsParser.optionalPositionalArg`.
 
 -}
-type MiddleOption
-    = MiddleOption
+type BeginningOption
+    = BeginningOption
 
 
 {-| TODO
@@ -91,7 +91,7 @@ type TerminalOption
     = TerminalOption
 
 
-{-| `MiddleOption`s can only be used with `OptionsParser.with`.
+{-| `BeginningOption`s can only be used with `OptionsParser.with`.
 
 `EndingOption`s can only be used with `OptionsParser.optionalPositionalArg`.
 
@@ -162,7 +162,7 @@ validateIfPresent validateFunction cliSpec =
 
 {-| TODO
 -}
-positionalArg : String -> Option String String MiddleOption
+positionalArg : String -> Option String String BeginningOption
 positionalArg operandDescription =
     buildOption
         (\{ usageSpecs, operands, operandsSoFar } ->
@@ -181,7 +181,7 @@ positionalArg operandDescription =
 
 {-| TODO
 -}
-optionalKeywordArg : String -> Option (Maybe String) (Maybe String) MiddleOption
+optionalKeywordArg : String -> Option (Maybe String) (Maybe String) BeginningOption
 optionalKeywordArg optionName =
     buildOption
         (\{ operands, options } ->
@@ -204,7 +204,7 @@ optionalKeywordArg optionName =
 
 {-| TODO
 -}
-requiredKeywordArg : String -> Option String String MiddleOption
+requiredKeywordArg : String -> Option String String BeginningOption
 requiredKeywordArg optionName =
     buildOption
         (\{ operands, options } ->
@@ -227,7 +227,7 @@ requiredKeywordArg optionName =
 
 {-| TODO
 -}
-flag : String -> Option Bool Bool MiddleOption
+flag : String -> Option Bool Bool BeginningOption
 flag flagName =
     buildOption
         (\{ options } ->
@@ -372,7 +372,7 @@ withDefault defaultValue (Option option) =
 
 {-| TODO
 -}
-keywordArgList : String -> Option (List String) (List String) MiddleOption
+keywordArgList : String -> Option (List String) (List String) BeginningOption
 keywordArgList flagName =
     buildOption
         (\{ options } ->

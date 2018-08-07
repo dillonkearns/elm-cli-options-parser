@@ -386,7 +386,7 @@ expectFlag flagName (ActualOptionsParser ({ usageSpecs, decoder } as optionsPars
         ]
 
 -}
-with : Option from to Cli.Option.MiddleOption -> OptionsParserBuilder (to -> msg) -> OptionsParserBuilder msg
+with : Option from to Cli.Option.BeginningOption -> OptionsParserBuilder (to -> msg) -> OptionsParserBuilder msg
 with =
     withCommon
 
