@@ -119,7 +119,7 @@ init options argv =
     let
         matchResult : RunResult options
         matchResult =
-            run options.program (argv |> Debug.log "argv")
+            run options.program argv
 
         cmd =
             case matchResult of
