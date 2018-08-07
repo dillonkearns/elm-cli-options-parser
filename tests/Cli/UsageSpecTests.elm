@@ -71,14 +71,14 @@ all =
         , test "print rest operands synopsis" <|
             \() ->
                 OptionsParser.build identity
-                    |> OptionsParser.finally (Option.restArgs "files")
+                    |> OptionsParser.restArgs (Option.restArgs "files")
                     |> OptionsParser.synopsis "rm"
                     |> Expect.equal "rm <files>..."
         , test "prints rest args at the end of the synopsis" <|
             \() ->
                 OptionsParser.build (,)
                     |> OptionsParser.with (Option.flag "dry-run")
-                    |> OptionsParser.finally (Option.restArgs "files")
+                    |> OptionsParser.restArgs (Option.restArgs "files")
                     |> OptionsParser.synopsis "rm"
                     |> Expect.equal "rm [--dry-run] <files>..."
         , test "shows sub optionsParsers" <|

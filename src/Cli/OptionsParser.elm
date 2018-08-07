@@ -9,7 +9,7 @@ module Cli.OptionsParser
         , end
         , endWith
         , expectFlag
-        , finally
+        , restArgs
         , getSubCommand
         , getUsageSpecs
         , hardcoded
@@ -43,7 +43,7 @@ turn your `OptionsParserBuilder` into a `OptionsParser` by calling
 
 The new way:
 
-@docs endWith, finally
+@docs endWith, restArgs
 
 
 ## Middle
@@ -449,8 +449,8 @@ endWith =
 
 {-| For chaining on `Cli.Option.restArgs`.
 -}
-finally : Option from to Cli.Option.TerminalOption -> ActualOptionsParser (to -> msg) startingBuilderState -> TerminalOptionsParser msg
-finally =
+restArgs : Option from to Cli.Option.TerminalOption -> ActualOptionsParser (to -> msg) startingBuilderState -> TerminalOptionsParser msg
+restArgs =
     withCommon
 
 
