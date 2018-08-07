@@ -1,7 +1,8 @@
 module Main exposing (main)
 
 import Cli.Option as Option
-import Cli.OptionsParser as OptionsParser exposing (OptionsParser, with)
+import Cli.OptionsParser as OptionsParser exposing (with)
+import Cli.OptionsParser.BuilderState as BuilderState
 import Cli.Program as Program
 import Json.Decode exposing (..)
 import Ports
@@ -36,7 +37,7 @@ program =
         |> Program.add (OptionsParser.map Log logOptionsParser)
 
 
-logOptionsParser : OptionsParser.TerminalOptionsParser LogOptions
+logOptionsParser : OptionsParser.ActualOptionsParser LogOptions BuilderState.Terminal
 logOptionsParser =
     OptionsParser.buildSubCommand "log" LogOptions
         |> with (Option.optionalKeywordArg "author")

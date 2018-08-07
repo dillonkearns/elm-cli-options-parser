@@ -1,9 +1,6 @@
 module Cli.OptionsParser
     exposing
         ( ActualOptionsParser
-        , OptionsParser
-        , OptionsParserBuilder
-        , TerminalOptionsParser
         , build
         , buildSubCommand
         , end
@@ -29,7 +26,7 @@ You start building with a `OptionsParserBuilder`. At the end,
 turn your `OptionsParserBuilder` into a `OptionsParser` by calling
 `OptionsParser.end` or `OptionsParser.optionalPositionalArg`.
 
-@docs OptionsParser, OptionsParserBuilder, ActualOptionsParser, TerminalOptionsParser
+@docs ActualOptionsParser
 
 
 ## Start Building

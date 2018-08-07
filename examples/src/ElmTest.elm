@@ -1,7 +1,7 @@
 module Main exposing (main)
 
 import Cli.Option as Option
-import Cli.OptionsParser as OptionsParser exposing (OptionsParser, with)
+import Cli.OptionsParser as OptionsParser exposing (with)
 import Cli.Program as Program
 import Json.Decode exposing (..)
 import Ports

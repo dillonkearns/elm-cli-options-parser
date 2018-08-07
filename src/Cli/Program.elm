@@ -10,7 +10,7 @@ module Cli.Program exposing (Program, ProgramNew, StatefulProgram, add, program,
 
 import Cli.ExitStatus exposing (ExitStatus)
 import Cli.LowLevel
-import Cli.OptionsParser as OptionsParser exposing (ActualOptionsParser, OptionsParser)
+import Cli.OptionsParser as OptionsParser exposing (ActualOptionsParser)
 import Cli.OptionsParser.BuilderState as BuilderState
 import List.Extra
 import TypoSuggestion
