@@ -456,7 +456,7 @@ withOptionalPositionalArg =
 
 {-| For chaining on `Cli.Option.restArgs`.
 -}
-withRestArgs : Option from to Cli.Option.TerminalOption -> OptionsParser (to -> msg) startingBuilderState -> OptionsParser msg BuilderState.NoMoreOptions
+withRestArgs : Option from to Cli.Option.RestArgsOption -> OptionsParser (to -> msg) startingBuilderState -> OptionsParser msg BuilderState.NoMoreOptions
 withRestArgs =
     withCommon
 

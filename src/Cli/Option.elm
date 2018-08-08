@@ -3,7 +3,7 @@ module Cli.Option
         ( BeginningOption
         , MiddleOption
         , Option(Option)
-        , TerminalOption
+        , RestArgsOption
         , flag
         , keywordArgList
         , map
@@ -102,7 +102,7 @@ with the following functions.
 ## Ending Options
 
 @docs optionalPositionalArg, restArgs
-@docs Option, BeginningOption, MiddleOption, TerminalOption
+@docs Option, BeginningOption, MiddleOption, RestArgsOption
 
 -}
 
@@ -114,8 +114,7 @@ import Occurences exposing (Occurences(Optional, Required, ZeroOrMore))
 import Tokenizer
 
 
-{-| TODO
--}
+{-| -}
 type Option from to middleOrEnding
     = Option (InnerOption from to)
 
@@ -129,10 +128,10 @@ type BeginningOption
     = BeginningOption
 
 
-{-| TODO
+{-| `RestArgsOption`s can only be used with `OptionsParser.withRestArgs`.
 -}
-type TerminalOption
-    = TerminalOption
+type RestArgsOption
+    = RestArgsOption
 
 
 {-| `BeginningOption`s can only be used with `OptionsParser.with`.
@@ -465,7 +464,7 @@ optionalPositionalArg operandDescription =
 
 {-| TODO
 -}
-restArgs : String -> Option (List String) (List String) TerminalOption
+restArgs : String -> Option (List String) (List String) RestArgsOption
 restArgs restArgsDescription =
     buildOption
         (\({ operands, usageSpecs } as stuff) ->
