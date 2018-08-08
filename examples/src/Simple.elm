@@ -7,9 +7,9 @@ import Json.Decode exposing (..)
 import Ports
 
 
-program : Program.Program GreetOptions
+program : Program.Config GreetOptions
 program =
-    Program.program { version = "1.2.3" }
+    Program.config { version = "1.2.3" }
         |> Program.add
             (OptionsParser.build GreetOptions
                 |> OptionsParser.with (Option.requiredKeywordArg "name")

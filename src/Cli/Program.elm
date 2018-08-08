@@ -1,10 +1,21 @@
-module Cli.Program exposing (Program, ProgramNew, StatefulProgram, add, program, stateful, stateless)
+module Cli.Program exposing (Config, ProgramNew, StatefulProgram, add, config, stateful, stateless)
 
 {-| TODO
 
-@docs Program, ProgramNew, StatefulProgram
-@docs add
-@docs program, stateless, stateful
+
+## Config
+
+A `Cli.Program.Config` is created with `empty`. Then `OptionsParser`s are added
+to it. Finally, you create a `Cli.Program.ProgramNew` using `stateless` or
+`stateful`.
+
+@docs config, Config, add
+
+
+## `ProgramNew`
+
+@docs stateless, stateful
+@docs ProgramNew, StatefulProgram
 
 -}
 
@@ -21,19 +32,20 @@ type RunResult match
     | CustomMatch match
 
 
-{-| TODO
+{-| A `Cli.Program.Config` is used to build up a set of `OptionsParser`s for your
+Command-Line Interface, as well as its meta-data such as version number.
 -}
-type Program msg
-    = Program
+type Config msg
+    = Config
         { optionsParsers : List (OptionsParser msg BuilderState.NoMoreOptions)
         , version : String
         }
 
 
 {-| -}
-program : { version : String } -> Program decodesTo
-program { version } =
-    Program
+config : { version : String } -> Config decodesTo
+config { version } =
+    Config
         { version = version
         , optionsParsers = []
         }
@@ -69,7 +81,7 @@ stateful :
     , init : options -> ( model, Cmd msg )
     , update : msg -> model -> ( model, Cmd msg )
     , subscriptions : model -> Sub msg
-    , program : Program options
+    , program : Config options
     }
     -> Platform.Program (List String) (StatefulProgramModel model) msg
 stateful options =
@@ -102,7 +114,7 @@ type alias ProgramOptions decodesTo options =
     { printAndExitFailure : String -> Cmd decodesTo
     , printAndExitSuccess : String -> Cmd decodesTo
     , init : options -> Cmd decodesTo
-    , program : Program options
+    , program : Config options
     }
 
 
@@ -111,7 +123,7 @@ init :
         | printAndExitFailure : String -> Cmd msg
         , printAndExitSuccess : String -> Cmd msg
         , init : options -> Cmd msg
-        , program : Program options
+        , program : Config options
     }
     -> List String
     -> ( (), Cmd msg )
@@ -147,7 +159,7 @@ initWithModel :
         | printAndExitFailure : String -> Cmd msg
         , printAndExitSuccess : String -> Cmd msg
         , init : options -> ( model, Cmd msg )
-        , program : Program options
+        , program : Config options
     }
     -> List String
     -> ( StatefulProgramModel model, Cmd msg )
@@ -178,9 +190,9 @@ initWithModel options argv =
 
 
 {-| -}
-add : OptionsParser msg anything -> Program msg -> Program msg
-add optionsParser (Program ({ optionsParsers } as programRecord)) =
-    Program
+add : OptionsParser msg anything -> Config msg -> Config msg
+add optionsParser (Config ({ optionsParsers } as programRecord)) =
+    Config
         { programRecord
             | optionsParsers = optionsParsers ++ [ OptionsParser.end optionsParser ]
         }
@@ -214,8 +226,8 @@ add optionsParser (Program ({ optionsParsers } as programRecord)) =
         Cli.Program.run cli argv
 
 -}
-run : Program msg -> List String -> RunResult msg
-run (Program { optionsParsers, version }) argv =
+run : Config msg -> List String -> RunResult msg
+run (Config { optionsParsers, version }) argv =
     let
         programName =
             case argv of

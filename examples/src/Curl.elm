@@ -16,9 +16,9 @@ type alias Model =
     ()
 
 
-program : Program.Program CliOptions
+program : Program.Config CliOptions
 program =
-    Program.program { version = "1.2.3" }
+    Program.config { version = "1.2.3" }
         |> Program.add
             (OptionsParser.build CliOptions
                 |> with (Option.positionalArg "url")
