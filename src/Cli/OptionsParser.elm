@@ -72,11 +72,38 @@ arguments.
 
 ## Adding `Cli.Option.Option`s To The Pipeline
 
-Start the chain using `with`:
+Most options can be chained on using `with`. There are two exceptions,
+`restArgs` and `optionalPositionalArg`s. `elm-cli-options-parser` enforces that
+they are added in an unambiguous order (see the `Cli.OptionsParser.BuilderState` docs).
+So instead of using `with`, you add them with their corresponding `with...`
+functions.
+
+    import Cli.Option
+    import Cli.OptionsParser as OptionsParser exposing (with)
+
+    type GitOptionsParser
+        = Init
+        | Log LogOptions -- ...
+
+    type alias LogOptions =
+        { maybeAuthorPattern : Maybe String
+        , maybeNumberToDisplay : Maybe Int
+        }
+
+    logOptionsParser =
+        OptionsParser.buildSubCommand "log" LogOptions
+            |> with (Option.optionalKeywordArg "author")
+            |> with
+                (Option.optionalKeywordArg "max-count"
+                    |> Option.validateMapIfPresent String.toInt
+                )
+            |> with (Option.flag "stat")
+            |> OptionsParser.withOptionalPositionalArg
+                (Option.optionalPositionalArg "revision range")
+            |> OptionsParser.withRestArgs
+                (Option.restArgs "rest args")
+
 @docs with
-If you need to add `restArgs` or `optionalPositionalArg`s, they must be added
-in the correct order. So instead of using `with`, you use the corresponding
-`with...` function:
 @docs withOptionalPositionalArg, withRestArgs
 
 
@@ -373,32 +400,6 @@ expectFlag flagName (OptionsParser ({ usageSpecs, decoder } as optionsParser)) =
 
 
 {-| Include an `Option` in your `OptionsParser`, see the `Cli.Option` module.
-
-    import Cli.Option
-    import Cli.OptionsParser as OptionsParser exposing (with)
-
-    type GitOptionsParser
-        = Init
-        | Log LogOptions -- ...
-
-    type alias LogOptions =
-        { maybeAuthorPattern : Maybe String
-        , maybeNumberToDisplay : Maybe Int
-        }
-
-    logOptionsParser =
-        OptionsParser.buildSubCommand "log" LogOptions
-            |> with (Option.optionalKeywordArg "author")
-            |> with
-                (Option.optionalKeywordArg "max-count"
-                    |> Option.validateMapIfPresent String.toInt
-                )
-            |> with (Option.flag "stat")
-            |> OptionsParser.withOptionalPositionalArg
-                (Option.optionalPositionalArg "revision range")
-            |> OptionsParser.withRestArgs
-                (Option.restArgs "rest args")
-
 -}
 with : Option from to Cli.Option.BeginningOption -> OptionsParser (to -> msg) BuilderState.AnyOptions -> OptionsParser msg BuilderState.AnyOptions
 with =
