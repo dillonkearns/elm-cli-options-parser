@@ -91,7 +91,7 @@ type alias StatefulOptions msg model cliOptions =
     , init : cliOptions -> ( model, Cmd msg )
     , update : msg -> model -> ( model, Cmd msg )
     , subscriptions : model -> Sub msg
-    , program : Config cliOptions
+    , config : Config cliOptions
     }
 
 
@@ -132,7 +132,7 @@ type alias ProgramOptions decodesTo options =
     { printAndExitFailure : String -> Cmd decodesTo
     , printAndExitSuccess : String -> Cmd decodesTo
     , init : options -> Cmd decodesTo
-    , program : Config options
+    , config : Config options
     }
 
 
@@ -144,7 +144,7 @@ init options argv =
     let
         matchResult : RunResult options
         matchResult =
-            run options.program argv
+            run options.config argv
 
         cmd =
             case matchResult of
@@ -175,7 +175,7 @@ statefulInit options argv =
     let
         matchResult : RunResult cliOptions
         matchResult =
-            run options.program argv
+            run options.config argv
 
         cmd =
             case matchResult of

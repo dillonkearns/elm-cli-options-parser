@@ -61,7 +61,7 @@ main =
         { printAndExitFailure = Ports.printAndExitFailure
         , printAndExitSuccess = Ports.printAndExitSuccess
         , init = init
-        , program = program
+        , config = program
         , update = update
         , subscriptions = \_ -> Sub.none
         }

@@ -86,5 +86,5 @@ main =
         { printAndExitFailure = Ports.printAndExitFailure
         , printAndExitSuccess = Ports.printAndExitSuccess
         , init = init
-        , program = programConfig
+        , config = programConfig
         }
