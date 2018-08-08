@@ -222,7 +222,10 @@ unexpectedOptions_ (OptionsParser { usageSpecs }) options =
         options
 
 
-{-| TODO
+{-| An `OptionsParser` represents one possible way to interpret command line arguments.
+A `Cli.Program.Config` can be built up using one or more `OptionsParser`s. It will
+try each parser in order until one succeeds. If none succeed, it will print
+an error message with information for the user of the Command-Line Interface.
 -}
 type OptionsParser msg builderState
     = OptionsParser (OptionsParserRecord msg)
