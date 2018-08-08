@@ -53,6 +53,16 @@ config { version } =
         }
 
 
+{-| Add an `OptionsParser` to your `Cli.Program.Config`.
+-}
+add : OptionsParser msg anything -> Config msg -> Config msg
+add optionsParser (Config ({ optionsParsers } as programRecord)) =
+    Config
+        { programRecord
+            | optionsParsers = optionsParsers ++ [ OptionsParser.end optionsParser ]
+        }
+
+
 {-| TODO
 -}
 type alias Program decodesTo =
@@ -184,16 +194,6 @@ initWithModel options argv =
                     ( UserModel model, cmd )
     in
     cmd
-
-
-{-| Add an `OptionsParser` to your `Cli.Program.Config`.
--}
-add : OptionsParser msg anything -> Config msg -> Config msg
-add optionsParser (Config ({ optionsParsers } as programRecord)) =
-    Config
-        { programRecord
-            | optionsParsers = optionsParsers ++ [ OptionsParser.end optionsParser ]
-        }
 
 
 {-| Run an Program.Program. See the `examples` folder for end-to-end examples.
