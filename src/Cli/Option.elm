@@ -118,7 +118,7 @@ type alias DataGrabber decodesTo =
     -> Result Cli.Decode.ProcessingError decodesTo
 
 
-{-| TODO
+{-| Run a validation.
 -}
 validate : (to -> Validate.ValidationResult) -> Option from to anything -> Option from to anything
 validate validateFunction (Option option) =
@@ -146,7 +146,7 @@ validate validateFunction (Option option) =
         }
 
 
-{-| TODO
+{-| Run a validation if the value is `Just someValue`. Or do nothing if the value is `Nothing`.
 -}
 validateIfPresent : (to -> Validate.ValidationResult) -> Option from (Maybe to) anything -> Option from (Maybe to) anything
 validateIfPresent validateFunction cliSpec =
@@ -162,8 +162,7 @@ validateIfPresent validateFunction cliSpec =
         cliSpec
 
 
-{-| TODO
--}
+{-| -}
 positionalArg : String -> Option String String BeginningOption
 positionalArg operandDescription =
     buildOption
@@ -314,7 +313,10 @@ oneOf default list (Option option) =
         )
 
 
-{-| TODO
+{-| Transform the value through a map function. If it returns `Ok someValue` then
+the `Option` will be transformed into `someValue`. If it returns `Err someError`
+then the User of the Command-Line Interface will see `someError` with details
+about the `Option` that had the validation error.
 -}
 validateMap : (to -> Result String toMapped) -> Option from to anything -> Option from toMapped anything
 validateMap mapFn (Option option) =
@@ -342,7 +344,8 @@ validateMap mapFn (Option option) =
         }
 
 
-{-| TODO
+{-| Same as `validateMap` if the value is `Just someValue`. Does nothing if
+the value is `Nothing`.
 -}
 validateMapIfPresent : (to -> Result String toMapped) -> Option (Maybe from) (Maybe to) anything -> Option (Maybe from) (Maybe toMapped) anything
 validateMapIfPresent mapFn ((Option { dataGrabber, usageSpec, decoder }) as cliSpec) =
@@ -359,7 +362,7 @@ validateMapIfPresent mapFn ((Option { dataGrabber, usageSpec, decoder }) as cliS
         cliSpec
 
 
-{-| TODO
+{-| Provide a default value for the `Option`.
 -}
 withDefault : to -> Option from (Maybe to) anything -> Option from to anything
 withDefault defaultValue (Option option) =
@@ -372,8 +375,7 @@ withDefault defaultValue (Option option) =
         }
 
 
-{-| TODO
--}
+{-| -}
 keywordArgList : String -> Option (List String) (List String) BeginningOption
 keywordArgList flagName =
     buildOption
