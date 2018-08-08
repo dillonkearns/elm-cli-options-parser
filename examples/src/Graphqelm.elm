@@ -59,7 +59,7 @@ init msg =
         |> Ports.print
 
 
-main : Program.ProgramNew Never
+main : Program.Program Never
 main =
     Program.stateless
         { printAndExitFailure = Ports.printAndExitFailure

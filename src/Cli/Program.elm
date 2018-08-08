@@ -1,4 +1,4 @@
-module Cli.Program exposing (Config, ProgramNew, StatefulProgram, add, config, stateful, stateless)
+module Cli.Program exposing (Config, Program, StatefulProgram, add, config, stateful, stateless)
 
 {-| TODO
 
@@ -6,16 +6,16 @@ module Cli.Program exposing (Config, ProgramNew, StatefulProgram, add, config, s
 ## Config
 
 A `Cli.Program.Config` is created with `empty`. Then `OptionsParser`s are added
-to it. Finally, you create a `Cli.Program.ProgramNew` using `stateless` or
+to it. Finally, you create a `Cli.Program.Program` using `stateless` or
 `stateful`.
 
 @docs config, Config, add
 
 
-## `ProgramNew`
+## `Program`
 
 @docs stateless, stateful
-@docs ProgramNew, StatefulProgram
+@docs Program, StatefulProgram
 
 -}
 
@@ -55,12 +55,12 @@ config { version } =
 
 {-| TODO
 -}
-type alias ProgramNew decodesTo =
+type alias Program decodesTo =
     Platform.Program (List String) () decodesTo
 
 
 {-| -}
-stateless : ProgramOptions msg options -> ProgramNew msg
+stateless : ProgramOptions msg options -> Program msg
 stateless options =
     Platform.programWithFlags
         { init = init options
