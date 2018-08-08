@@ -31,7 +31,10 @@ You build up an `OptionsParser` similarly to the way you build a decoder using t
 [elm-decode-pipeline](http://package.elm-lang.org/packages/NoRedInk/elm-decode-pipeline/latest)
 pattern. That is, you start the pipeline by giving it a constructor function,
 and then for each argument of your constructor function, you have a corresponding
-`|> with` in the exact same order.
+
+    |> with (Option.someKindOfOption)
+
+in the exact same order.
 
 For example, if we define a type alias for a record with two attributes,
 Elm generates a 2-argument constructor function for that record type. Here
