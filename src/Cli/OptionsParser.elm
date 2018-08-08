@@ -299,11 +299,11 @@ type alias OptionsParserRecord msg =
 {-| TODO
 -}
 build : msg -> OptionsParser msg BuilderState.AnyOptions
-build msgConstructor =
+build cliOptionsConstructor =
     OptionsParser
         { usageSpecs = []
         , description = Nothing
-        , decoder = \_ -> Ok ( [], msgConstructor )
+        , decoder = \_ -> Ok ( [], cliOptionsConstructor )
         , buildSubCommand = Nothing
         }
 
@@ -311,11 +311,11 @@ build msgConstructor =
 {-| TODO
 -}
 buildSubCommand : String -> msg -> OptionsParser msg BuilderState.AnyOptions
-buildSubCommand buildSubCommandName msgConstructor =
+buildSubCommand buildSubCommandName cliOptionsConstructor =
     OptionsParser
         { usageSpecs = []
         , description = Nothing
-        , decoder = \_ -> Ok ( [], msgConstructor )
+        , decoder = \_ -> Ok ( [], cliOptionsConstructor )
         , buildSubCommand = Just buildSubCommandName
         }
 
