@@ -34,19 +34,14 @@ turn your `OptionsParserBuilder` into a `OptionsParser` by calling
 @docs build, buildSubCommand
 
 
-## End Building
-
-@docs end
-
-The new way:
-
-@docs optionalPositionalArg, restArgs
-
-
-## Middle
+## Adding `Cli.Option.Option`s To The Pipeline
 
 Start the chain using `with`:
 @docs with
+If you need to add `restArgs` or `optionalPositionalArg`s, they must be added
+in the correct order. So instead of using `with`, you use the corresponding
+`with...` function:
+@docs optionalPositionalArg, restArgs
 
 
 ## I wish this could be in Option...
@@ -54,19 +49,20 @@ Start the chain using `with`:
 @docs expectFlag
 
 
-## Other Stuff
-
-@docs hardcoded, withDoc
-
-
-## Mapping
+## Mapping and Transforming
 
 @docs map
+@docs hardcoded
+
+
+## Meta-Data
+
+@docs withDoc
 
 
 ## Low-Level, can I get rid of these?
 
-@docs getSubCommand, getUsageSpecs, synopsis, tryMatch
+@docs getSubCommand, getUsageSpecs, synopsis, tryMatch, end
 
 -}
 
