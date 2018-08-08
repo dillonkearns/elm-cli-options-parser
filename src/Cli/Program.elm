@@ -85,16 +85,22 @@ type alias StatefulProgram model msg =
     Platform.Program (List String) (StatefulProgramModel model) msg
 
 
-{-| TODO
--}
-stateful :
+type alias StatefulOptions msg model cliOptions =
     { printAndExitFailure : String -> Cmd msg
     , printAndExitSuccess : String -> Cmd msg
-    , init : options -> ( model, Cmd msg )
+    , init : cliOptions -> ( model, Cmd msg )
     , update : msg -> model -> ( model, Cmd msg )
     , subscriptions : model -> Sub msg
-    , program : Config options
+    , program : Config cliOptions
     }
+
+
+{-| A `stateful` program can have a model that it creates and updates via `init`
+and `update`. It also has `subscriptions`. See
+[the `Curl.elm` example](https://github.com/dillonkearns/elm-cli-options-parser/blob/master/examples/src/Curl.elm).
+-}
+stateful :
+    StatefulOptions msg model cliOptions
     -> Platform.Program (List String) (StatefulProgramModel model) msg
 stateful options =
     Platform.programWithFlags
@@ -127,16 +133,6 @@ type alias ProgramOptions decodesTo options =
     , printAndExitSuccess : String -> Cmd decodesTo
     , init : options -> Cmd decodesTo
     , program : Config options
-    }
-
-
-type alias StatefulOptions msg model cliOptions =
-    { printAndExitFailure : String -> Cmd msg
-    , printAndExitSuccess : String -> Cmd msg
-    , init : cliOptions -> ( model, Cmd msg )
-    , update : msg -> model -> ( model, Cmd msg )
-    , subscriptions : model -> Sub msg
-    , program : Config cliOptions
     }
 
 
