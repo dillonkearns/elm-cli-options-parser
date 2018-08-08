@@ -49,6 +49,19 @@ module Cli.Option
 
 ### Validation
 
+Validations allow you to guarantee that if you receive the data in Elm, it
+meets a set of preconditions. If it doesn't, the User will see an error message
+describing the validation error, which option it came from, and the value the
+option had.
+
+Note that failing a validation will not cause the next `OptionsParser` in
+your `Cli.Program.Config` to be run. Instead,
+if the OptionsParser is a match except for validation errors, you will get an
+error message regardless.
+
+See `Cli.Validate` for some validation helpers that can be used in conjunction
+with the following functions.
+
 @docs validate, validateIfPresent, validateMap, validateMapIfPresent
 
 
