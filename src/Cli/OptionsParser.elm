@@ -296,7 +296,8 @@ type alias OptionsParserRecord msg =
     }
 
 
-{-| TODO
+{-| Start an `OptionsParser` pipeline with no sub-command (see
+[the OptionsParser terminilogy legend](https://github.com/dillonkearns/elm-cli-options-parser#options-parser-terminology)).
 -}
 build : msg -> OptionsParser msg BuilderState.AnyOptions
 build cliOptionsConstructor =
@@ -308,7 +309,8 @@ build cliOptionsConstructor =
         }
 
 
-{-| TODO
+{-| Start an `OptionsParser` pipeline with a sub-command (see
+[the OptionsParser terminilogy legend](https://github.com/dillonkearns/elm-cli-options-parser#options-parser-terminology)).
 -}
 buildSubCommand : String -> msg -> OptionsParser msg BuilderState.AnyOptions
 buildSubCommand buildSubCommandName cliOptionsConstructor =
