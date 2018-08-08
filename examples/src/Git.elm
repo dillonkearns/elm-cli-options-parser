@@ -80,7 +80,7 @@ dummy =
     Json.Decode.string
 
 
-main : Program.Program msg
+main : Program.StatelessProgram msg
 main =
     Program.stateless
         { printAndExitFailure = Ports.printAndExitFailure

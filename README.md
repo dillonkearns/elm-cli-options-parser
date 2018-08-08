@@ -45,7 +45,7 @@ logOptionsParser =
             (Cli.Option.optionalPositionalArg "revision range")
 
 
-cli : Cli.Program.Program GitOptionsParser
+cli : Cli.Program.StatelessProgram GitOptionsParser
 cli =
     { programName = "git"
     , commands = commands

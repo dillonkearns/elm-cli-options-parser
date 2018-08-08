@@ -13,7 +13,7 @@ type CliOptions
     | FromFile String (Maybe String) (Maybe String) Bool
 
 
-program : Program.Program CliOptions
+program : Program.Config CliOptions
 program =
     Program.config { version = "1.2.3" }
         |> Program.add
@@ -59,7 +59,7 @@ init msg =
         |> Ports.print
 
 
-main : Program.Program Never
+main : Program.StatelessProgram Never
 main =
     Program.stateless
         { printAndExitFailure = Ports.printAndExitFailure

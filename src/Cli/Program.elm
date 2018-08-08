@@ -1,4 +1,4 @@
-module Cli.Program exposing (Config, Program, StatefulProgram, add, config, stateful, stateless)
+module Cli.Program exposing (Config, StatefulProgram, StatelessProgram, add, config, stateful, stateless)
 
 {-|
 
@@ -6,16 +6,16 @@ module Cli.Program exposing (Config, Program, StatefulProgram, add, config, stat
 ## Config
 
 A `Cli.Program.Config` is created with `empty`. Then `OptionsParser`s are added
-to it. Finally, you create a `Cli.Program.Program` using `stateless` or
+to it. Finally, you create a `Cli.Program.StatelessProgram` using `stateless` or
 `stateful`.
 
 @docs config, Config, add
 
 
-## `Program`
+## `Program`s
 
 @docs stateless, stateful
-@docs Program, StatefulProgram
+@docs StatelessProgram, StatefulProgram
 
 -}
 
@@ -65,12 +65,12 @@ add optionsParser (Config ({ optionsParsers } as programRecord)) =
 
 {-| TODO
 -}
-type alias Program msg =
+type alias StatelessProgram msg =
     Platform.Program (List String) () msg
 
 
 {-| -}
-stateless : ProgramOptions msg options -> Program msg
+stateless : ProgramOptions msg options -> StatelessProgram msg
 stateless options =
     Platform.programWithFlags
         { init = init options
@@ -197,34 +197,6 @@ statefulInit options argv =
     cmd
 
 
-{-| Run an Program.Program. See the `examples` folder for end-to-end examples.
-
-    type GitOptionsParser
-        = Init
-        | Clone String
-
-    cli : Cli.Program.Program GitOptionsParser
-    cli =
-        { optionsParsers = optionsParsers
-        , version = "1.2.3"
-        }
-
-    optionsParsers : List (OptionsParser.OptionsParser GitOptionsParser)
-    optionsParsers =
-        [ OptionsParser.buildSubCommand "clone" Clone
-            |> with (Cli.Option.positionalArg "repository")
-            |> OptionsParser.end
-        ]
-
-    argv : List String
-    argv =
-        [{- passed in as Flags from JavaScript, see `examples` folder. -}]
-
-    matchResult : Cli.Program.RunResult GitOptionsParser
-    matchResult =
-        Cli.Program.run cli argv
-
--}
 run : Config msg -> List String -> RunResult msg
 run (Config { optionsParsers, version }) argv =
     let

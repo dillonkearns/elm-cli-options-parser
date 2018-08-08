@@ -99,7 +99,7 @@ init msg =
     (,)
 
 
-main : Program.Program Never
+main : Program.StatelessProgram Never
 main =
     Program.stateless
         { printAndExitFailure = Ports.printAndExitFailure
