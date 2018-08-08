@@ -103,6 +103,17 @@ functions.
             |> OptionsParser.withRestArgs
                 (Option.restArgs "rest args")
 
+
+### User Error Message on Invalid Number of Positional Args
+
+The User of the Command-Line Interface will get an error message if there is no
+`OptionsParser` that succeeds. And an `OptionsParser` will only succeed if
+a valid number of positional arguments is passed in, as defined by these rules:
+
+  - At least the number of required arguments
+  - Can be any number greater than that if there are `restArgs`
+  - Could be up to as many as (the number of required arguments) + (the number of optional arguments) if there are no rest args
+
 @docs with
 @docs withOptionalPositionalArg, withRestArgs
 
@@ -435,8 +446,7 @@ withCommon (Option innerOption) ((OptionsParser ({ decoder, usageSpecs } as opti
         }
 
 
-{-| Turn a `OptionsParserBuilder` into a `OptionsParser` which can be used with `Cli.Program.run`.
-The optionsParser will succeed if any unspecific positional arguments are passed in and will capture them in a list.
+{-| Include an optional positional argument in the pipeline.
 
     type GitOptionsParser
         = Init
