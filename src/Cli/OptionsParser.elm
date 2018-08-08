@@ -22,14 +22,46 @@ module Cli.OptionsParser
 
 ## Types
 
-You start building with a `OptionsParserBuilder`. At the end,
-turn your `OptionsParserBuilder` into a `OptionsParser` by calling
-`OptionsParser.withOptionalPositionalArg` or `OptionsParser.withRestArgs`.
-
 @docs OptionsParser
 
 
-## Start Building
+## Start the Pipeline
+
+You build up an `OptionsParser` similarly to the way you build a decoder using
+[elm-decode-pipeline](http://package.elm-lang.org/packages/NoRedInk/elm-decode-pipeline/latest)
+pattern. That is, you start the pipeline by giving it a constructor function,
+and then for each argument of your constructor function, you have a corresponding
+`|> with` in the exact same order.
+
+For example, if we define a type alias for a record with two attributes,
+Elm generates a 2-argument constructor function for that record type. Here
+Elm gives us a `GreetOptions` which looks like `String -> Maybe String -> GreetOptions`
+(this is just a core Elm language feature). That is, if we pass in a `String` and
+a `Maybe String` as the 1st and 2nd arguments, we get a `GreetOptions` record.
+
+So in this example, we call `OptionsParser.build` with our `GreetOptions`
+constructor function. Then we call `with` once for each of those two arguments.
+Note that the first with will give us a `String`, and the second will give us
+a `Maybe String`, so it matches up perfectly with the order of our constructor's
+arguments.
+
+    import Cli.Option as Option
+    import Cli.OptionsParser as OptionsParser exposing (with)
+    import Cli.Program as Program
+
+    type alias GreetOptions =
+        { name : String
+        , maybeGreeting : Maybe String
+        }
+
+    program : Program.Config GreetOptions
+    program =
+        Program.config { version = "1.2.3" }
+            |> Program.add
+                (OptionsParser.build GreetOptions
+                    |> with (Option.requiredKeywordArg "name")
+                    |> with (Option.optionalKeywordArg "greeting")
+                )
 
 @docs build, buildSubCommand
 
