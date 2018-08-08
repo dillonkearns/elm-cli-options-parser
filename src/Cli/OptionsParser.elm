@@ -449,7 +449,7 @@ withCommon (Option innerOption) ((OptionsParser ({ decoder, usageSpecs } as opti
 
 {-| For chaining on `Cli.Option.optionalPositionalArg`s.
 -}
-withOptionalPositionalArg : Option from to Cli.Option.MiddleOption -> OptionsParser (to -> msg) BuilderState.AnyOptions -> OptionsParser msg BuilderState.NoBeginningOptions
+withOptionalPositionalArg : Option from to Cli.Option.OptionalPositionalArgOption -> OptionsParser (to -> msg) BuilderState.AnyOptions -> OptionsParser msg BuilderState.NoBeginningOptions
 withOptionalPositionalArg =
     withCommon
 
