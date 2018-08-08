@@ -9,12 +9,12 @@ module Cli.OptionsParser
         , getUsageSpecs
         , hardcoded
         , map
-        , restArgs
         , synopsis
         , tryMatch
         , with
         , withDoc
         , withOptionalPositionalArg
+        , withRestArgs
         )
 
 {-|
@@ -41,7 +41,7 @@ Start the chain using `with`:
 If you need to add `restArgs` or `optionalPositionalArg`s, they must be added
 in the correct order. So instead of using `with`, you use the corresponding
 `with...` function:
-@docs withOptionalPositionalArg, restArgs
+@docs withOptionalPositionalArg, withRestArgs
 
 
 ## I wish this could be in Option...
@@ -424,8 +424,8 @@ withOptionalPositionalArg =
 
 {-| For chaining on `Cli.Option.restArgs`.
 -}
-restArgs : Option from to Cli.Option.TerminalOption -> OptionsParser (to -> msg) startingBuilderState -> OptionsParser msg BuilderState.NoMoreOptions
-restArgs =
+withRestArgs : Option from to Cli.Option.TerminalOption -> OptionsParser (to -> msg) startingBuilderState -> OptionsParser msg BuilderState.NoMoreOptions
+withRestArgs =
     withCommon
 
 

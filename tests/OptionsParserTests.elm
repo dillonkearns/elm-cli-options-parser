@@ -197,7 +197,7 @@ all =
                     expectMatch [ "--verbose" ]
                         (OptionsParser.build identity
                             |> OptionsParser.expectFlag "verbose"
-                            |> OptionsParser.restArgs (Option.restArgs "files")
+                            |> OptionsParser.withRestArgs (Option.restArgs "files")
                         )
                         []
             , test "rest operands has all operands when there are no required operands" <|
@@ -205,7 +205,7 @@ all =
                     expectMatch [ "--verbose", "rest1", "rest2" ]
                         (OptionsParser.build identity
                             |> OptionsParser.expectFlag "verbose"
-                            |> OptionsParser.restArgs (Option.restArgs "files")
+                            |> OptionsParser.withRestArgs (Option.restArgs "files")
                         )
                         [ "rest1", "rest2" ]
             , test "rest operands has all operands when there is a required operand" <|
@@ -214,7 +214,7 @@ all =
                         (OptionsParser.build (,)
                             |> OptionsParser.expectFlag "something"
                             |> OptionsParser.with (Option.positionalArg "operand")
-                            |> OptionsParser.restArgs (Option.restArgs "files")
+                            |> OptionsParser.withRestArgs (Option.restArgs "files")
                         )
                         ( "operand1", [ "rest1", "rest2" ] )
             ]

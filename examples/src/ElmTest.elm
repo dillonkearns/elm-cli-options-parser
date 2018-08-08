@@ -52,7 +52,7 @@ program =
                             , "console" => Console
                             ]
                     )
-                |> OptionsParser.restArgs (Option.restArgs "TESTFILES")
+                |> OptionsParser.withRestArgs (Option.restArgs "TESTFILES")
                 |> OptionsParser.map RunTests
             )
 

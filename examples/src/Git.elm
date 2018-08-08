@@ -48,7 +48,7 @@ logOptionsParser =
         |> with (Option.flag "stat")
         |> OptionsParser.withOptionalPositionalArg
             (Option.optionalPositionalArg "revision range")
-        |> OptionsParser.restArgs
+        |> OptionsParser.withRestArgs
             (Option.restArgs "rest args")
 
 
