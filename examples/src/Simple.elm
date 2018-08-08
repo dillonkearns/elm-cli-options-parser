@@ -7,8 +7,8 @@ import Json.Decode exposing (..)
 import Ports
 
 
-program : Program.Config GreetOptions
-program =
+programConfig : Program.Config GreetOptions
+programConfig =
     Program.config { version = "1.2.3" }
         |> Program.add
             (OptionsParser.build GreetOptions
@@ -42,5 +42,5 @@ main =
         { printAndExitFailure = Ports.printAndExitFailure
         , printAndExitSuccess = Ports.printAndExitSuccess
         , init = init
-        , config = program
+        , config = programConfig
         }
