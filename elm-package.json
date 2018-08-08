@@ -11,8 +11,7 @@
         "Cli.Option",
         "Cli.OptionsParser",
         "Cli.Validate",
-        "Cli.OptionsParser.BuilderState",
-        "Cli.ExitStatus"
+        "Cli.OptionsParser.BuilderState"
     ],
     "dependencies": {
         "elm-community/list-extra": "7.1.0 <= v < 8.0.0",
