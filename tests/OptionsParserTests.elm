@@ -1,8 +1,8 @@
 module OptionsParserTests exposing (all)
 
+import Cli.Option as Option
 import Cli.OptionsParser as OptionsParser
 import Cli.OptionsParser.MatchResult
-import Cli.Option as Option
 import Cli.Validate as Validate
 import Expect exposing (Expectation)
 import Test exposing (..)
@@ -65,7 +65,7 @@ all =
                 \() ->
                     expectMatch [ "abcdefg" ]
                         (OptionsParser.build identity
-                            |> OptionsParser.optionalPositionalArg (Option.optionalPositionalArg "revision-range")
+                            |> OptionsParser.withOptionalPositionalArg (Option.optionalPositionalArg "revision-range")
                         )
                         (Just "abcdefg")
             , test "optionsParser with required and optional positional arg present" <|
@@ -73,14 +73,14 @@ all =
                     expectMatch [ "required", "optional" ]
                         (OptionsParser.build (,)
                             |> OptionsParser.with (Option.positionalArg "required")
-                            |> OptionsParser.optionalPositionalArg (Option.optionalPositionalArg "revision-range")
+                            |> OptionsParser.withOptionalPositionalArg (Option.optionalPositionalArg "revision-range")
                         )
                         ( "required", Just "optional" )
             , test "optionsParser with optional positional arg not present" <|
                 \() ->
                     expectMatch []
                         (OptionsParser.build identity
-                            |> OptionsParser.optionalPositionalArg (Option.optionalPositionalArg "revision-range")
+                            |> OptionsParser.withOptionalPositionalArg (Option.optionalPositionalArg "revision-range")
                         )
                         Nothing
             , test "optionsParser with multiple operands" <|

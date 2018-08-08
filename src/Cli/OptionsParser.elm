@@ -9,12 +9,12 @@ module Cli.OptionsParser
         , getUsageSpecs
         , hardcoded
         , map
-        , optionalPositionalArg
         , restArgs
         , synopsis
         , tryMatch
         , with
         , withDoc
+        , withOptionalPositionalArg
         )
 
 {-|
@@ -24,7 +24,7 @@ module Cli.OptionsParser
 
 You start building with a `OptionsParserBuilder`. At the end,
 turn your `OptionsParserBuilder` into a `OptionsParser` by calling
-`OptionsParser.end` or `OptionsParser.optionalPositionalArg`.
+`OptionsParser.withOptionalPositionalArg` or `OptionsParser.withRestArgs`.
 
 @docs OptionsParser
 
@@ -41,7 +41,7 @@ Start the chain using `with`:
 If you need to add `restArgs` or `optionalPositionalArg`s, they must be added
 in the correct order. So instead of using `with`, you use the corresponding
 `with...` function:
-@docs optionalPositionalArg, restArgs
+@docs withOptionalPositionalArg, restArgs
 
 
 ## I wish this could be in Option...
@@ -404,7 +404,7 @@ The optionsParser will succeed if any unspecific positional arguments are passed
 
     addOptionsParser =
         OptionsParser.buildSubCommand "add" Add
-            |> OptionsParser.optionalPositionalArg (Option.restArgs "files")
+            |> OptionsParser.withRestArgs (Option.restArgs "files")
 
 
     {-
@@ -417,8 +417,8 @@ The optionsParser will succeed if any unspecific positional arguments are passed
 If you need at least one positional argument, then just use `Cli.Option.positionalArg`.
 
 -}
-optionalPositionalArg : Option from to Cli.Option.MiddleOption -> OptionsParser (to -> msg) BuilderState.AnyOptions -> OptionsParser msg BuilderState.NoBeginningOptions
-optionalPositionalArg =
+withOptionalPositionalArg : Option from to Cli.Option.MiddleOption -> OptionsParser (to -> msg) BuilderState.AnyOptions -> OptionsParser msg BuilderState.NoBeginningOptions
+withOptionalPositionalArg =
     withCommon
 
 
