@@ -221,8 +221,7 @@ positionalArg operandDescription =
         (UsageSpec.operand operandDescription)
 
 
-{-| TODO
--}
+{-| -}
 optionalKeywordArg : String -> Option (Maybe String) (Maybe String) BeginningOption
 optionalKeywordArg optionName =
     buildOption
@@ -244,8 +243,7 @@ optionalKeywordArg optionName =
         (UsageSpec.keywordArg optionName Optional)
 
 
-{-| TODO
--}
+{-| -}
 requiredKeywordArg : String -> Option String String BeginningOption
 requiredKeywordArg optionName =
     buildOption
@@ -267,8 +265,7 @@ requiredKeywordArg optionName =
         (UsageSpec.keywordArg optionName Required)
 
 
-{-| TODO
--}
+{-| -}
 flag : String -> Option Bool Bool BeginningOption
 flag flagName =
     buildOption
@@ -440,7 +437,7 @@ keywordArgList flagName =
         (UsageSpec.keywordArg flagName ZeroOrMore)
 
 
-{-| TODO
+{-| Note that this must be used with `OptionsParser.withOptionalPositionalArg`.
 -}
 optionalPositionalArg : String -> Option (Maybe String) (Maybe String) OptionalPositionalArgOption
 optionalPositionalArg operandDescription =
@@ -462,7 +459,7 @@ optionalPositionalArg operandDescription =
         (UsageSpec.optionalPositionalArg operandDescription)
 
 
-{-| TODO
+{-| Note that this must be used with `OptionsParser.withRestArgs`.
 -}
 restArgs : String -> Option (List String) (List String) RestArgsOption
 restArgs restArgsDescription =
