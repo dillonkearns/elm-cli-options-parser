@@ -186,7 +186,8 @@ initWithModel options argv =
     cmd
 
 
-{-| -}
+{-| Add an `OptionsParser` to your `Cli.Program.Config`.
+-}
 add : OptionsParser msg anything -> Config msg -> Config msg
 add optionsParser (Config ({ optionsParsers } as programRecord)) =
     Config
