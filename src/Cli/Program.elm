@@ -1,6 +1,6 @@
 module Cli.Program exposing (Config, Program, StatefulProgram, add, config, stateful, stateless)
 
-{-| TODO
+{-|
 
 
 ## Config
