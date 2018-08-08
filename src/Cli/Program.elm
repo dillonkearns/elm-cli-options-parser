@@ -16,8 +16,6 @@ import List.Extra
 import TypoSuggestion
 
 
-{-| TODO
--}
 type RunResult match
     = SystemMessage ExitStatus String
     | CustomMatch match
@@ -25,18 +23,20 @@ type RunResult match
 
 {-| TODO
 -}
-type alias Program msg =
-    { optionsParsers : List (OptionsParser msg BuilderState.NoMoreOptions)
-    , version : String
-    }
+type Program msg
+    = Program
+        { optionsParsers : List (OptionsParser msg BuilderState.NoMoreOptions)
+        , version : String
+        }
 
 
 {-| -}
 program : { version : String } -> Program decodesTo
 program { version } =
-    { version = version
-    , optionsParsers = []
-    }
+    Program
+        { version = version
+        , optionsParsers = []
+        }
 
 
 {-| TODO
@@ -179,10 +179,11 @@ initWithModel options argv =
 
 {-| -}
 add : OptionsParser msg anything -> Program msg -> Program msg
-add optionsParser ({ optionsParsers } as program) =
-    { program
-        | optionsParsers = optionsParsers ++ [ OptionsParser.end optionsParser ]
-    }
+add optionsParser (Program ({ optionsParsers } as programRecord)) =
+    Program
+        { programRecord
+            | optionsParsers = optionsParsers ++ [ OptionsParser.end optionsParser ]
+        }
 
 
 {-| Run an Program.Program. See the `examples` folder for end-to-end examples.
@@ -214,7 +215,7 @@ add optionsParser ({ optionsParsers } as program) =
 
 -}
 run : Program msg -> List String -> RunResult msg
-run { optionsParsers, version } argv =
+run (Program { optionsParsers, version }) argv =
     let
         programName =
             case argv of
