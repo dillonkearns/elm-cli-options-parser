@@ -104,7 +104,7 @@ stateful :
     -> Platform.Program (List String) (StatefulProgramModel model) msg
 stateful options =
     Platform.programWithFlags
-        { init = initWithModel options
+        { init = statefulInit options
         , update =
             \msg model ->
                 case model of
@@ -167,11 +167,11 @@ type StatefulProgramModel model
     | UserModel model
 
 
-initWithModel :
+statefulInit :
     StatefulOptions msg model cliOptions
     -> List String
     -> ( StatefulProgramModel model, Cmd msg )
-initWithModel options argv =
+statefulInit options argv =
     let
         matchResult : RunResult cliOptions
         matchResult =
