@@ -65,8 +65,8 @@ add optionsParser (Config ({ optionsParsers } as programRecord)) =
 
 {-| TODO
 -}
-type alias Program decodesTo =
-    Platform.Program (List String) () decodesTo
+type alias Program msg =
+    Platform.Program (List String) () msg
 
 
 {-| -}
@@ -127,6 +127,16 @@ type alias ProgramOptions decodesTo options =
     , printAndExitSuccess : String -> Cmd decodesTo
     , init : options -> Cmd decodesTo
     , program : Config options
+    }
+
+
+type alias StatefulOptions msg model cliOptions =
+    { printAndExitFailure : String -> Cmd msg
+    , printAndExitSuccess : String -> Cmd msg
+    , init : cliOptions -> ( model, Cmd msg )
+    , update : msg -> model -> ( model, Cmd msg )
+    , subscriptions : model -> Sub msg
+    , program : Config cliOptions
     }
 
 

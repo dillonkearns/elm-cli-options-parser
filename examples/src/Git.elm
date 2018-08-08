@@ -23,8 +23,8 @@ type alias LogOptions =
     }
 
 
-program : Program.Config CliOptions
-program =
+programConfig : Program.Config CliOptions
+programConfig =
     Program.config { version = "1.2.3" }
         |> Program.add
             (OptionsParser.buildSubCommand "init" Init
@@ -53,8 +53,8 @@ logOptionsParser =
 
 
 init : CliOptions -> Cmd msg
-init msg =
-    (case msg of
+init cliOptions =
+    (case cliOptions of
         Init ->
             "Initializing test suite..."
 
@@ -86,5 +86,5 @@ main =
         { printAndExitFailure = Ports.printAndExitFailure
         , printAndExitSuccess = Ports.printAndExitSuccess
         , init = init
-        , program = program
+        , program = programConfig
         }
