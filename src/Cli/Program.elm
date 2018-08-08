@@ -42,7 +42,9 @@ type Config msg
         }
 
 
-{-| -}
+{-| Create a `Config` with no `OptionsParser`s. Use `Cli.Program.add` to add
+`OptionsParser`s.
+-}
 config : { version : String } -> Config decodesTo
 config { version } =
     Config
