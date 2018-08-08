@@ -168,17 +168,12 @@ type StatefulProgramModel model
 
 
 initWithModel :
-    { config
-        | printAndExitFailure : String -> Cmd msg
-        , printAndExitSuccess : String -> Cmd msg
-        , init : options -> ( model, Cmd msg )
-        , program : Config options
-    }
+    StatefulOptions msg model cliOptions
     -> List String
     -> ( StatefulProgramModel model, Cmd msg )
 initWithModel options argv =
     let
-        matchResult : RunResult options
+        matchResult : RunResult cliOptions
         matchResult =
             run options.program argv
 
