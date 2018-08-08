@@ -39,6 +39,13 @@ module Cli.Option
 @docs flag
 
 
+## Ending Options
+
+See note in `Cli.OptionsParser` docs.
+
+@docs optionalPositionalArg, restArgs
+
+
 ## Transformations
 
 
@@ -99,9 +106,8 @@ with the following functions.
 @docs map, mapFlag, withDefault
 
 
-## Ending Options
+## Types
 
-@docs optionalPositionalArg, restArgs
 @docs Option, BeginningOption, OptionalPositionalArgOption, RestArgsOption
 
 -}
