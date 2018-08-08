@@ -375,7 +375,7 @@ expectFlag flagName (OptionsParser ({ usageSpecs, decoder } as optionsParser)) =
 {-| Include an `Option` in your `OptionsParser`, see the `Cli.Option` module.
 
     import Cli.Option
-    import Cli.OptionsParser as OptionsParser exposing (OptionsParser, with)
+    import Cli.OptionsParser as OptionsParser exposing (with)
 
     type GitOptionsParser
         = Init
@@ -386,20 +386,18 @@ expectFlag flagName (OptionsParser ({ usageSpecs, decoder } as optionsParser)) =
         , maybeNumberToDisplay : Maybe Int
         }
 
-    optionsParsers : List (OptionsParser GitOptionsParser)
-    optionsParsers =
-        [ OptionsParser.buildSubCommand "log" LogOptions
+    logOptionsParser =
+        OptionsParser.buildSubCommand "log" LogOptions
+            |> with (Option.optionalKeywordArg "author")
             |> with
-                (Cli.Option.optionalKeywordArg "author")
-            |> with
-                (Cli.Option.optionalKeywordArg "number"
-                    |> Cli.Option.validateMapIfPresent String.toInt
+                (Option.optionalKeywordArg "max-count"
+                    |> Option.validateMapIfPresent String.toInt
                 )
-            |> OptionsParser.end
-            |> OptionsParser.map Log
-
-        -- ...
-        ]
+            |> with (Option.flag "stat")
+            |> OptionsParser.withOptionalPositionalArg
+                (Option.optionalPositionalArg "revision range")
+            |> OptionsParser.withRestArgs
+                (Option.restArgs "rest args")
 
 -}
 with : Option from to Cli.Option.BeginningOption -> OptionsParser (to -> msg) BuilderState.AnyOptions -> OptionsParser msg BuilderState.AnyOptions
