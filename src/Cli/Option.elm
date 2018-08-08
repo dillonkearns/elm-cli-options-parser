@@ -23,8 +23,6 @@ module Cli.Option
 
 {-|
 
-@docs Option, BeginningOption, MiddleOption, TerminalOption
-
 
 ## Positional Arguments
 
@@ -41,24 +39,28 @@ module Cli.Option
 @docs flag
 
 
-## Ending Options
-
-@docs optionalPositionalArg, restArgs
+## Transformations
 
 
-## Mutually Exclusive Values
+### Mutually Exclusive Values
 
 @docs oneOf
 
 
-## Validation
+### Validation
 
 @docs validate, validateIfPresent, validateMap, validateMapIfPresent
 
 
-## Mapping/Defaults
+### Mapping/Defaults
 
 @docs map, mapFlag, withDefault
+
+
+## Ending Options
+
+@docs optionalPositionalArg, restArgs
+@docs Option, BeginningOption, MiddleOption, TerminalOption
 
 -}
 
