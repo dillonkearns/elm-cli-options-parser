@@ -121,12 +121,7 @@ type alias ProgramOptions decodesTo options =
 
 
 init :
-    { config
-        | printAndExitFailure : String -> Cmd msg
-        , printAndExitSuccess : String -> Cmd msg
-        , init : options -> Cmd msg
-        , program : Config options
-    }
+    ProgramOptions msg options
     -> List String
     -> ( (), Cmd msg )
 init options argv =
