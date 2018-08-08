@@ -59,6 +59,35 @@ your `Cli.Program.Config` to be run. Instead,
 if the OptionsParser is a match except for validation errors, you will get an
 error message regardless.
 
+Example:
+
+    capitalizedNameRegex =
+        "[A-Z][A-Za-z]*"
+
+    validateParser =
+        OptionsParser.build (,)
+            |> with
+                (Option.requiredKeywordArg "name"
+                    |> Option.validate (Cli.Validate.regex capitalizedNameRegex)
+                )
+            |> with
+                (Option.optionalKeywordArg "age"
+                    |> Option.validateMapIfPresent String.toInt
+                )
+
+
+    {-
+       $ ./validation --name Mozart --age 262
+       Mozart is 262 years old
+
+       $ ./validation --name Mozart --age "Two-hundred and sixty-two"
+       Validation errors:
+
+       `age` failed a validation. could not convert string 'Two-hundred and sixty-two' to an Int
+       Value was:
+       Just "Two-hundred and sixty-two"
+    -}
+
 See `Cli.Validate` for some validation helpers that can be used in conjunction
 with the following functions.
 
