@@ -410,7 +410,8 @@ expectFlag flagName (OptionsParser ({ usageSpecs, decoder } as optionsParser)) =
         }
 
 
-{-| Include an `Option` in your `OptionsParser`, see the `Cli.Option` module.
+{-| For chaining on any `Cli.Option.Option` besides a `restArg` or an `optionalPositionalArg`.
+See the `Cli.Option` module.
 -}
 with : Option from to Cli.Option.BeginningOption -> OptionsParser (to -> msg) BuilderState.AnyOptions -> OptionsParser msg BuilderState.AnyOptions
 with =
@@ -446,26 +447,7 @@ withCommon (Option innerOption) ((OptionsParser ({ decoder, usageSpecs } as opti
         }
 
 
-{-| Include an optional positional argument in the pipeline.
-
-    type GitOptionsParser
-        = Init
-        | Add (List String)
-
-    addOptionsParser =
-        OptionsParser.buildSubCommand "add" Add
-            |> OptionsParser.withRestArgs (Option.restArgs "files")
-
-
-    {-
-       $ git add
-       # matches Add []
-       $ git add new-file1.txt new-file2.txt
-       # matches Add ["new-file1.txt", "new-file2.txt"]
-    -}
-
-If you need at least one positional argument, then just use `Cli.Option.positionalArg`.
-
+{-| For chaining on `Cli.Option.optionalPositionalArg`s.
 -}
 withOptionalPositionalArg : Option from to Cli.Option.MiddleOption -> OptionsParser (to -> msg) BuilderState.AnyOptions -> OptionsParser msg BuilderState.NoBeginningOptions
 withOptionalPositionalArg =
