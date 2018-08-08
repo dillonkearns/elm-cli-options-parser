@@ -38,13 +38,14 @@ in the exact same order.
 
 For example, if we define a type alias for a record with two attributes,
 Elm generates a 2-argument constructor function for that record type. Here
-Elm gives us a `GreetOptions` which looks like `String -> Maybe String -> GreetOptions`
+Elm gives us a `GreetOptions` function of the type `String -> Maybe String -> GreetOptions`
 (this is just a core Elm language feature). That is, if we pass in a `String` and
-a `Maybe String` as the 1st and 2nd arguments, we get a `GreetOptions` record.
+a `Maybe String` as the 1st and 2nd arguments to the `GreetOptions` function,
+it will build up a record of that type.
 
 So in this example, we call `OptionsParser.build` with our `GreetOptions`
-constructor function. Then we call `with` once for each of those two arguments.
-Note that the first with will give us a `String`, and the second will give us
+constructor function. Then we chain on `with` once for each of those two arguments.
+Note that the first `with` will give us a `String`, and the second will give us
 a `Maybe String`, so it matches up perfectly with the order of our constructor's
 arguments.
 
