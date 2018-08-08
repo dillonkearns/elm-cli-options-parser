@@ -27,7 +27,7 @@ module Cli.OptionsParser
 
 ## Start the Pipeline
 
-You build up an `OptionsParser` similarly to the way you build a decoder using
+You build up an `OptionsParser` similarly to the way you build a decoder using the
 [elm-decode-pipeline](http://package.elm-lang.org/packages/NoRedInk/elm-decode-pipeline/latest)
 pattern. That is, you start the pipeline by giving it a constructor function,
 and then for each argument of your constructor function, you have a corresponding
