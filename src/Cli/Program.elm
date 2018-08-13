@@ -63,8 +63,7 @@ add optionsParser (Config ({ optionsParsers } as programRecord)) =
         }
 
 
-{-| TODO
--}
+{-| -}
 type alias StatelessProgram msg =
     Platform.Program (List String) () msg
 
@@ -79,8 +78,7 @@ stateless options =
         }
 
 
-{-| TODO
--}
+{-| -}
 type alias StatefulProgram model msg =
     Platform.Program (List String) (StatefulProgramModel model) msg
 
@@ -223,6 +221,7 @@ run (Config { optionsParsers, version }) argv =
                 "\nNo matching optionsParser...\n\nUsage:\n\n"
                     ++ Cli.LowLevel.helpText programName optionsParsers
                     |> SystemMessage Cli.ExitStatus.Failure
+
             else
                 unexpectedOptions
                     |> List.map
