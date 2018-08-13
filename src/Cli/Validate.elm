@@ -1,6 +1,7 @@
 module Cli.Validate exposing (ValidationResult(..), predicate, regex)
 
-{-|
+{-| This module contains helper functions for performing validations (see the
+"validate..." functions in `Cli.Option`).
 
 @docs predicate, ValidationResult, regex
 
@@ -38,21 +39,42 @@ predicate message predicate =
         >> (\boolResult ->
                 if boolResult then
                     Valid
+
                 else
                     Invalid message
            )
 
 
-{-| smoething
+{-| A helper for regex validations.
 
-     Option.optionalKeywordArg "base"
-        |> Option.validateIfPresent
-          (Cli.Validate.regex "^[A-Z][A-Za-z_]*(\\.[A-Z][A-Za-z_]*)*$")
+    programConfig : Program.Config String
+    programConfig =
+        Program.config { version = "1.2.3" }
+            |> Program.add
+                (OptionsParser.build identity
+                    |> OptionsParser.with
+                        (Option.requiredKeywordArg "name"
+                            |> Option.validate
+                                (Cli.Validate.regex "^[A-Z][A-Za-z_]*")
+                        )
+                )
+
+If the validation fails, the user gets output like this:
+
+```shell
+$ ./greet --name john
+Validation errors:
+
+`name` failed a validation. Must be of form /^[A-Z][A-Za-z_]*/
+Value was:
+"john"
+```
 
 -}
 regex : String -> String -> ValidationResult
 regex regexPattern checkString =
     if Regex.contains (Regex.regex regexPattern) checkString then
         Valid
+
     else
         Invalid ("Must be of form /" ++ regexPattern ++ "/")
