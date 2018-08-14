@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-let program = require('./elm.js').Main.worker(process.argv)
+let program = require('./elm.js').Main.worker({ argv: process.argv })
 XMLHttpRequest = require('xhr2')
 
 program.ports.print.subscribe(message => console.log(message))
