@@ -2,6 +2,7 @@
 build/
 documentation.json
 */elm.js
+*/*.elm.js
 *graphqelm-metadata.json
 **/index.html
 
