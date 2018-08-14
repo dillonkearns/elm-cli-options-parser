@@ -165,14 +165,14 @@ synopsis programName optionsParser =
 {-| Low-level function, for internal use.
 -}
 getSubCommand : OptionsParser msg builderState -> Maybe String
-getSubCommand (OptionsParser { buildSubCommand }) =
-    buildSubCommand
+getSubCommand (OptionsParser { subCommand }) =
+    subCommand
 
 
 {-| Low-level function, for internal use.
 -}
 tryMatch : List String -> OptionsParser msg builderState -> Cli.OptionsParser.MatchResult.MatchResult msg
-tryMatch argv ((OptionsParser { usageSpecs, buildSubCommand }) as optionsParser) =
+tryMatch argv ((OptionsParser { usageSpecs, subCommand }) as optionsParser) =
     let
         decoder =
             optionsParser
@@ -183,7 +183,7 @@ tryMatch argv ((OptionsParser { usageSpecs, buildSubCommand }) as optionsParser)
         flagsAndOperands =
             Tokenizer.flagsAndOperands usageSpecs argv
                 |> (\record ->
-                        case ( buildSubCommand, record.operands ) of
+                        case ( subCommand, record.operands ) of
                             ( Nothing, _ ) ->
                                 Ok
                                     { options = record.options
@@ -198,7 +198,6 @@ tryMatch argv ((OptionsParser { usageSpecs, buildSubCommand }) as optionsParser)
                                         , operands = remainingOperands
                                         , usageSpecs = usageSpecs
                                         }
-
                                 else
                                     Err { errorMessage = "Sub optionsParser does not match", options = record.options }
 
@@ -248,7 +247,6 @@ expectedPositionalArgCountOrFail (OptionsParser ({ decoder, usageSpecs } as opti
                               )
                     then
                         Cli.Decode.MatchError "Wrong number of operands" |> Err
-
                     else
                         decoder stuff
         }
@@ -278,7 +276,6 @@ failIfUnexpectedOptions ((OptionsParser ({ decoder, usageSpecs } as optionsParse
                     in
                     if List.isEmpty unexpectedOptions then
                         decoder flagsAndOperands
-
                     else
                         Cli.Decode.UnexpectedOptions unexpectedOptions |> Err
         }
@@ -290,7 +287,6 @@ unexpectedOptions_ (OptionsParser { usageSpecs }) options =
         (\(Tokenizer.ParsedOption optionName optionKind) ->
             if UsageSpec.optionExists usageSpecs optionName == Nothing then
                 Just optionName
-
             else
                 Nothing
         )
@@ -335,7 +331,7 @@ type alias OptionsParserRecord msg =
     { decoder : { usageSpecs : List UsageSpec, options : List ParsedOption, operands : List String } -> Result Cli.Decode.ProcessingError ( List Cli.Decode.ValidationError, msg )
     , usageSpecs : List UsageSpec
     , description : Maybe String
-    , buildSubCommand : Maybe String
+    , subCommand : Maybe String
     }
 
 
@@ -348,7 +344,7 @@ build cliOptionsConstructor =
         { usageSpecs = []
         , description = Nothing
         , decoder = \_ -> Ok ( [], cliOptionsConstructor )
-        , buildSubCommand = Nothing
+        , subCommand = Nothing
         }
 
 
@@ -356,12 +352,12 @@ build cliOptionsConstructor =
 [the OptionsParser terminilogy legend](https://github.com/dillonkearns/elm-cli-options-parser#options-parser-terminology)).
 -}
 buildSubCommand : String -> msg -> OptionsParser msg BuilderState.AnyOptions
-buildSubCommand buildSubCommandName cliOptionsConstructor =
+buildSubCommand subCommandName cliOptionsConstructor =
     OptionsParser
         { usageSpecs = []
         , description = Nothing
         , decoder = \_ -> Ok ( [], cliOptionsConstructor )
-        , buildSubCommand = Just buildSubCommandName
+        , subCommand = Just subCommandName
         }
 
 
@@ -406,7 +402,6 @@ expectFlag flagName (OptionsParser ({ usageSpecs, decoder } as optionsParser)) =
                             |> List.member (Tokenizer.ParsedOption flagName Tokenizer.Flag)
                     then
                         decoder stuff
-
                     else
                         Cli.Decode.MatchError ("Expect flag " ++ ("--" ++ flagName))
                             |> Err
