@@ -168,7 +168,7 @@ type alias DataGrabber decodesTo =
 {-| Run a validation. (See an example in the Validation section above, or
 in the `examples` folder).
 -}
-validate : (to -> Validate.ValidationResult) -> Option from to anything -> Option from to anything
+validate : (to -> Validate.ValidationResult) -> Option from to builderState -> Option from to builderState
 validate validateFunction (Option option) =
     let
         mappedDecoder : Cli.Decode.Decoder from to
@@ -197,7 +197,7 @@ validate validateFunction (Option option) =
 {-| Run a validation if the value is `Just someValue`. Or do nothing if the value is `Nothing`.
 (See an example in the Validation section above, or in the `examples` folder).
 -}
-validateIfPresent : (to -> Validate.ValidationResult) -> Option from (Maybe to) anything -> Option from (Maybe to) anything
+validateIfPresent : (to -> Validate.ValidationResult) -> Option from (Maybe to) builderState -> Option from (Maybe to) builderState
 validateIfPresent validateFunction cliSpec =
     validate
         (\maybeValue ->
@@ -289,7 +289,7 @@ flag flagName =
         (UsageSpec.flag flagName Optional)
 
 
-buildOption : DataGrabber a -> UsageSpec -> Option a a anything
+buildOption : DataGrabber a -> UsageSpec -> Option a a builderState
 buildOption dataGrabber usageSpec =
     Option
         { dataGrabber = dataGrabber
@@ -321,7 +321,7 @@ raw `String` that comes from the command line into a `Regex`, as in this code sn
                 )
 
 -}
-map : (toRaw -> toMapped) -> Option from toRaw anything -> Option from toMapped anything
+map : (toRaw -> toMapped) -> Option from toRaw builderState -> Option from toMapped builderState
 map mapFn (Option ({ dataGrabber, usageSpec, decoder } as option)) =
     Option { option | decoder = Cli.Decode.map mapFn decoder }
 
@@ -355,7 +355,7 @@ map mapFn (Option ({ dataGrabber, usageSpec, decoder } as option)) =
                 )
 
 -}
-mapFlag : { present : union, absent : union } -> Option from Bool anything -> Option from union anything
+mapFlag : { present : union, absent : union } -> Option from Bool builderState -> Option from union builderState
 mapFlag { present, absent } option =
     option
         |> map
@@ -373,7 +373,7 @@ type alias MutuallyExclusiveValue union =
 
 {-| TODO
 -}
-oneOf : value -> List (MutuallyExclusiveValue value) -> Option from String anything -> Option from value anything
+oneOf : value -> List (MutuallyExclusiveValue value) -> Option from String builderState -> Option from value builderState
 oneOf default list (Option option) =
     validateMap
         (\argValue ->
@@ -416,7 +416,7 @@ about the `Option` that had the validation error.
 in the `examples` folder).
 
 -}
-validateMap : (to -> Result String toMapped) -> Option from to anything -> Option from toMapped anything
+validateMap : (to -> Result String toMapped) -> Option from to builderState -> Option from toMapped builderState
 validateMap mapFn (Option option) =
     let
         mappedDecoder =
@@ -449,7 +449,7 @@ the value is `Nothing`.
 in the `examples` folder).
 
 -}
-validateMapIfPresent : (to -> Result String toMapped) -> Option (Maybe from) (Maybe to) anything -> Option (Maybe from) (Maybe toMapped) anything
+validateMapIfPresent : (to -> Result String toMapped) -> Option (Maybe from) (Maybe to) builderState -> Option (Maybe from) (Maybe toMapped) builderState
 validateMapIfPresent mapFn ((Option { dataGrabber, usageSpec, decoder }) as cliSpec) =
     validateMap
         (\thing ->
@@ -466,7 +466,7 @@ validateMapIfPresent mapFn ((Option { dataGrabber, usageSpec, decoder }) as cliS
 
 {-| Provide a default value for the `Option`.
 -}
-withDefault : to -> Option from (Maybe to) anything -> Option from to anything
+withDefault : to -> Option from (Maybe to) builderState -> Option from to builderState
 withDefault defaultValue (Option option) =
     Option
         { option
