@@ -39,7 +39,6 @@ predicate message predicate =
         >> (\boolResult ->
                 if boolResult then
                     Valid
-
                 else
                     Invalid message
            )
@@ -75,6 +74,5 @@ regex : String -> String -> ValidationResult
 regex regexPattern checkString =
     if Regex.contains (Regex.regex regexPattern) checkString then
         Valid
-
     else
         Invalid ("Must be of form /" ++ regexPattern ++ "/")

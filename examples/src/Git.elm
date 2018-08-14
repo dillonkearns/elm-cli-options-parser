@@ -52,8 +52,8 @@ logOptionsParser =
             (Option.restArgs "rest args")
 
 
-init : CliOptions -> Cmd msg
-init cliOptions =
+init : Flags -> CliOptions -> Cmd msg
+init flags cliOptions =
     (case cliOptions of
         Init ->
             "Initializing test suite..."
@@ -80,7 +80,11 @@ dummy =
     Json.Decode.string
 
 
-main : Program.StatelessProgram msg
+type alias Flags =
+    Program.FlagsIncludingArgv {}
+
+
+main : Program.StatelessProgram msg {}
 main =
     Program.stateless
         { printAndExitFailure = Ports.printAndExitFailure

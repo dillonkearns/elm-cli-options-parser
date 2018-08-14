@@ -69,12 +69,8 @@ dummy =
     Json.Decode.string
 
 
-
--- init : Flags -> ( Model, Cmd Msg )
-
-
-init : ElmTestOptionsParser -> Cmd Never
-init msg =
+init : Flags -> ElmTestOptionsParser -> Cmd Never
+init flags msg =
     (case msg of
         Init ->
             "Initializing test suite..."
@@ -99,7 +95,11 @@ init msg =
     (,)
 
 
-main : Program.StatelessProgram Never
+type alias Flags =
+    Program.FlagsIncludingArgv {}
+
+
+main : Program.StatelessProgram Never {}
 main =
     Program.stateless
         { printAndExitFailure = Ports.printAndExitFailure

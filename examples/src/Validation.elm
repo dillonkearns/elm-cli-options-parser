@@ -39,8 +39,8 @@ type alias GreetOptions =
     }
 
 
-init : GreetOptions -> Cmd Never
-init { name, maybeAge } =
+init : Flags -> GreetOptions -> Cmd Never
+init flags { name, maybeAge } =
     maybeAge
         |> Maybe.map (\age -> name ++ " is " ++ toString age ++ " years old")
         |> Maybe.withDefault ("Hello " ++ name ++ "!")
@@ -52,7 +52,11 @@ dummy =
     Json.Decode.string
 
 
-main : Program.StatelessProgram Never
+type alias Flags =
+    Program.FlagsIncludingArgv {}
+
+
+main : Program.StatelessProgram Never {}
 main =
     Program.stateless
         { printAndExitFailure = Ports.printAndExitFailure

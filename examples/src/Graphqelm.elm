@@ -47,8 +47,12 @@ dummy =
     Json.Decode.string
 
 
-init : CliOptions -> Cmd Never
-init msg =
+type alias Flags =
+    Program.FlagsIncludingArgv {}
+
+
+init : Flags -> CliOptions -> Cmd Never
+init flags msg =
     (case msg of
         FromUrl url base outputPath excludeDeprecated headers ->
             "...fetching from url " ++ url ++ "\noptions: " ++ toString ( url, base, outputPath, excludeDeprecated, headers )
@@ -59,7 +63,7 @@ init msg =
         |> Ports.print
 
 
-main : Program.StatelessProgram Never
+main : Program.StatelessProgram Never {}
 main =
     Program.stateless
         { printAndExitFailure = Ports.printAndExitFailure

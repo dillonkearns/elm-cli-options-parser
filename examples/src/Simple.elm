@@ -7,33 +7,27 @@ import Json.Decode exposing (..)
 import Ports
 
 
-type Verbosity
-    = Quiet
-    | Verbose
-
-
-type alias CliOptions =
-    { verbosity : Verbosity
+type alias GreetOptions =
+    { name : String
+    , maybeGreeting : Maybe String
     }
 
 
-programConfig : Program.Config CliOptions
+programConfig : Program.Config GreetOptions
 programConfig =
     Program.config { version = "1.2.3" }
         |> Program.add
-            (OptionsParser.build CliOptions
-                |> OptionsParser.with
-                    (Option.flag "verbose"
-                        |> Option.mapFlag { present = Verbose, absent = Quiet }
-                    )
+            (OptionsParser.build GreetOptions
+                |> OptionsParser.with (Option.requiredKeywordArg "name")
+                |> OptionsParser.with (Option.optionalKeywordArg "greeting")
             )
 
 
-init : CliOptions -> Cmd Never
-init _ =
-    Nothing
+init : Flags -> GreetOptions -> Cmd Never
+init flags { maybeGreeting, name } =
+    maybeGreeting
         |> Maybe.withDefault "Hello"
-        |> (\greeting -> greeting ++ " " ++ "" ++ "!")
+        |> (\greeting -> greeting ++ " " ++ name ++ "!")
         |> Ports.print
 
 
@@ -42,7 +36,11 @@ dummy =
     Json.Decode.string
 
 
-main : Program.StatelessProgram Never
+type alias Flags =
+    Program.FlagsIncludingArgv {}
+
+
+main : Program.StatelessProgram Never {}
 main =
     Program.stateless
         { printAndExitFailure = Ports.printAndExitFailure

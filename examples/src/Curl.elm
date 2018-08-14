@@ -30,14 +30,18 @@ type alias CliOptions =
     }
 
 
-init : CliOptions -> ( Model, Cmd Msg )
-init { url } =
+init : Flags -> CliOptions -> ( Model, Cmd Msg )
+init flags { url } =
     ( ()
     , Cmd.batch
         [ "Fetching from url: " ++ url |> Ports.print
         , url |> Http.getString |> Http.send GotResponse
         ]
     )
+
+
+type alias Flags =
+    Program.FlagsIncludingArgv {}
 
 
 dummy : Decoder String
@@ -55,7 +59,7 @@ update (GotResponse httpResult) model =
             ( model, error |> toString |> Ports.print )
 
 
-main : Program.StatefulProgram Model Msg
+main : Program.StatefulProgram Model Msg {}
 main =
     Program.stateful
         { printAndExitFailure = Ports.printAndExitFailure
