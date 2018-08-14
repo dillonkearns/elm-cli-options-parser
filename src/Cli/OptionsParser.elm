@@ -398,7 +398,7 @@ a single union type.
                 )
 
 -}
-map : (msg -> mappedMsg) -> OptionsParser msg builderState -> OptionsParser mappedMsg builderState
+map : (cliOptions -> mappedCliOptions) -> OptionsParser cliOptions builderState -> OptionsParser mappedCliOptions builderState
 map mapFunction (OptionsParser ({ decoder } as record)) =
     OptionsParser { record | decoder = decoder >> Result.map (Tuple.mapSecond mapFunction) }
 
