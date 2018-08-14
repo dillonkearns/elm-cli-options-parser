@@ -2,6 +2,7 @@ module Cli.LowLevel exposing (MatchResult(..), helpText, try)
 
 import Cli.Decode
 import Cli.OptionsParser as OptionsParser exposing (OptionsParser)
+import Cli.OptionsParser.BuilderState as BuilderState
 import Cli.OptionsParser.MatchResult as MatchResult exposing (MatchResult)
 import Set exposing (Set)
 
@@ -36,23 +37,17 @@ type CombinedParser userOptions
 try : List (OptionsParser.OptionsParser msg builderState) -> List String -> MatchResult msg
 try optionsParsers argv =
     let
-        maybeShowHelpMatch =
-            OptionsParser.build ShowHelp
-                |> OptionsParser.expectFlag "help"
-                |> OptionsParser.map SystemParser
-
-        maybeShowVersionMatch =
-            OptionsParser.build ShowVersion
-                |> OptionsParser.expectFlag "version"
-                |> OptionsParser.map SystemParser
-
         matchResults =
             (optionsParsers
                 |> List.map (OptionsParser.map UserParser)
                 |> List.map OptionsParser.end
             )
-                ++ [ maybeShowHelpMatch |> OptionsParser.end
-                   , maybeShowVersionMatch |> OptionsParser.end
+                ++ [ helpParser
+                        |> OptionsParser.end
+                        |> OptionsParser.map SystemParser
+                   , showVersionParser
+                        |> OptionsParser.end
+                        |> OptionsParser.map SystemParser
                    ]
                 |> List.map
                     (argv
@@ -95,6 +90,18 @@ try optionsParsers argv =
                     Nothing ->
                         NoMatch commonUnmatchedFlags
            )
+
+
+helpParser : OptionsParser (MatchResult msg) BuilderState.AnyOptions
+helpParser =
+    OptionsParser.build ShowHelp
+        |> OptionsParser.expectFlag "help"
+
+
+showVersionParser : OptionsParser (MatchResult msg) BuilderState.AnyOptions
+showVersionParser =
+    OptionsParser.build ShowVersion
+        |> OptionsParser.expectFlag "version"
 
 
 oneOf : List (Maybe a) -> Maybe a
