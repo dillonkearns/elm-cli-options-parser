@@ -345,7 +345,29 @@ buildSubCommand subCommandName cliOptionsConstructor =
         }
 
 
-{-| TODO
+{-| Use a fixed value for the next step in the pipeline. This doesn't use
+any input from the user, it just passes the supplied value through in the chain.
+
+    import Cli.Option as Option
+    import Cli.OptionsParser as OptionsParser
+    import Cli.Program as Program
+
+    type alias GreetOptions =
+        { name : String
+        , maybeGreeting : Maybe String
+        , hardcodedValue : String
+        }
+
+    programConfig : Program.Config GreetOptions
+    programConfig =
+        Program.config { version = "1.2.3" }
+            |> Program.add
+                (OptionsParser.build GreetOptions
+                    |> OptionsParser.with (Option.requiredKeywordArg "name")
+                    |> OptionsParser.with (Option.optionalKeywordArg "greeting")
+                    |> OptionsParser.hardcoded "any hardcoded value"
+                )
+
 -}
 hardcoded : value -> OptionsParser (value -> msg) BuilderState.AnyOptions -> OptionsParser msg BuilderState.AnyOptions
 hardcoded hardcodedValue (OptionsParser ({ decoder } as optionsParser)) =
