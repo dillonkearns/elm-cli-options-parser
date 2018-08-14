@@ -305,7 +305,34 @@ map mapFn (Option ({ dataGrabber, usageSpec, decoder } as option)) =
     Option { option | decoder = Cli.Decode.map mapFn decoder }
 
 
-{-| TODO
+{-| Useful for using a custom union type for a flag instead of a `Bool`.
+
+    import Cli.Option as Option
+    import Cli.OptionsParser as OptionsParser
+    import Cli.Program as Program
+
+    type Verbosity
+        = Quiet
+        | Verbose
+
+    type alias CliOptions =
+        { verbosity : Verbosity
+        }
+
+    programConfig : Program.Config CliOptions
+    programConfig =
+        Program.config { version = "1.2.3" }
+            |> Program.add
+                (OptionsParser.build CliOptions
+                    |> OptionsParser.with
+                        (Option.flag "verbose"
+                            |> Option.mapFlag
+                                { present = Verbose
+                                , absent = Quiet
+                                }
+                        )
+                )
+
 -}
 mapFlag : { present : union, absent : union } -> Option from Bool anything -> Option from union anything
 mapFlag { present, absent } option =
