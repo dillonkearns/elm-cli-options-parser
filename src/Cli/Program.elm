@@ -133,7 +133,7 @@ type alias StatefulOptions msg model cliOptions flags =
     { printAndExitFailure : String -> Cmd msg
     , printAndExitSuccess : String -> Cmd msg
     , init : FlagsIncludingArgv flags -> cliOptions -> ( model, Cmd msg )
-    , update : msg -> model -> ( model, Cmd msg )
+    , update : cliOptions -> msg -> model -> ( model, Cmd msg )
     , subscriptions : model -> Sub msg
     , config : Config cliOptions
     }
@@ -155,7 +155,7 @@ stateful options =
                     UserModel actualModel cliOptions ->
                         let
                             ( model, cmd ) =
-                                options.update msg actualModel
+                                options.update cliOptions msg actualModel
                         in
                         ( UserModel model cliOptions, cmd )
 

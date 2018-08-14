@@ -49,8 +49,8 @@ dummy =
     Json.Decode.string
 
 
-update : Msg -> Model -> ( Model, Cmd Msg )
-update (GotResponse httpResult) model =
+update : CliOptions -> Msg -> Model -> ( Model, Cmd Msg )
+update cliOptions (GotResponse httpResult) model =
     case httpResult of
         Ok httpResponse ->
             ( model, Ports.print httpResponse )

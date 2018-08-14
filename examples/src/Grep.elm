@@ -61,14 +61,14 @@ subscriptions model =
     Ports.stdin OnStdin
 
 
-update : Msg -> Model -> ( Model, Cmd Msg )
-update msg model =
+update : CliOptions -> Msg -> Model -> ( Model, Cmd Msg )
+update cliOptions msg model =
     case msg of
         OnStdin line ->
             ( model
             , if
                 line
-                    |> Regex.contains model.pattern
+                    |> Regex.contains cliOptions.pattern
               then
                 "matches: "
                     ++ line
