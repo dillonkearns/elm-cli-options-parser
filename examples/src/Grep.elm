@@ -19,7 +19,7 @@ type Verbosity
 
 
 type alias CliOptions =
-    { verbosity : Verbosity
+    { countMode : Bool
     , pattern : Regex
     }
 
@@ -30,12 +30,7 @@ programConfig =
         |> Program.add
             (OptionsParser.build CliOptions
                 |> OptionsParser.with
-                    (Option.flag "verbose"
-                        |> Option.mapFlag
-                            { present = Verbose
-                            , absent = Quiet
-                            }
-                    )
+                    (Option.flag "count")
                 |> OptionsParser.with
                     (Option.requiredPositionalArg "pattern"
                         |> Option.map Regex.regex
@@ -44,12 +39,16 @@ programConfig =
 
 
 type alias Model =
-    ()
+    { matchCount : Int
+    }
 
 
 init : Program.FlagsIncludingArgv {} -> CliOptions -> ( Model, Cmd Msg )
 init flags cliOptions =
-    ( (), Cmd.none )
+    ( { matchCount = 0
+      }
+    , Cmd.none
+    )
 
 
 dummy : Decoder String
@@ -62,21 +61,43 @@ subscriptions model =
     Sub.map OnStdin Stdin.subscriptions
 
 
+incrementMatchCount : { model | matchCount : Int } -> { model | matchCount : Int }
+incrementMatchCount model =
+    { model | matchCount = model.matchCount + 1 }
+
+
 update : CliOptions -> Msg -> Model -> ( Model, Cmd Msg )
 update cliOptions msg model =
     case msg of
         OnStdin stdinEvent ->
-            case stdinEvent of
-                Stdin.Line line ->
-                    ( model
-                    , if Regex.contains cliOptions.pattern line then
-                        Ports.print line
-                      else
-                        Cmd.none
-                    )
+            if cliOptions.countMode then
+                case stdinEvent of
+                    Stdin.Line line ->
+                        ( if Regex.contains cliOptions.pattern line then
+                            model |> incrementMatchCount
+                          else
+                            model
+                        , Cmd.none
+                        )
 
-                Stdin.Closed ->
-                    ( model, Ports.print "Closed stdin..." )
+                    Stdin.Closed ->
+                        ( model
+                        , model.matchCount
+                            |> toString
+                            |> Ports.print
+                        )
+            else
+                case stdinEvent of
+                    Stdin.Line line ->
+                        ( model
+                        , if Regex.contains cliOptions.pattern line then
+                            Ports.print line
+                          else
+                            Cmd.none
+                        )
+
+                    Stdin.Closed ->
+                        ( model, Ports.print "Closed stdin..." )
 
 
 main : Program.StatefulProgram Model Msg CliOptions {}
