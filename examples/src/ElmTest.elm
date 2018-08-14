@@ -18,9 +18,15 @@ type alias RunTestsRecord =
     , maybeCompilerPath : Maybe String
     , maybeDependencies : Maybe String
     , watch : Bool
-    , report : Report
+    , reportFormat : ReportFormat
     , testFiles : List String
     }
+
+
+type ReportFormat
+    = Json
+    | Junit
+    | Console
 
 
 program : Program.Config CliOptions
@@ -57,12 +63,6 @@ program =
             )
 
 
-type Report
-    = Json
-    | Junit
-    | Console
-
-
 dummy : Decoder String
 dummy =
     -- this is a workaround for an Elm compiler bug
@@ -80,7 +80,7 @@ init flags msg =
             , "watch: " ++ toString options.watch |> Just
             , options.maybeFuzz |> Maybe.map (\fuzz -> "fuzz: " ++ toString fuzz)
             , options.maybeSeed |> Maybe.map (\seed -> "seed: " ++ toString seed)
-            , options.report |> toString |> Just
+            , options.reportFormat |> toString |> Just
             , options.maybeCompilerPath |> Maybe.map (\compilerPath -> "compiler: " ++ toString compilerPath)
             , options.maybeDependencies |> Maybe.map (\dependencies -> "dependencies: " ++ toString dependencies)
             ]
