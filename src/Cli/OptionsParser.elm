@@ -117,9 +117,6 @@ a valid number of positional arguments is passed in, as defined by these rules:
 @docs with
 @docs withOptionalPositionalArg, withRestArgs
 
-
-## I wish this could be in Option...
-
 @docs expectFlag
 
 
@@ -201,6 +198,7 @@ tryMatch argv ((OptionsParser { usageSpecs, buildSubCommand }) as optionsParser)
                                         , operands = remainingOperands
                                         , usageSpecs = usageSpecs
                                         }
+
                                 else
                                     Err { errorMessage = "Sub optionsParser does not match", options = record.options }
 
@@ -250,6 +248,7 @@ expectedPositionalArgCountOrFail (OptionsParser ({ decoder, usageSpecs } as opti
                               )
                     then
                         Cli.Decode.MatchError "Wrong number of operands" |> Err
+
                     else
                         decoder stuff
         }
@@ -279,6 +278,7 @@ failIfUnexpectedOptions ((OptionsParser ({ decoder, usageSpecs } as optionsParse
                     in
                     if List.isEmpty unexpectedOptions then
                         decoder flagsAndOperands
+
                     else
                         Cli.Decode.UnexpectedOptions unexpectedOptions |> Err
         }
@@ -290,6 +290,7 @@ unexpectedOptions_ (OptionsParser { usageSpecs }) options =
         (\(Tokenizer.ParsedOption optionName optionKind) ->
             if UsageSpec.optionExists usageSpecs optionName == Nothing then
                 Just optionName
+
             else
                 Nothing
         )
@@ -390,7 +391,8 @@ resultMap mapFunction result =
         |> Result.map (\( validationErrors, value ) -> ( validationErrors, mapFunction value ))
 
 
-{-| TODO
+{-| The `OptionsParser` will only match if the given flag is present. Often its
+best to use a subcommand in these cases.
 -}
 expectFlag : String -> OptionsParser msg BuilderState.AnyOptions -> OptionsParser msg BuilderState.AnyOptions
 expectFlag flagName (OptionsParser ({ usageSpecs, decoder } as optionsParser)) =
@@ -404,6 +406,7 @@ expectFlag flagName (OptionsParser ({ usageSpecs, decoder } as optionsParser)) =
                             |> List.member (Tokenizer.ParsedOption flagName Tokenizer.Flag)
                     then
                         decoder stuff
+
                     else
                         Cli.Decode.MatchError ("Expect flag " ++ ("--" ++ flagName))
                             |> Err

@@ -1,8 +1,8 @@
 module Cli.LowLevel exposing (MatchResult(..), helpText, try)
 
+import Cli.Decode
 import Cli.OptionsParser as OptionsParser exposing (OptionsParser)
 import Cli.OptionsParser.MatchResult as MatchResult exposing (MatchResult)
-import Cli.Decode
 import Maybe.Extra
 import Set exposing (Set)
 
