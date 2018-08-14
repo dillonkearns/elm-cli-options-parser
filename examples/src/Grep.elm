@@ -13,9 +13,9 @@ type Msg
     = OnStdin Stdin.Event
 
 
-type Verbosity
-    = Quiet
-    | Verbose
+type alias Model =
+    { matchCount : Int
+    }
 
 
 type alias CliOptions =
@@ -38,32 +38,9 @@ programConfig =
             )
 
 
-type alias Model =
-    { matchCount : Int
-    }
-
-
 init : Program.FlagsIncludingArgv {} -> CliOptions -> ( Model, Cmd Msg )
 init flags cliOptions =
-    ( { matchCount = 0
-      }
-    , Cmd.none
-    )
-
-
-dummy : Decoder String
-dummy =
-    Json.Decode.string
-
-
-subscriptions : a -> Sub Msg
-subscriptions model =
-    Sub.map OnStdin Stdin.subscriptions
-
-
-incrementMatchCount : { model | matchCount : Int } -> { model | matchCount : Int }
-incrementMatchCount model =
-    { model | matchCount = model.matchCount + 1 }
+    ( { matchCount = 0 }, Cmd.none )
 
 
 update : CliOptions -> Msg -> Model -> ( Model, Cmd Msg )
@@ -98,6 +75,21 @@ update cliOptions msg model =
 
                     Stdin.Closed ->
                         ( model, Ports.print "Closed stdin..." )
+
+
+subscriptions : a -> Sub Msg
+subscriptions model =
+    Sub.map OnStdin Stdin.subscriptions
+
+
+incrementMatchCount : { model | matchCount : Int } -> { model | matchCount : Int }
+incrementMatchCount model =
+    { model | matchCount = model.matchCount + 1 }
+
+
+dummy : Decoder String
+dummy =
+    Json.Decode.string
 
 
 main : Program.StatefulProgram Model Msg CliOptions {}
