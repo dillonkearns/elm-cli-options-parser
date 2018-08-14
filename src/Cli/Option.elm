@@ -371,7 +371,53 @@ type alias MutuallyExclusiveValue union =
     ( String, union )
 
 
-{-| TODO
+{-| Mutually exclusive option values.
+
+    type ReportFormat
+        = Json
+        | Junit
+        | Console
+
+    type alias CliOptions =
+        { reportFormat : ReportFormat
+        , testFiles : List String
+        }
+
+    program : Program.Config CliOptions
+    program =
+        Program.config { version = "1.2.3" }
+            |> Program.add
+                (OptionsParser.build CliOptions
+                    |> with
+                        (Option.optionalKeywordArg "report"
+                            |> Option.withDefault "console"
+                            |> Option.oneOf Console
+                                [ "json" => Json
+                                , "junit" => Junit
+                                , "console" => Console
+                                ]
+                        )
+                    |> OptionsParser.withRestArgs (Option.restArgs "TESTFILES")
+                )
+
+Now when you run it, you get the following in your help text:
+
+```shell
+$ ./elm-test --help
+elm-test [--report <json|junit|console>] <TESTFILES>...
+```
+
+And if you run it with an unrecognized value, you get a validation error:
+
+```shell
+$ ./elm-test --report xml
+Validation errors:
+
+`report` failed a validation. Must be one of [json, junit, console]
+Value was:
+"xml"
+```
+
 -}
 oneOf : value -> List (MutuallyExclusiveValue value) -> Option from String builderState -> Option from value builderState
 oneOf default list (Option option) =
