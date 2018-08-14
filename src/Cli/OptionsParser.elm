@@ -398,14 +398,20 @@ a single union type.
                 )
 
 -}
-map : (cliOptions -> mappedCliOptions) -> OptionsParser cliOptions builderState -> OptionsParser mappedCliOptions builderState
+map :
+    (cliOptions -> mappedCliOptions)
+    -> OptionsParser cliOptions builderState
+    -> OptionsParser mappedCliOptions builderState
 map mapFunction (OptionsParser ({ decoder } as record)) =
     OptionsParser { record | decoder = decoder >> Result.map (Tuple.mapSecond mapFunction) }
 
 
 {-| TODO
 -}
-resultMap : (a -> value) -> Result Cli.Decode.ProcessingError ( List Cli.Decode.ValidationError, a ) -> Result Cli.Decode.ProcessingError ( List Cli.Decode.ValidationError, value )
+resultMap :
+    (a -> value)
+    -> Result Cli.Decode.ProcessingError ( List Cli.Decode.ValidationError, a )
+    -> Result Cli.Decode.ProcessingError ( List Cli.Decode.ValidationError, value )
 resultMap mapFunction result =
     result
         |> Result.map (\( validationErrors, value ) -> ( validationErrors, mapFunction value ))
