@@ -21,5 +21,9 @@ var rl = readline.createInterface({
 })
 
 rl.on('line', function(line) {
-  program.ports.stdin.send(line)
+  program.ports.onStdinLine.send(line)
+})
+
+rl.on('close', function(line) {
+  program.ports.onStdinClosed.send(null)
 })

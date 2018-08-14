@@ -6,10 +6,11 @@ import Cli.Program as Program
 import Json.Decode exposing (..)
 import Ports
 import Regex exposing (Regex)
+import Stdin
 
 
 type Msg
-    = OnStdin String
+    = OnStdin Stdin.Event
 
 
 type Verbosity
@@ -58,25 +59,24 @@ dummy =
 
 subscriptions : a -> Sub Msg
 subscriptions model =
-    Ports.stdin OnStdin
+    Sub.map OnStdin Stdin.subscriptions
 
 
 update : CliOptions -> Msg -> Model -> ( Model, Cmd Msg )
 update cliOptions msg model =
     case msg of
-        OnStdin line ->
-            ( model
-            , if
-                line
-                    |> Regex.contains cliOptions.pattern
-              then
-                "matches: "
-                    ++ line
-                    |> Ports.print
-              else
-                "no match"
-                    |> Ports.print
-            )
+        OnStdin stdinEvent ->
+            case stdinEvent of
+                Stdin.Line line ->
+                    ( model
+                    , if Regex.contains cliOptions.pattern line then
+                        Ports.print line
+                      else
+                        Cmd.none
+                    )
+
+                Stdin.Closed ->
+                    ( model, Ports.print "Closed stdin..." )
 
 
 main : Program.StatefulProgram Model Msg CliOptions {}

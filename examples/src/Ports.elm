@@ -1,4 +1,4 @@
-port module Ports exposing (..)
+port module Ports exposing (print, printAndExitFailure, printAndExitSuccess)
 
 
 port print : String -> Cmd msg
@@ -8,6 +8,3 @@ port printAndExitFailure : String -> Cmd msg
 
 
 port printAndExitSuccess : String -> Cmd msg
-
-
-port stdin : (String -> msg) -> Sub msg

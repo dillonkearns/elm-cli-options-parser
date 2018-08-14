@@ -9668,23 +9668,58 @@ var _user$project$Ports$printAndExitSuccess = _elm_lang$core$Native_Platform.out
 	function (v) {
 		return v;
 	});
-var _user$project$Ports$stdin = _elm_lang$core$Native_Platform.incomingPort('stdin', _elm_lang$core$Json_Decode$string);
+
+var _user$project$Stdin$onStdinLine = _elm_lang$core$Native_Platform.incomingPort('onStdinLine', _elm_lang$core$Json_Decode$string);
+var _user$project$Stdin$onStdinClosed = _elm_lang$core$Native_Platform.incomingPort(
+	'onStdinClosed',
+	_elm_lang$core$Json_Decode$null(
+		{ctor: '_Tuple0'}));
+var _user$project$Stdin$Closed = {ctor: 'Closed'};
+var _user$project$Stdin$Line = function (a) {
+	return {ctor: 'Line', _0: a};
+};
+var _user$project$Stdin$subscriptions = _elm_lang$core$Platform_Sub$batch(
+	{
+		ctor: '::',
+		_0: _user$project$Stdin$onStdinLine(_user$project$Stdin$Line),
+		_1: {
+			ctor: '::',
+			_0: _user$project$Stdin$onStdinClosed(
+				function (_p0) {
+					var _p1 = _p0;
+					return _user$project$Stdin$Closed;
+				}),
+			_1: {ctor: '[]'}
+		}
+	});
 
 var _user$project$Main$update = F3(
 	function (cliOptions, msg, model) {
 		var _p0 = msg;
 		var _p1 = _p0._0;
-		return {
-			ctor: '_Tuple2',
-			_0: model,
-			_1: A2(_elm_lang$core$Regex$contains, cliOptions.pattern, _p1) ? _user$project$Ports$print(
-				A2(_elm_lang$core$Basics_ops['++'], 'matches: ', _p1)) : _user$project$Ports$print('no match')
-		};
+		if (_p1.ctor === 'Line') {
+			var _p2 = _p1._0;
+			return {
+				ctor: '_Tuple2',
+				_0: model,
+				_1: A2(_elm_lang$core$Regex$contains, cliOptions.pattern, _p2) ? _user$project$Ports$print(_p2) : _elm_lang$core$Platform_Cmd$none
+			};
+		} else {
+			return {
+				ctor: '_Tuple2',
+				_0: model,
+				_1: _user$project$Ports$print('GOODBYE!!! :-)')
+			};
+		}
 	});
 var _user$project$Main$dummy = _elm_lang$core$Json_Decode$string;
 var _user$project$Main$init = F2(
 	function (flags, cliOptions) {
-		return {ctor: '_Tuple2', _0: cliOptions, _1: _elm_lang$core$Platform_Cmd$none};
+		return {
+			ctor: '_Tuple2',
+			_0: {ctor: '_Tuple0'},
+			_1: _elm_lang$core$Platform_Cmd$none
+		};
 	});
 var _user$project$Main$CliOptions = F2(
 	function (a, b) {
@@ -9694,7 +9729,7 @@ var _user$project$Main$OnStdin = function (a) {
 	return {ctor: 'OnStdin', _0: a};
 };
 var _user$project$Main$subscriptions = function (model) {
-	return _user$project$Ports$stdin(_user$project$Main$OnStdin);
+	return A2(_elm_lang$core$Platform_Sub$map, _user$project$Main$OnStdin, _user$project$Stdin$subscriptions);
 };
 var _user$project$Main$Verbose = {ctor: 'Verbose'};
 var _user$project$Main$Quiet = {ctor: 'Quiet'};
