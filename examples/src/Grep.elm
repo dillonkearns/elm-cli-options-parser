@@ -43,12 +43,12 @@ programConfig =
 
 
 type alias Model =
-    CliOptions
+    ()
 
 
 init : Program.FlagsIncludingArgv {} -> CliOptions -> ( Model, Cmd Msg )
 init flags cliOptions =
-    ( cliOptions, Cmd.none )
+    ( (), Cmd.none )
 
 
 dummy : Decoder String
