@@ -298,7 +298,28 @@ buildOption dataGrabber usageSpec =
         }
 
 
-{-| TODO
+{-| Transform an `Option`. For example, you may want to map an option from the
+raw `String` that comes from the command line into a `Regex`, as in this code snippet.
+
+    import Cli.Option as Option
+    import Cli.OptionsParser as OptionsParser
+    import Cli.Program as Program
+    import Regex exposing (Regex)
+
+    type alias CliOptions =
+        { pattern : Regex }
+
+    programConfig : Program.Config CliOptions
+    programConfig =
+        Program.config { version = "1.2.3" }
+            |> Program.add
+                (OptionsParser.build buildCliOptions
+                    |> OptionsParser.with
+                        (Option.requiredPositionalArg "pattern"
+                            |> Option.map Regex.regex
+                        )
+                )
+
 -}
 map : (toRaw -> toMapped) -> Option from toRaw anything -> Option from toMapped anything
 map mapFn (Option ({ dataGrabber, usageSpec, decoder } as option)) =
