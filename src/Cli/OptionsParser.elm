@@ -166,14 +166,14 @@ synopsis programName optionsParser =
 
 {-| Low-level function, for internal use.
 -}
-getSubCommand : OptionsParser msg builderState -> Maybe String
+getSubCommand : OptionsParser cliOptions builderState -> Maybe String
 getSubCommand (OptionsParser { subCommand }) =
     subCommand
 
 
 {-| Low-level function, for internal use.
 -}
-tryMatch : List String -> OptionsParser msg builderState -> Cli.OptionsParser.MatchResult.MatchResult msg
+tryMatch : List String -> OptionsParser cliOptions builderState -> Cli.OptionsParser.MatchResult.MatchResult cliOptions
 tryMatch argv ((OptionsParser { usageSpecs, subCommand }) as optionsParser) =
     let
         decoder =
@@ -234,7 +234,7 @@ tryMatch argv ((OptionsParser { usageSpecs, subCommand }) as optionsParser) =
             Cli.OptionsParser.MatchResult.NoMatch (unexpectedOptions_ optionsParser options)
 
 
-expectedPositionalArgCountOrFail : OptionsParser msg builderState -> OptionsParser msg builderState
+expectedPositionalArgCountOrFail : OptionsParser cliOptions builderState -> OptionsParser cliOptions builderState
 expectedPositionalArgCountOrFail (OptionsParser ({ decoder, usageSpecs } as optionsParser)) =
     OptionsParser
         { optionsParser
@@ -255,18 +255,18 @@ expectedPositionalArgCountOrFail (OptionsParser ({ decoder, usageSpecs } as opti
 
 
 getDecoder :
-    OptionsParser msg builderState
+    OptionsParser cliOptions builderState
     ->
         { operands : List String
         , options : List ParsedOption
         , usageSpecs : List UsageSpec
         }
-    -> Result Cli.Decode.ProcessingError ( List Cli.Decode.ValidationError, msg )
+    -> Result Cli.Decode.ProcessingError ( List Cli.Decode.ValidationError, cliOptions )
 getDecoder (OptionsParser { decoder }) =
     decoder
 
 
-failIfUnexpectedOptions : OptionsParser msg builderState -> OptionsParser msg builderState
+failIfUnexpectedOptions : OptionsParser cliOptions builderState -> OptionsParser cliOptions builderState
 failIfUnexpectedOptions ((OptionsParser ({ decoder, usageSpecs } as optionsParser)) as fullOptionsParser) =
     OptionsParser
         { optionsParser
@@ -283,7 +283,7 @@ failIfUnexpectedOptions ((OptionsParser ({ decoder, usageSpecs } as optionsParse
         }
 
 
-unexpectedOptions_ : OptionsParser msg builderState -> List ParsedOption -> List String
+unexpectedOptions_ : OptionsParser cliOptions builderState -> List ParsedOption -> List String
 unexpectedOptions_ (OptionsParser { usageSpecs }) options =
     List.filterMap
         (\(Tokenizer.ParsedOption optionName optionKind) ->
@@ -300,19 +300,19 @@ A `Cli.Program.Config` can be built up using one or more `OptionsParser`s. It wi
 try each parser in order until one succeeds. If none succeed, it will print
 an error message with information for the user of the Command-Line Interface.
 -}
-type OptionsParser msg builderState
-    = OptionsParser (OptionsParserRecord msg)
+type OptionsParser cliOptions builderState
+    = OptionsParser (OptionsParserRecord cliOptions)
 
 
 {-| Low-level function, for internal use.
 -}
-end : OptionsParser msg anything -> OptionsParser msg BuilderState.NoMoreOptions
+end : OptionsParser builderState builderState -> OptionsParser builderState BuilderState.NoMoreOptions
 end (OptionsParser record) =
     OptionsParser record
 
 
-type alias OptionsParserRecord msg =
-    { decoder : { usageSpecs : List UsageSpec, options : List ParsedOption, operands : List String } -> Result Cli.Decode.ProcessingError ( List Cli.Decode.ValidationError, msg )
+type alias OptionsParserRecord cliOptions =
+    { decoder : { usageSpecs : List UsageSpec, options : List ParsedOption, operands : List String } -> Result Cli.Decode.ProcessingError ( List Cli.Decode.ValidationError, cliOptions )
     , usageSpecs : List UsageSpec
     , description : Maybe String
     , subCommand : Maybe String
@@ -322,7 +322,7 @@ type alias OptionsParserRecord msg =
 {-| Start an `OptionsParser` pipeline with no sub-command (see
 [the OptionsParser terminilogy legend](https://github.com/dillonkearns/elm-cli-options-parser#options-parser-terminology)).
 -}
-build : msg -> OptionsParser msg BuilderState.AnyOptions
+build : cliOptions -> OptionsParser cliOptions BuilderState.AnyOptions
 build cliOptionsConstructor =
     OptionsParser
         { usageSpecs = []
@@ -335,7 +335,7 @@ build cliOptionsConstructor =
 {-| Start an `OptionsParser` pipeline with a sub-command (see
 [the OptionsParser terminilogy legend](https://github.com/dillonkearns/elm-cli-options-parser#options-parser-terminology)).
 -}
-buildSubCommand : String -> msg -> OptionsParser msg BuilderState.AnyOptions
+buildSubCommand : String -> cliOptions -> OptionsParser cliOptions BuilderState.AnyOptions
 buildSubCommand subCommandName cliOptionsConstructor =
     OptionsParser
         { usageSpecs = []
@@ -369,7 +369,7 @@ any input from the user, it just passes the supplied value through in the chain.
                 )
 
 -}
-hardcoded : value -> OptionsParser (value -> msg) BuilderState.AnyOptions -> OptionsParser msg BuilderState.AnyOptions
+hardcoded : value -> OptionsParser (value -> cliOptions) BuilderState.AnyOptions -> OptionsParser cliOptions BuilderState.AnyOptions
 hardcoded hardcodedValue (OptionsParser ({ decoder } as optionsParser)) =
     OptionsParser
         { optionsParser
@@ -442,7 +442,7 @@ resultMap mapFunction result =
 {-| The `OptionsParser` will only match if the given flag is present. Often its
 best to use a subcommand in these cases.
 -}
-expectFlag : String -> OptionsParser msg BuilderState.AnyOptions -> OptionsParser msg BuilderState.AnyOptions
+expectFlag : String -> OptionsParser cliOptions BuilderState.AnyOptions -> OptionsParser cliOptions BuilderState.AnyOptions
 expectFlag flagName (OptionsParser ({ usageSpecs, decoder } as optionsParser)) =
     OptionsParser
         { optionsParser
@@ -463,12 +463,12 @@ expectFlag flagName (OptionsParser ({ usageSpecs, decoder } as optionsParser)) =
 {-| For chaining on any `Cli.Option.Option` besides a `restArg` or an `optionalPositionalArg`.
 See the `Cli.Option` module.
 -}
-with : Option from to Cli.Option.BeginningOption -> OptionsParser (to -> msg) BuilderState.AnyOptions -> OptionsParser msg BuilderState.AnyOptions
+with : Option from to Cli.Option.BeginningOption -> OptionsParser (to -> cliOptions) BuilderState.AnyOptions -> OptionsParser cliOptions BuilderState.AnyOptions
 with =
     withCommon
 
 
-withCommon : Option from to optionConstraint -> OptionsParser (to -> msg) startOptionsParserBuilderState -> OptionsParser msg endOptionsParserBuilderState
+withCommon : Option from to optionConstraint -> OptionsParser (to -> cliOptions) startOptionsParserBuilderState -> OptionsParser cliOptions endOptionsParserBuilderState
 withCommon (Option innerOption) ((OptionsParser ({ decoder, usageSpecs } as optionsParser)) as fullOptionsParser) =
     OptionsParser
         { optionsParser
@@ -499,14 +499,14 @@ withCommon (Option innerOption) ((OptionsParser ({ decoder, usageSpecs } as opti
 
 {-| For chaining on `Cli.Option.optionalPositionalArg`s.
 -}
-withOptionalPositionalArg : Option from to Cli.Option.OptionalPositionalArgOption -> OptionsParser (to -> msg) BuilderState.AnyOptions -> OptionsParser msg BuilderState.NoBeginningOptions
+withOptionalPositionalArg : Option from to Cli.Option.OptionalPositionalArgOption -> OptionsParser (to -> cliOptions) BuilderState.AnyOptions -> OptionsParser cliOptions BuilderState.NoBeginningOptions
 withOptionalPositionalArg =
     withCommon
 
 
 {-| For chaining on `Cli.Option.restArgs`.
 -}
-withRestArgs : Option from to Cli.Option.RestArgsOption -> OptionsParser (to -> msg) startingBuilderState -> OptionsParser msg BuilderState.NoMoreOptions
+withRestArgs : Option from to Cli.Option.RestArgsOption -> OptionsParser (to -> cliOptions) startingBuilderState -> OptionsParser cliOptions BuilderState.NoMoreOptions
 withRestArgs =
     withCommon
 
@@ -533,7 +533,7 @@ git init # initialize a git repository
          |> OptionsParser.withDoc "initialize a git repository"
 
 -}
-withDoc : String -> OptionsParser msg anything -> OptionsParser msg anything
+withDoc : String -> OptionsParser cliOptions anything -> OptionsParser cliOptions anything
 withDoc docString (OptionsParser optionsParserRecord) =
     OptionsParser
         { optionsParserRecord
