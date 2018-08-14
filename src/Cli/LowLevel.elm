@@ -3,7 +3,6 @@ module Cli.LowLevel exposing (MatchResult(..), helpText, try)
 import Cli.Decode
 import Cli.OptionsParser as OptionsParser exposing (OptionsParser)
 import Cli.OptionsParser.MatchResult as MatchResult exposing (MatchResult)
-import Maybe.Extra
 import Set exposing (Set)
 
 
@@ -29,39 +28,32 @@ intersection sets =
                 |> Set.intersect first
 
 
+type CombinedParser userOptions
+    = SystemParser (MatchResult userOptions)
+    | UserParser userOptions
+
+
 try : List (OptionsParser.OptionsParser msg builderState) -> List String -> MatchResult msg
 try optionsParsers argv =
     let
-        maybeShowHelpMatch : Maybe (MatchResult msg)
         maybeShowHelpMatch =
             OptionsParser.build ShowHelp
                 |> OptionsParser.expectFlag "help"
-                |> OptionsParser.tryMatch (argv |> List.drop 2)
-                |> (\matchResult ->
-                        case matchResult of
-                            MatchResult.NoMatch _ ->
-                                Nothing
+                |> OptionsParser.map SystemParser
 
-                            MatchResult.Match _ ->
-                                Just ShowHelp
-                   )
-
-        maybeShowVersionMatch : Maybe (MatchResult msg)
         maybeShowVersionMatch =
             OptionsParser.build ShowVersion
                 |> OptionsParser.expectFlag "version"
-                |> OptionsParser.tryMatch (argv |> List.drop 2)
-                |> (\matchResult ->
-                        case matchResult of
-                            MatchResult.NoMatch _ ->
-                                Nothing
-
-                            MatchResult.Match _ ->
-                                Just ShowVersion
-                   )
+                |> OptionsParser.map SystemParser
 
         matchResults =
-            optionsParsers
+            (optionsParsers
+                |> List.map (OptionsParser.map UserParser)
+                |> List.map OptionsParser.end
+            )
+                ++ [ maybeShowHelpMatch |> OptionsParser.end
+                   , maybeShowVersionMatch |> OptionsParser.end
+                   ]
                 |> List.map
                     (argv
                         |> List.drop 2
@@ -90,16 +82,18 @@ try optionsParsers argv =
                     Just result ->
                         case result of
                             Ok msg ->
-                                Match msg
+                                case msg of
+                                    SystemParser systemMsg ->
+                                        systemMsg
+
+                                    UserParser userMsg ->
+                                        Match userMsg
 
                             Err validationErrors ->
                                 ValidationErrors validationErrors
 
                     Nothing ->
-                        maybeShowHelpMatch
-                            |> Maybe.Extra.or maybeShowVersionMatch
-                            |> Maybe.withDefault
-                                (NoMatch commonUnmatchedFlags)
+                        NoMatch commonUnmatchedFlags
            )
 
 
