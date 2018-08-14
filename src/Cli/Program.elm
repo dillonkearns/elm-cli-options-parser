@@ -9,6 +9,43 @@ A `Cli.Program.Config` is created with `Cli.Program.config`. Then `OptionsParser
 to it with `Cli.Program.add`. Finally, you create a `Cli.Program.StatelessProgram`
 using `stateless` or a `Cli.Program.StatefulProgram` using `stateful`.
 
+    import Cli.Option as Option
+    import Cli.OptionsParser as OptionsParser
+    import Cli.Program as Program
+    import Ports
+
+    programConfig : Program.Config GreetOptions
+    programConfig =
+        Program.config { version = "1.2.3" }
+            |> Program.add
+                (OptionsParser.build GreetOptions
+                    |> OptionsParser.with (Option.requiredKeywordArg "name")
+                    |> OptionsParser.with (Option.optionalKeywordArg "greeting")
+                )
+
+    type alias GreetOptions =
+        { name : String
+        , maybeGreeting : Maybe String
+        }
+
+    init : GreetOptions -> Cmd Never
+    init { name, maybeGreeting } =
+        maybeGreeting
+            |> Maybe.withDefault "Hello"
+            |> (\greeting -> greeting ++ " " ++ name ++ "!")
+            |> Ports.print
+
+    main : Program.StatelessProgram Never
+    main =
+        Program.stateless
+            { printAndExitFailure = Ports.printAndExitFailure
+            , printAndExitSuccess = Ports.printAndExitSuccess
+            , init = init
+            , config = programConfig
+            }
+
+See the `examples` for some end-to-end examples.
+
 @docs config, Config, add
 
 

@@ -27,7 +27,7 @@ init : GreetOptions -> Cmd Never
 init { name, maybeGreeting } =
     maybeGreeting
         |> Maybe.withDefault "Hello"
-        |> (++) (" " ++ name ++ "!")
+        |> (\greeting -> greeting ++ " " ++ name ++ "!")
         |> Ports.print
 
 
