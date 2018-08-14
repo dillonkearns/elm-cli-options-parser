@@ -306,7 +306,7 @@ type OptionsParser cliOptions builderState
 
 {-| Low-level function, for internal use.
 -}
-end : OptionsParser builderState builderState -> OptionsParser builderState BuilderState.NoMoreOptions
+end : OptionsParser cliOptions builderState -> OptionsParser cliOptions BuilderState.NoMoreOptions
 end (OptionsParser record) =
     OptionsParser record
 
