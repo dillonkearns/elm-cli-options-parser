@@ -104,8 +104,7 @@ add optionsParser (Config ({ optionsParsers } as programRecord)) =
 {-| Flags in Cli Programs can contain any data as long as it is a record
 at the top-level which contains an `argv` field of type `List String`.
 In other words, it must be a record of type `FlagsIncludingArgv`
-(if you don't know what an extensible record is, you can [read more about it
-here](https://medium.com/@ckoster22/advanced-types-in-elm-extensible-records-67e9d804030d)).
+(if you aren't familiar with them, you can [read more about extensible records here](https://medium.com/@ckoster22/advanced-types-in-elm-extensible-records-67e9d804030d)).
 
 You pass in the flags like this (see the `examples` folder for more):
 
