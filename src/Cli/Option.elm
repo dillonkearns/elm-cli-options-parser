@@ -165,7 +165,8 @@ type alias DataGrabber decodesTo =
     -> Result Cli.Decode.ProcessingError decodesTo
 
 
-{-| Run a validation.
+{-| Run a validation. (See an example in the Validation section above, or
+in the `examples` folder).
 -}
 validate : (to -> Validate.ValidationResult) -> Option from to anything -> Option from to anything
 validate validateFunction (Option option) =
@@ -194,6 +195,7 @@ validate validateFunction (Option option) =
 
 
 {-| Run a validation if the value is `Just someValue`. Or do nothing if the value is `Nothing`.
+(See an example in the Validation section above, or in the `examples` folder).
 -}
 validateIfPresent : (to -> Validate.ValidationResult) -> Option from (Maybe to) anything -> Option from (Maybe to) anything
 validateIfPresent validateFunction cliSpec =
@@ -361,6 +363,10 @@ oneOf default list (Option option) =
 the `Option` will be transformed into `someValue`. If it returns `Err someError`
 then the User of the Command-Line Interface will see `someError` with details
 about the `Option` that had the validation error.
+
+(See an example in the Validation section above, or
+in the `examples` folder).
+
 -}
 validateMap : (to -> Result String toMapped) -> Option from to anything -> Option from toMapped anything
 validateMap mapFn (Option option) =
@@ -390,6 +396,10 @@ validateMap mapFn (Option option) =
 
 {-| Same as `validateMap` if the value is `Just someValue`. Does nothing if
 the value is `Nothing`.
+
+(See an example in the Validation section above, or
+in the `examples` folder).
+
 -}
 validateMapIfPresent : (to -> Result String toMapped) -> Option (Maybe from) (Maybe to) anything -> Option (Maybe from) (Maybe toMapped) anything
 validateMapIfPresent mapFn ((Option { dataGrabber, usageSpec, decoder }) as cliSpec) =
