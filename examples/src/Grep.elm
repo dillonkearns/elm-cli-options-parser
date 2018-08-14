@@ -24,16 +24,45 @@ type alias CliOptions =
     }
 
 
+buildCliOptions : Bool -> Regex -> CaseSensitivity -> CliOptions
+buildCliOptions countMode regex caseSensitivity =
+    { countMode = countMode
+    , pattern = regex |> applyCaseSensitivity caseSensitivity
+    }
+
+
+applyCaseSensitivity : CaseSensitivity -> Regex -> Regex
+applyCaseSensitivity caseSensitivity regex =
+    case caseSensitivity of
+        IgnoreCase ->
+            Regex.caseInsensitive regex
+
+        MatchCase ->
+            regex
+
+
+type CaseSensitivity
+    = IgnoreCase
+    | MatchCase
+
+
 programConfig : Program.Config CliOptions
 programConfig =
     Program.config { version = "1.2.3" }
         |> Program.add
-            (OptionsParser.build CliOptions
+            (OptionsParser.build buildCliOptions
                 |> OptionsParser.with
                     (Option.flag "count")
                 |> OptionsParser.with
                     (Option.requiredPositionalArg "pattern"
                         |> Option.map Regex.regex
+                    )
+                |> OptionsParser.with
+                    (Option.flag "ignore-case"
+                        |> Option.mapFlag
+                            { present = IgnoreCase
+                            , absent = MatchCase
+                            }
                     )
             )
 
@@ -74,7 +103,7 @@ update cliOptions msg model =
                         )
 
                     Stdin.Closed ->
-                        ( model, Ports.print "Closed stdin..." )
+                        ( model, Cmd.none )
 
 
 subscriptions : a -> Sub Msg
