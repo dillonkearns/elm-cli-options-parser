@@ -21,7 +21,12 @@ module Cli.Option
         , withDefault
         )
 
-{-|
+{-| Here is the terminology used for building up Command-Line parsers with this library.
+
+<img src="https://raw.githubusercontent.com/dillonkearns/elm-cli-options-parser/master/terminology.png" alt="Terminology Legend" width="600px"/>
+
+See the README and the `examples` folder for more in-depth examples of building
+and using `Cli.Option`s.
 
 
 ## Positional Arguments
