@@ -131,7 +131,9 @@ a valid number of positional arguments is passed in, as defined by these rules:
 @docs withDoc
 
 
-## Low-Level, can I get rid of these?
+## Low-Level Functions
+
+You shouldn't need to use these functions to build a command line utility.
 
 @docs getSubCommand, getUsageSpecs, synopsis, tryMatch, end
 
@@ -146,7 +148,7 @@ import Occurences exposing (Occurences(..))
 import Tokenizer exposing (ParsedOption)
 
 
-{-| TODO
+{-| Low-level function, for internal use.
 -}
 getUsageSpecs : OptionsParser decodesTo builderState -> List UsageSpec
 getUsageSpecs (OptionsParser { usageSpecs }) =
@@ -302,25 +304,7 @@ type OptionsParser msg builderState
     = OptionsParser (OptionsParserRecord msg)
 
 
-{-| Turn a `OptionsParserBuilder` into a `OptionsParser` which can be used with `Cli.Program.run`.
-The optionsParser will fail if any unspecific positional arguments are passed in.
-
-    type GitOptionsParser
-        = Init
-        | Clone
-
-    initOptionsParser =
-        OptionsParser.buildSubCommand "init" Init
-            |> OptionsParser.end
-
-
-    {-
-       $ git init
-       # matches Init
-       $ git init positionalArg
-       # doesn't match init optionsParser
-    -}
-
+{-| Low-level function, for internal use.
 -}
 end : OptionsParser msg anything -> OptionsParser msg BuilderState.NoMoreOptions
 end (OptionsParser record) =
