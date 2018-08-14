@@ -36,7 +36,6 @@ try optionsParsers argv =
         maybeShowHelpMatch =
             OptionsParser.build ShowHelp
                 |> OptionsParser.expectFlag "help"
-                |> OptionsParser.end
                 |> OptionsParser.tryMatch (argv |> List.drop 2)
                 |> (\matchResult ->
                         case matchResult of
@@ -51,7 +50,6 @@ try optionsParsers argv =
         maybeShowVersionMatch =
             OptionsParser.build ShowVersion
                 |> OptionsParser.expectFlag "version"
-                |> OptionsParser.end
                 |> OptionsParser.tryMatch (argv |> List.drop 2)
                 |> (\matchResult ->
                         case matchResult of
