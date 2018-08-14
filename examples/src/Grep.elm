@@ -79,7 +79,7 @@ update msg model =
             )
 
 
-main : Program.StatefulProgram Model Msg {}
+main : Program.StatefulProgram Model Msg CliOptions {}
 main =
     Program.stateful
         { printAndExitFailure = Ports.printAndExitFailure

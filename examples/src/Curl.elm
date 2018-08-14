@@ -59,7 +59,7 @@ update (GotResponse httpResult) model =
             ( model, error |> toString |> Ports.print )
 
 
-main : Program.StatefulProgram Model Msg {}
+main : Program.StatefulProgram Model Msg CliOptions {}
 main =
     Program.stateful
         { printAndExitFailure = Ports.printAndExitFailure

@@ -125,8 +125,8 @@ stateless options =
 
 
 {-| -}
-type alias StatefulProgram model msg flags =
-    Platform.Program (FlagsIncludingArgv flags) (StatefulProgramModel model) msg
+type alias StatefulProgram model msg cliOptions flags =
+    Platform.Program (FlagsIncludingArgv flags) (StatefulProgramModel model cliOptions) msg
 
 
 type alias StatefulOptions msg model cliOptions flags =
@@ -145,26 +145,26 @@ and `update`. It also has `subscriptions`. See
 -}
 stateful :
     StatefulOptions msg model cliOptions flags
-    -> Platform.Program (FlagsIncludingArgv flags) (StatefulProgramModel model) msg
+    -> Platform.Program (FlagsIncludingArgv flags) (StatefulProgramModel model cliOptions) msg
 stateful options =
     Platform.programWithFlags
         { init = statefulInit options
         , update =
             \msg model ->
                 case model of
-                    UserModel actualModel ->
+                    UserModel actualModel cliOptions ->
                         let
                             ( model, cmd ) =
                                 options.update msg actualModel
                         in
-                        ( UserModel model, cmd )
+                        ( UserModel model cliOptions, cmd )
 
                     ShowSystemMessage ->
                         ( ShowSystemMessage, Cmd.none )
         , subscriptions =
             \model ->
                 case model of
-                    UserModel actualModel ->
+                    UserModel actualModel cliOptions ->
                         options.subscriptions actualModel
 
                     ShowSystemMessage ->
@@ -208,15 +208,15 @@ init options { argv } =
     ( (), cmd )
 
 
-type StatefulProgramModel model
+type StatefulProgramModel model cliOptions
     = ShowSystemMessage
-    | UserModel model
+    | UserModel model cliOptions
 
 
 statefulInit :
     StatefulOptions msg model cliOptions flags
     -> FlagsIncludingArgv flags
-    -> ( StatefulProgramModel model, Cmd msg )
+    -> ( StatefulProgramModel model cliOptions, Cmd msg )
 statefulInit options flags =
     let
         matchResult : RunResult cliOptions
@@ -233,12 +233,12 @@ statefulInit options flags =
                         Cli.ExitStatus.Success ->
                             ( ShowSystemMessage, options.printAndExitSuccess message )
 
-                CustomMatch msg ->
+                CustomMatch cliOptions ->
                     let
                         ( model, cmd ) =
-                            options.init flags msg
+                            options.init flags cliOptions
                     in
-                    ( UserModel model, cmd )
+                    ( UserModel model cliOptions, cmd )
     in
     cmd
 
