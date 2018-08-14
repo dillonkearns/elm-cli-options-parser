@@ -356,7 +356,47 @@ hardcoded hardcodedValue (OptionsParser ({ decoder } as optionsParser)) =
         }
 
 
-{-| TODO
+{-| Map the CLI options returned in the `OptionsParser` using the supplied map function.
+
+This is very handy when you want a type alias for a record with options for a
+a given `OptionsParser`, but you need all of your `OptionsParser` to map into
+a single union type.
+
+    import Cli.Option as Option
+    import Cli.OptionsParser as OptionsParser
+    import Cli.Program as Program
+    import Ports
+
+    type CliOptions
+        = Hello HelloOptions
+        | Goodbye GoodbyeOptions
+
+    type alias HelloOptions =
+        { name : String
+        , maybeHello : Maybe String
+        }
+
+    type alias GoodbyeOptions =
+        { name : String
+        , maybeGoodbye : Maybe String
+        }
+
+    programConfig : Program.Config CliOptions
+    programConfig =
+        Program.config { version = "1.2.3" }
+            |> Program.add
+                (OptionsParser.buildSubCommand "hello" HelloOptions
+                    |> OptionsParser.with (Option.requiredKeywordArg "name")
+                    |> OptionsParser.with (Option.optionalKeywordArg "greeting")
+                    |> OptionsParser.map Hello
+                )
+            |> Program.add
+                (OptionsParser.buildSubCommand "goodbye" GoodbyeOptions
+                    |> OptionsParser.with (Option.requiredKeywordArg "name")
+                    |> OptionsParser.with (Option.optionalKeywordArg "goodbye")
+                    |> OptionsParser.map Goodbye
+                )
+
 -}
 map : (msg -> mappedMsg) -> OptionsParser msg builderState -> OptionsParser mappedMsg builderState
 map mapFunction (OptionsParser ({ decoder } as record)) =
