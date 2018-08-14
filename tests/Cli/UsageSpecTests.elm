@@ -41,7 +41,7 @@ all =
         , test "print synopsis with required operand" <|
             \() ->
                 OptionsParser.build identity
-                    |> OptionsParser.with (Option.positionalArg "MyApp.elm")
+                    |> OptionsParser.with (Option.requiredPositionalArg "MyApp.elm")
                     |> OptionsParser.end
                     |> OptionsParser.synopsis "elm-interop"
                     |> Expect.equal "elm-interop <MyApp.elm>"
@@ -105,7 +105,7 @@ all =
             \() ->
                 OptionsParser.build identity
                     |> OptionsParser.with
-                        (Option.positionalArg "report"
+                        (Option.requiredPositionalArg "report"
                             |> Option.oneOf 123
                                 [ "json" => 123
                                 , "junit" => 123

@@ -57,7 +57,7 @@ all =
                 \() ->
                     expectMatch [ "http://my-domain.com" ]
                         (OptionsParser.build OpenUrl
-                            |> OptionsParser.with (Option.positionalArg "url")
+                            |> OptionsParser.with (Option.requiredPositionalArg "url")
                             |> OptionsParser.end
                         )
                         (OpenUrl "http://my-domain.com")
@@ -72,7 +72,7 @@ all =
                 \() ->
                     expectMatch [ "required", "optional" ]
                         (OptionsParser.build (,)
-                            |> OptionsParser.with (Option.positionalArg "required")
+                            |> OptionsParser.with (Option.requiredPositionalArg "required")
                             |> OptionsParser.withOptionalPositionalArg (Option.optionalPositionalArg "revision-range")
                         )
                         ( "required", Just "optional" )
@@ -87,8 +87,8 @@ all =
                 \() ->
                     expectMatch [ "http://my-domain.com", "./file.txt" ]
                         (OptionsParser.build (,)
-                            |> OptionsParser.with (Option.positionalArg "url")
-                            |> OptionsParser.with (Option.positionalArg "path/to/file")
+                            |> OptionsParser.with (Option.requiredPositionalArg "url")
+                            |> OptionsParser.with (Option.requiredPositionalArg "path/to/file")
                             |> OptionsParser.end
                         )
                         ( "http://my-domain.com", "./file.txt" )
@@ -96,7 +96,7 @@ all =
                 \() ->
                     expectMatch [ "http://my-domain.com" ]
                         (OptionsParser.build OpenUrlWithFlag
-                            |> OptionsParser.with (Option.positionalArg "url")
+                            |> OptionsParser.with (Option.requiredPositionalArg "url")
                             |> OptionsParser.with (Option.flag "flag")
                             |> OptionsParser.end
                         )
@@ -105,7 +105,7 @@ all =
                 \() ->
                     expectMatch [ "http://my-domain.com", "--flag" ]
                         (OptionsParser.build OpenUrlWithFlag
-                            |> OptionsParser.with (Option.positionalArg "url")
+                            |> OptionsParser.with (Option.requiredPositionalArg "url")
                             |> OptionsParser.with (Option.flag "flag")
                             |> OptionsParser.end
                         )
@@ -213,7 +213,7 @@ all =
                     expectMatch [ "--something", "operand1", "rest1", "rest2" ]
                         (OptionsParser.build (,)
                             |> OptionsParser.expectFlag "something"
-                            |> OptionsParser.with (Option.positionalArg "operand")
+                            |> OptionsParser.with (Option.requiredPositionalArg "operand")
                             |> OptionsParser.withRestArgs (Option.restArgs "files")
                         )
                         ( "operand1", [ "rest1", "rest2" ] )
@@ -361,7 +361,7 @@ all =
                         [ "hello" ]
                         (OptionsParser.build identity
                             |> OptionsParser.with
-                                (Option.positionalArg "operand"
+                                (Option.requiredPositionalArg "operand"
                                     |> Option.map String.length
                                 )
                             |> OptionsParser.end

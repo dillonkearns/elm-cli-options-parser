@@ -88,7 +88,7 @@ all =
                 expectFlagsAndOperands
                     [ "operand" ]
                     (OptionsParser.build identity
-                        |> OptionsParser.with (Option.positionalArg "foo")
+                        |> OptionsParser.with (Option.requiredPositionalArg "foo")
                         |> OptionsParser.end
                     )
                     { options = []

@@ -11,8 +11,8 @@ module Cli.Option
         , oneOf
         , optionalKeywordArg
         , optionalPositionalArg
-        , positionalArg
         , requiredKeywordArg
+        , requiredPositionalArg
         , restArgs
         , validate
         , validateIfPresent
@@ -26,7 +26,7 @@ module Cli.Option
 
 ## Positional Arguments
 
-@docs positionalArg
+@docs requiredPositionalArg
 
 
 ## Keyword Arguments
@@ -212,8 +212,8 @@ validateIfPresent validateFunction cliSpec =
 
 
 {-| -}
-positionalArg : String -> Option String String BeginningOption
-positionalArg operandDescription =
+requiredPositionalArg : String -> Option String String BeginningOption
+requiredPositionalArg operandDescription =
     buildOption
         (\{ usageSpecs, operands, operandsSoFar } ->
             case

@@ -18,7 +18,7 @@ program =
     Program.config { version = "1.2.3" }
         |> Program.add
             (OptionsParser.build FromUrl
-                |> with (Option.positionalArg "url")
+                |> with (Option.requiredPositionalArg "url")
                 |> with baseOption
                 |> with (Option.optionalKeywordArg "output")
                 |> with (Option.flag "excludeDeprecated")

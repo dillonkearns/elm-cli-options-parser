@@ -32,7 +32,7 @@ programConfig =
             )
         |> Program.add
             (OptionsParser.buildSubCommand "clone" Clone
-                |> with (Option.positionalArg "repository")
+                |> with (Option.requiredPositionalArg "repository")
             )
         |> Program.add (OptionsParser.map Log logOptionsParser)
 

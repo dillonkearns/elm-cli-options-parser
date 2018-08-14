@@ -21,7 +21,7 @@ program =
     Program.config { version = "1.2.3" }
         |> Program.add
             (OptionsParser.build CliOptions
-                |> with (Option.positionalArg "url")
+                |> with (Option.requiredPositionalArg "url")
             )
 
 
