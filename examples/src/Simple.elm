@@ -7,27 +7,33 @@ import Json.Decode exposing (..)
 import Ports
 
 
-programConfig : Program.Config GreetOptions
-programConfig =
-    Program.config { version = "1.2.3" }
-        |> Program.add
-            (OptionsParser.build GreetOptions
-                |> OptionsParser.with (Option.requiredKeywordArg "name")
-                |> OptionsParser.with (Option.optionalKeywordArg "greeting")
-            )
+type Verbosity
+    = Quiet
+    | Verbose
 
 
-type alias GreetOptions =
-    { name : String
-    , maybeGreeting : Maybe String
+type alias CliOptions =
+    { verbosity : Verbosity
     }
 
 
-init : GreetOptions -> Cmd Never
-init { name, maybeGreeting } =
-    maybeGreeting
+programConfig : Program.Config CliOptions
+programConfig =
+    Program.config { version = "1.2.3" }
+        |> Program.add
+            (OptionsParser.build CliOptions
+                |> OptionsParser.with
+                    (Option.flag "verbose"
+                        |> Option.mapFlag { present = Verbose, absent = Quiet }
+                    )
+            )
+
+
+init : CliOptions -> Cmd Never
+init _ =
+    Nothing
         |> Maybe.withDefault "Hello"
-        |> (\greeting -> greeting ++ " " ++ name ++ "!")
+        |> (\greeting -> greeting ++ " " ++ "" ++ "!")
         |> Ports.print
 
 

@@ -1,4 +1,4 @@
-module Cli.Program exposing (Config, StatefulProgram, StatelessProgram, add, config, stateful, stateless)
+module Cli.Program exposing (Config, FlagsIncludingArgv, StatefulProgram, StatelessProgram, add, config, stateful, stateless)
 
 {-|
 
@@ -53,6 +53,7 @@ See the `examples` for some end-to-end examples.
 
 @docs stateless, stateful
 @docs StatelessProgram, StatefulProgram
+@docs FlagsIncludingArgv
 
 -}
 
@@ -100,13 +101,21 @@ add optionsParser (Config ({ optionsParsers } as programRecord)) =
         }
 
 
-{-| -}
-type alias StatelessProgram msg =
-    Platform.Program (List String) () msg
+{-| TODO
+-}
+type alias FlagsIncludingArgv flagsRecord =
+    { flagsRecord
+        | argv : List String
+    }
 
 
 {-| -}
-stateless : ProgramOptions msg options -> StatelessProgram msg
+type alias StatelessProgram msg flags =
+    Platform.Program (FlagsIncludingArgv flags) () msg
+
+
+{-| -}
+stateless : ProgramOptions msg options flags -> StatelessProgram msg flags
 stateless options =
     Platform.programWithFlags
         { init = init options
@@ -116,14 +125,14 @@ stateless options =
 
 
 {-| -}
-type alias StatefulProgram model msg =
-    Platform.Program (List String) (StatefulProgramModel model) msg
+type alias StatefulProgram model msg flags =
+    Platform.Program (FlagsIncludingArgv flags) (StatefulProgramModel model) msg
 
 
-type alias StatefulOptions msg model cliOptions =
+type alias StatefulOptions msg model cliOptions flags =
     { printAndExitFailure : String -> Cmd msg
     , printAndExitSuccess : String -> Cmd msg
-    , init : cliOptions -> ( model, Cmd msg )
+    , init : FlagsIncludingArgv flags -> cliOptions -> ( model, Cmd msg )
     , update : msg -> model -> ( model, Cmd msg )
     , subscriptions : model -> Sub msg
     , config : Config cliOptions
@@ -135,8 +144,8 @@ and `update`. It also has `subscriptions`. See
 [the `Curl.elm` example](https://github.com/dillonkearns/elm-cli-options-parser/blob/master/examples/src/Curl.elm).
 -}
 stateful :
-    StatefulOptions msg model cliOptions
-    -> Platform.Program (List String) (StatefulProgramModel model) msg
+    StatefulOptions msg model cliOptions flags
+    -> Platform.Program (FlagsIncludingArgv flags) (StatefulProgramModel model) msg
 stateful options =
     Platform.programWithFlags
         { init = statefulInit options
@@ -163,19 +172,19 @@ stateful options =
         }
 
 
-type alias ProgramOptions decodesTo options =
+type alias ProgramOptions decodesTo options flags =
     { printAndExitFailure : String -> Cmd decodesTo
     , printAndExitSuccess : String -> Cmd decodesTo
-    , init : options -> Cmd decodesTo
+    , init : FlagsIncludingArgv flags -> options -> Cmd decodesTo
     , config : Config options
     }
 
 
 init :
-    ProgramOptions msg options
-    -> List String
+    ProgramOptions msg options flags
+    -> FlagsIncludingArgv flags
     -> ( (), Cmd msg )
-init options argv =
+init options { argv } =
     let
         matchResult : RunResult options
         matchResult =
@@ -192,7 +201,9 @@ init options argv =
                             options.printAndExitSuccess message
 
                 CustomMatch msg ->
-                    options.init msg
+                    Cmd.none
+
+        -- options.init msg
     in
     ( (), cmd )
 
@@ -203,14 +214,14 @@ type StatefulProgramModel model
 
 
 statefulInit :
-    StatefulOptions msg model cliOptions
-    -> List String
+    StatefulOptions msg model cliOptions flags
+    -> FlagsIncludingArgv flags
     -> ( StatefulProgramModel model, Cmd msg )
-statefulInit options argv =
+statefulInit options flags =
     let
         matchResult : RunResult cliOptions
         matchResult =
-            run options.config argv
+            run options.config flags.argv
 
         cmd =
             case matchResult of
@@ -225,7 +236,7 @@ statefulInit options argv =
                 CustomMatch msg ->
                     let
                         ( model, cmd ) =
-                            options.init msg
+                            options.init flags msg
                     in
                     ( UserModel model, cmd )
     in

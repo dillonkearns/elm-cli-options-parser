@@ -1,0 +1,25 @@
+#!/usr/bin/env node
+const readline = require('readline')
+
+const program = require('./grep.elm.js').Main.worker({
+  argv: process.argv
+})
+
+program.ports.print.subscribe(message => console.log(message))
+program.ports.printAndExitFailure.subscribe(message => {
+  console.log(message)
+  process.exit(1)
+})
+program.ports.printAndExitSuccess.subscribe(message => {
+  console.log(message)
+  process.exit(0)
+})
+var rl = readline.createInterface({
+  input: process.stdin,
+  output: process.stdout,
+  terminal: false
+})
+
+rl.on('line', function(line) {
+  program.ports.stdin.send(line)
+})

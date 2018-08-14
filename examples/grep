@@ -1,0 +1,2 @@
+# /bin/bash
+elm-make src/Grep.elm --output src/grep.elm.js > /dev/null && ./src/grep $@
