@@ -7,7 +7,7 @@ import Json.Decode exposing (..)
 import Ports
 
 
-type ElmTestOptionsParser
+type CliOptions
     = Init
     | RunTests RunTestsRecord
 
@@ -23,7 +23,7 @@ type alias RunTestsRecord =
     }
 
 
-program : Program.Config ElmTestOptionsParser
+program : Program.Config CliOptions
 program =
     Program.config { version = "1.2.3" }
         |> Program.add
@@ -69,7 +69,7 @@ dummy =
     Json.Decode.string
 
 
-init : Flags -> ElmTestOptionsParser -> Cmd Never
+init : Flags -> CliOptions -> Cmd Never
 init flags msg =
     (case msg of
         Init ->
