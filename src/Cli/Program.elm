@@ -5,9 +5,9 @@ module Cli.Program exposing (Config, StatefulProgram, StatelessProgram, add, con
 
 ## Config
 
-A `Cli.Program.Config` is created with `empty`. Then `OptionsParser`s are added
-to it. Finally, you create a `Cli.Program.StatelessProgram` using `stateless` or
-`stateful`.
+A `Cli.Program.Config` is created with `Cli.Program.config`. Then `OptionsParser`s are added
+to it with `Cli.Program.add`. Finally, you create a `Cli.Program.StatelessProgram`
+using `stateless` or a `Cli.Program.StatefulProgram` using `stateful`.
 
 @docs config, Config, add
 
@@ -221,7 +221,6 @@ run (Config { optionsParsers, version }) argv =
                 "\nNo matching optionsParser...\n\nUsage:\n\n"
                     ++ Cli.LowLevel.helpText programName optionsParsers
                     |> SystemMessage Cli.ExitStatus.Failure
-
             else
                 unexpectedOptions
                     |> List.map
