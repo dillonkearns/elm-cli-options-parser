@@ -9,6 +9,10 @@
     line-height: 1.5;
     font-size: 20px;
   }
+  .output {
+    padding-bottom: 40px;
+  }
+
   #output {
     max-width: 800px;
     white-space: pre-wrap;
@@ -38,18 +42,27 @@
 <body>
   <script src="./elm.js"></script>
 <script>
+const commandName = 'git'
 window.printMessage = function(message, className) {
   let newOutput = document.createElement('div')
-  newOutput.innerHTML = `<span class="${className}">${message}</span>`
+  newOutput.textContent = message
+  newOutput.setAttribute('class', 'output ' + className)
+  document.getElementById('output').appendChild(newOutput)
+}
+
+window.appendCommand = function(message) {
+  let newOutput = document.createElement('div')
+  newOutput.innerHTML = `<span>$ ${commandName} ${message}</span>`
   document.getElementById('output').appendChild(newOutput)
 }
 
 window.runCli = function() {
   const rawArgsString = document.getElementById('cli-input').value
+  appendCommand(rawArgsString)
   document.getElementById('cli-input').value = ''
   console.log('...')
   const argsToAppend = rawArgsString.split(' ')
-  const args = ['', 'git', ...argsToAppend]
+  const args = ['', commandName, ...argsToAppend]
   let program = Elm.Main.worker({ argv: args })
 
   program.ports.print.subscribe(message => printMessage(message, 'plain'))
