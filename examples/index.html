@@ -1,13 +1,44 @@
 <html>
 <head>
   <title>elm-cli-options-parser demo</title>
+  <style>
+  body {
+    background-color: black;
+    color: white;
+    font-family: 'Courier New';
+    line-height: 1.5;
+  }
+
+  .exit-failure {
+    color: red;
+  }
+
+  input {
+    border: none;
+    /* -webkit-box-shadow:
+      inset 0 0 8px  rgba(0,0,0,0.1),
+            0 0 16px rgba(0,0,0,0.1);
+    -moz-box-shadow:
+      inset 0 0 8px  rgba(0,0,0,0.1),
+            0 0 16px rgba(0,0,0,0.1);
+    box-shadow:
+      inset 0 0 8px  rgba(0,0,0,0.1),
+            0 0 16px rgba(0,0,0,0.1); */
+    padding: 15px;
+    background-color: black;
+    font-size: 20px;
+    color: white;
+    font-family: 'Courier New';
+    line-height: 1.5;
+  }
+  </style>
 </head>
 <body>
   <script src="./elm.js"></script>
 <script>
-window.printMessage = function(message) {
+window.printMessage = function(message, className) {
   let newOutput = document.createElement('div')
-  newOutput.innerHTML = `<span>${message}</span>`
+  newOutput.innerHTML = `<span class="${className}">${message}</span>`
   document.getElementById('output').appendChild(newOutput)
 }
 
@@ -18,20 +49,20 @@ window.runCli = function() {
   const args = ['', 'git', ...argsToAppend]
   let program = Elm.Main.worker({ argv: args })
 
-  program.ports.print.subscribe(message => printMessage(message))
+  program.ports.print.subscribe(message => printMessage(message, 'plain'))
   program.ports.printAndExitSuccess.subscribe(message => {
-    printMessage(message)
+    printMessage(message, 'exit-success')
   })
   program.ports.printAndExitFailure.subscribe(message => {
     console.log(message)
-    printMessage(message)
+    printMessage(message, 'exit-failure')
   })
 }
 </script>
   <div id="output">Replace me!</div>
-  <form onsubmit="event.preventDefault(); return runCli()">
-    <input id="cli-input" />
-    <input type="submit" value="execute"/>
+  <form autocomplete="false" onsubmit="event.preventDefault(); return runCli()">
+    <input autocomplete="new-password" id="cli-input" value="" />
+    <input type="submit" value="execute" />
 
   </form>
 </body>
