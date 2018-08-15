@@ -3,6 +3,9 @@
 `elm-cli-options-parser` allows you to build command-line options parsers in Elm.
 It uses a syntax similar to `Json.Decode.Pipeline`.
 
+You can
+[play around with `elm-cli-options-parser` in a live terminal simulation in Ellie here](https://rebrand.ly/elm-cli)!
+
 ## Design Goals
 
 1. **Build in great UX by design**
