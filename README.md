@@ -39,7 +39,7 @@ It uses a syntax similar to `Json.Decode.Pipeline`.
 
 ## Example
 
-See the `examples` folder for full end-to-end examples, including how to wire
+See the [`examples`](https://github.com/dillonkearns/elm-cli-options-parser/tree/master/examples/src) folder for full end-to-end examples, including how to wire
 your Elm options parser up through NodeJS so it can receive the command line input.
 
 Take this `git` command:
@@ -48,7 +48,7 @@ Take this `git` command:
 git log --author=dillon --max-count=5 --stat a410067
 ```
 
-To parse the above command, we could build a `Program` as follows (this snippet doesn't include the wiring of the OptionsParser-Line options from NodeJS, see the `examples` folder):
+To parse the above command, we could build a `Program` as follows (this snippet doesn't include the wiring of the OptionsParser-Line options from NodeJS, see the [`examples`](https://github.com/dillonkearns/elm-cli-options-parser/tree/master/examples/src) folder):
 
 ```elm
 import Cli.Option as Option
@@ -104,7 +104,7 @@ logOptionsParser =
 {-
 Now running:
 `git log --author=dillon --max-count=5 --stat a410067`
-will yield the following output (with wiring as in the `examples` folder):
+will yield the following output (with wiring as in the [`examples`](https://github.com/dillonkearns/elm-cli-options-parser/tree/master/examples/src) folder):
 -}
 matchResult : CliOptions
 matchResult =

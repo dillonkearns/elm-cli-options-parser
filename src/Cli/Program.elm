@@ -44,7 +44,7 @@ using `stateless` or a `Cli.Program.StatefulProgram` using `stateful`.
             , config = programConfig
             }
 
-See the `examples` for some end-to-end examples.
+See the [`examples`](https://github.com/dillonkearns/elm-cli-options-parser/tree/master/examples/src) for some end-to-end examples.
 
 @docs config, Config, add
 
@@ -106,7 +106,7 @@ at the top-level which contains an `argv` field of type `List String`.
 In other words, it must be a record of type `FlagsIncludingArgv`
 (if you aren't familiar with them, you can [read more about extensible records here](https://medium.com/@ckoster22/advanced-types-in-elm-extensible-records-67e9d804030d)).
 
-You pass in the flags like this (see the `examples` folder for more):
+You pass in the flags like this (see the [`examples`](https://github.com/dillonkearns/elm-cli-options-parser/tree/master/examples/src) folder for more):
 
 ```javascript
 #!/usr/bin/env node

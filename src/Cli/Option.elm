@@ -25,7 +25,7 @@ module Cli.Option
 
 <img src="https://raw.githubusercontent.com/dillonkearns/elm-cli-options-parser/master/terminology.png" alt="Terminology Legend" width="600px"/>
 
-See the README and the `examples` folder for more in-depth examples of building
+See the README and the [`examples`](https://github.com/dillonkearns/elm-cli-options-parser/tree/master/examples/src) folder for more in-depth examples of building
 and using `Cli.Option`s.
 
 
@@ -171,7 +171,7 @@ type alias DataGrabber decodesTo =
 
 
 {-| Run a validation. (See an example in the Validation section above, or
-in the `examples` folder).
+in the [`examples`](https://github.com/dillonkearns/elm-cli-options-parser/tree/master/examples/src) folder).
 -}
 validate : (to -> Validate.ValidationResult) -> Option from to builderState -> Option from to builderState
 validate validateFunction (Option option) =
@@ -200,7 +200,7 @@ validate validateFunction (Option option) =
 
 
 {-| Run a validation if the value is `Just someValue`. Or do nothing if the value is `Nothing`.
-(See an example in the Validation section above, or in the `examples` folder).
+(See an example in the Validation section above, or in the [`examples`](https://github.com/dillonkearns/elm-cli-options-parser/tree/master/examples/src) folder).
 -}
 validateIfPresent : (to -> Validate.ValidationResult) -> Option from (Maybe to) builderState -> Option from (Maybe to) builderState
 validateIfPresent validateFunction cliSpec =
@@ -464,7 +464,7 @@ then the User of the Command-Line Interface will see `someError` with details
 about the `Option` that had the validation error.
 
 (See an example in the Validation section above, or
-in the `examples` folder).
+in the [`examples`](https://github.com/dillonkearns/elm-cli-options-parser/tree/master/examples/src) folder).
 
 -}
 validateMap : (to -> Result String toMapped) -> Option from to builderState -> Option from toMapped builderState
@@ -497,7 +497,7 @@ validateMap mapFn (Option option) =
 the value is `Nothing`.
 
 (See an example in the Validation section above, or
-in the `examples` folder).
+in the [`examples`](https://github.com/dillonkearns/elm-cli-options-parser/tree/master/examples/src) folder).
 
 -}
 validateMapIfPresent : (to -> Result String toMapped) -> Option (Maybe from) (Maybe to) builderState -> Option (Maybe from) (Maybe toMapped) builderState
