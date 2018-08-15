@@ -56,14 +56,19 @@ window.onload = () => {
   document.getElementById('cli-input').focus()
 }
 </script>
-  <div id="output">Replace me!</div>
+<label for="cli-input">
+  <div id="main" style="height: 100%">
+    <div id="output"></div>
   <form onsubmit="event.preventDefault(); return runCli()">
     <input autocomplete="new-password" id="cli-input" value=""
+    type="text"
     width="16px"
     />
     <input type="submit" value="execute" style="display: none"
      />
 
   </form>
+</div>
+</label>
 </body>
 </html>
