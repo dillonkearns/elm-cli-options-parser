@@ -58,11 +58,26 @@ window.runCli = function() {
     printMessage(message, 'exit-failure')
   })
 }
+window.resizeInput = function() {
+  this.style.width = this.value.length + 'ch'
+}
+// let input = document.getElementById('cli-input')
+// input.addEventListener('input', resizeInput)
+// resizeInput.call(input)
 </script>
   <div id="output">Replace me!</div>
   <form onsubmit="event.preventDefault(); return runCli()">
-    <input autocomplete="new-password" id="cli-input" value="" />
-    <input type="submit" value="execute" />
+    <input autocomplete="new-password" id="cli-input" value=""
+    width="16px"
+    onkeypress="console.log(this.value.length); this.style.width = ((this.value.length + 1) * 12) + 'px';"
+
+
+    />
+    <input type="submit" value="execute" style="display: none"
+     />
+    <svg width="15" height="32">
+      <rect width="300" height="100" style="fill:rgb(255,255,255);stroke-width:3;stroke:rgb(0,0,0)" />
+    </svg>
 
   </form>
 </body>
