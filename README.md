@@ -1,5 +1,34 @@
 # Elm CLI Options Parser
 
+`elm-cli-options-parser` allows you to build command-line options parsers in Elm.
+It uses a syntax similar to `Json.Decode.Pipeline`.
+
+Main goals:
+
+1. Separate the definition of the contract and the business logic... contract enforcement
+   is declarative rather than low-level steps which can be error prone and hard to read.
+1. You either have the data you think you have, or else the user sees a nice, clear error
+   message (no in between where you check if the data is there but in one variation it's not
+   , for example the `init` sub command has a `--verbose` flag but the `` sub command doesn't.
+   You can't check for the `verbose` value unless it's there).
+1. Guaranteed to be in-sync - the parsers and the help message, the parsers and the data
+   you get back, the error messages and the parsers.
+1. Be explicit - like the Elm ethos, this library aims to give you very clear error
+   messages the minute it knows you did something wrong. For example, if you
+   pass in an unrecognized flag, you will immediately get an error.
+1. Ensure that you create a good UX... for example, single letter switches are confusing
+   (for example, `grep -v` is an alias for `--invert-match`. And there is a confusing
+   and somewhat ambiguous syntax for passing arguments to arguments (for example, you can
+   group multiple flags like `grep -veabc`, which is the same as
+   `grep --invert-match --regexp=abc`. This is "write-only", and this library is
+   opinionated about doing things in a way that is very explicit, unambiguous,
+   and easy to understand).
+
+It's far less confusing
+).
+And the `--help` flag should always be there and do a standard thing... so this is
+baked into the library.
+
 ## Example
 
 See the `examples` folder for full end-to-end examples, including how to wire
