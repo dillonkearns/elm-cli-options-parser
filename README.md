@@ -6,40 +6,6 @@ It uses a syntax similar to `Json.Decode.Pipeline`.
 You can
 play around with `elm-cli-options-parser` in a [live terminal simulation in Ellie here](https://rebrand.ly/elm-cli)!
 
-## Design Goals
-
-1. **Build in great UX by design**
-   For example, single character options like `-v` can be confusing.
-   Are they always confusing? Maybe not, but eliminating the possibility makes
-   things much more explicit and predictable.
-   For example, `grep -v` is an alias for `--invert-match` (`-V` is the alias
-   for `--version`). And there is a confusing and somewhat ambiguous syntax for
-   passing arguments to single character flags
-   (for example, you can group multiple flags like `grep -veabc`, which is the
-   same as `grep --invert-match --regexp=abc`). This is difficult for humans to
-   parse or remember, and this library is opinionated about doing things in a
-   way that is very explicit, unambiguous, and easy to understand.
-
-   Another example, the `--help` flag should always be there and work in a standard way...
-   so this is baked into the library rather than being an optional or a manual
-   configuration.
-
-1. **Guaranteed to be in-sync** - by automatically generating help messages
-   you know that users are getting the right information. The design of the
-   validation API also ensures that users get focused errors that point to
-   exactly the point of failure and the reason for the failure.
-
-1. **Be explicit and unambiguous** - like the Elm ethos, this library aims to give you very clear error
-   messages the instant it knows the options can't be parsed, rather than when it
-   discovers it's missing something it requires. For example, if you
-   pass in an unrecognized flag, you will immediately get an error with typo
-   suggestions.
-   Another example, this library [enforces that you don't specify an ambiguous mix of optional
-   and required positional args](#todo-link). This could easily be fixed with
-   some convention to move all optional arguments to the very end regardless of
-   what order you specify them in, but this would go against this value of
-   explicitness.
-
 ## Example
 
 See the [`examples`](https://github.com/dillonkearns/elm-cli-options-parser/tree/master/examples/src) folder for full end-to-end examples, including how to wire
@@ -128,6 +94,40 @@ git log [--author <author>] [--max-count <max-count>] [--stat] [<revision range>
 ```
 
 Note: the `--help` option is a built-in command, so no need to write a `OptionsParser` for that.
+
+## Design Goals
+
+1. **Build in great UX by design**
+   For example, single character options like `-v` can be confusing.
+   Are they always confusing? Maybe not, but eliminating the possibility makes
+   things much more explicit and predictable.
+   For example, `grep -v` is an alias for `--invert-match` (`-V` is the alias
+   for `--version`). And there is a confusing and somewhat ambiguous syntax for
+   passing arguments to single character flags
+   (for example, you can group multiple flags like `grep -veabc`, which is the
+   same as `grep --invert-match --regexp=abc`). This is difficult for humans to
+   parse or remember, and this library is opinionated about doing things in a
+   way that is very explicit, unambiguous, and easy to understand.
+
+   Another example, the `--help` flag should always be there and work in a standard way...
+   so this is baked into the library rather than being an optional or a manual
+   configuration.
+
+1. **Guaranteed to be in-sync** - by automatically generating help messages
+   you know that users are getting the right information. The design of the
+   validation API also ensures that users get focused errors that point to
+   exactly the point of failure and the reason for the failure.
+
+1. **Be explicit and unambiguous** - like the Elm ethos, this library aims to give you very clear error
+   messages the instant it knows the options can't be parsed, rather than when it
+   discovers it's missing something it requires. For example, if you
+   pass in an unrecognized flag, you will immediately get an error with typo
+   suggestions.
+   Another example, this library [enforces that you don't specify an ambiguous mix of optional
+   and required positional args](#todo-link). This could easily be fixed with
+   some convention to move all optional arguments to the very end regardless of
+   what order you specify them in, but this would go against this value of
+   explicitness.
 
 ## Options Parser Terminology
 
