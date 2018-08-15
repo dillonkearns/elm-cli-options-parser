@@ -7,6 +7,7 @@
     color: white;
     font-family: 'Courier New';
     line-height: 1.5;
+    font-size: 20px;
   }
   #output {
     max-width: 800px;
@@ -22,13 +23,16 @@
 
   input {
     border: none;
-    padding: 15px;
     background-color: black;
     font-size: 20px;
     color: white;
     font-family: 'Courier New';
     line-height: 1.5;
   }
+  .current-command {
+
+  }
+
   </style>
 </head>
 <body>
@@ -67,10 +71,12 @@ window.onload = () => {
   <div id="main" style="height: 100%">
     <div id="output"></div>
   <form onsubmit="event.preventDefault(); return runCli()">
-    <input autocomplete="new-password" id="cli-input" value=""
+    <div class="current-command">
+      <span>$ git </span><input spellcheck="false" autocomplete="new-password" id="cli-input" value=""
     type="text"
     width="16px"
     />
+    </div>
     <input type="submit" value="execute" style="display: none"
      />
 
