@@ -43,8 +43,11 @@
   <script src="./elm.js"></script>
 <script>
 const commandName = 'git'
+window.resetCommandPointer = function() {
+  window.nextCommandInHistory = 0
+}
 window.commandHistory = []
-window.nextCommandInHistory = 0
+resetCommandPointer()
 window.printMessage = function(message, className) {
   let newOutput = document.createElement('div')
   newOutput.textContent = message
@@ -79,6 +82,7 @@ window.runCli = function() {
     console.log(message)
     printMessage(message, 'exit-failure')
   })
+  resetCommandPointer()
 }
 window.resizeInput = function() {
   this.style.width = this.value.length + 'ch'
