@@ -44,7 +44,7 @@
 <script>
 const commandName = 'git'
 window.commandHistory = []
-window.nextCommandInHistory = -1
+window.nextCommandInHistory = 0
 window.printMessage = function(message, className) {
   let newOutput = document.createElement('div')
   newOutput.textContent = message
@@ -87,20 +87,20 @@ const downArrowCode = 40
 window.setupCommandHistoryListener = function() {
   var ignoreKey = false
   var handler = function(e) {
+    console.log('before', nextCommandInHistory)
     if (ignoreKey) {
       e.preventDefault()
       return
     }
     if (e.keyCode == upArrowCode) {
-      this.value = commandHistory[commandHistory.length + nextCommandInHistory]
-
-      nextCommandInHistory--
+      nextCommandInHistory -= 1
       if (
         commandHistory.length + nextCommandInHistory < 0 ||
         nextCommandInHistory > -1
       ) {
         nextCommandInHistory = -1
       }
+      this.value = commandHistory[commandHistory.length + nextCommandInHistory]
 
       ignoreKey = true
       setTimeout(function() {
@@ -108,8 +108,6 @@ window.setupCommandHistoryListener = function() {
       }, 1)
       e.preventDefault()
     } else if (e.keyCode == downArrowCode) {
-      this.value = commandHistory[commandHistory.length + nextCommandInHistory]
-
       nextCommandInHistory += 1
       if (
         commandHistory.length + nextCommandInHistory < 0 ||
@@ -117,6 +115,7 @@ window.setupCommandHistoryListener = function() {
       ) {
         nextCommandInHistory = -1
       }
+      this.value = commandHistory[commandHistory.length + nextCommandInHistory]
 
       ignoreKey = true
       setTimeout(function() {
@@ -124,6 +123,7 @@ window.setupCommandHistoryListener = function() {
       }, 1)
       e.preventDefault()
     }
+    console.log('after', nextCommandInHistory)
   }
 
   const cliInput = document.getElementById('cli-input')
