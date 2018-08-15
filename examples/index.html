@@ -1,0 +1,55 @@
+<html>
+<head>
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <title>Incremental Elm</title>
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" />
+  <style>
+    @import url('https://fonts.googleapis.com/css?family=Lato');
+    @import url('https://fonts.googleapis.com/css?family=Raleway');
+
+  </style>
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5">
+  <meta name="theme-color" content="#ffffff">
+</head>
+<body>
+  <script src="./elm.js"></script>
+<script>
+function printMessage(message) {
+  let newOutput = document.createElement('div')
+  newOutput.innerHTML = `<span>${message}</span>`
+  document.getElementById('output').appendChild(newOutput)
+}
+
+function runCli() {
+  const rawArgsString = document.getElementById('cli-input').value
+  console.log('...')
+  const argsToAppend = rawArgsString.split(' ')
+  const args = ['', 'git', ...argsToAppend]
+  // console.log('called with', args)
+  let program = Elm.Main.worker({ argv: args })
+
+  program.ports.print.subscribe(message => console.log(message))
+  program.ports.printAndExitSuccess.subscribe(message => {
+    printMessage(message)
+    console.log('SUCCESS!', message)
+    // process.exit(0)
+  })
+  program.ports.printAndExitFailure.subscribe(message => {
+    console.log(message)
+    printMessage(message)
+    // process.exit(1)
+  })
+}
+</script>
+  <div id="output">Replace me!</div>
+  <form onsubmit="event.preventDefault(); return runCli()">
+    <input id="cli-input" />
+    <input type="submit" value="google it"/>
+
+  </form>
+</body>
+</html>
