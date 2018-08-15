@@ -196,11 +196,12 @@ init :
     ProgramOptions msg options flags
     -> FlagsIncludingArgv flags
     -> ( (), Cmd msg )
-init options { argv } =
+init options ({ argv } as flags) =
     let
         matchResult : RunResult options
         matchResult =
             run options.config argv
+                |> Debug.log "matchResult"
 
         cmd =
             case matchResult of
@@ -213,9 +214,7 @@ init options { argv } =
                             options.printAndExitSuccess message
 
                 CustomMatch msg ->
-                    Cmd.none
-
-        -- options.init msg
+                    options.init flags msg
     in
     ( (), cmd )
 
