@@ -82,14 +82,16 @@ window.runCli = function() {
 window.resizeInput = function() {
   this.style.width = this.value.length + 'ch'
 }
-window.setThing = function() {
+const upArrowCode = 38
+const downArrowCode = 40
+window.setupCommandHistoryListener = function() {
   var ignoreKey = false
   var handler = function(e) {
     if (ignoreKey) {
       e.preventDefault()
       return
     }
-    if (e.keyCode == 38) {
+    if (e.keyCode == upArrowCode) {
       this.value = commandHistory[commandHistory.length + nextCommandInHistory]
 
       nextCommandInHistory--
@@ -105,7 +107,7 @@ window.setThing = function() {
         ignoreKey = false
       }, 1)
       e.preventDefault()
-    } else if (e.keyCode == 40) {
+    } else if (e.keyCode == downArrowCode) {
       this.value = commandHistory[commandHistory.length + nextCommandInHistory]
 
       nextCommandInHistory += 1
@@ -132,7 +134,7 @@ window.onload = () => {
   runCli()
   const cliInput = document.getElementById('cli-input')
   cliInput.focus()
-  setThing()
+  setupCommandHistoryListener()
 }
 </script>
 <label for="cli-input">
