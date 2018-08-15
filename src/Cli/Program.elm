@@ -201,7 +201,6 @@ init options ({ argv } as flags) =
         matchResult : RunResult options
         matchResult =
             run options.config argv
-                |> Debug.log "matchResult"
 
         cmd =
             case matchResult of
@@ -277,10 +276,7 @@ run (Config { optionsParsers, version }) argv =
     case matchResult of
         Cli.LowLevel.NoMatch unexpectedOptions ->
             if unexpectedOptions == [] then
-                ("argv: "
-                    ++ toString argv
-                    ++ "\n\nNo matching optionsParser...\n\nUsage:\n\n"
-                )
+                "\nNo matching optionsParser...\n\nUsage:\n\n"
                     ++ Cli.LowLevel.helpText programName optionsParsers
                     |> SystemMessage Cli.ExitStatus.Failure
             else
