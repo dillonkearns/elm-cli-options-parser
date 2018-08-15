@@ -23,12 +23,12 @@ It uses a syntax similar to `Json.Decode.Pipeline`.
 
 1. **Guaranteed to be in-sync** - by automatically generating help messages
    you know that users are getting the right information. The design of the
-   validation API also ensures that users get accurate error messages rather
-   than hand-crafted error messages which can be error-prone.
+   validation API also ensures that users get focused errors that point to
+   exactly the point of failure and the reason for the failure.
 
 1. **Be explicit and unambiguous** - like the Elm ethos, this library aims to give you very clear error
-   messages the instant it knows the options can't be parsed, rather than whenever it
-   discovers its missing something it requires. For example, if you
+   messages the instant it knows the options can't be parsed, rather than when it
+   discovers it's missing something it requires. For example, if you
    pass in an unrecognized flag, you will immediately get an error with typo
    suggestions.
    Another example, this library [enforces that you don't specify an ambiguous mix of optional
