@@ -5,13 +5,13 @@
 <body>
   <script src="./elm.js"></script>
 <script>
-function printMessage(message) {
+window.printMessage = function(message) {
   let newOutput = document.createElement('div')
   newOutput.innerHTML = `<span>${message}</span>`
   document.getElementById('output').appendChild(newOutput)
 }
 
-function runCli() {
+window.runCli = function() {
   const rawArgsString = document.getElementById('cli-input').value
   console.log('...')
   const argsToAppend = rawArgsString.split(' ')
@@ -31,7 +31,7 @@ function runCli() {
   <div id="output">Replace me!</div>
   <form onsubmit="event.preventDefault(); return runCli()">
     <input id="cli-input" />
-    <input type="submit" value="google it"/>
+    <input type="submit" value="execute"/>
 
   </form>
 </body>
