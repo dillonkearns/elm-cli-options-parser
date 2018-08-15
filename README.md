@@ -9,19 +9,25 @@ It uses a syntax similar to `Json.Decode.Pipeline`.
    For example, single character options like `-v` can be confusing.
    Are they always confusing? Maybe not, but eliminating the possibility makes
    things much more explicit and predictable.
-   For example, `grep -v` is an alias for `--invert-match`. And there is a confusing
-   and somewhat ambiguous syntax for passing arguments to single character flags
+   For example, `grep -v` is an alias for `--invert-match` (`-V` is the alias
+   for `--version`). And there is a confusing and somewhat ambiguous syntax for
+   passing arguments to single character flags
    (for example, you can group multiple flags like `grep -veabc`, which is the
-   same as `grep --invert-match --regexp=abc`. This is difficult for humans to
+   same as `grep --invert-match --regexp=abc`). This is difficult for humans to
    parse or remember, and this library is opinionated about doing things in a
-   way that is very explicit, unambiguous, and easy to understand).
-   And the `--help` flag should always be there and work in a standard way...
+   way that is very explicit, unambiguous, and easy to understand.
+
+   Another example, the `--help` flag should always be there and work in a standard way...
    so this is baked into the library rather than being an optional or a manual
    configuration.
-1. **Guaranteed to be in-sync** - the parsers and the help message, the parsers and the data
-   you get back, the error messages and the parsers.
+
+1. **Guaranteed to be in-sync** - by automatically generating help messages
+   you know that users are getting the right information. The design of the
+   validation API also ensures that users get accurate error messages rather
+   than hand-crafted error messages which can be error-prone.
+
 1. **Be explicit and unambiguous** - like the Elm ethos, this library aims to give you very clear error
-   messages the minute it knows you did something wrong, rather than whenever it
+   messages the instant it knows the options can't be parsed, rather than whenever it
    discovers its missing something it requires. For example, if you
    pass in an unrecognized flag, you will immediately get an error with typo
    suggestions.
