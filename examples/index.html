@@ -15,15 +15,6 @@
 
   input {
     border: none;
-    /* -webkit-box-shadow:
-      inset 0 0 8px  rgba(0,0,0,0.1),
-            0 0 16px rgba(0,0,0,0.1);
-    -moz-box-shadow:
-      inset 0 0 8px  rgba(0,0,0,0.1),
-            0 0 16px rgba(0,0,0,0.1);
-    box-shadow:
-      inset 0 0 8px  rgba(0,0,0,0.1),
-            0 0 16px rgba(0,0,0,0.1); */
     padding: 15px;
     background-color: black;
     font-size: 20px;
@@ -61,23 +52,17 @@ window.runCli = function() {
 window.resizeInput = function() {
   this.style.width = this.value.length + 'ch'
 }
-// let input = document.getElementById('cli-input')
-// input.addEventListener('input', resizeInput)
-// resizeInput.call(input)
+window.onload = () => {
+  document.getElementById('cli-input').focus()
+}
 </script>
   <div id="output">Replace me!</div>
   <form onsubmit="event.preventDefault(); return runCli()">
     <input autocomplete="new-password" id="cli-input" value=""
     width="16px"
-    onkeypress="console.log(this.value.length); this.style.width = ((this.value.length + 1) * 12) + 'px';"
-
-
     />
     <input type="submit" value="execute" style="display: none"
      />
-    <svg width="15" height="32">
-      <rect width="300" height="100" style="fill:rgb(255,255,255);stroke-width:3;stroke:rgb(0,0,0)" />
-    </svg>
 
   </form>
 </body>
