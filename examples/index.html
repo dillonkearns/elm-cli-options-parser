@@ -88,10 +88,9 @@ window.onload = () => {
   <div id="main" style="height: 100%; min-height: 1000px;">
     <div id="output"></div>
   <form onsubmit="event.preventDefault(); return runCli()">
-    <div class="current-command">
+    <div class="current-command" style="display: flex;">
       <span>$ git </span><input spellcheck="false" autocomplete="new-password" id="cli-input" value="--help"
-    type="text"
-    width="16px"
+    type="text" style="flex-grow: 100; margin-left: 12px;"
     />
     </div>
     <input type="submit" value="execute" style="display: none"
