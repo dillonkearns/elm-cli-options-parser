@@ -43,6 +43,8 @@
   <script src="./elm.js"></script>
 <script>
 const commandName = 'git'
+window.commandHistory = []
+window.nextCommandInHistory = -1
 window.printMessage = function(message, className) {
   let newOutput = document.createElement('div')
   newOutput.textContent = message
@@ -58,6 +60,7 @@ window.appendCommand = function(message) {
 
 window.runCli = function() {
   const rawArgsString = document.getElementById('cli-input').value
+  commandHistory = commandHistory.concat(rawArgsString)
   appendCommand(rawArgsString)
   document.getElementById('cli-input').value = ''
   console.log('...')
@@ -79,9 +82,41 @@ window.runCli = function() {
 window.resizeInput = function() {
   this.style.width = this.value.length + 'ch'
 }
+window.setThing = function() {
+  var ignoreKey = false
+  var handler = function(e) {
+    if (ignoreKey) {
+      e.preventDefault()
+      return
+    }
+    if (e.keyCode == 38 || e.keyCode == 40) {
+      this.value = commandHistory[commandHistory.length + nextCommandInHistory]
+
+      nextCommandInHistory--
+      if (
+        commandHistory.length + nextCommandInHistory < 0 ||
+        nextCommandInHistory > -1
+      ) {
+        nextCommandInHistory = -1
+      }
+
+      ignoreKey = true
+      setTimeout(function() {
+        ignoreKey = false
+      }, 1)
+      e.preventDefault()
+    }
+  }
+
+  const cliInput = document.getElementById('cli-input')
+  cliInput.addEventListener('keydown', handler, false)
+  cliInput.addEventListener('keypress', handler, false)
+}
 window.onload = () => {
   runCli()
-  document.getElementById('cli-input').focus()
+  const cliInput = document.getElementById('cli-input')
+  cliInput.focus()
+  setThing()
 }
 </script>
 <label for="cli-input">
