@@ -50,6 +50,7 @@ window.printMessage = function(message, className) {
   newOutput.textContent = message
   newOutput.setAttribute('class', 'output ' + className)
   document.getElementById('output').appendChild(newOutput)
+  document.getElementById('cli-input').scrollIntoView(true)
 }
 
 window.appendCommand = function(message) {
