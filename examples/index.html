@@ -46,6 +46,7 @@ window.printMessage = function(message, className) {
 
 window.runCli = function() {
   const rawArgsString = document.getElementById('cli-input').value
+  document.getElementById('cli-input').value = ''
   console.log('...')
   const argsToAppend = rawArgsString.split(' ')
   const args = ['', 'git', ...argsToAppend]
