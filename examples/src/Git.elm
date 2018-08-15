@@ -52,7 +52,7 @@ logOptionsParser =
             (Option.restArgs "rest args")
 
 
-init : Flags -> CliOptions -> Cmd msg
+init : Flags -> CliOptions -> Cmd Never
 init flags cliOptions =
     (case cliOptions of
         Init ->
@@ -84,7 +84,7 @@ type alias Flags =
     Program.FlagsIncludingArgv {}
 
 
-main : Program.StatelessProgram msg {}
+main : Program.StatelessProgram Never {}
 main =
     Program.stateless
         { printAndExitFailure = Ports.printAndExitFailure

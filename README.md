@@ -51,12 +51,13 @@ git log --author=dillon --max-count=5 --stat a410067
 To parse the above command, we could build a `Program` as follows (this snippet doesn't include the wiring of the OptionsParser-Line options from NodeJS, see the `examples` folder):
 
 ```elm
-import Cli.OptionsParser as OptionsParser exposing (OptionsParser, with)
 import Cli.Option as Option
-import Cli.Program
+import Cli.OptionsParser as OptionsParser exposing (with)
+import Cli.OptionsParser.BuilderState as BuilderState
+import Cli.Program as Program
 
 
-type GitOptionsParser
+type CliOptions
     = Init
     | Clone String
     | Log LogOptions
@@ -67,35 +68,36 @@ type alias LogOptions =
     , maybeMaxCount : Maybe Int
     , statisticsMode : Bool
     , maybeRevisionRange : Maybe String
+    , restArgs : List String
     }
 
-logOptionsParser : OptionsParser LogOptions
-logOptionsParser =
-    OptionsParser.buildSubOptionsParser "log" LogOptions
-        |> with (Cli.Option.optionalKeywordArg "author")
-        |> with
-            (Cli.Option.optionalKeywordArg "max-count"
-                |> Cli.Option.validateMapIfPresent String.toInt
+programConfig : Program.Config CliOptions
+programConfig =
+    Program.config { version = "1.2.3" }
+        |> Program.add
+            (OptionsParser.buildSubCommand "init" Init
+                |> OptionsParser.withDoc "initialize a git repository"
             )
-        |> with (Cli.Option.flag "stat")
-        |> OptionsParser.endWith
-            (Cli.Option.optionalPositionalArg "revision range")
+        |> Program.add
+            (OptionsParser.buildSubCommand "clone" Clone
+                |> with (Option.requiredPositionalArg "repository")
+            )
+        |> Program.add (OptionsParser.map Log logOptionsParser)
 
 
-cli : Cli.Program.StatelessProgram GitOptionsParser
-cli =
-    { programName = "git"
-    , commands = commands
-    , version = "1.2.3"
-    }
-
-
-commands : List (OptionsParser GitOptionsParser)
-commands =
-    [ OptionsParser.map Log logOptionsParser
-      -- ... `OptionsParser`s for `Init`, `Clone`, etc. here
-      -- See `examples` folder
-    ]
+logOptionsParser : OptionsParser.OptionsParser LogOptions BuilderState.NoMoreOptions
+logOptionsParser =
+    OptionsParser.buildSubCommand "log" LogOptions
+        |> with (Option.optionalKeywordArg "author")
+        |> with
+            (Option.optionalKeywordArg "max-count"
+                |> Option.validateMapIfPresent String.toInt
+            )
+        |> with (Option.flag "stat")
+        |> OptionsParser.withOptionalPositionalArg
+            (Option.optionalPositionalArg "revision range")
+        |> OptionsParser.withRestArgs
+            (Option.restArgs "rest args")
 ```
 
 ```elm
@@ -104,7 +106,7 @@ Now running:
 `git log --author=dillon --max-count=5 --stat a410067`
 will yield the following output (with wiring as in the `examples` folder):
 -}
-matchResult : GitOptionsParser
+matchResult : CliOptions
 matchResult =
     Log
         { maybeAuthorPattern = Just "dillon"
