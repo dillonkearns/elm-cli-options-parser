@@ -61,7 +61,9 @@ window.runCli = function() {
   appendCommand(rawArgsString)
   document.getElementById('cli-input').value = ''
   console.log('...')
-  const argsToAppend = rawArgsString.split(' ')
+  const argsToAppend = rawArgsString
+    .split(/\s+|\s*'([^']*)'|\s*"([^"]*)"/)
+    .filter(element => element && element !== '')
   const args = ['', commandName, ...argsToAppend]
   let program = Elm.Main.worker({ argv: args })
 
