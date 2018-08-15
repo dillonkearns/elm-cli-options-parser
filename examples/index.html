@@ -89,10 +89,26 @@ window.setThing = function() {
       e.preventDefault()
       return
     }
-    if (e.keyCode == 38 || e.keyCode == 40) {
+    if (e.keyCode == 38) {
       this.value = commandHistory[commandHistory.length + nextCommandInHistory]
 
       nextCommandInHistory--
+      if (
+        commandHistory.length + nextCommandInHistory < 0 ||
+        nextCommandInHistory > -1
+      ) {
+        nextCommandInHistory = -1
+      }
+
+      ignoreKey = true
+      setTimeout(function() {
+        ignoreKey = false
+      }, 1)
+      e.preventDefault()
+    } else if (e.keyCode == 40) {
+      this.value = commandHistory[commandHistory.length + nextCommandInHistory]
+
+      nextCommandInHistory += 1
       if (
         commandHistory.length + nextCommandInHistory < 0 ||
         nextCommandInHistory > -1
