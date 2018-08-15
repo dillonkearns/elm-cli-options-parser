@@ -4,7 +4,7 @@
 It uses a syntax similar to `Json.Decode.Pipeline`.
 
 You can
-[play around with `elm-cli-options-parser` in a live terminal simulation in Ellie here](https://rebrand.ly/elm-cli)!
+play around with `elm-cli-options-parser` in a [live terminal simulation in Ellie here](https://rebrand.ly/elm-cli)!
 
 ## Design Goals
 
