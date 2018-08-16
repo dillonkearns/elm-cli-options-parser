@@ -53,12 +53,13 @@ window.printMessage = function(message, className) {
   newOutput.textContent = message
   newOutput.setAttribute('class', 'output ' + className)
   document.getElementById('output').appendChild(newOutput)
-  document.getElementById('cli-input').scrollIntoView(true)
+  const commands = document.getElementsByClassName('command')
+  commands[commands.length - 1].scrollIntoView(true)
 }
 
 window.appendCommand = function(message) {
   let newOutput = document.createElement('div')
-  newOutput.innerHTML = `<span>$ ${commandName} ${message}</span>`
+  newOutput.innerHTML = `<span class="command">$ ${commandName} ${message}</span>`
   document.getElementById('output').appendChild(newOutput)
 }
 
