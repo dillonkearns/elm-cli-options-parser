@@ -1,21 +1,14 @@
-module Cli.OptionsParser
-    exposing
-        ( OptionsParser
-        , build
-        , buildSubCommand
-        , end
-        , expectFlag
-        , getSubCommand
-        , getUsageSpecs
-        , hardcoded
-        , map
-        , synopsis
-        , tryMatch
-        , with
-        , withDoc
-        , withOptionalPositionalArg
-        , withRestArgs
-        )
+module Cli.OptionsParser exposing
+    ( OptionsParser
+    , build, buildSubCommand
+    , with
+    , withOptionalPositionalArg, withRestArgs
+    , expectFlag
+    , map
+    , hardcoded
+    , withDoc
+    , getSubCommand, getUsageSpecs, synopsis, tryMatch, end
+    )
 
 {-|
 
@@ -140,7 +133,7 @@ You shouldn't need to use these functions to build a command line utility.
 -}
 
 import Cli.Decode
-import Cli.Option exposing (Option(Option))
+import Cli.Option exposing (Option(..))
 import Cli.OptionsParser.BuilderState as BuilderState
 import Cli.OptionsParser.MatchResult
 import Cli.UsageSpec as UsageSpec exposing (UsageSpec)
@@ -200,6 +193,7 @@ tryMatch argv ((OptionsParser { usageSpecs, subCommand }) as optionsParser) =
                                         , operands = remainingOperands
                                         , usageSpecs = usageSpecs
                                         }
+
                                 else
                                     Err { errorMessage = "Sub optionsParser does not match", options = record.options }
 
@@ -249,6 +243,7 @@ expectedPositionalArgCountOrFail (OptionsParser ({ decoder, usageSpecs } as opti
                               )
                     then
                         Cli.Decode.MatchError "Wrong number of operands" |> Err
+
                     else
                         decoder stuff
         }
@@ -278,6 +273,7 @@ failIfUnexpectedOptions ((OptionsParser ({ decoder, usageSpecs } as optionsParse
                     in
                     if List.isEmpty unexpectedOptions then
                         decoder flagsAndOperands
+
                     else
                         Cli.Decode.UnexpectedOptions unexpectedOptions |> Err
         }
@@ -289,6 +285,7 @@ unexpectedOptions_ (OptionsParser { usageSpecs }) options =
         (\(Tokenizer.ParsedOption optionName optionKind) ->
             if UsageSpec.optionExists usageSpecs optionName == Nothing then
                 Just optionName
+
             else
                 Nothing
         )
@@ -454,6 +451,7 @@ expectFlag flagName (OptionsParser ({ usageSpecs, decoder } as optionsParser)) =
                             |> List.member (Tokenizer.ParsedOption flagName Tokenizer.Flag)
                     then
                         decoder stuff
+
                     else
                         Cli.Decode.MatchError ("Expect flag " ++ ("--" ++ flagName))
                             |> Err

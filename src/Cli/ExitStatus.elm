@@ -1,4 +1,4 @@
-module Cli.ExitStatus exposing (ExitStatus(Failure, Success))
+module Cli.ExitStatus exposing (ExitStatus(..))
 
 {-|
 

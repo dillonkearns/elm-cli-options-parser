@@ -1,7 +1,7 @@
 module Cli.LowLevelTests exposing (all)
 
-import Cli.OptionsParser as OptionsParser
 import Cli.LowLevel
+import Cli.OptionsParser as OptionsParser
 import Expect exposing (Expectation)
 import Test exposing (..)
 

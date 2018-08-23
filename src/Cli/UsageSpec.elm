@@ -1,21 +1,20 @@
-module Cli.UsageSpec
-    exposing
-        ( MutuallyExclusiveValues
-        , UsageSpec
-        , changeUsageSpec
-        , flag
-        , hasRestArgs
-        , isOperand
-        , keywordArg
-        , name
-        , operand
-        , operandCount
-        , optionExists
-        , optionHasArg
-        , optionalPositionalArg
-        , restArgs
-        , synopsis
-        )
+module Cli.UsageSpec exposing
+    ( MutuallyExclusiveValues
+    , UsageSpec
+    , changeUsageSpec
+    , flag
+    , hasRestArgs
+    , isOperand
+    , keywordArg
+    , name
+    , operand
+    , operandCount
+    , optionExists
+    , optionHasArg
+    , optionalPositionalArg
+    , restArgs
+    , synopsis
+    )
 
 import List.Extra
 import Occurences exposing (Occurences)

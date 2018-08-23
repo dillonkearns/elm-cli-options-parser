@@ -92,7 +92,7 @@ init flags msg =
 
 (=>) : a -> b -> ( a, b )
 (=>) =
-    (,)
+    \a b -> ( a, b )
 
 
 type alias Flags =

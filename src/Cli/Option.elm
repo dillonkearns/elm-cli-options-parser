@@ -1,25 +1,13 @@
-module Cli.Option
-    exposing
-        ( BeginningOption
-        , Option(Option)
-        , OptionalPositionalArgOption
-        , RestArgsOption
-        , flag
-        , keywordArgList
-        , map
-        , mapFlag
-        , oneOf
-        , optionalKeywordArg
-        , optionalPositionalArg
-        , requiredKeywordArg
-        , requiredPositionalArg
-        , restArgs
-        , validate
-        , validateIfPresent
-        , validateMap
-        , validateMapIfPresent
-        , withDefault
-        )
+module Cli.Option exposing
+    ( requiredPositionalArg
+    , optionalKeywordArg, requiredKeywordArg, keywordArgList
+    , flag
+    , optionalPositionalArg, restArgs
+    , oneOf
+    , validate, validateIfPresent, validateMap, validateMapIfPresent
+    , map, mapFlag, withDefault
+    , Option(..), BeginningOption, OptionalPositionalArgOption, RestArgsOption
+    )
 
 {-| Here is the terminology used for building up Command-Line parsers with this library.
 
@@ -73,11 +61,12 @@ error message regardless.
 
 Example:
 
+
     capitalizedNameRegex =
         "[A-Z][A-Za-z]*"
 
     validateParser =
-        OptionsParser.build (,)
+        OptionsParser.build (\a b -> ( a, b ))
             |> with
                 (Option.requiredKeywordArg "name"
                     |> Option.validate (Cli.Validate.regex capitalizedNameRegex)
@@ -121,7 +110,7 @@ import Cli.Decode
 import Cli.UsageSpec as UsageSpec exposing (UsageSpec)
 import Cli.Validate as Validate
 import List.Extra
-import Occurences exposing (Occurences(Optional, Required, ZeroOrMore))
+import Occurences exposing (Occurences(..))
 import Tokenizer
 
 
@@ -288,6 +277,7 @@ flag flagName =
                     |> List.member (Tokenizer.ParsedOption flagName Tokenizer.Flag)
             then
                 Ok True
+
             else
                 Ok False
         )
@@ -367,6 +357,7 @@ mapFlag { present, absent } option =
             (\flag ->
                 if flag then
                     present
+
                 else
                     absent
             )

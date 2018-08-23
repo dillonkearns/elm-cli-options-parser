@@ -2,7 +2,7 @@ module TypoSuggestionTests exposing (all)
 
 import Cli.UsageSpec as UsageSpec
 import Expect exposing (Expectation)
-import Occurences exposing (Occurences(Required))
+import Occurences exposing (Occurences(..))
 import Test exposing (..)
 import TypoSuggestion
 

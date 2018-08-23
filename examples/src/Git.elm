@@ -4,7 +4,6 @@ import Cli.Option as Option
 import Cli.OptionsParser as OptionsParser exposing (with)
 import Cli.OptionsParser.BuilderState as BuilderState
 import Cli.Program as Program
-import Json.Decode exposing (..)
 import Ports
 
 
@@ -72,12 +71,6 @@ init flags cliOptions =
                 |> String.join "\n"
     )
         |> Ports.print
-
-
-dummy : Decoder String
-dummy =
-    -- this is a workaround for an Elm compiler bug
-    Json.Decode.string
 
 
 type alias Flags =

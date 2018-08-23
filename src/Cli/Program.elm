@@ -1,4 +1,9 @@
-module Cli.Program exposing (Config, FlagsIncludingArgv, StatefulProgram, StatelessProgram, add, config, stateful, stateless)
+module Cli.Program exposing
+    ( config, Config, add
+    , stateless, stateful
+    , StatelessProgram, StatefulProgram
+    , FlagsIncludingArgv
+    )
 
 {-|
 
@@ -279,6 +284,7 @@ run (Config { optionsParsers, version }) argv =
                 "\nNo matching optionsParser...\n\nUsage:\n\n"
                     ++ Cli.LowLevel.helpText programName optionsParsers
                     |> SystemMessage Cli.ExitStatus.Failure
+
             else
                 unexpectedOptions
                     |> List.map

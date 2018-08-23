@@ -46,6 +46,7 @@ flagsAndOperands_ usageSpecs argv soFar =
                                     { options = soFar.options ++ [ ParsedOption optionName Flag ]
                                     , operands = soFar.operands
                                     }
+
                     else
                         flagsAndOperands_ usageSpecs
                             restArgs

@@ -1,10 +1,10 @@
-module Cli.OptionsParser.MatchResult
-    exposing
-        ( MatchResult(..)
-        , matchResultToMaybe
-        )
+module Cli.OptionsParser.MatchResult exposing
+    ( MatchResult(..)
+    , matchResultToMaybe
+    )
 
 {-| TODO
+
 @docs MatchResult
 
 @docs matchResultToMaybe

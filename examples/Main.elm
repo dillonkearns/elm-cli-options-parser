@@ -2,7 +2,7 @@
 -- https://guide.elm-lang.org/architecture/effects/http.html
 
 
-module Main exposing (..)
+module Main exposing (Model, Msg(..), decodeGifUrl, getRandomGif, init, main, subscriptions, update, view)
 
 import Html exposing (..)
 import Html.Attributes exposing (..)

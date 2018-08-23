@@ -1,14 +1,14 @@
 module Cli.UsageSpecTests exposing (all)
 
-import Cli.OptionsParser as OptionsParser
 import Cli.Option as Option
+import Cli.OptionsParser as OptionsParser
 import Expect exposing (Expectation)
 import Test exposing (..)
 
 
 (=>) : a -> b -> ( a, b )
 (=>) =
-    (,)
+    \a b -> ( a, b )
 
 
 all : Test
@@ -16,7 +16,7 @@ all =
     describe "synopsis"
         [ test "synopsis prints options with arguments" <|
             \() ->
-                (OptionsParser.build (,)
+                (OptionsParser.build (\a b -> ( a, b ))
                     |> OptionsParser.with (Option.requiredKeywordArg "first-name")
                     |> OptionsParser.with (Option.requiredKeywordArg "last-name")
                     |> OptionsParser.end
@@ -25,14 +25,14 @@ all =
                     |> Expect.equal "greet --first-name <first-name> --last-name <last-name>"
         , test "print synopsis with required flag" <|
             \() ->
-                OptionsParser.build (,)
+                OptionsParser.build (\a b -> ( a, b ))
                     |> OptionsParser.expectFlag "version"
                     |> OptionsParser.end
                     |> OptionsParser.synopsis "greet"
                     |> Expect.equal "greet --version"
         , test "print synopsis with optional arg" <|
             \() ->
-                OptionsParser.build (,)
+                OptionsParser.build (\a b -> ( a, b ))
                     |> OptionsParser.with (Option.requiredKeywordArg "name")
                     |> OptionsParser.with (Option.optionalKeywordArg "prefix")
                     |> OptionsParser.end
@@ -53,7 +53,7 @@ all =
                     |> Expect.equal "git [<revision range>]"
         , test "print synopsis with doc string" <|
             \() ->
-                OptionsParser.build (,)
+                OptionsParser.build (\a b -> ( a, b ))
                     |> OptionsParser.with (Option.requiredKeywordArg "name")
                     |> OptionsParser.with (Option.optionalKeywordArg "prefix")
                     |> OptionsParser.end
@@ -76,7 +76,7 @@ all =
                     |> Expect.equal "rm <files>..."
         , test "prints rest args at the end of the synopsis" <|
             \() ->
-                OptionsParser.build (,)
+                OptionsParser.build (\a b -> ( a, b ))
                     |> OptionsParser.with (Option.flag "dry-run")
                     |> OptionsParser.withRestArgs (Option.restArgs "files")
                     |> OptionsParser.synopsis "rm"

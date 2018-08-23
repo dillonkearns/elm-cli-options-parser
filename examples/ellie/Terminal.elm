@@ -1,4 +1,4 @@
-module Main exposing (..)
+module Main exposing (Msg(..), cursorRectangle, main, terminal)
 
 import Color exposing (..)
 import Element exposing (..)

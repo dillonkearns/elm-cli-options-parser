@@ -1,4 +1,4 @@
-module Cli.Validate exposing (ValidationResult(..), predicate, regex)
+module Cli.Validate exposing (predicate, ValidationResult(..), regex)
 
 {-| This module contains helper functions for performing validations (see the
 "validate..." functions in `Cli.Option`).
@@ -23,7 +23,7 @@ type ValidationResult
 
     isEven : Int -> Bool
     isEven n =
-        n % 2 == 0
+        modBy 2 n == 0
 
     pairsOption : Option.Option (Maybe String) (Maybe Int)
     pairsOption =
@@ -39,6 +39,7 @@ predicate message predicate =
         >> (\boolResult ->
                 if boolResult then
                     Valid
+
                 else
                     Invalid message
            )
@@ -74,5 +75,6 @@ regex : String -> String -> ValidationResult
 regex regexPattern checkString =
     if Regex.contains (Regex.regex regexPattern) checkString then
         Valid
+
     else
         Invalid ("Must be of form /" ++ regexPattern ++ "/")

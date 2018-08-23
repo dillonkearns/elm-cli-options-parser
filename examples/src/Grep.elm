@@ -81,6 +81,7 @@ update cliOptions msg model =
                     Stdin.Line line ->
                         ( if Regex.contains cliOptions.pattern line then
                             model |> incrementMatchCount
+
                           else
                             model
                         , Cmd.none
@@ -92,12 +93,14 @@ update cliOptions msg model =
                             |> toString
                             |> Ports.print
                         )
+
             else
                 case stdinEvent of
                     Stdin.Line line ->
                         ( model
                         , if Regex.contains cliOptions.pattern line then
                             Ports.print line
+
                           else
                             Cmd.none
                         )

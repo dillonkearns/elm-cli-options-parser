@@ -10,7 +10,7 @@ import Test exposing (..)
 
 (=>) : a -> b -> ( a, b )
 (=>) =
-    (,)
+    \a b -> ( a, b )
 
 
 type WatchMode
@@ -71,7 +71,7 @@ all =
             , test "optionsParser with required and optional positional arg present" <|
                 \() ->
                     expectMatch [ "required", "optional" ]
-                        (OptionsParser.build (,)
+                        (OptionsParser.build (\a b -> ( a, b ))
                             |> OptionsParser.with (Option.requiredPositionalArg "required")
                             |> OptionsParser.withOptionalPositionalArg (Option.optionalPositionalArg "revision-range")
                         )
@@ -86,7 +86,7 @@ all =
             , test "optionsParser with multiple operands" <|
                 \() ->
                     expectMatch [ "http://my-domain.com", "./file.txt" ]
-                        (OptionsParser.build (,)
+                        (OptionsParser.build (\a b -> ( a, b ))
                             |> OptionsParser.with (Option.requiredPositionalArg "url")
                             |> OptionsParser.with (Option.requiredPositionalArg "path/to/file")
                             |> OptionsParser.end
@@ -127,7 +127,7 @@ all =
             , test "option with argument" <|
                 \() ->
                     expectMatch [ "--name", "Deanna", "--prefix", "Hello" ]
-                        (OptionsParser.build (,)
+                        (OptionsParser.build (\a b -> ( a, b ))
                             |> OptionsParser.with (Option.requiredKeywordArg "name")
                             |> OptionsParser.with (Option.optionalKeywordArg "prefix")
                             |> OptionsParser.end
@@ -211,7 +211,7 @@ all =
             , test "rest operands has all operands when there is a required operand" <|
                 \() ->
                     expectMatch [ "--something", "operand1", "rest1", "rest2" ]
-                        (OptionsParser.build (,)
+                        (OptionsParser.build (\a b -> ( a, b ))
                             |> OptionsParser.expectFlag "something"
                             |> OptionsParser.with (Option.requiredPositionalArg "operand")
                             |> OptionsParser.withRestArgs (Option.restArgs "files")
@@ -277,6 +277,7 @@ all =
                                         (\name ->
                                             if String.length name == 3 then
                                                 Validate.Valid
+
                                             else
                                                 Validate.Invalid "Must be 3 characters long"
                                         )
@@ -294,6 +295,7 @@ all =
                                         (\name ->
                                             if String.length name == 3 then
                                                 Validate.Valid
+
                                             else
                                                 Validate.Invalid "Must be 3 characters long"
                                         )

@@ -1,7 +1,7 @@
 module TokenizerTests exposing (all)
 
-import Cli.OptionsParser as OptionsParser
 import Cli.Option as Option
+import Cli.OptionsParser as OptionsParser
 import Expect exposing (Expectation)
 import Test exposing (..)
 import Tokenizer exposing (ParsedOption(..))
@@ -13,7 +13,7 @@ all =
         [ test "recognizes empty operands and flags" <|
             \() ->
                 expectFlagsAndOperands []
-                    (OptionsParser.build (,)
+                    (OptionsParser.build (\a b -> ( a, b ))
                         |> OptionsParser.with (Option.requiredKeywordArg "first-name")
                         |> OptionsParser.with (Option.requiredKeywordArg "last-name")
                         |> OptionsParser.end
@@ -23,7 +23,7 @@ all =
             \() ->
                 expectFlagsAndOperands
                     [ "operand", "--verbose", "--dry-run" ]
-                    (OptionsParser.build (,,)
+                    (OptionsParser.build (\a b c -> ( a, b, c ))
                         |> OptionsParser.expectFlag "verbose"
                         |> OptionsParser.expectFlag "dry-run"
                         |> OptionsParser.end
@@ -35,7 +35,7 @@ all =
             \() ->
                 expectFlagsAndOperands
                     [ "--verbose", "--dry-run", "operand" ]
-                    (OptionsParser.build (,,)
+                    (OptionsParser.build (\a b c -> ( a, b, c ))
                         |> OptionsParser.expectFlag "verbose"
                         |> OptionsParser.expectFlag "dry-run"
                         |> OptionsParser.end
@@ -47,7 +47,7 @@ all =
             \() ->
                 expectFlagsAndOperands
                     [ "operand", "--first-name", "Will", "--last-name", "Riker" ]
-                    (OptionsParser.build (,)
+                    (OptionsParser.build (\a b -> ( a, b ))
                         |> OptionsParser.with (Option.requiredKeywordArg "first-name")
                         |> OptionsParser.with (Option.requiredKeywordArg "last-name")
                         |> OptionsParser.end
@@ -59,7 +59,7 @@ all =
             \() ->
                 expectFlagsAndOperands
                     [ "--first-name", "Will", "--last-name", "Riker", "operand" ]
-                    (OptionsParser.build (,)
+                    (OptionsParser.build (\a b -> ( a, b ))
                         |> OptionsParser.with (Option.requiredKeywordArg "first-name")
                         |> OptionsParser.with (Option.requiredKeywordArg "last-name")
                         |> OptionsParser.end
@@ -75,7 +75,7 @@ all =
                     , "--first-name"
                     , "Deanna"
                     ]
-                    (OptionsParser.build (,)
+                    (OptionsParser.build (\a b -> ( a, b ))
                         |> OptionsParser.with (Option.requiredKeywordArg "first-name")
                         |> OptionsParser.with (Option.requiredKeywordArg "last-name")
                         |> OptionsParser.end

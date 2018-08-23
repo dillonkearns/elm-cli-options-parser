@@ -110,6 +110,7 @@ oneOf =
         (\x acc ->
             if acc /= Nothing then
                 acc
+
             else
                 x
         )
