@@ -73,8 +73,13 @@ Value was:
 -}
 regex : String -> String -> ValidationResult
 regex regexPattern checkString =
-    if Regex.contains (Regex.regex regexPattern) checkString then
-        Valid
+    case Regex.fromString regexPattern of
+        Nothing ->
+            Valid
 
-    else
-        Invalid ("Must be of form /" ++ regexPattern ++ "/")
+        Just actualRegex ->
+            if Regex.contains actualRegex checkString then
+                Valid
+
+            else
+                Invalid ("Must be of form /" ++ regexPattern ++ "/")

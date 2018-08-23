@@ -178,7 +178,7 @@ validate validateFunction (Option option) =
                                 Just
                                     { name = UsageSpec.name option.usageSpec
                                     , invalidReason = invalidReason
-                                    , valueAsString = toString value
+                                    , valueAsString = Debug.toString value
                                     }
                     )
     in
@@ -218,7 +218,7 @@ requiredPositionalArg operandDescription =
                     Ok operandValue
 
                 Nothing ->
-                    Cli.Decode.MatchError ("Expect operand " ++ operandDescription ++ "at " ++ toString operandsSoFar ++ " but had operands " ++ toString operands) |> Err
+                    Cli.Decode.MatchError ("Expect operand " ++ operandDescription ++ "at " ++ String.fromInt operandsSoFar ++ " but had operands " ++ listToString operands) |> Err
         )
         (UsageSpec.operand operandDescription)
 
@@ -256,7 +256,7 @@ requiredKeywordArg optionName =
                         (\(Tokenizer.ParsedOption thisOptionName optionKind) -> thisOptionName == optionName)
             of
                 Nothing ->
-                    Cli.Decode.MatchError ("Expected to find option " ++ optionName ++ " but only found options " ++ toString options) |> Err
+                    Cli.Decode.MatchError ("Expected to find option " ++ optionName ++ " but only found options " ++ (options |> List.map Tokenizer.parsedOptionToString |> listToString)) |> Err
 
                 Just (Tokenizer.ParsedOption _ (Tokenizer.KeywordArg optionArg)) ->
                     Ok optionArg
@@ -265,6 +265,15 @@ requiredKeywordArg optionName =
                     Cli.Decode.MatchError ("Expected option " ++ optionName ++ " to have arg but found none.") |> Err
         )
         (UsageSpec.keywordArg optionName Required)
+
+
+listToString : List String -> String
+listToString list =
+    String.concat
+        [ "["
+        , list |> String.join ", "
+        , "]"
+        ]
 
 
 {-| -}
@@ -317,8 +326,17 @@ raw `String` that comes from the command line into a `Regex`, as in this code sn
 
 -}
 map : (toRaw -> toMapped) -> Option from toRaw builderState -> Option from toMapped builderState
-map mapFn (Option ({ dataGrabber, usageSpec, decoder } as option)) =
-    Option { option | decoder = Cli.Decode.map mapFn decoder }
+map mapFn option =
+    updateDecoder (\decoder -> Cli.Decode.map mapFn decoder) option
+
+
+updateDecoder : (Cli.Decode.Decoder from to -> Cli.Decode.Decoder from toNew) -> Option from to builderState -> Option from toNew builderState
+updateDecoder mappedDecoder (Option ({ dataGrabber, usageSpec, decoder } as option)) =
+    Option
+        { dataGrabber = dataGrabber
+        , usageSpec = usageSpec
+        , decoder = mappedDecoder decoder
+        }
 
 
 {-| Useful for using a custom union type for a flag instead of a `Bool`.
@@ -354,8 +372,8 @@ mapFlag : { present : union, absent : union } -> Option from Bool builderState -
 mapFlag { present, absent } option =
     option
         |> map
-            (\flag ->
-                if flag then
+            (\flagValue ->
+                if flagValue then
                     present
 
                 else
@@ -459,9 +477,9 @@ in the [`examples`](https://github.com/dillonkearns/elm-cli-options-parser/tree/
 
 -}
 validateMap : (to -> Result String toMapped) -> Option from to builderState -> Option from toMapped builderState
-validateMap mapFn (Option option) =
-    let
-        mappedDecoder =
+validateMap mapFn ((Option optionRecord) as option) =
+    updateDecoder
+        (\decoder ->
             Cli.Decode.mapProcessingError
                 (\value ->
                     case mapFn value of
@@ -470,18 +488,15 @@ validateMap mapFn (Option option) =
 
                         Err invalidReason ->
                             Cli.Decode.UnrecoverableValidationError
-                                { name = UsageSpec.name option.usageSpec
+                                { name = UsageSpec.name optionRecord.usageSpec
                                 , invalidReason = invalidReason
-                                , valueAsString = toString value
+                                , valueAsString = Debug.toString value
                                 }
                                 |> Err
                 )
-                option.decoder
-    in
-    Option
-        { option
-            | decoder = mappedDecoder
-        }
+                decoder
+        )
+        option
 
 
 {-| Same as `validateMap` if the value is `Just someValue`. Does nothing if
@@ -509,14 +524,14 @@ validateMapIfPresent mapFn ((Option { dataGrabber, usageSpec, decoder }) as cliS
 {-| Provide a default value for the `Option`.
 -}
 withDefault : to -> Option from (Maybe to) builderState -> Option from to builderState
-withDefault defaultValue (Option option) =
-    Option
-        { option
-            | decoder =
-                Cli.Decode.map
-                    (Maybe.withDefault defaultValue)
-                    option.decoder
-        }
+withDefault defaultValue option =
+    updateDecoder
+        (\decoder ->
+            Cli.Decode.map
+                (Maybe.withDefault defaultValue)
+                decoder
+        )
+        option
 
 
 {-| -}
@@ -570,12 +585,9 @@ optionalPositionalArg operandDescription =
 restArgs : String -> Option (List String) (List String) RestArgsOption
 restArgs restArgsDescription =
     buildOption
-        (\({ operands, usageSpecs } as stuff) ->
-            let
-                restArgs =
-                    operands
-                        |> List.drop (UsageSpec.operandCount usageSpecs)
-            in
-            Ok restArgs
+        (\{ operands, usageSpecs } ->
+            operands
+                |> List.drop (UsageSpec.operandCount usageSpecs)
+                |> Ok
         )
         (UsageSpec.restArgs restArgsDescription)

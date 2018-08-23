@@ -1,4 +1,4 @@
-module Tokenizer exposing (OptionKind(..), ParsedOption(..), flagsAndOperands)
+module Tokenizer exposing (OptionKind(..), ParsedOption(..), flagsAndOperands, parsedOptionToString)
 
 import Cli.UsageSpec exposing (UsageSpec)
 import Tokenizer.EqualsSplitter as EqualsSplitter
@@ -11,6 +11,11 @@ type ParsedOption
 type OptionKind
     = Flag
     | KeywordArg String
+
+
+parsedOptionToString : ParsedOption -> String
+parsedOptionToString (ParsedOption name optionKind) =
+    name
 
 
 flagsAndOperands : List UsageSpec -> List String -> { options : List ParsedOption, operands : List String }
