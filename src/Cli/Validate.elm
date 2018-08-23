@@ -34,8 +34,8 @@ type ValidationResult
 
 -}
 predicate : String -> (a -> Bool) -> (a -> ValidationResult)
-predicate message predicate =
-    predicate
+predicate message predicateFunction =
+    predicateFunction
         >> (\boolResult ->
                 if boolResult then
                     Valid
