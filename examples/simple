@@ -1,0 +1,2 @@
+# /bin/bash
+elm-make src/Simple.elm --output src/elm.js > /dev/null && ./src/main.js $@
