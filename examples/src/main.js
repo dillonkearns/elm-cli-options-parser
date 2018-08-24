@@ -1,13 +1,15 @@
 #!/usr/bin/env node
-let program = require('./elm.js').Main.worker({ argv: process.argv })
-XMLHttpRequest = require('xhr2')
+let program = require("./elm.js").Elm.Main.init({
+  flags: { argv: process.argv }
+});
+XMLHttpRequest = require("xhr2");
 
-program.ports.print.subscribe(message => console.log(message))
+program.ports.print.subscribe(message => console.log(message));
 program.ports.printAndExitFailure.subscribe(message => {
-  console.log(message)
-  process.exit(1)
-})
+  console.log(message);
+  process.exit(1);
+});
 program.ports.printAndExitSuccess.subscribe(message => {
-  console.log(message)
-  process.exit(0)
-})
+  console.log(message);
+  process.exit(0);
+});
