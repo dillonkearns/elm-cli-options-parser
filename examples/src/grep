@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 const readline = require('readline')
 
-const program = require('./grep.elm.js').Main.worker({
-  argv: process.argv
+const program = require('./grep.elm.js').Elm.Main.init({
+  flags: {argv: process.argv}
 })
 
 program.ports.print.subscribe(message => console.log(message))
