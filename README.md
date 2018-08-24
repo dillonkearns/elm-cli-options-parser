@@ -1,5 +1,7 @@
 # Elm CLI Options Parser
 
+[![Build Status](https://travis-ci.org/dillonkearns/elm-cli-options-parser.svg?branch=master)](https://travis-ci.org/dillonkearns/elm-cli-options-parser)
+
 `elm-cli-options-parser` allows you to build command-line options parsers in Elm.
 It uses a syntax similar to `Json.Decode.Pipeline`.
 
@@ -140,7 +142,7 @@ because I found them to be the most intuitive and unambiguous.
 
 ## Some Inspiration for this package
 
-* http://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap12.html.
-* https://pythonconquerstheuniverse.wordpress.com/2010/07/25/command-line-syntax-some-basic-concepts/
-* https://devcenter.heroku.com/articles/cli-style-guide
-* http://docopt.org/
+- http://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap12.html.
+- https://pythonconquerstheuniverse.wordpress.com/2010/07/25/command-line-syntax-some-basic-concepts/
+- https://devcenter.heroku.com/articles/cli-style-guide
+- http://docopt.org/
