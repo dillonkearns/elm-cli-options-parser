@@ -171,10 +171,10 @@ stateful options =
                 case model of
                     UserModel actualModel cliOptions ->
                         let
-                            ( model, cmd ) =
+                            ( userModel, userCmd ) =
                                 options.update cliOptions msg actualModel
                         in
-                        ( UserModel model cliOptions, cmd )
+                        ( UserModel userModel cliOptions, userCmd )
 
                     ShowSystemMessage ->
                         ( ShowSystemMessage, Cmd.none )
@@ -250,10 +250,10 @@ statefulInit options flags =
 
                 CustomMatch cliOptions ->
                     let
-                        ( model, cmd ) =
+                        ( userModel, userCmd ) =
                             options.init flags cliOptions
                     in
-                    ( UserModel model cliOptions, cmd )
+                    ( UserModel userModel cliOptions, userCmd )
     in
     cmd
 
