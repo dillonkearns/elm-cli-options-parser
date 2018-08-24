@@ -13,7 +13,6 @@ module Cli.Decode exposing
 type alias ValidationError =
     { name : String
     , invalidReason : String
-    , valueAsString : String
     }
 
 

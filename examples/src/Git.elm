@@ -74,13 +74,23 @@ init flags cliOptions =
             [ "Logging..." |> Just
             , options.maybeAuthorPattern |> Maybe.map (\authorPattern -> "authorPattern: " ++ authorPattern)
             , options.maybeMaxCount |> Maybe.map (\maxCount -> "maxCount: " ++ String.fromInt maxCount)
-            , "stat: " ++ Debug.toString options.statisticsMode |> Just
+            , "stat: " ++ boolToString options.statisticsMode |> Just
             , options.maybeRevisionRange |> Maybe.map (\revisionRange -> "revisionRange: " ++ revisionRange)
             ]
                 |> List.filterMap identity
                 |> String.join "\n"
     )
         |> Ports.print
+
+
+boolToString : Bool -> String
+boolToString bool =
+    case bool of
+        True ->
+            "True"
+
+        False ->
+            "False"
 
 
 type alias Flags =

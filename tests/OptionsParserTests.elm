@@ -244,7 +244,7 @@ all =
                                 )
                             |> OptionsParser.end
                         )
-                        [ { name = "name", invalidReason = "Invalid", valueAsString = toString "Bob" } ]
+                        [ { name = "name", invalidReason = "Invalid" } ]
             , test "validate if present when present and invalid" <|
                 \() ->
                     expectValidationErrors [ "--name", "Bob" ]
@@ -255,7 +255,7 @@ all =
                                 )
                             |> OptionsParser.end
                         )
-                        [ { name = "name", invalidReason = "Invalid", valueAsString = toString (Just "Bob") } ]
+                        [ { name = "name", invalidReason = "Invalid" } ]
             , test "validate if present when absent and invalid" <|
                 \() ->
                     expectMatch []
@@ -284,7 +284,7 @@ all =
                                 )
                             |> OptionsParser.end
                         )
-                        [ { name = "name", invalidReason = "Must be 3 characters long", valueAsString = toString "Robert" } ]
+                        [ { name = "name", invalidReason = "Must be 3 characters long" } ]
             , test "succeeds when validation function passes" <|
                 \() ->
                     expectMatch [ "--name", "Bob" ]
@@ -339,7 +339,7 @@ all =
                                 )
                             |> OptionsParser.end
                         )
-                        [ { name = "report", invalidReason = "Must be one of [json]", valueAsString = "\"invalidOption\"" } ]
+                        [ { name = "report", invalidReason = "Must be one of [json]" } ]
             , test "failed map validation" <|
                 \() ->
                     expectValidationErrors [ "--fuzz", "abcdefg" ]
@@ -352,7 +352,6 @@ all =
                         )
                         [ { name = "fuzz"
                           , invalidReason = "could not convert string 'abcdefg' to an Int"
-                          , valueAsString = toString "abcdefg"
                           }
                         ]
             ]
@@ -429,7 +428,7 @@ expectMatch argv optionsParsers expectedValue =
 expectValidationErrors :
     List String
     -> OptionsParser.OptionsParser value builderState
-    -> List { invalidReason : String, name : String, valueAsString : String }
+    -> List { invalidReason : String, name : String }
     -> Expectation
 expectValidationErrors argv optionsParsers expectedErrors =
     OptionsParser.tryMatch argv optionsParsers

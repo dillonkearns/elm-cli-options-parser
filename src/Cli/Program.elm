@@ -305,13 +305,11 @@ run (Config { optionsParsers, version }) argv =
             ("Validation errors:\n\n"
                 ++ (validationErrors
                         |> List.map
-                            (\{ name, invalidReason, valueAsString } ->
+                            (\{ name, invalidReason } ->
                                 "`"
                                     ++ name
                                     ++ "` failed a validation. "
                                     ++ invalidReason
-                                    ++ "\nValue was:\n"
-                                    ++ valueAsString
                             )
                         |> String.join "\n"
                    )

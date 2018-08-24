@@ -178,7 +178,6 @@ validate validateFunction (Option option) =
                                 Just
                                     { name = UsageSpec.name option.usageSpec
                                     , invalidReason = invalidReason
-                                    , valueAsString = Debug.toString value
                                     }
                     )
     in
@@ -490,7 +489,6 @@ validateMap mapFn ((Option optionRecord) as option) =
                             Cli.Decode.UnrecoverableValidationError
                                 { name = UsageSpec.name optionRecord.usageSpec
                                 , invalidReason = invalidReason
-                                , valueAsString = Debug.toString value
                                 }
                                 |> Err
                 )
