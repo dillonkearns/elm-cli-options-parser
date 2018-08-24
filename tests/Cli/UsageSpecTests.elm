@@ -6,11 +6,6 @@ import Expect exposing (Expectation)
 import Test exposing (..)
 
 
-(=>) : a -> b -> ( a, b )
-(=>) =
-    \a b -> ( a, b )
-
-
 all : Test
 all =
     describe "synopsis"
@@ -93,9 +88,9 @@ all =
                     |> OptionsParser.with
                         (Option.requiredKeywordArg "report"
                             |> Option.oneOf 123
-                                [ "json" => 123
-                                , "junit" => 123
-                                , "console" => 123
+                                [ ( "json", 123 )
+                                , ( "junit", 123 )
+                                , ( "console", 123 )
                                 ]
                         )
                     |> OptionsParser.end
@@ -107,9 +102,9 @@ all =
                     |> OptionsParser.with
                         (Option.requiredPositionalArg "report"
                             |> Option.oneOf 123
-                                [ "json" => 123
-                                , "junit" => 123
-                                , "console" => 123
+                                [ ( "json", 123 )
+                                , ( "junit", 123 )
+                                , ( "console", 123 )
                                 ]
                         )
                     |> OptionsParser.end

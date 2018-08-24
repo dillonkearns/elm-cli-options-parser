@@ -8,11 +8,6 @@ import Expect exposing (Expectation)
 import Test exposing (..)
 
 
-(=>) : a -> b -> ( a, b )
-(=>) =
-    \a b -> ( a, b )
-
-
 type WatchMode
     = Watch
     | NoWatch
@@ -309,7 +304,7 @@ all =
                         (OptionsParser.build identity
                             |> OptionsParser.with
                                 (Option.requiredKeywordArg "fuzz"
-                                    |> Option.validateMap String.toInt
+                                    |> Option.validateMap (String.toInt >> maybeToResult)
                                 )
                             |> OptionsParser.end
                         )
@@ -321,7 +316,7 @@ all =
                             |> OptionsParser.with
                                 (Option.requiredKeywordArg "report"
                                     |> Option.oneOf Console
-                                        [ "json" => Json
+                                        [ ( "json", Json )
                                         ]
                                 )
                             |> OptionsParser.end
@@ -334,7 +329,7 @@ all =
                             |> OptionsParser.with
                                 (Option.requiredKeywordArg "report"
                                     |> Option.oneOf Console
-                                        [ "json" => Json
+                                        [ ( "json", Json )
                                         ]
                                 )
                             |> OptionsParser.end
@@ -346,12 +341,12 @@ all =
                         (OptionsParser.build identity
                             |> OptionsParser.with
                                 (Option.requiredKeywordArg "fuzz"
-                                    |> Option.validateMap String.toInt
+                                    |> Option.validateMap (String.toInt >> maybeToResult)
                                 )
                             |> OptionsParser.end
                         )
                         [ { name = "fuzz"
-                          , invalidReason = "could not convert string 'abcdefg' to an Int"
+                          , invalidReason = "Could not convert."
                           }
                         ]
             ]
@@ -442,4 +437,14 @@ expectNoMatch argv optionsParsers =
             Expect.pass
 
         Cli.OptionsParser.MatchResult.Match matchResult ->
-            Expect.fail ("Expected no match but got match:\n\n" ++ toString matchResult)
+            Expect.fail ("Expected no match but got match:\n\n" ++ Debug.toString matchResult)
+
+
+maybeToResult : Maybe value -> Result String value
+maybeToResult maybe =
+    case maybe of
+        Just value ->
+            Ok value
+
+        Nothing ->
+            Err "Could not convert."
