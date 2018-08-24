@@ -134,7 +134,7 @@ type alias StatelessProgram msg flags =
 {-| -}
 stateless : ProgramOptions msg options flags -> StatelessProgram msg flags
 stateless options =
-    Platform.programWithFlags
+    Platform.worker
         { init = init options
         , update = \msg model -> ( (), Cmd.none )
         , subscriptions = \_ -> Sub.none
@@ -164,7 +164,7 @@ stateful :
     StatefulOptions msg model cliOptions flags
     -> Platform.Program (FlagsIncludingArgv flags) (StatefulProgramModel model cliOptions) msg
 stateful options =
-    Platform.programWithFlags
+    Platform.worker
         { init = statefulInit options
         , update =
             \msg model ->
