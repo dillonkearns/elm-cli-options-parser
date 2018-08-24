@@ -309,11 +309,25 @@ end (OptionsParser record) =
 
 
 type alias OptionsParserRecord cliOptions =
-    { decoder : { usageSpecs : List UsageSpec, options : List ParsedOption, operands : List String } -> Result Cli.Decode.ProcessingError ( List Cli.Decode.ValidationError, cliOptions )
+    { decoder : Decoder cliOptions
     , usageSpecs : List UsageSpec
     , description : Maybe String
     , subCommand : Maybe String
     }
+
+
+type alias Decoder cliOptions =
+    { usageSpecs : List UsageSpec, options : List ParsedOption, operands : List String } -> Result Cli.Decode.ProcessingError ( List Cli.Decode.ValidationError, cliOptions )
+
+
+updateDecoder : Decoder mappedCliOptions -> OptionsParser cliOptions fromBuilderState -> OptionsParser mappedCliOptions toBuilderState
+updateDecoder decoder (OptionsParser optionsParserRecord) =
+    OptionsParser
+        { decoder = decoder
+        , usageSpecs = optionsParserRecord.usageSpecs
+        , description = optionsParserRecord.description
+        , subCommand = optionsParserRecord.subCommand
+        }
 
 
 {-| Start an `OptionsParser` pipeline with no sub-command (see
@@ -367,12 +381,8 @@ any input from the user, it just passes the supplied value through in the chain.
 
 -}
 hardcoded : value -> OptionsParser (value -> cliOptions) BuilderState.AnyOptions -> OptionsParser cliOptions BuilderState.AnyOptions
-hardcoded hardcodedValue (OptionsParser ({ decoder } as optionsParser)) =
-    OptionsParser
-        { optionsParser
-            | decoder =
-                \stuff -> resultMap (\fn -> fn hardcodedValue) (decoder stuff)
-        }
+hardcoded hardcodedValue ((OptionsParser { decoder }) as optionsParser) =
+    updateDecoder (\stuff -> resultMap (\fn -> fn hardcodedValue) (decoder stuff)) optionsParser
 
 
 {-| Map the CLI options returned in the `OptionsParser` using the supplied map function.
@@ -421,8 +431,8 @@ map :
     (cliOptions -> mappedCliOptions)
     -> OptionsParser cliOptions builderState
     -> OptionsParser mappedCliOptions builderState
-map mapFunction (OptionsParser ({ decoder } as record)) =
-    OptionsParser { record | decoder = decoder >> Result.map (Tuple.mapSecond mapFunction) }
+map mapFunction ((OptionsParser { decoder }) as optionsParser) =
+    updateDecoder (decoder >> Result.map (Tuple.mapSecond mapFunction)) optionsParser
 
 
 {-| TODO
@@ -468,31 +478,35 @@ with =
 
 withCommon : Option from to optionConstraint -> OptionsParser (to -> cliOptions) startOptionsParserBuilderState -> OptionsParser cliOptions endOptionsParserBuilderState
 withCommon (Option innerOption) ((OptionsParser ({ decoder, usageSpecs } as optionsParser)) as fullOptionsParser) =
-    OptionsParser
-        { optionsParser
-            | decoder =
-                \optionsAndOperands ->
-                    { options = optionsAndOperands.options
-                    , operands = optionsAndOperands.operands
-                    , usageSpecs = optionsAndOperands.usageSpecs
-                    , operandsSoFar = UsageSpec.operandCount usageSpecs
-                    }
-                        |> innerOption.dataGrabber
-                        |> Result.andThen (Cli.Decode.decodeFunction innerOption.decoder)
-                        |> Result.andThen
-                            (\( validationErrors, fromValue ) ->
-                                case
-                                    resultMap (\fn -> fn fromValue)
-                                        (decoder optionsAndOperands)
-                                of
-                                    Ok ( previousValidationErrors, thing ) ->
-                                        Ok ( previousValidationErrors ++ validationErrors, thing )
+    updateDecoder
+        (\optionsAndOperands ->
+            { options = optionsAndOperands.options
+            , operands = optionsAndOperands.operands
+            , usageSpecs = optionsAndOperands.usageSpecs
+            , operandsSoFar = UsageSpec.operandCount usageSpecs
+            }
+                |> innerOption.dataGrabber
+                |> Result.andThen (Cli.Decode.decodeFunction innerOption.decoder)
+                |> Result.andThen
+                    (\( validationErrors, fromValue ) ->
+                        case
+                            resultMap (\fn -> fn fromValue)
+                                (decoder optionsAndOperands)
+                        of
+                            Ok ( previousValidationErrors, thing ) ->
+                                Ok ( previousValidationErrors ++ validationErrors, thing )
 
-                                    value ->
-                                        value
-                            )
-            , usageSpecs = usageSpecs ++ [ innerOption.usageSpec ]
-        }
+                            value ->
+                                value
+                    )
+        )
+        fullOptionsParser
+        |> (\(OptionsParser record) ->
+                OptionsParser
+                    { record
+                        | usageSpecs = usageSpecs ++ [ innerOption.usageSpec ]
+                    }
+           )
 
 
 {-| For chaining on `Cli.Option.optionalPositionalArg`s.
