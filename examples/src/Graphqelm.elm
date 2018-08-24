@@ -4,7 +4,6 @@ import Cli.Option as Option
 import Cli.OptionsParser as OptionsParser exposing (OptionsParser, with)
 import Cli.Program as Program
 import Cli.Validate
-import Json.Decode exposing (..)
 import Ports
 
 
@@ -41,12 +40,6 @@ baseOption =
             (Cli.Validate.regex "^[A-Z][A-Za-z_]*(\\.[A-Z][A-Za-z_]*)*$")
 
 
-dummy : Decoder String
-dummy =
-    -- this is a workaround for an Elm compiler bug
-    Json.Decode.string
-
-
 type alias Flags =
     Program.FlagsIncludingArgv {}
 
@@ -55,10 +48,10 @@ init : Flags -> CliOptions -> Cmd Never
 init flags msg =
     (case msg of
         FromUrl url base outputPath excludeDeprecated headers ->
-            "...fetching from url " ++ url ++ "\noptions: " ++ toString ( url, base, outputPath, excludeDeprecated, headers )
+            "...fetching from url " ++ url ++ "\noptions: " ++ Debug.toString { url = url, base = base, outputPath = outputPath, excludeDeprecated = excludeDeprecated, headers = headers }
 
         FromFile file base outputPath excludeDeprecated ->
-            "...fetching from file " ++ file ++ "\noptions: " ++ toString ( base, outputPath, excludeDeprecated )
+            "...fetching from file " ++ file ++ "\noptions: " ++ Debug.toString ( base, outputPath, excludeDeprecated )
     )
         |> Ports.print
 

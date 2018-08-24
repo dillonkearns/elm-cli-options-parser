@@ -5,7 +5,6 @@ import Cli.OptionsParser as OptionsParser exposing (with)
 import Cli.OptionsParser.BuilderState
 import Cli.Program as Program
 import Cli.Validate
-import Json.Decode exposing (..)
 import Ports
 
 
@@ -29,7 +28,7 @@ validateParser =
             )
         |> with
             (Option.optionalKeywordArg "age"
-                |> Option.validateMapIfPresent String.toInt
+                |> Option.validateMapIfPresent (String.toInt >> maybeToResult)
             )
 
 
@@ -42,18 +41,23 @@ type alias GreetOptions =
 init : Flags -> GreetOptions -> Cmd Never
 init flags { name, maybeAge } =
     maybeAge
-        |> Maybe.map (\age -> name ++ " is " ++ toString age ++ " years old")
+        |> Maybe.map (\age -> name ++ " is " ++ String.fromInt age ++ " years old")
         |> Maybe.withDefault ("Hello " ++ name ++ "!")
         |> Ports.print
 
 
-dummy : Decoder String
-dummy =
-    Json.Decode.string
-
-
 type alias Flags =
     Program.FlagsIncludingArgv {}
+
+
+maybeToResult : Maybe value -> Result String value
+maybeToResult maybe =
+    case maybe of
+        Just value ->
+            Ok value
+
+        Nothing ->
+            Err "Could not convert."
 
 
 main : Program.StatelessProgram Never {}

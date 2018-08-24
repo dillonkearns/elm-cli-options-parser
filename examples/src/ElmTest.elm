@@ -3,7 +3,6 @@ module Main exposing (main)
 import Cli.Option as Option
 import Cli.OptionsParser as OptionsParser exposing (with)
 import Cli.Program as Program
-import Json.Decode exposing (..)
 import Ports
 
 
@@ -40,11 +39,11 @@ program =
             (OptionsParser.build RunTestsRecord
                 |> with
                     (Option.optionalKeywordArg "fuzz"
-                        |> Option.validateMapIfPresent String.toInt
+                        |> Option.validateMapIfPresent (String.toInt >> maybeToResult)
                     )
                 |> with
                     (Option.optionalKeywordArg "seed"
-                        |> Option.validateMapIfPresent String.toInt
+                        |> Option.validateMapIfPresent (String.toInt >> maybeToResult)
                     )
                 |> with (Option.optionalKeywordArg "compiler")
                 |> with (Option.optionalKeywordArg "add-dependencies")
@@ -53,20 +52,14 @@ program =
                     (Option.optionalKeywordArg "report"
                         |> Option.withDefault "console"
                         |> Option.oneOf Console
-                            [ "json" => Json
-                            , "junit" => Junit
-                            , "console" => Console
+                            [ ( "json", Json )
+                            , ( "junit", Junit )
+                            , ( "console", Console )
                             ]
                     )
                 |> OptionsParser.withRestArgs (Option.restArgs "TESTFILES")
                 |> OptionsParser.map RunTests
             )
-
-
-dummy : Decoder String
-dummy =
-    -- this is a workaround for an Elm compiler bug
-    Json.Decode.string
 
 
 init : Flags -> CliOptions -> Cmd Never
@@ -76,13 +69,13 @@ init flags msg =
             "Initializing test suite..."
 
         RunTests options ->
-            [ "Running the following test files: " ++ toString options.testFiles |> Just
-            , "watch: " ++ toString options.watch |> Just
-            , options.maybeFuzz |> Maybe.map (\fuzz -> "fuzz: " ++ toString fuzz)
-            , options.maybeSeed |> Maybe.map (\seed -> "seed: " ++ toString seed)
-            , options.reportFormat |> toString |> Just
-            , options.maybeCompilerPath |> Maybe.map (\compilerPath -> "compiler: " ++ toString compilerPath)
-            , options.maybeDependencies |> Maybe.map (\dependencies -> "dependencies: " ++ toString dependencies)
+            [ "Running the following test files: " ++ Debug.toString options.testFiles |> Just
+            , "watch: " ++ Debug.toString options.watch |> Just
+            , options.maybeFuzz |> Maybe.map (\fuzz -> "fuzz: " ++ Debug.toString fuzz)
+            , options.maybeSeed |> Maybe.map (\seed -> "seed: " ++ String.fromInt seed)
+            , options.reportFormat |> Debug.toString |> Just
+            , options.maybeCompilerPath |> Maybe.map (\compilerPath -> "compiler: " ++ Debug.toString compilerPath)
+            , options.maybeDependencies |> Maybe.map (\dependencies -> "dependencies: " ++ Debug.toString dependencies)
             ]
                 |> List.filterMap identity
                 |> String.join "\n"
@@ -90,13 +83,18 @@ init flags msg =
         |> Ports.print
 
 
-(=>) : a -> b -> ( a, b )
-(=>) =
-    \a b -> ( a, b )
-
-
 type alias Flags =
     Program.FlagsIncludingArgv {}
+
+
+maybeToResult : Maybe value -> Result String value
+maybeToResult maybe =
+    case maybe of
+        Just value ->
+            Ok value
+
+        Nothing ->
+            Err "Could not convert."
 
 
 main : Program.StatelessProgram Never {}

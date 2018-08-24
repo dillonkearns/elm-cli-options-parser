@@ -4,7 +4,6 @@ import Cli.Option as Option
 import Cli.OptionsParser as OptionsParser exposing (with)
 import Cli.Program as Program
 import Http
-import Json.Decode exposing (..)
 import Ports
 
 
@@ -44,11 +43,6 @@ type alias Flags =
     Program.FlagsIncludingArgv {}
 
 
-dummy : Decoder String
-dummy =
-    Json.Decode.string
-
-
 update : CliOptions -> Msg -> Model -> ( Model, Cmd Msg )
 update cliOptions (GotResponse httpResult) model =
     case httpResult of
@@ -56,7 +50,7 @@ update cliOptions (GotResponse httpResult) model =
             ( model, Ports.print httpResponse )
 
         Err error ->
-            ( model, error |> toString |> Ports.print )
+            ( model, error |> Debug.toString |> Ports.print )
 
 
 main : Program.StatefulProgram Model Msg CliOptions {}

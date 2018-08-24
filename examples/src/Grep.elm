@@ -3,7 +3,6 @@ module Main exposing (main)
 import Cli.Option as Option
 import Cli.OptionsParser as OptionsParser
 import Cli.Program as Program
-import Json.Decode exposing (..)
 import Ports
 import Regex exposing (Regex)
 import Stdin
@@ -35,7 +34,8 @@ applyCaseSensitivity : CaseSensitivity -> Regex -> Regex
 applyCaseSensitivity caseSensitivity regex =
     case caseSensitivity of
         IgnoreCase ->
-            Regex.caseInsensitive regex
+            -- Regex.caseInsensitive regex
+            regex
 
         MatchCase ->
             regex
@@ -55,7 +55,17 @@ programConfig =
                     (Option.flag "count")
                 |> OptionsParser.with
                     (Option.requiredPositionalArg "pattern"
-                        |> Option.map Regex.regex
+                        |> Option.validateMap
+                            (Regex.fromString
+                                >> (\maybeRegex ->
+                                        case maybeRegex of
+                                            Just regex ->
+                                                Ok regex
+
+                                            Nothing ->
+                                                Err "Invalid regex."
+                                   )
+                            )
                     )
                 |> OptionsParser.with
                     (Option.flag "ignore-case"
@@ -90,7 +100,7 @@ update cliOptions msg model =
                     Stdin.Closed ->
                         ( model
                         , model.matchCount
-                            |> toString
+                            |> String.fromInt
                             |> Ports.print
                         )
 
@@ -117,11 +127,6 @@ subscriptions model =
 incrementMatchCount : { model | matchCount : Int } -> { model | matchCount : Int }
 incrementMatchCount model =
     { model | matchCount = model.matchCount + 1 }
-
-
-dummy : Decoder String
-dummy =
-    Json.Decode.string
 
 
 main : Program.StatefulProgram Model Msg CliOptions {}

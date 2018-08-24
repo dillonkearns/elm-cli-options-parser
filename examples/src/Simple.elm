@@ -3,7 +3,6 @@ module Main exposing (main)
 import Cli.Option as Option
 import Cli.OptionsParser as OptionsParser
 import Cli.Program as Program
-import Json.Decode exposing (..)
 import Ports
 
 
@@ -29,11 +28,6 @@ init flags { maybeGreeting, name } =
         |> Maybe.withDefault "Hello"
         |> (\greeting -> greeting ++ " " ++ name ++ "!")
         |> Ports.print
-
-
-dummy : Decoder String
-dummy =
-    Json.Decode.string
 
 
 type alias Flags =
