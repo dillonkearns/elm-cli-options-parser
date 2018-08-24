@@ -15,6 +15,7 @@
     "xhr2": "^0.1.4"
   },
   "devDependencies": {
+    "elm": "^0.19.0",
     "elm-test": "^0.19.0-beta4"
   }
 }
