@@ -116,7 +116,9 @@ You pass in the flags like this (see the [`examples`](https://github.com/dillonk
 ```javascript
 #!/usr/bin/env node
 
-let program = require('./elm.js').Main.worker({ argv: process.argv })
+let program = require("./elm.js").Elm.Main.init({
+  flags: { argv: process.argv }
+});
 ```
 
 -}
