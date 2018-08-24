@@ -4,7 +4,6 @@ import Cli.Option as Option
 import Cli.OptionsParser as OptionsParser exposing (with)
 import Cli.OptionsParser.BuilderState as BuilderState
 import Cli.Program as Program
-import Json.Decode exposing (..)
 
 
 type CliOptions
@@ -42,7 +41,7 @@ logOptionsParser =
         |> with (Option.optionalKeywordArg "author")
         |> with
             (Option.optionalKeywordArg "max-count"
-                |> Option.validateMapIfPresent String.toInt
+                |> Option.validateMapIfPresent (String.toInt >> maybeToResult)
             )
         |> with (Option.flag "stat")
         |> OptionsParser.withOptionalPositionalArg
@@ -63,9 +62,9 @@ init flags cliOptions =
         Log options ->
             [ "Logging..." |> Just
             , options.maybeAuthorPattern |> Maybe.map (\authorPattern -> "authorPattern: " ++ authorPattern)
-            , options.maybeMaxCount |> Maybe.map (\maxCount -> "maxCount: " ++ toString maxCount)
-            , "stat: " ++ toString options.statisticsMode |> Just
-            , options.maybeRevisionRange |> Maybe.map (\revisionRange -> "revisionRange: " ++ toString revisionRange)
+            , options.maybeMaxCount |> Maybe.map (\maxCount -> "maxCount: " ++ String.fromInt maxCount)
+            , "stat: " ++ Debug.toString options.statisticsMode |> Just
+            , options.maybeRevisionRange |> Maybe.map (\revisionRange -> "revisionRange: " ++ Debug.toString revisionRange)
             ]
                 |> List.filterMap identity
                 |> String.join "\n"
@@ -73,10 +72,14 @@ init flags cliOptions =
         |> print
 
 
-dummy : Decoder String
-dummy =
-    -- this is a workaround for an Elm compiler bug
-    Json.Decode.string
+maybeToResult : Maybe value -> Result String value
+maybeToResult maybe =
+    case maybe of
+        Just value ->
+            Ok value
+
+        Nothing ->
+            Err "Could not convert."
 
 
 type alias Flags =
