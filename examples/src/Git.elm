@@ -42,13 +42,23 @@ logOptionsParser =
         |> with (Option.optionalKeywordArg "author")
         |> with
             (Option.optionalKeywordArg "max-count"
-                |> Option.validateMapIfPresent String.toInt
+                |> Option.validateMapIfPresent (String.toInt >> maybeToResult)
             )
         |> with (Option.flag "stat")
         |> OptionsParser.withOptionalPositionalArg
             (Option.optionalPositionalArg "revision range")
         |> OptionsParser.withRestArgs
             (Option.restArgs "rest args")
+
+
+maybeToResult : Maybe value -> Result String value
+maybeToResult maybe =
+    case maybe of
+        Just value ->
+            Ok value
+
+        Nothing ->
+            Err "Could not convert."
 
 
 init : Flags -> CliOptions -> Cmd Never
@@ -63,9 +73,9 @@ init flags cliOptions =
         Log options ->
             [ "Logging..." |> Just
             , options.maybeAuthorPattern |> Maybe.map (\authorPattern -> "authorPattern: " ++ authorPattern)
-            , options.maybeMaxCount |> Maybe.map (\maxCount -> "maxCount: " ++ toString maxCount)
-            , "stat: " ++ toString options.statisticsMode |> Just
-            , options.maybeRevisionRange |> Maybe.map (\revisionRange -> "revisionRange: " ++ toString revisionRange)
+            , options.maybeMaxCount |> Maybe.map (\maxCount -> "maxCount: " ++ String.fromInt maxCount)
+            , "stat: " ++ Debug.toString options.statisticsMode |> Just
+            , options.maybeRevisionRange |> Maybe.map (\revisionRange -> "revisionRange: " ++ revisionRange)
             ]
                 |> List.filterMap identity
                 |> String.join "\n"
