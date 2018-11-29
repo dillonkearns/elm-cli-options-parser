@@ -30,7 +30,7 @@ type ReportFormat
 
 program : Program.Config CliOptions
 program =
-    Program.config { version = "1.2.3" }
+    Program.config
         |> Program.add
             (OptionsParser.buildSubCommand "init" Init
                 |> OptionsParser.end

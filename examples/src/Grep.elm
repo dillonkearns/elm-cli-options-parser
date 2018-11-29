@@ -48,7 +48,7 @@ type CaseSensitivity
 
 programConfig : Program.Config CliOptions
 programConfig =
-    Program.config { version = "1.2.3" }
+    Program.config
         |> Program.add
             (OptionsParser.build buildCliOptions
                 |> OptionsParser.with

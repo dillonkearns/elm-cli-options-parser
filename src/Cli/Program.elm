@@ -21,7 +21,7 @@ using `stateless` or a `Cli.Program.StatefulProgram` using `stateful`.
 
     programConfig : Program.Config GreetOptions
     programConfig =
-        Program.config { version = "1.2.3" }
+        Program.config
             |> Program.add
                 (OptionsParser.build GreetOptions
                     |> OptionsParser.with (Option.requiredKeywordArg "name")
@@ -81,18 +81,16 @@ Command-Line Interface, as well as its meta-data such as version number.
 type Config msg
     = Config
         { optionsParsers : List (OptionsParser msg BuilderState.NoMoreOptions)
-        , version : String
         }
 
 
 {-| Create a `Config` with no `OptionsParser`s. Use `Cli.Program.add` to add
 `OptionsParser`s.
 -}
-config : { version : String } -> Config decodesTo
-config { version } =
+config : Config decodesTo
+config =
     Config
-        { version = version
-        , optionsParsers = []
+        { optionsParsers = []
         }
 
 
@@ -117,7 +115,7 @@ You pass in the flags like this (see the [`examples`](https://github.com/dillonk
 #!/usr/bin/env node
 
 let program = require("./elm.js").Elm.Main.init({
-  flags: { argv: process.argv }
+  flags: { argv: process.argv, version: "1.2.3" }
 });
 ```
 
@@ -125,6 +123,7 @@ let program = require("./elm.js").Elm.Main.init({
 type alias FlagsIncludingArgv flagsRecord =
     { flagsRecord
         | argv : List String
+        , version : String
     }
 
 
@@ -203,11 +202,11 @@ init :
     ProgramOptions msg options flags
     -> FlagsIncludingArgv flags
     -> ( (), Cmd msg )
-init options ({ argv } as flags) =
+init options ({ argv, version } as flags) =
     let
         matchResult : RunResult options
         matchResult =
-            run options.config argv
+            run options.config argv version
 
         cmd =
             case matchResult of
@@ -238,7 +237,7 @@ statefulInit options flags =
     let
         matchResult : RunResult cliOptions
         matchResult =
-            run options.config flags.argv
+            run options.config flags.argv flags.version
 
         cmd =
             case matchResult of
@@ -260,8 +259,8 @@ statefulInit options flags =
     cmd
 
 
-run : Config msg -> List String -> RunResult msg
-run (Config { optionsParsers, version }) argv =
+run : Config msg -> List String -> String -> RunResult msg
+run (Config { optionsParsers }) argv versionString =
     let
         programName =
             case argv of
@@ -327,7 +326,7 @@ run (Config { optionsParsers, version }) argv =
                 |> SystemMessage Cli.ExitStatus.Success
 
         Cli.LowLevel.ShowVersion ->
-            programName
-                ++ " version "
-                ++ version
+            -- programName
+            --     ++ " version "
+            versionString
                 |> SystemMessage Cli.ExitStatus.Success

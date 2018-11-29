@@ -14,7 +14,7 @@ type CliOptions
 
 program : Program.Config CliOptions
 program =
-    Program.config { version = "1.2.3" }
+    Program.config
         |> Program.add
             (OptionsParser.build FromUrl
                 |> with (Option.requiredPositionalArg "url")

@@ -10,7 +10,7 @@ import Ports
 
 programConfig : Program.Config GreetOptions
 programConfig =
-    Program.config { version = "1.2.3" }
+    Program.config
         |> Program.add validateParser
 
 

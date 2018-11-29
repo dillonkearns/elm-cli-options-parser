@@ -49,7 +49,7 @@ predicate message predicateFunction =
 
     programConfig : Program.Config String
     programConfig =
-        Program.config { version = "1.2.3" }
+        Program.config
             |> Program.add
                 (OptionsParser.build identity
                     |> OptionsParser.with

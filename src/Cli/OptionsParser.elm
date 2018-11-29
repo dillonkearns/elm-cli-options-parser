@@ -53,7 +53,7 @@ arguments.
 
     programConfig : Program.Config GreetOptions
     programConfig =
-        Program.config { version = "1.2.3" }
+        Program.config
             |> Program.add
                 (OptionsParser.build GreetOptions
                     |> with (Option.requiredKeywordArg "name")
@@ -371,7 +371,7 @@ any input from the user, it just passes the supplied value through in the chain.
 
     programConfig : Program.Config GreetOptions
     programConfig =
-        Program.config { version = "1.2.3" }
+        Program.config
             |> Program.add
                 (OptionsParser.build GreetOptions
                     |> OptionsParser.with (Option.requiredKeywordArg "name")
@@ -412,7 +412,7 @@ a single union type.
 
     programConfig : Program.Config CliOptions
     programConfig =
-        Program.config { version = "1.2.3" }
+        Program.config
             |> Program.add
                 (OptionsParser.buildSubCommand "hello" HelloOptions
                     |> OptionsParser.with (Option.requiredKeywordArg "name")

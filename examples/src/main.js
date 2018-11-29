@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 let program = require("./elm.js").Elm.Main.init({
-  flags: { argv: process.argv }
+  flags: { argv: process.argv, version: "1.2.3" }
 });
 XMLHttpRequest = require("xhr2");
 

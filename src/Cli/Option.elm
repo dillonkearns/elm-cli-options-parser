@@ -314,7 +314,7 @@ raw `String` that comes from the command line into a `Regex`, as in this code sn
 
     programConfig : Program.Config CliOptions
     programConfig =
-        Program.config { version = "1.2.3" }
+        Program.config
             |> Program.add
                 (OptionsParser.build buildCliOptions
                     |> OptionsParser.with
@@ -354,7 +354,7 @@ updateDecoder mappedDecoder (Option ({ dataGrabber, usageSpec, decoder } as opti
 
     programConfig : Program.Config CliOptions
     programConfig =
-        Program.config { version = "1.2.3" }
+        Program.config
             |> Program.add
                 (OptionsParser.build CliOptions
                     |> OptionsParser.with
@@ -398,7 +398,7 @@ type alias MutuallyExclusiveValue union =
 
     program : Program.Config CliOptions
     program =
-        Program.config { version = "1.2.3" }
+        Program.config
             |> Program.add
                 (OptionsParser.build CliOptions
                     |> with
