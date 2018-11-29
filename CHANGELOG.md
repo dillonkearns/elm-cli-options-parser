@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [3.0.0] - 2018-11-29
+
+### Fixed
+
+- Rename `version` flag to `versionMessage` to avoid a compiler bug.
+
 ## [2.0.0] - 2018-11-29
 
 ### Changes

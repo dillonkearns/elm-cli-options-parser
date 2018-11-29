@@ -115,7 +115,7 @@ You pass in the flags like this (see the [`examples`](https://github.com/dillonk
 #!/usr/bin/env node
 
 let program = require("./elm.js").Elm.Main.init({
-  flags: { argv: process.argv, version: "1.2.3" }
+  flags: { argv: process.argv, versionMessage: "1.2.3" }
 });
 ```
 
@@ -123,7 +123,7 @@ let program = require("./elm.js").Elm.Main.init({
 type alias FlagsIncludingArgv flagsRecord =
     { flagsRecord
         | argv : List String
-        , version : String
+        , versionMessage : String
     }
 
 
@@ -202,11 +202,11 @@ init :
     ProgramOptions msg options flags
     -> FlagsIncludingArgv flags
     -> ( (), Cmd msg )
-init options ({ argv, version } as flags) =
+init options flags =
     let
         matchResult : RunResult options
         matchResult =
-            run options.config argv version
+            run options.config flags.argv flags.versionMessage
 
         cmd =
             case matchResult of
@@ -237,7 +237,7 @@ statefulInit options flags =
     let
         matchResult : RunResult cliOptions
         matchResult =
-            run options.config flags.argv flags.version
+            run options.config flags.argv flags.versionMessage
 
         cmd =
             case matchResult of
@@ -260,7 +260,7 @@ statefulInit options flags =
 
 
 run : Config msg -> List String -> String -> RunResult msg
-run (Config { optionsParsers }) argv versionString =
+run (Config { optionsParsers }) argv versionMessage =
     let
         programName =
             case argv of
@@ -326,7 +326,5 @@ run (Config { optionsParsers }) argv versionString =
                 |> SystemMessage Cli.ExitStatus.Success
 
         Cli.LowLevel.ShowVersion ->
-            -- programName
-            --     ++ " version "
-            versionString
+            versionMessage
                 |> SystemMessage Cli.ExitStatus.Success

@@ -2,7 +2,7 @@
 const readline = require('readline')
 
 const program = require('./grep.elm.js').Elm.Main.init({
-  flags: {argv: process.argv, version: '1.2.3'}
+  flags: {argv: process.argv, versionMessage: '1.2.3'}
 })
 
 program.ports.print.subscribe(message => console.log(message))
