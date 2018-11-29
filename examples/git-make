@@ -1,2 +1,2 @@
 # /bin/bash
-elm make src/Git.elm --output src/elm.js --optimize > /dev/null
+elm make src/Git.elm --output src/elm.js > /dev/null
