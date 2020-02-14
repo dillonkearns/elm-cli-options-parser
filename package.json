@@ -11,7 +11,7 @@
   "author": "Dillon Kearns",
   "license": "ISC",
   "dependencies": {
-    "npm": "^5.8.0",
+    "npm": "^6.13.4",
     "xhr2": "^0.1.4"
   },
   "devDependencies": {
