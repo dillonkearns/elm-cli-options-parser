@@ -1,20 +1,16 @@
-sudo: false
+language: elm
 
-language: node_js
-node_js: node
+elm: latest-0.19.0
 
-cache:
-  directories:
-    - node_modules
-
-os:
-  - linux
-
-env: ELM_VERSION=0.19.0
-
-install:
-  - npm install
+elm-test: latest-0.19.0
 
 script:
-  - npm test
-  - npm run approve
+  elm-test
+  elm make --docs=documentation.json
+  cd examples && elm make src/ElmTest.elm
+  cd examples && elm make src/Git.elm
+  cd examples && elm make src/Graphqelm.elm
+  cd examples && elm make src/Simple.elm
+  cd examples && elm make src/Validation.elm
+  cd examples && elm make src/Curl.elm
+  cd examples && elm make src/Grep.elm
