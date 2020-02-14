@@ -1,4 +1,4 @@
-module Main exposing (main)
+module Grep exposing (main)
 
 import Cli.Option as Option
 import Cli.OptionsParser as OptionsParser

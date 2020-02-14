@@ -6,12 +6,14 @@ elm-test: latest-0.19.0
 elm-format: latest-0.19.0
 
 script:
-  elm-test
-  elm make --docs=documentation.json
-  cd examples && elm make src/ElmTest.elm
-  cd examples && elm make src/Git.elm
-  cd examples && elm make src/Graphqelm.elm
-  cd examples && elm make src/Simple.elm
-  cd examples && elm make src/Validation.elm
-  cd examples && elm make src/Curl.elm
-  cd examples && elm make src/Grep.elm
+  - elm-test
+  - elm make --docs=documentation.json
+	- cd examples && elm make src/ElmTest.elm src/Git.elm src/Graphqelm.elm src/Simple.elm src/Validation.elm src/Curl.elm src/Grep.elm --output ./elm.js
+  - ./examples/elm-test
+  - ./examples/git
+  - ./examples/graphqelm
+  - ./examples/simple
+  - ./examples/validation
+  - ./examples/curl
+  - ./examples/grep
+

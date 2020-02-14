@@ -1,1 +1,3 @@
-src/main.js
+#!/usr/bin/env node
+
+require('./create-cli')('Git');
