@@ -5,6 +5,9 @@ elm: latest-0.19.0
 elm-test: latest-0.19.0
 elm-format: latest-0.19.0
 
+install:
+  - (cd examples && npm install)
+
 script:
   - elm-test
   - elm make --docs=documentation.json

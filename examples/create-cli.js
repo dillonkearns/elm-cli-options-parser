@@ -1,12 +1,16 @@
 const { Elm } = require('./elm.js');
 const readline = require('readline');
 
+global.XMLHttpRequest = require("xhr2");
+
 module.exports = (name, opts) => {
   const program = Elm[name].init({
     flags: { argv: process.argv, versionMessage: "1.2.3" }
   });
 
-  program.ports.print.subscribe(message => console.log(message));
+  program.ports.print.subscribe(message => {
+    console.log(message)
+  });
   program.ports.printAndExitFailure.subscribe(message => {
     console.log(message);
     process.exit(1);
