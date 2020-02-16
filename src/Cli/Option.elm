@@ -11,7 +11,7 @@ module Cli.Option exposing
 
 {-| Here is the terminology used for building up Command-Line parsers with this library.
 
-<img src="https://raw.githubusercontent.com/dillonkearns/elm-cli-options-parser/master/terminology.png" alt="Terminology Legend" width="600px"/>
+![Terminology Legend](https://raw.githubusercontent.com/dillonkearns/elm-cli-options-parser/master/terminology.png)
 
 See the README and the [`examples`](https://github.com/dillonkearns/elm-cli-options-parser/tree/master/examples/src) folder for more in-depth examples of building
 and using `Cli.Option`s.
