@@ -10,10 +10,10 @@ script:
   - elm make --docs=documentation.json
   - (cd examples && elm make src/ElmTest.elm src/Git.elm src/Graphqelm.elm src/Simple.elm src/Validation.elm src/Curl.elm src/Grep.elm --output ./elm.js)
   - ./examples/elm-test
-  - ./examples/git
-  - ./examples/graphqelm
-  - ./examples/simple
-  - ./examples/validation
-  - ./examples/curl
-  - ./examples/grep
+  - ./examples/git init
+  - ./examples/graphqelm https://example.com
+  - ./examples/simple --name Steve
+  - ./examples/validation --name Steve
+  - ./examples/curl https://example.com
+  - echo "a\nb\nc" | ./examples/grep  b
 
