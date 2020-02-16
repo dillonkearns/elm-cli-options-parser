@@ -4,9 +4,11 @@ module Cli.OptionsParser.BuilderState exposing (AnyOptions, NoBeginningOptions, 
 For example, if you were to build an OptionsParser that had optional positional
 arguments after required positional arguments, it would be amgiguous.
 
+```bash
 greet <greeting1> [name1][name2] <greeting2> [farewell]
 
 greet Hi Hello Goodbye
+```
 
 Should `"Goodbye"` be set as `[name1]` or `[farewell]`? You could certainly come
 up with some rules, but they're not obvious, and you'd have to think really hard!
