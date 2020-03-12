@@ -138,7 +138,7 @@ terms can vary across different standards. For example, posix uses the term
 `option` for what this library calls a `keyword argument`. I chose these terms
 because I found them to be the most intuitive and unambiguous.
 
-<img src="https://raw.githubusercontent.com/dillonkearns/elm-cli-options-parser/master/terminology.png" alt="Terminology Legend" width="600px"/>
+![Terminology Legend](https://raw.githubusercontent.com/dillonkearns/elm-cli-options-parser/master/terminology.png)
 
 ## Some Inspiration for this package
 
