@@ -4,6 +4,8 @@
     "build-examples": "cd examples && elm make src/ElmTest.elm src/Git.elm src/Graphqelm.elm src/Simple.elm src/Validation.elm src/Curl.elm src/Grep.elm --output ./elm.js"
   },
   "devDependencies": {
+    "elm": "latest-0.19.0",
+    "elm-test": "latest-0.19.0",
     "xhr2": "^0.2.0"
   }
 }
