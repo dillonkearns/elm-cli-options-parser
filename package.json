@@ -1,0 +1,9 @@
+{
+  "scripts": {
+    "test": "elm make && elm-test",
+    "build-examples": "cd examples && elm make src/ElmTest.elm src/Git.elm src/Graphqelm.elm src/Simple.elm src/Validation.elm src/Curl.elm src/Grep.elm --output ./elm.js"
+  },
+  "devDependencies": {
+    "xhr2": "^0.2.0"
+  }
+}
