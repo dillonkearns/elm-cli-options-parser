@@ -1,2 +1,3 @@
-# /bin/bash
-elm-make src/Graphqelm.elm --output src/elm.js > /dev/null && ./src/main.js $@
+#!/usr/bin/env node
+
+require('./create-cli')('Graphqelm');

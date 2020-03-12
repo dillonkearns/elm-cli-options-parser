@@ -1,20 +1,8 @@
-sudo: false
-
 language: node_js
+
 node_js: node
 
-cache:
-  directories:
-    - node_modules
-
-os:
-  - linux
-
-env: ELM_VERSION=0.19.0
-
-install:
-  - npm install
-
 script:
-  - npm test
-  - npm run approve
+  - npm run test
+  - ./approve.sh
+

@@ -1,2 +1,0 @@
-# /bin/bash
-elm make src/Git.elm --output src/elm.js > /dev/null
