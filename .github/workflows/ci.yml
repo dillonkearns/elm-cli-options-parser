@@ -133,6 +133,6 @@ jobs:
           key: ${{ runner.os }}-elm--home-${{ hashFiles('**/elm.json') }}
       - run: npm ci
       - run: npx --no-install elm make --output /dev/null && cd examples && npx --no-install elm make src/*.elm --output /dev/null && cd ..
-      - uses: dillonkearns/elm-actions@master
+      - uses: dillonkearns/elm-publish-action@master
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
