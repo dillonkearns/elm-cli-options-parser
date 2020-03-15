@@ -2,7 +2,11 @@ name: Elm Actions
 
 on:
   push:
-    branches: [master]
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
 
 jobs:
   test:
@@ -84,6 +88,7 @@ jobs:
         run: ./node_modules/.bin/elm make --docs docs.json
 
   publish-elm-package:
+    if: ${{ github.ref == 'master' }}
     needs: [test, lint, validate-package]
     runs-on: ubuntu-latest
 
