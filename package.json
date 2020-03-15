@@ -5,6 +5,7 @@
   },
   "devDependencies": {
     "elm": "latest-0.19.0",
+    "elm-format": "^0.8.2",
     "elm-test": "latest-0.19.0",
     "xhr2": "^0.2.0"
   }
