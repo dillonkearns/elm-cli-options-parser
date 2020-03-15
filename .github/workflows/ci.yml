@@ -30,7 +30,7 @@ jobs:
           path: ~/.elm
           key: ${{ runner.os }}-elm_home-${{ hashFiles('**/elm.json') }}
       - run: npm ci
-      - run: elm make --output /dev/null && elm make src/*.elm --output /dev/null
+      - run: npx --no-install elm make --output /dev/null && npx --no-install elm make src/*.elm --output /dev/null
       - name: elm-test
         run: npx --no-install elm-test
 
@@ -55,7 +55,7 @@ jobs:
           path: ~/.elm
           key: ${{ runner.os }}-elm_home-${{ hashFiles('**/elm.json') }}
       - run: npm ci
-      - run: elm make --output /dev/null && elm make src/*.elm --output /dev/null
+      - run: npx --no-install elm make --output /dev/null && npx --no-install elm make src/*.elm --output /dev/null
       - name: elm-format
         run: npx --no-install elm-format --validate
 
@@ -80,7 +80,7 @@ jobs:
           path: ~/.elm
           key: ${{ runner.os }}-elm_home-${{ hashFiles('**/elm.json') }}
       - run: npm ci
-      - run: elm make --output /dev/null && elm make src/*.elm --output /dev/null
+      - run: npx --no-install elm make --output /dev/null && npx --no-install elm make src/*.elm --output /dev/null
       - name: Check examples
         run: ./approve.sh
 
@@ -105,7 +105,7 @@ jobs:
           path: ~/.elm
           key: ${{ runner.os }}-elm_home-${{ hashFiles('**/elm.json') }}
       - run: npm ci
-      - run: elm make --output /dev/null && elm make src/*.elm --output /dev/null
+      - run: npx --no-install elm make --output /dev/null && npx --no-install elm make src/*.elm --output /dev/null
       - name: Build elm docs
         run: ./node_modules/.bin/elm make --docs docs.json
 
@@ -132,7 +132,7 @@ jobs:
           path: ~/.elm
           key: ${{ runner.os }}-elm_home-${{ hashFiles('**/elm.json') }}
       - run: npm ci
-      - run: elm make --output /dev/null && elm make src/*.elm --output /dev/null
+      - run: npx --no-install elm make --output /dev/null && npx --no-install elm make src/*.elm --output /dev/null
       - uses: dillonkearns/elm-actions@master
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
