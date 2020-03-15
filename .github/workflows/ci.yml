@@ -28,7 +28,7 @@ jobs:
         id: elm-cache
         with:
           path: ~/.elm
-          key: ${{ runner.os }}-elm_home-${{ hashFiles('**/elm.json') }}
+          key: ${{ runner.os }}-elm--home-${{ hashFiles('**/elm.json') }}
       - run: npm ci
       - run: npx --no-install elm make --output /dev/null && npx --no-install elm make src/*.elm --output /dev/null
       - name: elm-test
@@ -53,7 +53,7 @@ jobs:
         id: elm-cache
         with:
           path: ~/.elm
-          key: ${{ runner.os }}-elm_home-${{ hashFiles('**/elm.json') }}
+          key: ${{ runner.os }}-elm--home-${{ hashFiles('**/elm.json') }}
       - run: npm ci
       - run: npx --no-install elm make --output /dev/null && npx --no-install elm make src/*.elm --output /dev/null
       - name: elm-format
@@ -78,7 +78,7 @@ jobs:
         id: elm-cache
         with:
           path: ~/.elm
-          key: ${{ runner.os }}-elm_home-${{ hashFiles('**/elm.json') }}
+          key: ${{ runner.os }}-elm--home-${{ hashFiles('**/elm.json') }}
       - run: npm ci
       - run: npx --no-install elm make --output /dev/null && npx --no-install elm make src/*.elm --output /dev/null
       - name: Check examples
@@ -103,7 +103,7 @@ jobs:
         id: elm-cache
         with:
           path: ~/.elm
-          key: ${{ runner.os }}-elm_home-${{ hashFiles('**/elm.json') }}
+          key: ${{ runner.os }}-elm--home-${{ hashFiles('**/elm.json') }}
       - run: npm ci
       - run: npx --no-install elm make --output /dev/null && npx --no-install elm make src/*.elm --output /dev/null
       - name: Build elm docs
@@ -130,7 +130,7 @@ jobs:
         id: elm-cache
         with:
           path: ~/.elm
-          key: ${{ runner.os }}-elm_home-${{ hashFiles('**/elm.json') }}
+          key: ${{ runner.os }}-elm--home-${{ hashFiles('**/elm.json') }}
       - run: npm ci
       - run: npx --no-install elm make --output /dev/null && npx --no-install elm make src/*.elm --output /dev/null
       - uses: dillonkearns/elm-actions@master
