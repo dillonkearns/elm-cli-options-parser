@@ -76,7 +76,6 @@ Example:
                     |> Option.validateMapIfPresent String.toInt
                 )
 
-
     {-
        $ ./validation --name Mozart --age 262
        Mozart is 262 years old

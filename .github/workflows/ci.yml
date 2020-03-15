@@ -24,7 +24,13 @@ jobs:
           key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
           restore-keys: |
             ${{ runner.os }}-node-
+      - uses: actions/cache@v1
+        id: elm-cache
+        with:
+          path: ~/.elm
+          key: ${{ runner.os }}-elm--home-${{ hashFiles('**/elm.json') }}
       - run: npm ci
+      - run: npx --no-install elm make --output /dev/null && cd examples && npx --no-install elm make src/*.elm --output /dev/null && cd ..
       - name: elm-test
         run: npx --no-install elm-test
 
@@ -43,11 +49,15 @@ jobs:
           key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
           restore-keys: |
             ${{ runner.os }}-node-
+      - uses: actions/cache@v1
+        id: elm-cache
+        with:
+          path: ~/.elm
+          key: ${{ runner.os }}-elm--home-${{ hashFiles('**/elm.json') }}
       - run: npm ci
+      - run: npx --no-install elm make --output /dev/null && cd examples && npx --no-install elm make src/*.elm --output /dev/null && cd ..
       - name: elm-format
         run: npx --no-install elm-format --validate
-      - name: Build elm docs
-        run: ./node_modules/.bin/elm make --docs docs.json
 
   approve-examples:
     runs-on: ubuntu-latest
@@ -64,7 +74,13 @@ jobs:
           key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
           restore-keys: |
             ${{ runner.os }}-node-
+      - uses: actions/cache@v1
+        id: elm-cache
+        with:
+          path: ~/.elm
+          key: ${{ runner.os }}-elm--home-${{ hashFiles('**/elm.json') }}
       - run: npm ci
+      - run: npx --no-install elm make --output /dev/null && cd examples && npx --no-install elm make src/*.elm --output /dev/null && cd ..
       - name: Check examples
         run: ./approve.sh
 
@@ -83,7 +99,13 @@ jobs:
           key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
           restore-keys: |
             ${{ runner.os }}-node-
+      - uses: actions/cache@v1
+        id: elm-cache
+        with:
+          path: ~/.elm
+          key: ${{ runner.os }}-elm--home-${{ hashFiles('**/elm.json') }}
       - run: npm ci
+      - run: npx --no-install elm make --output /dev/null && cd examples && npx --no-install elm make src/*.elm --output /dev/null && cd ..
       - name: Build elm docs
         run: ./node_modules/.bin/elm make --docs docs.json
 
@@ -104,7 +126,13 @@ jobs:
           key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
           restore-keys: |
             ${{ runner.os }}-node-
+      - uses: actions/cache@v1
+        id: elm-cache
+        with:
+          path: ~/.elm
+          key: ${{ runner.os }}-elm--home-${{ hashFiles('**/elm.json') }}
       - run: npm ci
-      - uses: dillonkearns/elm-actions@master
+      - run: npx --no-install elm make --output /dev/null && cd examples && npx --no-install elm make src/*.elm --output /dev/null && cd ..
+      - uses: dillonkearns/elm-publish-action@master
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
