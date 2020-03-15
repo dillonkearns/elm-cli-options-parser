@@ -110,7 +110,6 @@ jobs:
         run: ./node_modules/.bin/elm make --docs docs.json
 
   publish-elm-package:
-    if: ${{ github.ref == 'refs/heads/master' }}
     needs: [test, lint, validate-package]
     runs-on: ubuntu-latest
 
