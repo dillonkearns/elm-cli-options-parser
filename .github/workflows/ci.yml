@@ -30,6 +30,7 @@ jobs:
           path: ~/.elm
           key: ${{ runner.os }}-elm_home-${{ hashFiles('**/elm.json') }}
       - run: npm ci
+      - run: elm make --output /dev/null && elm make src/*.elm --output /dev/null
       - name: elm-test
         run: npx --no-install elm-test
 
@@ -48,7 +49,13 @@ jobs:
           key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
           restore-keys: |
             ${{ runner.os }}-node-
+      - uses: actions/cache@v1
+        id: elm-cache
+        with:
+          path: ~/.elm
+          key: ${{ runner.os }}-elm_home-${{ hashFiles('**/elm.json') }}
       - run: npm ci
+      - run: elm make --output /dev/null && elm make src/*.elm --output /dev/null
       - name: elm-format
         run: npx --no-install elm-format --validate
 
@@ -73,6 +80,7 @@ jobs:
           path: ~/.elm
           key: ${{ runner.os }}-elm_home-${{ hashFiles('**/elm.json') }}
       - run: npm ci
+      - run: elm make --output /dev/null && elm make src/*.elm --output /dev/null
       - name: Check examples
         run: ./approve.sh
 
@@ -97,6 +105,7 @@ jobs:
           path: ~/.elm
           key: ${{ runner.os }}-elm_home-${{ hashFiles('**/elm.json') }}
       - run: npm ci
+      - run: elm make --output /dev/null && elm make src/*.elm --output /dev/null
       - name: Build elm docs
         run: ./node_modules/.bin/elm make --docs docs.json
 
@@ -123,6 +132,7 @@ jobs:
           path: ~/.elm
           key: ${{ runner.os }}-elm_home-${{ hashFiles('**/elm.json') }}
       - run: npm ci
+      - run: elm make --output /dev/null && elm make src/*.elm --output /dev/null
       - uses: dillonkearns/elm-actions@master
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
