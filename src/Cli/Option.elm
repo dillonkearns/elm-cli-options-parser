@@ -1,12 +1,12 @@
 module Cli.Option exposing
-    ( optionalKeywordArg, requiredKeywordArg, keywordArgList
+    ( requiredPositionalArg
+    , optionalKeywordArg, requiredKeywordArg, keywordArgList
     , flag
     , optionalPositionalArg, restArgs
     , oneOf
     , validate, validateIfPresent, validateMap, validateMapIfPresent
     , map, mapFlag, withDefault
     , Option(..), BeginningOption, OptionalPositionalArgOption, RestArgsOption
-    , requiredPositionalArg
     )
 
 {-| Here is the terminology used for building up Command-Line parsers with this library.
@@ -18,6 +18,8 @@ and using `Cli.Option`s.
 
 
 ## Positional Arguments
+
+@docs requiredPositionalArg
 
 
 ## Keyword Arguments
