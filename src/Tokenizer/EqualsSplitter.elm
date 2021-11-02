@@ -24,5 +24,19 @@ split string =
                         |> String.fromList
                         |> Option
 
+        '-' :: optionName ->
+            case String.split "=" (optionName |> String.fromList) of
+                [ singleOptionName ] ->
+                    singleOptionName
+                        |> Option
+
+                firstOptionName :: splitAfterOptionName ->
+                    KeywordArg { name = firstOptionName, value = String.concat splitAfterOptionName }
+
+                _ ->
+                    optionName
+                        |> String.fromList
+                        |> Option
+
         _ ->
             NotOption
