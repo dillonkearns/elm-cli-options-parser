@@ -33,12 +33,15 @@ using `stateless` or a `Cli.Program.StatefulProgram` using `stateful`.
         , maybeGreeting : Maybe String
         }
 
-    init : GreetOptions -> Cmd Never
-    init { name, maybeGreeting } =
+    init : Flags -> GreetOptions -> Cmd Never
+    init flags { name, maybeGreeting } =
         maybeGreeting
             |> Maybe.withDefault "Hello"
             |> (\greeting -> greeting ++ " " ++ name ++ "!")
             |> Ports.print
+
+    type alias Flags =
+        Program.FlagsIncludingArgv {}
 
     main : Program.StatelessProgram Never
     main =
