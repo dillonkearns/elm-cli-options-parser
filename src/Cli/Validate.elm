@@ -1,9 +1,9 @@
-module Cli.Validate exposing (predicate, ValidationResult(..), regex)
+module Cli.Validate exposing (predicate, ValidationResult(..), regex, regexWithExpectation)
 
 {-| This module contains helper functions for performing validations (see the
 "validate..." functions in `Cli.Option`).
 
-@docs predicate, ValidationResult, regex
+@docs predicate, ValidationResult, regex, regexWithExpectation
 
 -}
 
@@ -83,3 +83,40 @@ regex regexPattern checkString =
 
             else
                 Invalid ("Must be of form /" ++ regexPattern ++ "/")
+
+{-| A helper for regex validations with an additional expectation message.
+
+    programConfig : Program.Config String
+    programConfig =
+        Program.config
+            |> Program.add
+                (OptionsParser.build identity
+                    |> OptionsParser.with
+                        (Option.requiredKeywordArg "name"
+                            |> Option.validate
+                                (Cli.Validate.regexWithExpectation "I expected this to be" "^[A-Z][A-Za-z_]*")
+                        )
+                )
+
+If the validation fails, the user gets output like this:
+
+```shell
+$ ./greet --name john
+Validation errors:
+
+`name` failed a validation. I expected this to be matching "^[A-Z][A-Za-z_]*" but got 'john'
+Value was:
+"john"
+```
+
+-}
+regexWithExpectation : String -> String -> String -> ValidationResult
+regexWithExpectation expectation regexPattern checkString =
+    case regex regexPattern checkString of
+        Valid ->
+            Valid
+
+        Invalid _ ->
+            Invalid (expectation ++ " matching \"" ++ regexPattern ++ "\", but got '" ++ checkString ++ "'")
+
+
