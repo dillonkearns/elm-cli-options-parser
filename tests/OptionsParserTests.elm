@@ -280,6 +280,32 @@ all =
                             |> OptionsParser.end
                         )
                         [ { name = "name", invalidReason = "Must be 3 characters long" } ]
+            , test "fails with expectation when regexWithExpectation validation function fails" <|
+                \() ->
+                    expectValidationErrors [ "--scalar-codecs", "src/ModuleName" ]
+                        (OptionsParser.build identity
+                            |> OptionsParser.with
+                                (Option.optionalKeywordArg "scalar-codecs"
+                                    |> Option.validateIfPresent
+                                        (\moduleName ->
+                                            Validate.regexWithExpectation "I expected an Elm module name" "^[A-Z][A-Za-z_]*(\\.[A-Z][A-Za-z_]*)*$" moduleName)
+                                )
+                            |> OptionsParser.end
+                        )
+                        [ { name = "scalar-codecs", invalidReason = "I expected an Elm module name matching \"^[A-Z][A-Za-z_]*(\\.[A-Z][A-Za-z_]*)*$\", but got 'src/ModuleName'" } ]
+            , test "succeeds when regexWithExpectation validation function passes" <|
+                \() ->
+                    expectMatch [ "--scalar-codecs", "ModuleName" ]
+                        (OptionsParser.build identity
+                            |> OptionsParser.with
+                                (Option.optionalKeywordArg "scalar-codecs"
+                                    |> Option.validateIfPresent
+                                        (\moduleName ->
+                                            Validate.regexWithExpectation "I expected an Elm module name" "^[A-Z][A-Za-z_]*(\\.[A-Z][A-Za-z_]*)*$" moduleName)
+                                )
+                            |> OptionsParser.end
+                        )
+                        (Just "ModuleName")
             , test "succeeds when validation function passes" <|
                 \() ->
                     expectMatch [ "--name", "Bob" ]

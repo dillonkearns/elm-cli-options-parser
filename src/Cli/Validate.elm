@@ -1,4 +1,4 @@
-module Cli.Validate exposing (predicate, ValidationResult(..), regex)
+module Cli.Validate exposing (predicate, ValidationResult(..), regex, regexWithExpectation)
 
 {-| This module contains helper functions for performing validations (see the
 "validate..." functions in `Cli.Option`).
@@ -83,3 +83,14 @@ regex regexPattern checkString =
 
             else
                 Invalid ("Must be of form /" ++ regexPattern ++ "/")
+
+regexWithExpectation : String -> String -> String -> ValidationResult
+regexWithExpectation expectation regexPattern checkString =
+    case regex regexPattern checkString of
+        Valid ->
+            Valid
+
+        Invalid _ ->
+            Invalid (expectation ++ " matching \"" ++ regexPattern ++ "\", but got '" ++ checkString ++ "'")
+
+
