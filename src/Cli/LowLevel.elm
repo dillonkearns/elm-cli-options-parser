@@ -7,10 +7,10 @@ import Cli.OptionsParser.MatchResult as MatchResult exposing (MatchResult)
 import Set exposing (Set)
 
 
-type MatchResult msg
+type MatchResult options
     = ValidationErrors (List Cli.Decode.ValidationError)
     | NoMatch (List String)
-    | Match msg
+    | Match options
     | ShowHelp
     | ShowVersion
 
@@ -39,8 +39,7 @@ try optionsParsers argv =
     let
         matchResults =
             (optionsParsers
-                |> List.map (OptionsParser.map UserParser)
-                |> List.map OptionsParser.end
+                |> List.map (\a -> OptionsParser.map UserParser a |> OptionsParser.end)
             )
                 ++ [ helpParser
                         |> OptionsParser.end

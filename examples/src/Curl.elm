@@ -55,11 +55,16 @@ update cliOptions (GotResponse httpResult) model =
 
 main : Program.StatefulProgram Model Msg CliOptions {}
 main =
-    Program.stateful
-        { printAndExitFailure = Ports.printAndExitFailure
-        , printAndExitSuccess = Ports.printAndExitSuccess
-        , init = init
-        , config = program
-        , update = update
+    -- Program.stateful
+    --     { printAndExitFailure = Ports.printAndExitFailure
+    --     , printAndExitSuccess = Ports.printAndExitSuccess
+    --     , init = init
+    --     , config = program
+    --     , update = update
+    --     , subscriptions = \_ -> Sub.none
+    --     }
+    Platform.worker
+        { init = init options
+        , update = \msg model -> ( (), Cmd.none )
         , subscriptions = \_ -> Sub.none
         }

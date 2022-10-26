@@ -1,8 +1,9 @@
-module Cli.Program exposing
+module Cli exposing
     ( config, Config, add
     , stateless, stateful
     , StatelessProgram, StatefulProgram
     , FlagsIncludingArgv
+    , parse
     )
 
 {-|
@@ -73,17 +74,18 @@ import List.Extra
 import TypoSuggestion
 
 
-type RunResult match
-    = SystemMessage ExitStatus String
-    | CustomMatch match
+type ParseResult options
+    = Error String
+    | Match options
+    | HelpText String
 
 
 {-| A `Cli.Program.Config` is used to build up a set of `OptionsParser`s for your
 Command-Line Interface, as well as its meta-data such as version number.
 -}
-type Config msg
+type Config options
     = Config
-        { optionsParsers : List (OptionsParser msg BuilderState.NoMoreOptions)
+        { optionsParsers : List (OptionsParser options BuilderState.NoMoreOptions)
         }
 
 
@@ -207,9 +209,9 @@ init :
     -> ( (), Cmd msg )
 init options flags =
     let
-        matchResult : RunResult options
+        matchResult : ParseResult options
         matchResult =
-            run options.config flags.argv flags.versionMessage
+            parse options.config flags.argv flags.versionMessage
 
         cmd =
             case matchResult of
@@ -238,9 +240,9 @@ statefulInit :
     -> ( StatefulProgramModel model cliOptions, Cmd msg )
 statefulInit options flags =
     let
-        matchResult : RunResult cliOptions
+        matchResult : ParseResult cliOptions
         matchResult =
-            run options.config flags.argv flags.versionMessage
+            parse options.config flags.argv flags.versionMessage
 
         cmd =
             case matchResult of
@@ -262,9 +264,10 @@ statefulInit options flags =
     cmd
 
 
-run : Config msg -> List String -> String -> RunResult msg
-run (Config { optionsParsers }) argv versionMessage =
+parse : Config options -> List String -> String -> ParseResult options
+parse (Config { optionsParsers }) argv versionMessage =
     let
+        programName : String
         programName =
             case argv of
                 first :: programPath :: _ ->
@@ -276,9 +279,11 @@ run (Config { optionsParsers }) argv versionMessage =
                 _ ->
                     errorMessage
 
+        errorMessage : String
         errorMessage =
-            "TODO - show error message explaining that user needs to pass unmodified `process.argv` from node here."
+            "Expected to find an unmodified list of arguments"
 
+        matchResult : Cli.LowLevel.MatchResult options
         matchResult =
             Cli.LowLevel.try optionsParsers argv
     in
@@ -287,7 +292,7 @@ run (Config { optionsParsers }) argv versionMessage =
             if unexpectedOptions == [] then
                 "\nNo matching optionsParser...\n\nUsage:\n\n"
                     ++ Cli.LowLevel.helpText programName optionsParsers
-                    |> SystemMessage Cli.ExitStatus.Failure
+                    |> Error
 
             else
                 unexpectedOptions
@@ -303,7 +308,7 @@ run (Config { optionsParsers }) argv versionMessage =
                             )
                         )
                     |> String.join "\n"
-                    |> SystemMessage Cli.ExitStatus.Failure
+                    |> Error
 
         Cli.LowLevel.ValidationErrors validationErrors ->
             ("Validation errors:\n\n"
@@ -320,16 +325,14 @@ run (Config { optionsParsers }) argv versionMessage =
                         |> String.join "\n"
                    )
             )
-                |> SystemMessage Cli.ExitStatus.Failure
+                |> Error
 
         Cli.LowLevel.Match msg ->
-            msg
-                |> CustomMatch
+            Match msg
 
         Cli.LowLevel.ShowHelp ->
             Cli.LowLevel.helpText programName optionsParsers
-                |> SystemMessage Cli.ExitStatus.Success
+                |> HelpText
 
         Cli.LowLevel.ShowVersion ->
-            versionMessage
-                |> SystemMessage Cli.ExitStatus.Success
+            HelpText versionMessage
