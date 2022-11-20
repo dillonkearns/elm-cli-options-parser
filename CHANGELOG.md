@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [3.2.0] - 2022-10-19
+
+### Added
+
+- Added `Program.mapConfig` helper.
+
 ## [3.0.1] - 2020-3-15
 
 ### Changed
