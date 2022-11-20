@@ -288,7 +288,8 @@ all =
                                 (Option.optionalKeywordArg "scalar-codecs"
                                     |> Option.validateIfPresent
                                         (\moduleName ->
-                                            Validate.regexWithMessage "I expected an Elm module name" "^[A-Z][A-Za-z_]*(\\.[A-Z][A-Za-z_]*)*$" moduleName)
+                                            Validate.regexWithMessage "I expected an Elm module name" "^[A-Z][A-Za-z_]*(\\.[A-Z][A-Za-z_]*)*$" moduleName
+                                        )
                                 )
                             |> OptionsParser.end
                         )
@@ -301,7 +302,8 @@ all =
                                 (Option.optionalKeywordArg "scalar-codecs"
                                     |> Option.validateIfPresent
                                         (\moduleName ->
-                                            Validate.regexWithMessage "I expected an Elm module name" "^[A-Z][A-Za-z_]*(\\.[A-Z][A-Za-z_]*)*$" moduleName)
+                                            Validate.regexWithMessage "I expected an Elm module name" "^[A-Z][A-Za-z_]*(\\.[A-Z][A-Za-z_]*)*$" moduleName
+                                        )
                                 )
                             |> OptionsParser.end
                         )

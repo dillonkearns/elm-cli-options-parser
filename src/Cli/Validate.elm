@@ -84,6 +84,7 @@ regex regexPattern checkString =
             else
                 Invalid ("Must be of form /" ++ regexPattern ++ "/")
 
+
 {-| A helper for regex validations with an additional message.
 
     programConfig : Program.Config String
@@ -118,5 +119,3 @@ regexWithMessage message regexPattern checkString =
 
         Invalid _ ->
             Invalid (message ++ " matching \"" ++ regexPattern ++ "\", but got '" ++ checkString ++ "'")
-
-
