@@ -3,6 +3,7 @@ module Cli.Program exposing
     , stateless, stateful
     , StatelessProgram, StatefulProgram
     , FlagsIncludingArgv
+    , mapConfig
     )
 
 {-|
@@ -62,6 +63,7 @@ See the [`examples`](https://github.com/dillonkearns/elm-cli-options-parser/tree
 @docs stateless, stateful
 @docs StatelessProgram, StatefulProgram
 @docs FlagsIncludingArgv
+@docs mapConfig
 
 -}
 
@@ -333,3 +335,14 @@ run (Config { optionsParsers }) argv versionMessage =
         Cli.LowLevel.ShowVersion ->
             versionMessage
                 |> SystemMessage Cli.ExitStatus.Success
+
+
+{-| Transform the return type for all of the registered `OptionsParser`'s in the `Config`.
+-}
+mapConfig : (a -> b) -> Config a -> Config b
+mapConfig mapFn (Config configValue) =
+    Config
+        { optionsParsers =
+            configValue.optionsParsers
+                |> List.map (OptionsParser.map mapFn)
+        }
