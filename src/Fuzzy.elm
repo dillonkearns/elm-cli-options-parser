@@ -388,25 +388,22 @@ match configs separators needle hay =
     Tuple.first (List.foldl accumulateResult ( initialResult, 0 ) needles)
 
 
-
--- Reduce the left side of hays, the second needle do not need to match the first hay and so on.
-
-
+{-| Reduce the left side of hays, the second needle do not need to match the first hay and so on.
+-}
+reduceLeft : a -> Int -> List String -> ( Int, List String )
 reduceLeft ns c hs =
     ( List.foldl (\e sum -> String.length e + sum) 0 (List.take c hs), List.drop c hs )
 
 
-
--- Reduce the right side of hays, the first needle do not need to match against the last hay if there are other needles and so on.
-
-
+{-| Reduce the right side of hays, the first needle do not need to match against the last hay if there are other needles and so on.
+-}
+reduceRight : Int -> Int -> List a -> List a
 reduceRight ns c hs =
     List.take (List.length hs - (ns - c - 1)) hs
 
 
-
--- Pad the hay stack to prevent hay starvation if we have more needles than hays
-
-
+{-| Pad the hay stack to prevent hay starvation if we have more needles than hays
+-}
+padHays : Int -> List String -> List String
 padHays ns hs =
     hs ++ List.repeat (ns - List.length hs) ""
