@@ -157,7 +157,7 @@ type alias StatefulOptions msg model cliOptions flags =
     , printAndExitSuccess : String -> Cmd msg
     , init : FlagsIncludingArgv flags -> cliOptions -> ( model, Cmd msg )
     , update : cliOptions -> msg -> model -> ( model, Cmd msg )
-    , subscriptions : model -> Sub msg
+    , subscriptions : cliOptions -> model -> Sub msg
     , config : Config cliOptions
     }
 
@@ -188,7 +188,7 @@ stateful options =
             \model ->
                 case model of
                     UserModel actualModel cliOptions ->
-                        options.subscriptions actualModel
+                        options.subscriptions cliOptions actualModel
 
                     ShowSystemMessage ->
                         Sub.none
