@@ -169,12 +169,6 @@ getSubCommand (OptionsParser { subCommand }) =
 tryMatch : List String -> OptionsParser cliOptions builderState -> Cli.OptionsParser.MatchResult.MatchResult cliOptions
 tryMatch argv ((OptionsParser { usageSpecs, subCommand }) as optionsParser) =
     let
-        decoder =
-            optionsParser
-                |> expectedPositionalArgCountOrFail
-                |> failIfUnexpectedOptions
-                |> getDecoder
-
         flagsAndOperands =
             Tokenizer.flagsAndOperands usageSpecs argv
                 |> (\record ->
@@ -203,26 +197,30 @@ tryMatch argv ((OptionsParser { usageSpecs, subCommand }) as optionsParser) =
     in
     case flagsAndOperands of
         Ok actualFlagsAndOperands ->
-            decoder actualFlagsAndOperands
-                |> (\result ->
-                        case result of
-                            Err error ->
-                                case error of
-                                    Cli.Decode.MatchError matchError ->
-                                        Cli.OptionsParser.MatchResult.NoMatch []
+            let
+                parser : OptionsParser cliOptions builderState
+                parser =
+                    optionsParser
+                        |> expectedPositionalArgCountOrFail
+                        |> failIfUnexpectedOptions
+            in
+            case getDecoder parser actualFlagsAndOperands of
+                Err error ->
+                    case error of
+                        Cli.Decode.MatchError matchError ->
+                            Cli.OptionsParser.MatchResult.NoMatch []
 
-                                    Cli.Decode.UnrecoverableValidationError validationError ->
-                                        Cli.OptionsParser.MatchResult.Match (Err [ validationError ])
+                        Cli.Decode.UnrecoverableValidationError validationError ->
+                            Cli.OptionsParser.MatchResult.Match (Err [ validationError ])
 
-                                    Cli.Decode.UnexpectedOptions unexpectedOptions ->
-                                        Cli.OptionsParser.MatchResult.NoMatch unexpectedOptions
+                        Cli.Decode.UnexpectedOptions unexpectedOptions ->
+                            Cli.OptionsParser.MatchResult.NoMatch unexpectedOptions
 
-                            Ok ( [], value ) ->
-                                Cli.OptionsParser.MatchResult.Match (Ok value)
+                Ok ( [], value ) ->
+                    Cli.OptionsParser.MatchResult.Match (Ok value)
 
-                            Ok ( validationErrors, value ) ->
-                                Cli.OptionsParser.MatchResult.Match (Err validationErrors)
-                   )
+                Ok ( validationErrors, value ) ->
+                    Cli.OptionsParser.MatchResult.Match (Err validationErrors)
 
         Err { errorMessage, options } ->
             Cli.OptionsParser.MatchResult.NoMatch (unexpectedOptions_ optionsParser options)
