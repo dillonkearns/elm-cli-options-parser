@@ -132,7 +132,7 @@ quickSort entries =
                     else
                         1
             in
-            ( Tuple.first smaller + penalty + Tuple.first larger, Tuple.second smaller ++ [ head ] ++ Tuple.second larger )
+            ( Tuple.first smaller + penalty + Tuple.first larger, Tuple.second smaller ++ head :: Tuple.second larger )
 
 
 {-| Calculate the fuzzy distance between two Strings.
