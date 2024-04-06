@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "automatically created by": "elm-review suppress",
+  "learn more": "elm-review suppress --help",
+  "suppressions": [
+    { "count": 6, "filePath": "src/Cli/Option.elm" },
+    { "count": 5, "filePath": "src/Cli/Program.elm" },
+    { "count": 1, "filePath": "src/Cli/Validate.elm" }
+  ]
+}
