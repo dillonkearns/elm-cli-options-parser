@@ -69,16 +69,14 @@ getSuggestions optionsParsers unexpectedOption =
 buildSubCommandSuggestions : List OptionsParser -> List TypoSuggestion
 buildSubCommandSuggestions optionsParsers =
     optionsParsers
-        |> List.map .subCommand
-        |> List.filterMap identity
+        |> List.filterMap .subCommand
         |> List.map SubCommand
 
 
 optionSuggestions : List OptionsParser -> List TypoSuggestion
 optionSuggestions optionsParsers =
     optionsParsers
-        |> List.map .usageSpecs
-        |> List.concat
+        |> List.concatMap .usageSpecs
         |> List.Extra.uniqueBy UsageSpec.name
         |> List.map UsageSpec.name
         |> List.map Flag
