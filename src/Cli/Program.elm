@@ -188,7 +188,7 @@ stateful options =
         , subscriptions =
             \model ->
                 case model of
-                    UserModel actualModel cliOptions ->
+                    UserModel actualModel _ ->
                         options.subscriptions actualModel
 
                     ShowSystemMessage ->
@@ -268,7 +268,7 @@ run (Config { optionsParsers }) argv versionMessage =
     let
         programName =
             case argv of
-                first :: programPath :: _ ->
+                _ :: programPath :: _ ->
                     programPath
                         |> String.split "/"
                         |> List.Extra.last

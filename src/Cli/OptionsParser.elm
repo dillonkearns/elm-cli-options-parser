@@ -191,7 +191,7 @@ tryMatch argv ((OptionsParser { usageSpecs, subCommand }) as optionsParser) =
                                 else
                                     Err { errorMessage = "Sub optionsParser does not match", options = record.options }
 
-                            ( Just buildSubCommandName, [] ) ->
+                            ( Just _, [] ) ->
                                 Err { errorMessage = "No sub optionsParser provided", options = record.options }
                    )
     in
@@ -207,7 +207,7 @@ tryMatch argv ((OptionsParser { usageSpecs, subCommand }) as optionsParser) =
             case getDecoder parser actualFlagsAndOperands of
                 Err error ->
                     case error of
-                        Cli.Decode.MatchError matchError ->
+                        Cli.Decode.MatchError _ ->
                             Cli.OptionsParser.MatchResult.NoMatch []
 
                         Cli.Decode.UnrecoverableValidationError validationError ->
@@ -219,10 +219,10 @@ tryMatch argv ((OptionsParser { usageSpecs, subCommand }) as optionsParser) =
                 Ok ( [], value ) ->
                     Cli.OptionsParser.MatchResult.Match (Ok value)
 
-                Ok ( validationErrors, value ) ->
+                Ok ( validationErrors, _ ) ->
                     Cli.OptionsParser.MatchResult.Match (Err validationErrors)
 
-        Err { errorMessage, options } ->
+        Err { options } ->
             Cli.OptionsParser.MatchResult.NoMatch (unexpectedOptions_ optionsParser options)
 
 
