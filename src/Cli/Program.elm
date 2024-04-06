@@ -245,25 +245,22 @@ statefulInit options flags =
         matchResult : RunResult cliOptions
         matchResult =
             run options.config flags.argv flags.versionMessage
-
-        cmd =
-            case matchResult of
-                SystemMessage exitStatus message ->
-                    case exitStatus of
-                        Cli.ExitStatus.Failure ->
-                            ( ShowSystemMessage, options.printAndExitFailure message )
-
-                        Cli.ExitStatus.Success ->
-                            ( ShowSystemMessage, options.printAndExitSuccess message )
-
-                CustomMatch cliOptions ->
-                    let
-                        ( userModel, userCmd ) =
-                            options.init flags cliOptions
-                    in
-                    ( UserModel userModel cliOptions, userCmd )
     in
-    cmd
+    case matchResult of
+        SystemMessage exitStatus message ->
+            case exitStatus of
+                Cli.ExitStatus.Failure ->
+                    ( ShowSystemMessage, options.printAndExitFailure message )
+
+                Cli.ExitStatus.Success ->
+                    ( ShowSystemMessage, options.printAndExitSuccess message )
+
+        CustomMatch cliOptions ->
+            let
+                ( userModel, userCmd ) =
+                    options.init flags cliOptions
+            in
+            ( UserModel userModel cliOptions, userCmd )
 
 
 run : Config msg -> List String -> String -> RunResult msg
