@@ -1,6 +1,6 @@
 module Cli.Program exposing
     ( config, Config, add
-    , stateless, stateful
+    , stateless, ProgramOptions, stateful, StatefulOptions
     , StatelessProgram, StatefulProgram
     , FlagsIncludingArgv
     , mapConfig
@@ -60,7 +60,7 @@ See the [`examples`](https://github.com/dillonkearns/elm-cli-options-parser/tree
 
 ## `Program`s
 
-@docs stateless, stateful
+@docs stateless, ProgramOptions, stateful, StatefulOptions
 @docs StatelessProgram, StatefulProgram
 @docs FlagsIncludingArgv
 @docs mapConfig
@@ -152,6 +152,7 @@ type alias StatefulProgram model msg cliOptions flags =
     Platform.Program (FlagsIncludingArgv flags) (StatefulProgramModel model cliOptions) msg
 
 
+{-| -}
 type alias StatefulOptions msg model cliOptions flags =
     { printAndExitFailure : String -> Cmd msg
     , printAndExitSuccess : String -> Cmd msg
@@ -195,6 +196,7 @@ stateful options =
         }
 
 
+{-| -}
 type alias ProgramOptions decodesTo options flags =
     { printAndExitFailure : String -> Cmd decodesTo
     , printAndExitSuccess : String -> Cmd decodesTo
