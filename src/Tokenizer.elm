@@ -14,7 +14,7 @@ type OptionKind
 
 
 parsedOptionToString : ParsedOption -> String
-parsedOptionToString (ParsedOption name optionKind) =
+parsedOptionToString (ParsedOption name _) =
     name
 
 

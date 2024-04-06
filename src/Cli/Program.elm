@@ -142,7 +142,7 @@ stateless : ProgramOptions msg options flags -> StatelessProgram msg flags
 stateless options =
     Platform.worker
         { init = init options
-        , update = \msg model -> ( (), Cmd.none )
+        , update = \_ _ -> ( (), Cmd.none )
         , subscriptions = \_ -> Sub.none
         }
 

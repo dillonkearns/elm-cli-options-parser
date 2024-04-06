@@ -390,8 +390,8 @@ match configs separators needle hay =
 
 {-| Reduce the left side of hays, the second needle do not need to match the first hay and so on.
 -}
-reduceLeft : a -> Int -> List String -> ( Int, List String )
-reduceLeft ns c hs =
+reduceLeft : Int -> Int -> List String -> ( Int, List String )
+reduceLeft _ c hs =
     ( List.foldl (\e sum -> String.length e + sum) 0 (List.take c hs), List.drop c hs )
 
 

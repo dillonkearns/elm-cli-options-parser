@@ -260,7 +260,7 @@ getDecoder (OptionsParser { decoder }) =
 
 
 failIfUnexpectedOptions : OptionsParser cliOptions builderState -> OptionsParser cliOptions builderState
-failIfUnexpectedOptions ((OptionsParser ({ decoder, usageSpecs } as optionsParser)) as fullOptionsParser) =
+failIfUnexpectedOptions ((OptionsParser ({ decoder } as optionsParser)) as fullOptionsParser) =
     OptionsParser
         { optionsParser
             | decoder =
@@ -280,7 +280,7 @@ failIfUnexpectedOptions ((OptionsParser ({ decoder, usageSpecs } as optionsParse
 unexpectedOptions_ : OptionsParser cliOptions builderState -> List ParsedOption -> List String
 unexpectedOptions_ (OptionsParser { usageSpecs }) options =
     List.filterMap
-        (\(Tokenizer.ParsedOption optionName optionKind) ->
+        (\(Tokenizer.ParsedOption optionName _) ->
             if UsageSpec.optionExists usageSpecs optionName == Nothing then
                 Just optionName
 
@@ -475,7 +475,7 @@ with =
 
 
 withCommon : Option from to optionConstraint -> OptionsParser (to -> cliOptions) startOptionsParserBuilderState -> OptionsParser cliOptions endOptionsParserBuilderState
-withCommon (Option innerOption) ((OptionsParser ({ decoder, usageSpecs } as optionsParser)) as fullOptionsParser) =
+withCommon (Option innerOption) ((OptionsParser { decoder, usageSpecs }) as fullOptionsParser) =
     updateDecoder
         (\optionsAndOperands ->
             { options = optionsAndOperands.options
