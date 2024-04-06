@@ -1,6 +1,6 @@
 module Cli.Program exposing
     ( config, Config, add
-    , stateless, stateful
+    , stateless, ProgramOptions, stateful, StatefulOptions
     , StatelessProgram, StatefulProgram
     , FlagsIncludingArgv
     , mapConfig
@@ -60,7 +60,7 @@ See the [`examples`](https://github.com/dillonkearns/elm-cli-options-parser/tree
 
 ## `Program`s
 
-@docs stateless, stateful
+@docs stateless, ProgramOptions, stateful, StatefulOptions
 @docs StatelessProgram, StatefulProgram
 @docs FlagsIncludingArgv
 @docs mapConfig
@@ -142,7 +142,7 @@ stateless : ProgramOptions msg options flags -> StatelessProgram msg flags
 stateless options =
     Platform.worker
         { init = init options
-        , update = \msg model -> ( (), Cmd.none )
+        , update = \_ _ -> ( (), Cmd.none )
         , subscriptions = \_ -> Sub.none
         }
 
@@ -152,6 +152,7 @@ type alias StatefulProgram model msg cliOptions flags =
     Platform.Program (FlagsIncludingArgv flags) (StatefulProgramModel model cliOptions) msg
 
 
+{-| -}
 type alias StatefulOptions msg model cliOptions flags =
     { printAndExitFailure : String -> Cmd msg
     , printAndExitSuccess : String -> Cmd msg
@@ -187,7 +188,7 @@ stateful options =
         , subscriptions =
             \model ->
                 case model of
-                    UserModel actualModel cliOptions ->
+                    UserModel actualModel _ ->
                         options.subscriptions actualModel
 
                     ShowSystemMessage ->
@@ -195,6 +196,7 @@ stateful options =
         }
 
 
+{-| -}
 type alias ProgramOptions decodesTo options flags =
     { printAndExitFailure : String -> Cmd decodesTo
     , printAndExitSuccess : String -> Cmd decodesTo
@@ -243,25 +245,22 @@ statefulInit options flags =
         matchResult : RunResult cliOptions
         matchResult =
             run options.config flags.argv flags.versionMessage
-
-        cmd =
-            case matchResult of
-                SystemMessage exitStatus message ->
-                    case exitStatus of
-                        Cli.ExitStatus.Failure ->
-                            ( ShowSystemMessage, options.printAndExitFailure message )
-
-                        Cli.ExitStatus.Success ->
-                            ( ShowSystemMessage, options.printAndExitSuccess message )
-
-                CustomMatch cliOptions ->
-                    let
-                        ( userModel, userCmd ) =
-                            options.init flags cliOptions
-                    in
-                    ( UserModel userModel cliOptions, userCmd )
     in
-    cmd
+    case matchResult of
+        SystemMessage exitStatus message ->
+            case exitStatus of
+                Cli.ExitStatus.Failure ->
+                    ( ShowSystemMessage, options.printAndExitFailure message )
+
+                Cli.ExitStatus.Success ->
+                    ( ShowSystemMessage, options.printAndExitSuccess message )
+
+        CustomMatch cliOptions ->
+            let
+                ( userModel, userCmd ) =
+                    options.init flags cliOptions
+            in
+            ( UserModel userModel cliOptions, userCmd )
 
 
 run : Config msg -> List String -> String -> RunResult msg
@@ -269,7 +268,7 @@ run (Config { optionsParsers }) argv versionMessage =
     let
         programName =
             case argv of
-                first :: programPath :: _ ->
+                _ :: programPath :: _ ->
                     programPath
                         |> String.split "/"
                         |> List.Extra.last

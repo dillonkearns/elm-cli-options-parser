@@ -169,12 +169,6 @@ getSubCommand (OptionsParser { subCommand }) =
 tryMatch : List String -> OptionsParser cliOptions builderState -> Cli.OptionsParser.MatchResult.MatchResult cliOptions
 tryMatch argv ((OptionsParser { usageSpecs, subCommand }) as optionsParser) =
     let
-        decoder =
-            optionsParser
-                |> expectedPositionalArgCountOrFail
-                |> failIfUnexpectedOptions
-                |> getDecoder
-
         flagsAndOperands =
             Tokenizer.flagsAndOperands usageSpecs argv
                 |> (\record ->
@@ -197,34 +191,38 @@ tryMatch argv ((OptionsParser { usageSpecs, subCommand }) as optionsParser) =
                                 else
                                     Err { errorMessage = "Sub optionsParser does not match", options = record.options }
 
-                            ( Just buildSubCommandName, [] ) ->
+                            ( Just _, [] ) ->
                                 Err { errorMessage = "No sub optionsParser provided", options = record.options }
                    )
     in
     case flagsAndOperands of
         Ok actualFlagsAndOperands ->
-            decoder actualFlagsAndOperands
-                |> (\result ->
-                        case result of
-                            Err error ->
-                                case error of
-                                    Cli.Decode.MatchError matchError ->
-                                        Cli.OptionsParser.MatchResult.NoMatch []
+            let
+                parser : OptionsParser cliOptions builderState
+                parser =
+                    optionsParser
+                        |> expectedPositionalArgCountOrFail
+                        |> failIfUnexpectedOptions
+            in
+            case getDecoder parser actualFlagsAndOperands of
+                Err error ->
+                    case error of
+                        Cli.Decode.MatchError _ ->
+                            Cli.OptionsParser.MatchResult.NoMatch []
 
-                                    Cli.Decode.UnrecoverableValidationError validationError ->
-                                        Cli.OptionsParser.MatchResult.Match (Err [ validationError ])
+                        Cli.Decode.UnrecoverableValidationError validationError ->
+                            Cli.OptionsParser.MatchResult.Match (Err [ validationError ])
 
-                                    Cli.Decode.UnexpectedOptions unexpectedOptions ->
-                                        Cli.OptionsParser.MatchResult.NoMatch unexpectedOptions
+                        Cli.Decode.UnexpectedOptions unexpectedOptions ->
+                            Cli.OptionsParser.MatchResult.NoMatch unexpectedOptions
 
-                            Ok ( [], value ) ->
-                                Cli.OptionsParser.MatchResult.Match (Ok value)
+                Ok ( [], value ) ->
+                    Cli.OptionsParser.MatchResult.Match (Ok value)
 
-                            Ok ( validationErrors, value ) ->
-                                Cli.OptionsParser.MatchResult.Match (Err validationErrors)
-                   )
+                Ok ( validationErrors, _ ) ->
+                    Cli.OptionsParser.MatchResult.Match (Err validationErrors)
 
-        Err { errorMessage, options } ->
+        Err { options } ->
             Cli.OptionsParser.MatchResult.NoMatch (unexpectedOptions_ optionsParser options)
 
 
@@ -262,7 +260,7 @@ getDecoder (OptionsParser { decoder }) =
 
 
 failIfUnexpectedOptions : OptionsParser cliOptions builderState -> OptionsParser cliOptions builderState
-failIfUnexpectedOptions ((OptionsParser ({ decoder, usageSpecs } as optionsParser)) as fullOptionsParser) =
+failIfUnexpectedOptions ((OptionsParser ({ decoder } as optionsParser)) as fullOptionsParser) =
     OptionsParser
         { optionsParser
             | decoder =
@@ -282,7 +280,7 @@ failIfUnexpectedOptions ((OptionsParser ({ decoder, usageSpecs } as optionsParse
 unexpectedOptions_ : OptionsParser cliOptions builderState -> List ParsedOption -> List String
 unexpectedOptions_ (OptionsParser { usageSpecs }) options =
     List.filterMap
-        (\(Tokenizer.ParsedOption optionName optionKind) ->
+        (\(Tokenizer.ParsedOption optionName _) ->
             if UsageSpec.optionExists usageSpecs optionName == Nothing then
                 Just optionName
 
@@ -477,7 +475,7 @@ with =
 
 
 withCommon : Option from to optionConstraint -> OptionsParser (to -> cliOptions) startOptionsParserBuilderState -> OptionsParser cliOptions endOptionsParserBuilderState
-withCommon (Option innerOption) ((OptionsParser ({ decoder, usageSpecs } as optionsParser)) as fullOptionsParser) =
+withCommon (Option innerOption) ((OptionsParser { decoder, usageSpecs }) as fullOptionsParser) =
     updateDecoder
         (\optionsAndOperands ->
             { options = optionsAndOperands.options

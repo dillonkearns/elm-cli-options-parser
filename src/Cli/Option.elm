@@ -207,7 +207,7 @@ validateIfPresent validateFunction cliSpec =
 requiredPositionalArg : String -> Option String String BeginningOption
 requiredPositionalArg operandDescription =
     buildOption
-        (\{ usageSpecs, operands, operandsSoFar } ->
+        (\{ operands, operandsSoFar } ->
             case
                 operands
                     |> List.Extra.getAt operandsSoFar
@@ -225,11 +225,11 @@ requiredPositionalArg operandDescription =
 optionalKeywordArg : String -> Option (Maybe String) (Maybe String) BeginningOption
 optionalKeywordArg optionName =
     buildOption
-        (\{ operands, options } ->
+        (\{ options } ->
             case
                 options
                     |> List.Extra.find
-                        (\(Tokenizer.ParsedOption thisOptionName optionKind) -> thisOptionName == optionName)
+                        (\(Tokenizer.ParsedOption thisOptionName _) -> thisOptionName == optionName)
             of
                 Nothing ->
                     Ok Nothing
@@ -247,11 +247,11 @@ optionalKeywordArg optionName =
 requiredKeywordArg : String -> Option String String BeginningOption
 requiredKeywordArg optionName =
     buildOption
-        (\{ operands, options } ->
+        (\{ options } ->
             case
                 options
                     |> List.Extra.find
-                        (\(Tokenizer.ParsedOption thisOptionName optionKind) -> thisOptionName == optionName)
+                        (\(Tokenizer.ParsedOption thisOptionName _) -> thisOptionName == optionName)
             of
                 Nothing ->
                     Cli.Decode.MatchError ("Expected to find option " ++ optionName ++ " but only found options " ++ (options |> List.map Tokenizer.parsedOptionToString |> listToString)) |> Err
@@ -329,7 +329,7 @@ map mapFn option =
 
 
 updateDecoder : (Cli.Decode.Decoder from to -> Cli.Decode.Decoder from toNew) -> Option from to builderState -> Option from toNew builderState
-updateDecoder mappedDecoder (Option ({ dataGrabber, usageSpec, decoder } as option)) =
+updateDecoder mappedDecoder (Option { dataGrabber, usageSpec, decoder }) =
     Option
         { dataGrabber = dataGrabber
         , usageSpec = usageSpec
@@ -437,14 +437,20 @@ oneOf default list (Option option) =
         (\argValue ->
             case
                 list
-                    |> List.Extra.find (\( name, value ) -> name == argValue)
-                    |> Maybe.map (\( name, value ) -> value)
+                    |> List.Extra.findMap
+                        (\( name, value ) ->
+                            if name == argValue then
+                                Just value
+
+                            else
+                                Nothing
+                        )
             of
                 Nothing ->
                     Err
                         ("Must be one of ["
                             ++ (list
-                                    |> List.map (\( name, value ) -> name)
+                                    |> List.map (\( name, _ ) -> name)
                                     |> String.join ", "
                                )
                             ++ "]"
@@ -458,7 +464,7 @@ oneOf default list (Option option) =
                 | usageSpec =
                     UsageSpec.changeUsageSpec
                         (list
-                            |> List.map (\( name, value ) -> name)
+                            |> List.map (\( name, _ ) -> name)
                         )
                         option.usageSpec
             }
@@ -504,7 +510,7 @@ in the [`examples`](https://github.com/dillonkearns/elm-cli-options-parser/tree/
 
 -}
 validateMapIfPresent : (to -> Result String toMapped) -> Option (Maybe from) (Maybe to) builderState -> Option (Maybe from) (Maybe toMapped) builderState
-validateMapIfPresent mapFn ((Option { dataGrabber, usageSpec, decoder }) as cliSpec) =
+validateMapIfPresent mapFn cliSpec =
     validateMap
         (\thing ->
             case thing of

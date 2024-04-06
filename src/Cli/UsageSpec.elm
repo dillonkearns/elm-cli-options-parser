@@ -63,10 +63,10 @@ restArgs restArgsName =
 changeUsageSpec : List String -> UsageSpec -> UsageSpec
 changeUsageSpec possibleValues usageSpec =
     case usageSpec of
-        FlagOrKeywordArg option mutuallyExclusiveValues occurences ->
+        FlagOrKeywordArg option _ occurences ->
             FlagOrKeywordArg option (MutuallyExclusiveValues possibleValues |> Just) occurences
 
-        Operand operandName mutuallyExclusiveValues occurences ->
+        Operand operandName _ occurences ->
             Operand operandName (MutuallyExclusiveValues possibleValues |> Just) occurences
 
         _ ->
@@ -82,7 +82,7 @@ operandCount usageSpecs =
                     FlagOrKeywordArg _ _ _ ->
                         Nothing
 
-                    Operand operandName mutuallyExclusiveValues occurences ->
+                    Operand operandName _ _ ->
                         Just operandName
 
                     RestArgs _ ->
@@ -97,7 +97,7 @@ optionExists usageSpecs thisOptionName =
         |> List.filterMap
             (\usageSpec ->
                 case usageSpec of
-                    FlagOrKeywordArg option mutuallyExclusiveValues occurences ->
+                    FlagOrKeywordArg option _ _ ->
                         option
                             |> Just
 
@@ -113,7 +113,7 @@ optionExists usageSpecs thisOptionName =
 isOperand : UsageSpec -> Bool
 isOperand option =
     case option of
-        Operand operandName mutuallyExclusiveValues occurences ->
+        Operand _ _ _ ->
             True
 
         FlagOrKeywordArg _ _ _ ->
@@ -140,7 +140,7 @@ hasRestArgs usageSpecs =
 name : UsageSpec -> String
 name usageSpec =
     case usageSpec of
-        FlagOrKeywordArg option mutuallyExclusiveValues occurences ->
+        FlagOrKeywordArg option _ _ ->
             case option of
                 Flag flagName ->
                     flagName
@@ -148,7 +148,7 @@ name usageSpec =
                 KeywordArg keywordArgName ->
                     keywordArgName
 
-        Operand operandOptionName mutuallyExclusiveValues occurences ->
+        Operand operandOptionName _ _ ->
             operandOptionName
 
         RestArgs restArgsDescription ->
@@ -226,7 +226,7 @@ optionHasArg options optionNameToCheck =
             |> List.filterMap
                 (\spec ->
                     case spec of
-                        FlagOrKeywordArg option mutuallyExclusiveValues occurences ->
+                        FlagOrKeywordArg option _ _ ->
                             Just option
 
                         Operand _ _ _ ->
@@ -240,10 +240,10 @@ optionHasArg options optionNameToCheck =
     of
         Just option ->
             case option of
-                Flag flagName ->
+                Flag _ ->
                     False
 
-                KeywordArg optionName_ ->
+                KeywordArg _ ->
                     True
 
         Nothing ->
