@@ -285,7 +285,7 @@ run (Config { optionsParsers }) argv versionMessage =
     in
     case matchResult of
         Cli.LowLevel.NoMatch unexpectedOptions ->
-            if unexpectedOptions == [] then
+            if List.isEmpty unexpectedOptions then
                 "\nNo matching optionsParser...\n\nUsage:\n\n"
                     ++ Cli.LowLevel.helpText programName optionsParsers
                     |> SystemMessage Cli.ExitStatus.Failure

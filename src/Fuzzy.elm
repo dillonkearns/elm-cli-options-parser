@@ -17,8 +17,6 @@ module Fuzzy exposing
 
 -}
 
-import String
-
 
 {-| Represents a configuration element for customization.
 -}
@@ -367,7 +365,7 @@ match configs separators needle hay =
 
         -- Sentence logic, reduce hays on left and right side depending on current needle context
         reduceHays ns c hs =
-            hs |> padHays ns |> reduceRight ns c |> reduceLeft ns c
+            hs |> padHays ns |> reduceRight ns c |> reduceLeft c
 
         accumulateResult n ( prev, num ) =
             let
@@ -390,8 +388,8 @@ match configs separators needle hay =
 
 {-| Reduce the left side of hays, the second needle do not need to match the first hay and so on.
 -}
-reduceLeft : Int -> Int -> List String -> ( Int, List String )
-reduceLeft _ c hs =
+reduceLeft : Int -> List String -> ( Int, List String )
+reduceLeft c hs =
     ( List.foldl (\e sum -> String.length e + sum) 0 (List.take c hs), List.drop c hs )
 
 

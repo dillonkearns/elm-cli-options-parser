@@ -6,7 +6,7 @@
   "devDependencies": {
     "elm": "^0.19.1-5",
     "elm-format": "^0.8.5",
-    "elm-review": "^2.11.1",
+    "elm-review": "^2.13.5",
     "elm-test": "^0.19.1-revision10",
     "xhr2": "^0.2.0"
   }
