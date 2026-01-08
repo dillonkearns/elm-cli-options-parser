@@ -13,18 +13,18 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
-      - name: Use Node.js 13
-        uses: actions/setup-node@v1
+      - uses: actions/checkout@v4
+      - name: Use Node.js 20
+        uses: actions/setup-node@v4
         with:
-          node-version: 13
-      - uses: actions/cache@v1
+          node-version: 20
+      - uses: actions/cache@v4
         with:
           path: ~/.npm
           key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
           restore-keys: |
             ${{ runner.os }}-node-
-      - uses: actions/cache@v1
+      - uses: actions/cache@v4
         id: elm-cache
         with:
           path: ~/.elm
@@ -38,18 +38,18 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
-      - name: Use Node.js 13
-        uses: actions/setup-node@v1
+      - uses: actions/checkout@v4
+      - name: Use Node.js 20
+        uses: actions/setup-node@v4
         with:
-          node-version: 13
-      - uses: actions/cache@v1
+          node-version: 20
+      - uses: actions/cache@v4
         with:
           path: ~/.npm
           key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
           restore-keys: |
             ${{ runner.os }}-node-
-      - uses: actions/cache@v1
+      - uses: actions/cache@v4
         id: elm-cache
         with:
           path: ~/.elm
@@ -63,18 +63,18 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
-      - name: Use Node.js 13
-        uses: actions/setup-node@v1
+      - uses: actions/checkout@v4
+      - name: Use Node.js 20
+        uses: actions/setup-node@v4
         with:
-          node-version: 13
-      - uses: actions/cache@v1
+          node-version: 20
+      - uses: actions/cache@v4
         with:
           path: ~/.npm
           key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
           restore-keys: |
             ${{ runner.os }}-node-
-      - uses: actions/cache@v1
+      - uses: actions/cache@v4
         id: elm-cache
         with:
           path: ~/.elm
@@ -88,18 +88,18 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
-      - name: Use Node.js 13
-        uses: actions/setup-node@v1
+      - uses: actions/checkout@v4
+      - name: Use Node.js 20
+        uses: actions/setup-node@v4
         with:
-          node-version: 13
-      - uses: actions/cache@v1
+          node-version: 20
+      - uses: actions/cache@v4
         with:
           path: ~/.npm
           key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
           restore-keys: |
             ${{ runner.os }}-node-
-      - uses: actions/cache@v1
+      - uses: actions/cache@v4
         id: elm-cache
         with:
           path: ~/.elm
@@ -114,18 +114,18 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
-      - name: Use Node.js 13
-        uses: actions/setup-node@v1
+      - uses: actions/checkout@v4
+      - name: Use Node.js 20
+        uses: actions/setup-node@v4
         with:
-          node-version: 13
-      - uses: actions/cache@v1
+          node-version: 20
+      - uses: actions/cache@v4
         with:
           path: ~/.npm
           key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
           restore-keys: |
             ${{ runner.os }}-node-
-      - uses: actions/cache@v1
+      - uses: actions/cache@v4
         id: elm-cache
         with:
           path: ~/.elm

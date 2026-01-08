@@ -2,7 +2,7 @@ module Cli.OptionsParser.BuilderState exposing (AnyOptions, NoBeginningOptions, 
 
 {-| A BuilderState is used to ensure that no ambiguous OptionsParsers are built.
 For example, if you were to build an OptionsParser that had optional positional
-arguments after required positional arguments, it would be amgiguous.
+arguments after required positional arguments, it would be ambiguous.
 
 ```bash
 greet <greeting1> [name1][name2] <greeting2> [farewell]
