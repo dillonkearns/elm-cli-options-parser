@@ -28,8 +28,11 @@ jobs:
         id: elm-cache
         with:
           path: ~/.elm
-          key: ${{ runner.os }}-elm--home-${{ hashFiles('**/elm.json') }}
+          key: ${{ runner.os }}-elm--home-${{ hashFiles('**/elm.json', 'elm-tooling.json') }}
       - run: npm ci
+        env:
+          NO_ELM_TOOLING_INSTALL: 1
+      - run: npx elm-tooling install
       - run: npx --no-install elm make --output /dev/null && cd examples && npx --no-install elm make src/*.elm --output /dev/null && cd ..
       - name: elm-test
         run: npx --no-install elm-test
@@ -53,8 +56,11 @@ jobs:
         id: elm-cache
         with:
           path: ~/.elm
-          key: ${{ runner.os }}-elm--home-${{ hashFiles('**/elm.json') }}
+          key: ${{ runner.os }}-elm--home-${{ hashFiles('**/elm.json', 'elm-tooling.json') }}
       - run: npm ci
+        env:
+          NO_ELM_TOOLING_INSTALL: 1
+      - run: npx elm-tooling install
       - run: npx --no-install elm make --output /dev/null && cd examples && npx --no-install elm make src/*.elm --output /dev/null && cd ..
       - name: elm-format
         run: npx --no-install elm-format --validate
@@ -78,8 +84,11 @@ jobs:
         id: elm-cache
         with:
           path: ~/.elm
-          key: ${{ runner.os }}-elm--home-${{ hashFiles('**/elm.json') }}
+          key: ${{ runner.os }}-elm--home-${{ hashFiles('**/elm.json', 'elm-tooling.json') }}
       - run: npm ci
+        env:
+          NO_ELM_TOOLING_INSTALL: 1
+      - run: npx elm-tooling install
       - run: npx --no-install elm make --output /dev/null && cd examples && npx --no-install elm make src/*.elm --output /dev/null && cd ..
       - name: Check examples
         run: ./approve.sh
@@ -103,8 +112,11 @@ jobs:
         id: elm-cache
         with:
           path: ~/.elm
-          key: ${{ runner.os }}-elm--home-${{ hashFiles('**/elm.json') }}
+          key: ${{ runner.os }}-elm--home-${{ hashFiles('**/elm.json', 'elm-tooling.json') }}
       - run: npm ci
+        env:
+          NO_ELM_TOOLING_INSTALL: 1
+      - run: npx elm-tooling install
       - run: npx --no-install elm make --output /dev/null && cd examples && npx --no-install elm make src/*.elm --output /dev/null && cd ..
       - name: Build elm docs
         run: ./node_modules/.bin/elm make --docs docs.json
@@ -129,8 +141,11 @@ jobs:
         id: elm-cache
         with:
           path: ~/.elm
-          key: ${{ runner.os }}-elm--home-${{ hashFiles('**/elm.json') }}
+          key: ${{ runner.os }}-elm--home-${{ hashFiles('**/elm.json', 'elm-tooling.json') }}
       - run: npm ci
+        env:
+          NO_ELM_TOOLING_INSTALL: 1
+      - run: npx elm-tooling install
       - run: npx --no-install elm make --output /dev/null && cd examples && npx --no-install elm make src/*.elm --output /dev/null && cd ..
       - name: Elm Publish
         uses: dillonkearns/elm-publish-action@v1
