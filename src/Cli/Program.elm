@@ -152,7 +152,21 @@ type alias StatefulProgram model msg cliOptions flags =
     Platform.Program (FlagsIncludingArgv flags) (StatefulProgramModel model cliOptions) msg
 
 
-{-| -}
+{-| Configuration for a stateful CLI program. Pass this record to [`stateful`](#stateful).
+
+Stateful programs work like standard Elm programs with a model, update loop, and
+subscriptions. Use this when your CLI needs to wait for responses (e.g., HTTP requests)
+or maintain state across multiple events. The parsed CLI options are passed to both
+`init` and `update`.
+
+  - `printAndExitFailure` - Port to print a message and exit with a non-zero status code
+  - `printAndExitSuccess` - Port to print a message and exit with status code 0
+  - `init` - Initialize your model with the parsed CLI options
+  - `update` - Handle messages and update your model (also receives CLI options)
+  - `subscriptions` - Subscribe to external events
+  - `config` - The CLI configuration built with [`config`](#config) and [`add`](#add)
+
+-}
 type alias StatefulOptions msg model cliOptions flags =
     { printAndExitFailure : String -> Cmd msg
     , printAndExitSuccess : String -> Cmd msg
@@ -196,7 +210,18 @@ stateful options =
         }
 
 
-{-| -}
+{-| Configuration for a stateless CLI program. Pass this record to [`stateless`](#stateless).
+
+Stateless programs run once and exit - there is no persistent model or update loop.
+Your `init` receives the parsed CLI options and returns a `Cmd` that performs the
+program's work, then the program is done.
+
+  - `printAndExitFailure` - Port to print a message and exit with a non-zero status code
+  - `printAndExitSuccess` - Port to print a message and exit with status code 0
+  - `init` - Receives parsed CLI options and returns a `Cmd` to perform the program's work
+  - `config` - The CLI configuration built with [`config`](#config) and [`add`](#add)
+
+-}
 type alias ProgramOptions decodesTo options flags =
     { printAndExitFailure : String -> Cmd decodesTo
     , printAndExitSuccess : String -> Cmd decodesTo
