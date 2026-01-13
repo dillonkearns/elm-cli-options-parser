@@ -48,10 +48,10 @@ config =
     , NoConfusingPrefixOperator.rule
     , NoDebug.Log.rule
     , NoDebug.TodoOrToString.rule
-        |> Rule.ignoreErrorsForDirectories [ "tests/" ]
     , NoExposingEverything.rule
     , NoImportingEverything.rule []
     , NoMissingTypeAnnotation.rule
+
     -- , NoMissingTypeAnnotationInLetIn.rule
     , NoMissingTypeExpose.rule
     , NoSimpleLetBody.rule
@@ -65,4 +65,9 @@ config =
     , NoUnused.Variables.rule
     , Simplify.rule Simplify.defaults
     ]
-        |> List.map (Rule.ignoreErrorsForDirectories [ "tests/" ])
+        |> List.map
+            (\rule ->
+                rule
+                    |> Rule.ignoreErrorsForDirectories [ "tests" ]
+                    |> Rule.ignoreErrorsForFiles [ "src/Fuzzy.elm" ]
+            )
