@@ -17,6 +17,8 @@ module Fuzzy exposing
 
 -}
 
+import String
+
 
 {-| Represents a configuration element for customization.
 -}
@@ -130,7 +132,7 @@ quickSort entries =
                     else
                         1
             in
-            ( Tuple.first smaller + penalty + Tuple.first larger, Tuple.second smaller ++ head :: Tuple.second larger )
+            ( Tuple.first smaller + penalty + Tuple.first larger, Tuple.second smaller ++ [ head ] ++ Tuple.second larger )
 
 
 {-| Calculate the fuzzy distance between two Strings.
@@ -365,7 +367,7 @@ match configs separators needle hay =
 
         -- Sentence logic, reduce hays on left and right side depending on current needle context
         reduceHays ns c hs =
-            hs |> padHays ns |> reduceRight ns c |> reduceLeft c
+            hs |> padHays ns |> reduceRight ns c |> reduceLeft ns c
 
         accumulateResult n ( prev, num ) =
             let
@@ -386,22 +388,25 @@ match configs separators needle hay =
     Tuple.first (List.foldl accumulateResult ( initialResult, 0 ) needles)
 
 
-{-| Reduce the left side of hays, the second needle do not need to match the first hay and so on.
--}
-reduceLeft : Int -> List String -> ( Int, List String )
-reduceLeft c hs =
+
+-- Reduce the left side of hays, the second needle do not need to match the first hay and so on.
+
+
+reduceLeft ns c hs =
     ( List.foldl (\e sum -> String.length e + sum) 0 (List.take c hs), List.drop c hs )
 
 
-{-| Reduce the right side of hays, the first needle do not need to match against the last hay if there are other needles and so on.
--}
-reduceRight : Int -> Int -> List a -> List a
+
+-- Reduce the right side of hays, the first needle do not need to match against the last hay if there are other needles and so on.
+
+
 reduceRight ns c hs =
     List.take (List.length hs - (ns - c - 1)) hs
 
 
-{-| Pad the hay stack to prevent hay starvation if we have more needles than hays
--}
-padHays : Int -> List String -> List String
+
+-- Pad the hay stack to prevent hay starvation if we have more needles than hays
+
+
 padHays ns hs =
     hs ++ List.repeat (ns - List.length hs) ""
