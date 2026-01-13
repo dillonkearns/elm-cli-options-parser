@@ -430,9 +430,11 @@ Value was:
 "xml"
 ```
 
+Note: the first argument is currently ignored. It will be removed in a future breaking API change.
+
 -}
 oneOf : value -> List (MutuallyExclusiveValue value) -> Option from String builderState -> Option from value builderState
-oneOf default list (Option option) =
+oneOf _ list (Option option) =
     validateMap
         (\argValue ->
             case
