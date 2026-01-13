@@ -9,7 +9,7 @@ module Cli.Program exposing
 {-|
 
 
-## Config
+## Building a Config
 
 A `Cli.Program.Config` is created with `Cli.Program.config`. Then `OptionsParser`s are added
 to it with `Cli.Program.add`. Finally, you create a `Cli.Program.StatelessProgram`
