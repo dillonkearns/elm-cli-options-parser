@@ -61,5 +61,5 @@ main =
         , init = init
         , config = program
         , update = update
-        , subscriptions = \_ -> Sub.none
+        , subscriptions = \_ _ -> Sub.none
         }
