@@ -6,7 +6,7 @@ module Cli.Option exposing
     , oneOf
     , validate, validateIfPresent, validateMap, validateMapIfPresent
     , map, mapFlag, withDefault
-    , Option(..), BeginningOption, OptionalPositionalArgOption, RestArgsOption
+    , Option, BeginningOption, OptionalPositionalArgOption, RestArgsOption
     )
 
 {-| Here is the terminology used for building up Command-Line parsers with this library.
@@ -106,6 +106,7 @@ with the following functions.
 -}
 
 import Cli.Decode
+import Cli.Option.Internal as Internal exposing (Option(..))
 import Cli.UsageSpec as UsageSpec exposing (UsageSpec)
 import Cli.Validate as Validate
 import List.Extra
@@ -113,9 +114,10 @@ import Occurences exposing (Occurences(..))
 import Tokenizer
 
 
-{-| -}
-type Option from to middleOrEnding
-    = Option (InnerOption from to)
+{-| The type returned by the builder functions below. Use with `OptionsParser.with`.
+-}
+type alias Option from to middleOrEnding =
+    Internal.Option from to middleOrEnding
 
 
 {-| `BeginningOption`s can only be used with `OptionsParser.with`.
@@ -124,13 +126,13 @@ type Option from to middleOrEnding
 
 -}
 type BeginningOption
-    = BeginningOption
+    = BeginningOption Never
 
 
 {-| `RestArgsOption`s can only be used with `OptionsParser.withRestArgs`.
 -}
 type RestArgsOption
-    = RestArgsOption
+    = RestArgsOption Never
 
 
 {-| `BeginningOption`s can only be used with `OptionsParser.with`.
@@ -139,23 +141,7 @@ type RestArgsOption
 
 -}
 type OptionalPositionalArgOption
-    = OptionalPositionalArgOption
-
-
-type alias InnerOption from to =
-    { dataGrabber : DataGrabber from
-    , usageSpec : UsageSpec
-    , decoder : Cli.Decode.Decoder from to
-    }
-
-
-type alias DataGrabber decodesTo =
-    { usageSpecs : List UsageSpec
-    , operands : List String
-    , options : List Tokenizer.ParsedOption
-    , operandsSoFar : Int
-    }
-    -> Result Cli.Decode.ProcessingError decodesTo
+    = OptionalPositionalArgOption Never
 
 
 {-| Run a validation. (See an example in the Validation section above, or
@@ -203,7 +189,14 @@ validateIfPresent validateFunction cliSpec =
         cliSpec
 
 
-{-| -}
+{-| A positional argument that must be provided.
+
+Example: `src/Main.elm` in `elm make src/Main.elm`
+Parses to: `"src/Main.elm"`
+
+    Option.requiredPositionalArg "input"
+
+-}
 requiredPositionalArg : String -> Option String String BeginningOption
 requiredPositionalArg operandDescription =
     buildOption
@@ -221,7 +214,14 @@ requiredPositionalArg operandDescription =
         (UsageSpec.operand operandDescription)
 
 
-{-| -}
+{-| A keyword argument that may be omitted.
+
+Example: `--output main.js` or `--output=main.js`
+Parses to: `Just "main.js"` (or `Nothing` if omitted)
+
+    Option.optionalKeywordArg "output"
+
+-}
 optionalKeywordArg : String -> Option (Maybe String) (Maybe String) BeginningOption
 optionalKeywordArg optionName =
     buildOption
@@ -243,7 +243,14 @@ optionalKeywordArg optionName =
         (UsageSpec.keywordArg optionName Optional)
 
 
-{-| -}
+{-| A keyword argument that must be provided.
+
+Example: `--name my-app` or `--name=my-app`
+Parses to: `"my-app"`
+
+    Option.requiredKeywordArg "name"
+
+-}
 requiredKeywordArg : String -> Option String String BeginningOption
 requiredKeywordArg optionName =
     buildOption
@@ -274,7 +281,14 @@ listToString list =
         ]
 
 
-{-| -}
+{-| A flag with no argument.
+
+Example: `--debug` in `elm make --debug`
+Parses to: `True` (or `False` if omitted)
+
+    Option.flag "debug"
+
+-}
 flag : String -> Option Bool Bool BeginningOption
 flag flagName =
     buildOption
@@ -291,7 +305,7 @@ flag flagName =
         (UsageSpec.flag flagName Optional)
 
 
-buildOption : DataGrabber a -> UsageSpec -> Option a a builderState
+buildOption : Internal.DataGrabber a -> UsageSpec -> Option a a builderState
 buildOption dataGrabber usageSpec =
     Option
         { dataGrabber = dataGrabber
@@ -539,7 +553,14 @@ withDefault defaultValue option =
         option
 
 
-{-| -}
+{-| A keyword argument that can be provided multiple times.
+
+Example: `--header "Auth: token" --header "Accept: json"`
+Parses to: `["Auth: token", "Accept: json"]`
+
+    Option.keywordArgList "header"
+
+-}
 keywordArgList : String -> Option (List String) (List String) BeginningOption
 keywordArgList flagName =
     buildOption

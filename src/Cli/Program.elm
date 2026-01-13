@@ -132,12 +132,15 @@ type alias FlagsIncludingArgv flagsRecord =
     }
 
 
-{-| -}
+{-| A program that processes arguments and exits. Use with `stateless`.
+-}
 type alias StatelessProgram msg flags =
     Platform.Program (FlagsIncludingArgv flags) () msg
 
 
-{-| -}
+{-| Create a CLI that processes arguments and exits immediately.
+Use `stateful` instead if you need to perform `Cmd`s (HTTP, etc.).
+-}
 stateless : ProgramOptions msg options flags -> StatelessProgram msg flags
 stateless options =
     Platform.worker
@@ -147,7 +150,8 @@ stateless options =
         }
 
 
-{-| -}
+{-| A program with a model and update loop. Use with `stateful`.
+-}
 type alias StatefulProgram model msg cliOptions flags =
     Platform.Program (FlagsIncludingArgv flags) (StatefulProgramModel model cliOptions) msg
 
@@ -172,7 +176,7 @@ type alias StatefulOptions msg model cliOptions flags =
     , printAndExitSuccess : String -> Cmd msg
     , init : FlagsIncludingArgv flags -> cliOptions -> ( model, Cmd msg )
     , update : cliOptions -> msg -> model -> ( model, Cmd msg )
-    , subscriptions : model -> Sub msg
+    , subscriptions : cliOptions -> model -> Sub msg
     , config : Config cliOptions
     }
 
@@ -202,8 +206,8 @@ stateful options =
         , subscriptions =
             \model ->
                 case model of
-                    UserModel actualModel _ ->
-                        options.subscriptions actualModel
+                    UserModel actualModel cliOptions ->
+                        options.subscriptions cliOptions actualModel
 
                     ShowSystemMessage ->
                         Sub.none

@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [4.0.0]
+
+### Changed
+
+- `Option` type is now opaque. This shouldn't require any changes to your codebase but is a drop-in change.
+- `subscriptions` in `StatefulOptions` now receives `cliOptions` as first argument, allowing access to parsed CLI options from subscriptions.
+
+### Improved
+
+- Added and improved documentation throughout
+
 ## [3.2.0] - 2022-10-19
 
 ### Added

@@ -119,8 +119,8 @@ update cliOptions msg model =
                         ( model, Cmd.none )
 
 
-subscriptions : a -> Sub Msg
-subscriptions model =
+subscriptions : CliOptions -> a -> Sub Msg
+subscriptions _ model =
     Sub.map OnStdin Stdin.subscriptions
 
 

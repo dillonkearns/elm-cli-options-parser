@@ -133,7 +133,8 @@ You shouldn't need to use these functions to build a command line utility.
 -}
 
 import Cli.Decode
-import Cli.Option exposing (Option(..))
+import Cli.Option
+import Cli.Option.Internal as Internal
 import Cli.OptionsParser.BuilderState as BuilderState
 import Cli.OptionsParser.MatchResult
 import Cli.UsageSpec as UsageSpec exposing (UsageSpec)
@@ -207,8 +208,8 @@ tryMatch argv ((OptionsParser { usageSpecs, subCommand }) as optionsParser) =
             case getDecoder parser actualFlagsAndOperands of
                 Err error ->
                     case error of
-                        Cli.Decode.MatchError _ ->
-                            Cli.OptionsParser.MatchResult.NoMatch []
+                        Cli.Decode.MatchError errorMessage ->
+                            Cli.OptionsParser.MatchResult.NoMatch [ errorMessage ]
 
                         Cli.Decode.UnrecoverableValidationError validationError ->
                             Cli.OptionsParser.MatchResult.Match (Err [ validationError ])
@@ -469,13 +470,13 @@ expectFlag flagName (OptionsParser ({ usageSpecs, decoder } as optionsParser)) =
 {-| For chaining on any `Cli.Option.Option` besides a `restArg` or an `optionalPositionalArg`.
 See the `Cli.Option` module.
 -}
-with : Option from to Cli.Option.BeginningOption -> OptionsParser (to -> cliOptions) BuilderState.AnyOptions -> OptionsParser cliOptions BuilderState.AnyOptions
+with : Cli.Option.Option from to Cli.Option.BeginningOption -> OptionsParser (to -> cliOptions) BuilderState.AnyOptions -> OptionsParser cliOptions BuilderState.AnyOptions
 with =
     withCommon
 
 
-withCommon : Option from to optionConstraint -> OptionsParser (to -> cliOptions) startOptionsParserBuilderState -> OptionsParser cliOptions endOptionsParserBuilderState
-withCommon (Option innerOption) ((OptionsParser { decoder, usageSpecs }) as fullOptionsParser) =
+withCommon : Cli.Option.Option from to optionConstraint -> OptionsParser (to -> cliOptions) startOptionsParserBuilderState -> OptionsParser cliOptions endOptionsParserBuilderState
+withCommon (Internal.Option innerOption) ((OptionsParser { decoder, usageSpecs }) as fullOptionsParser) =
     updateDecoder
         (\optionsAndOperands ->
             { options = optionsAndOperands.options
@@ -509,14 +510,14 @@ withCommon (Option innerOption) ((OptionsParser { decoder, usageSpecs }) as full
 
 {-| For chaining on `Cli.Option.optionalPositionalArg`s.
 -}
-withOptionalPositionalArg : Option from to Cli.Option.OptionalPositionalArgOption -> OptionsParser (to -> cliOptions) BuilderState.AnyOptions -> OptionsParser cliOptions BuilderState.NoBeginningOptions
+withOptionalPositionalArg : Cli.Option.Option from to Cli.Option.OptionalPositionalArgOption -> OptionsParser (to -> cliOptions) BuilderState.AnyOptions -> OptionsParser cliOptions BuilderState.NoBeginningOptions
 withOptionalPositionalArg =
     withCommon
 
 
 {-| For chaining on `Cli.Option.restArgs`.
 -}
-withRestArgs : Option from to Cli.Option.RestArgsOption -> OptionsParser (to -> cliOptions) startingBuilderState -> OptionsParser cliOptions BuilderState.NoMoreOptions
+withRestArgs : Cli.Option.Option from to Cli.Option.RestArgsOption -> OptionsParser (to -> cliOptions) startingBuilderState -> OptionsParser cliOptions BuilderState.NoMoreOptions
 withRestArgs =
     withCommon
 
