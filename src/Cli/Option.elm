@@ -114,7 +114,8 @@ import Occurences exposing (Occurences(..))
 import Tokenizer
 
 
-{-| -}
+{-| The type returned by the builder functions below. Use with `OptionsParser.with`.
+-}
 type alias Option from to middleOrEnding =
     Internal.Option from to middleOrEnding
 
@@ -188,7 +189,14 @@ validateIfPresent validateFunction cliSpec =
         cliSpec
 
 
-{-| -}
+{-| A positional argument that must be provided.
+
+Example: `src/Main.elm` in `elm make src/Main.elm`
+Parses to: `"src/Main.elm"`
+
+    Option.requiredPositionalArg "input"
+
+-}
 requiredPositionalArg : String -> Option String String BeginningOption
 requiredPositionalArg operandDescription =
     buildOption
@@ -206,7 +214,14 @@ requiredPositionalArg operandDescription =
         (UsageSpec.operand operandDescription)
 
 
-{-| -}
+{-| A keyword argument that may be omitted.
+
+Example: `--output main.js` or `--output=main.js`
+Parses to: `Just "main.js"` (or `Nothing` if omitted)
+
+    Option.optionalKeywordArg "output"
+
+-}
 optionalKeywordArg : String -> Option (Maybe String) (Maybe String) BeginningOption
 optionalKeywordArg optionName =
     buildOption
@@ -228,7 +243,14 @@ optionalKeywordArg optionName =
         (UsageSpec.keywordArg optionName Optional)
 
 
-{-| -}
+{-| A keyword argument that must be provided.
+
+Example: `--name my-app` or `--name=my-app`
+Parses to: `"my-app"`
+
+    Option.requiredKeywordArg "name"
+
+-}
 requiredKeywordArg : String -> Option String String BeginningOption
 requiredKeywordArg optionName =
     buildOption
@@ -259,7 +281,14 @@ listToString list =
         ]
 
 
-{-| -}
+{-| A flag with no argument.
+
+Example: `--debug` in `elm make --debug`
+Parses to: `True` (or `False` if omitted)
+
+    Option.flag "debug"
+
+-}
 flag : String -> Option Bool Bool BeginningOption
 flag flagName =
     buildOption
@@ -524,7 +553,14 @@ withDefault defaultValue option =
         option
 
 
-{-| -}
+{-| A keyword argument that can be provided multiple times.
+
+Example: `--header "Auth: token" --header "Accept: json"`
+Parses to: `["Auth: token", "Accept: json"]`
+
+    Option.keywordArgList "header"
+
+-}
 keywordArgList : String -> Option (List String) (List String) BeginningOption
 keywordArgList flagName =
     buildOption
