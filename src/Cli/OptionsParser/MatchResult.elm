@@ -29,5 +29,5 @@ matchResultToMaybe matchResult =
         Match thing ->
             Just thing
 
-        NoMatch unknownFlags ->
+        NoMatch _ ->
             Nothing

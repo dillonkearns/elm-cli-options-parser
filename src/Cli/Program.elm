@@ -1,6 +1,6 @@
 module Cli.Program exposing
     ( config, Config, add
-    , stateless, stateful
+    , stateless, ProgramOptions, stateful, StatefulOptions
     , StatelessProgram, StatefulProgram
     , FlagsIncludingArgv
     , mapConfig
@@ -60,7 +60,7 @@ See the [`examples`](https://github.com/dillonkearns/elm-cli-options-parser/tree
 
 ## `Program`s
 
-@docs stateless, stateful
+@docs stateless, ProgramOptions, stateful, StatefulOptions
 @docs StatelessProgram, StatefulProgram
 @docs FlagsIncludingArgv
 @docs mapConfig
@@ -142,7 +142,7 @@ stateless : ProgramOptions msg options flags -> StatelessProgram msg flags
 stateless options =
     Platform.worker
         { init = init options
-        , update = \msg model -> ( (), Cmd.none )
+        , update = \_ _ -> ( (), Cmd.none )
         , subscriptions = \_ -> Sub.none
         }
 
@@ -152,6 +152,21 @@ type alias StatefulProgram model msg cliOptions flags =
     Platform.Program (FlagsIncludingArgv flags) (StatefulProgramModel model cliOptions) msg
 
 
+{-| Configuration for a stateful CLI program. Pass this record to [`stateful`](#stateful).
+
+Stateful programs work like standard Elm programs with a model, update loop, and
+subscriptions. Use this when your CLI needs to wait for responses (e.g., HTTP requests)
+or maintain state across multiple events. The parsed CLI options are passed to both
+`init` and `update`.
+
+  - `printAndExitFailure` - Port to print a message and exit with a non-zero status code
+  - `printAndExitSuccess` - Port to print a message and exit with status code 0
+  - `init` - Initialize your model with the parsed CLI options
+  - `update` - Handle messages and update your model (also receives CLI options)
+  - `subscriptions` - Subscribe to external events
+  - `config` - The CLI configuration built with [`config`](#config) and [`add`](#add)
+
+-}
 type alias StatefulOptions msg model cliOptions flags =
     { printAndExitFailure : String -> Cmd msg
     , printAndExitSuccess : String -> Cmd msg
@@ -187,7 +202,7 @@ stateful options =
         , subscriptions =
             \model ->
                 case model of
-                    UserModel actualModel cliOptions ->
+                    UserModel actualModel _ ->
                         options.subscriptions actualModel
 
                     ShowSystemMessage ->
@@ -195,6 +210,18 @@ stateful options =
         }
 
 
+{-| Configuration for a stateless CLI program. Pass this record to [`stateless`](#stateless).
+
+Stateless programs run once and exit - there is no persistent model or update loop.
+Your `init` receives the parsed CLI options and returns a `Cmd` that performs the
+program's work, then the program is done.
+
+  - `printAndExitFailure` - Port to print a message and exit with a non-zero status code
+  - `printAndExitSuccess` - Port to print a message and exit with status code 0
+  - `init` - Receives parsed CLI options and returns a `Cmd` to perform the program's work
+  - `config` - The CLI configuration built with [`config`](#config) and [`add`](#add)
+
+-}
 type alias ProgramOptions decodesTo options flags =
     { printAndExitFailure : String -> Cmd decodesTo
     , printAndExitSuccess : String -> Cmd decodesTo
@@ -243,25 +270,22 @@ statefulInit options flags =
         matchResult : RunResult cliOptions
         matchResult =
             run options.config flags.argv flags.versionMessage
-
-        cmd =
-            case matchResult of
-                SystemMessage exitStatus message ->
-                    case exitStatus of
-                        Cli.ExitStatus.Failure ->
-                            ( ShowSystemMessage, options.printAndExitFailure message )
-
-                        Cli.ExitStatus.Success ->
-                            ( ShowSystemMessage, options.printAndExitSuccess message )
-
-                CustomMatch cliOptions ->
-                    let
-                        ( userModel, userCmd ) =
-                            options.init flags cliOptions
-                    in
-                    ( UserModel userModel cliOptions, userCmd )
     in
-    cmd
+    case matchResult of
+        SystemMessage exitStatus message ->
+            case exitStatus of
+                Cli.ExitStatus.Failure ->
+                    ( ShowSystemMessage, options.printAndExitFailure message )
+
+                Cli.ExitStatus.Success ->
+                    ( ShowSystemMessage, options.printAndExitSuccess message )
+
+        CustomMatch cliOptions ->
+            let
+                ( userModel, userCmd ) =
+                    options.init flags cliOptions
+            in
+            ( UserModel userModel cliOptions, userCmd )
 
 
 run : Config msg -> List String -> String -> RunResult msg
@@ -269,7 +293,7 @@ run (Config { optionsParsers }) argv versionMessage =
     let
         programName =
             case argv of
-                first :: programPath :: _ ->
+                _ :: programPath :: _ ->
                     programPath
                         |> String.split "/"
                         |> List.Extra.last
@@ -286,7 +310,7 @@ run (Config { optionsParsers }) argv versionMessage =
     in
     case matchResult of
         Cli.LowLevel.NoMatch unexpectedOptions ->
-            if unexpectedOptions == [] then
+            if List.isEmpty unexpectedOptions then
                 "\nNo matching optionsParser...\n\nUsage:\n\n"
                     ++ Cli.LowLevel.helpText programName optionsParsers
                     |> SystemMessage Cli.ExitStatus.Failure
