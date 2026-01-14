@@ -209,7 +209,13 @@ requiredPositionalArg operandDescription =
                     Ok operandValue
 
                 Nothing ->
-                    Cli.Decode.MatchError ("Expect operand " ++ operandDescription ++ "at " ++ String.fromInt operandsSoFar ++ " but had operands " ++ listToString operands) |> Err
+                    Cli.Decode.MatchError
+                        (Cli.Decode.MissingRequiredPositionalArg
+                            { name = operandDescription
+                            , operandsSoFar = operandsSoFar
+                            }
+                        )
+                        |> Err
         )
         (UsageSpec.operand operandDescription)
 
@@ -238,7 +244,9 @@ optionalKeywordArg optionName =
                     Ok (Just optionArg)
 
                 _ ->
-                    Cli.Decode.MatchError ("Expected option " ++ optionName ++ " to have arg but found none.") |> Err
+                    Cli.Decode.MatchError
+                        (Cli.Decode.KeywordArgMissingValue { name = optionName })
+                        |> Err
         )
         (UsageSpec.keywordArg optionName Optional)
 
@@ -261,13 +269,17 @@ requiredKeywordArg optionName =
                         (\(Tokenizer.ParsedOption thisOptionName _) -> thisOptionName == optionName)
             of
                 Nothing ->
-                    Cli.Decode.MatchError ("Expected to find option " ++ optionName ++ " but only found options " ++ (options |> List.map Tokenizer.parsedOptionToString |> listToString)) |> Err
+                    Cli.Decode.MatchError
+                        (Cli.Decode.MissingRequiredKeywordArg { name = optionName })
+                        |> Err
 
                 Just (Tokenizer.ParsedOption _ (Tokenizer.KeywordArg optionArg)) ->
                     Ok optionArg
 
                 _ ->
-                    Cli.Decode.MatchError ("Expected option " ++ optionName ++ " to have arg but found none.") |> Err
+                    Cli.Decode.MatchError
+                        (Cli.Decode.KeywordArgMissingValue { name = optionName })
+                        |> Err
         )
         (UsageSpec.keywordArg optionName Required)
 
