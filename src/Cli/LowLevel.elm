@@ -3,13 +3,13 @@ module Cli.LowLevel exposing (MatchResult(..), helpText, try)
 import Cli.Decode
 import Cli.OptionsParser as OptionsParser exposing (OptionsParser)
 import Cli.OptionsParser.BuilderState as BuilderState
-import Cli.OptionsParser.MatchResult as MatchResult exposing (MatchResult)
+import Cli.OptionsParser.MatchResult as MatchResult exposing (NoMatchReason(..))
 import Set exposing (Set)
 
 
 type MatchResult msg
     = ValidationErrors (List Cli.Decode.ValidationError)
-    | NoMatch (List String)
+    | NoMatch (List MatchResult.NoMatchReason)
     | Match msg
     | ShowHelp
     | ShowVersion
@@ -55,19 +55,70 @@ try optionsParsers argv =
                         |> OptionsParser.tryMatch
                     )
 
-        commonUnmatchedFlags =
+        -- Extract UnexpectedOption strings and find the common ones (truly unknown)
+        commonUnexpectedOptions : Set String
+        commonUnexpectedOptions =
             matchResults
                 |> List.map
                     (\matchResult ->
                         case matchResult of
-                            MatchResult.NoMatch unknownFlags ->
-                                Set.fromList unknownFlags
+                            MatchResult.NoMatch reasons ->
+                                reasons
+                                    |> List.filterMap
+                                        (\reason ->
+                                            case reason of
+                                                UnexpectedOption name ->
+                                                    Just name
+
+                                                _ ->
+                                                    Nothing
+                                        )
+                                    |> Set.fromList
 
                             _ ->
                                 Set.empty
                     )
                 |> intersection
-                |> Set.toList
+
+        -- Collect all NoMatchReasons from all parsers
+        allNoMatchReasons : List MatchResult.NoMatchReason
+        allNoMatchReasons =
+            matchResults
+                |> List.concatMap
+                    (\matchResult ->
+                        case matchResult of
+                            MatchResult.NoMatch reasons ->
+                                reasons
+
+                            _ ->
+                                []
+                    )
+
+        -- Build the aggregated list of reasons:
+        -- 1. Common unexpected options (wrapped back into UnexpectedOption)
+        -- 2. All other reasons (deduplicated)
+        aggregatedReasons : List MatchResult.NoMatchReason
+        aggregatedReasons =
+            let
+                unexpectedOptionReasons =
+                    commonUnexpectedOptions
+                        |> Set.toList
+                        |> List.map UnexpectedOption
+
+                otherReasons =
+                    allNoMatchReasons
+                        |> List.filter
+                            (\reason ->
+                                case reason of
+                                    UnexpectedOption _ ->
+                                        False
+
+                                    _ ->
+                                        True
+                            )
+                        |> uniqueReasons
+            in
+            unexpectedOptionReasons ++ otherReasons
     in
     matchResults
         |> List.map MatchResult.matchResultToMaybe
@@ -88,8 +139,57 @@ try optionsParsers argv =
                                 ValidationErrors validationErrors
 
                     Nothing ->
-                        NoMatch commonUnmatchedFlags
+                        NoMatch aggregatedReasons
            )
+
+
+{-| Remove duplicate reasons (simple deduplication by converting to string and back).
+-}
+uniqueReasons : List MatchResult.NoMatchReason -> List MatchResult.NoMatchReason
+uniqueReasons reasons =
+    reasons
+        |> List.foldl
+            (\reason ( seen, acc ) ->
+                let
+                    key =
+                        reasonToKey reason
+                in
+                if Set.member key seen then
+                    ( seen, acc )
+
+                else
+                    ( Set.insert key seen, reason :: acc )
+            )
+            ( Set.empty, [] )
+        |> Tuple.second
+        |> List.reverse
+
+
+{-| Convert a NoMatchReason to a unique string key for deduplication.
+-}
+reasonToKey : MatchResult.NoMatchReason -> String
+reasonToKey reason =
+    case reason of
+        UnexpectedOption name ->
+            "UnexpectedOption:" ++ name
+
+        MissingSubCommand { expectedSubCommand } ->
+            "MissingSubCommand:" ++ expectedSubCommand
+
+        WrongSubCommand { expectedSubCommand, actualSubCommand } ->
+            "WrongSubCommand:" ++ expectedSubCommand ++ ":" ++ actualSubCommand
+
+        MissingRequiredPositionalArg { name } ->
+            "MissingRequiredPositionalArg:" ++ name
+
+        MissingRequiredKeywordArg { name } ->
+            "MissingRequiredKeywordArg:" ++ name
+
+        MissingExpectedFlag { name } ->
+            "MissingExpectedFlag:" ++ name
+
+        ExtraOperand ->
+            "ExtraOperand"
 
 
 helpParser : OptionsParser (MatchResult msg) BuilderState.AnyOptions

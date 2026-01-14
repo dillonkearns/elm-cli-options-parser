@@ -181,8 +181,8 @@ tryMatch argv ((OptionsParser { usageSpecs, subCommand }) as optionsParser) =
                                     , usageSpecs = usageSpecs
                                     }
 
-                            ( Just buildSubCommandName, actualSubCommand :: remainingOperands ) ->
-                                if actualSubCommand == buildSubCommandName then
+                            ( Just expectedSubCommandName, actualSubCommand :: remainingOperands ) ->
+                                if actualSubCommand == expectedSubCommandName then
                                     Ok
                                         { options = record.options
                                         , operands = remainingOperands
@@ -190,10 +190,22 @@ tryMatch argv ((OptionsParser { usageSpecs, subCommand }) as optionsParser) =
                                         }
 
                                 else
-                                    Err { errorMessage = "Sub optionsParser does not match", options = record.options }
+                                    Err
+                                        { subCommandError =
+                                            Cli.Decode.WrongSubCommand
+                                                { expectedSubCommand = expectedSubCommandName
+                                                , actualSubCommand = actualSubCommand
+                                                }
+                                        , options = record.options
+                                        }
 
-                            ( Just _, [] ) ->
-                                Err { errorMessage = "No sub optionsParser provided", options = record.options }
+                            ( Just expectedSubCommandName, [] ) ->
+                                Err
+                                    { subCommandError =
+                                        Cli.Decode.MissingSubCommand
+                                            { expectedSubCommand = expectedSubCommandName }
+                                    , options = record.options
+                                    }
                    )
     in
     case flagsAndOperands of
@@ -208,14 +220,16 @@ tryMatch argv ((OptionsParser { usageSpecs, subCommand }) as optionsParser) =
             case getDecoder parser actualFlagsAndOperands of
                 Err error ->
                     case error of
-                        Cli.Decode.MatchError errorMessage ->
-                            Cli.OptionsParser.MatchResult.NoMatch [ errorMessage ]
+                        Cli.Decode.MatchError matchErrorDetail ->
+                            Cli.OptionsParser.MatchResult.NoMatch
+                                [ matchErrorDetailToNoMatchReason matchErrorDetail ]
 
                         Cli.Decode.UnrecoverableValidationError validationError ->
                             Cli.OptionsParser.MatchResult.Match (Err [ validationError ])
 
                         Cli.Decode.UnexpectedOptions unexpectedOptions ->
-                            Cli.OptionsParser.MatchResult.NoMatch unexpectedOptions
+                            Cli.OptionsParser.MatchResult.NoMatch
+                                (List.map Cli.OptionsParser.MatchResult.UnexpectedOption unexpectedOptions)
 
                 Ok ( [], value ) ->
                     Cli.OptionsParser.MatchResult.Match (Ok value)
@@ -223,8 +237,46 @@ tryMatch argv ((OptionsParser { usageSpecs, subCommand }) as optionsParser) =
                 Ok ( validationErrors, _ ) ->
                     Cli.OptionsParser.MatchResult.Match (Err validationErrors)
 
-        Err { options } ->
-            Cli.OptionsParser.MatchResult.NoMatch (unexpectedOptions_ optionsParser options)
+        Err { subCommandError, options } ->
+            -- Include both the subcommand error AND any unexpected options
+            let
+                unexpectedOptionReasons =
+                    unexpectedOptions_ optionsParser options
+                        |> List.map Cli.OptionsParser.MatchResult.UnexpectedOption
+            in
+            Cli.OptionsParser.MatchResult.NoMatch
+                (matchErrorDetailToNoMatchReason subCommandError :: unexpectedOptionReasons)
+
+
+{-| Convert internal MatchErrorDetail to public NoMatchReason.
+-}
+matchErrorDetailToNoMatchReason : Cli.Decode.MatchErrorDetail -> Cli.OptionsParser.MatchResult.NoMatchReason
+matchErrorDetailToNoMatchReason detail =
+    case detail of
+        Cli.Decode.MissingExpectedFlag { name } ->
+            Cli.OptionsParser.MatchResult.MissingExpectedFlag { name = name }
+
+        Cli.Decode.MissingRequiredPositionalArg { name } ->
+            Cli.OptionsParser.MatchResult.MissingRequiredPositionalArg { name = name }
+
+        Cli.Decode.MissingRequiredKeywordArg { name } ->
+            Cli.OptionsParser.MatchResult.MissingRequiredKeywordArg { name = name }
+
+        Cli.Decode.KeywordArgMissingValue { name } ->
+            -- Treat "keyword arg provided without value" same as "missing required keyword arg"
+            Cli.OptionsParser.MatchResult.MissingRequiredKeywordArg { name = name }
+
+        Cli.Decode.ExtraOperand ->
+            Cli.OptionsParser.MatchResult.ExtraOperand
+
+        Cli.Decode.MissingSubCommand { expectedSubCommand } ->
+            Cli.OptionsParser.MatchResult.MissingSubCommand { expectedSubCommand = expectedSubCommand }
+
+        Cli.Decode.WrongSubCommand { expectedSubCommand, actualSubCommand } ->
+            Cli.OptionsParser.MatchResult.WrongSubCommand
+                { expectedSubCommand = expectedSubCommand
+                , actualSubCommand = actualSubCommand
+                }
 
 
 expectedPositionalArgCountOrFail : OptionsParser cliOptions builderState -> OptionsParser cliOptions builderState
@@ -241,7 +293,7 @@ expectedPositionalArgCountOrFail (OptionsParser ({ decoder, usageSpecs } as opti
                                 |> List.length
                               )
                     then
-                        Cli.Decode.MatchError "Wrong number of operands" |> Err
+                        Cli.Decode.MatchError Cli.Decode.ExtraOperand |> Err
 
                     else
                         decoder stuff
@@ -462,7 +514,7 @@ expectFlag flagName (OptionsParser ({ usageSpecs, decoder } as optionsParser)) =
                         decoder stuff
 
                     else
-                        Cli.Decode.MatchError ("Expect flag " ++ ("--" ++ flagName))
+                        Cli.Decode.MatchError (Cli.Decode.MissingExpectedFlag { name = flagName })
                             |> Err
         }
 
