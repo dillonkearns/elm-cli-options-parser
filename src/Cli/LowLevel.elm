@@ -13,6 +13,7 @@ type MatchResult msg
     | Match msg
     | ShowHelp
     | ShowVersion
+    | ShowSubcommandHelp String
 
 
 intersection : List (Set comparable) -> Set comparable
@@ -37,6 +38,38 @@ type CombinedParser userOptions
 try : List (OptionsParser.OptionsParser msg builderState) -> List String -> MatchResult msg
 try optionsParsers argv =
     let
+        argsWithoutNodeAndScript =
+            argv |> List.drop 2
+
+        -- Check for subcommand-specific help: "subcommand --help" or "--help subcommand"
+        hasHelpFlag =
+            List.member "--help" argsWithoutNodeAndScript
+
+        availableSubcommands =
+            optionsParsers
+                |> List.filterMap OptionsParser.getSubCommand
+
+        firstNonFlagArg =
+            argsWithoutNodeAndScript
+                |> List.filter (\arg -> not (String.startsWith "--" arg))
+                |> List.head
+
+        subcommandHelpResult =
+            if hasHelpFlag then
+                case firstNonFlagArg of
+                    Just arg ->
+                        if List.member arg availableSubcommands then
+                            Just (ShowSubcommandHelp arg)
+
+                        else
+                            Nothing
+
+                    Nothing ->
+                        Nothing
+
+            else
+                Nothing
+
         matchResults =
             (optionsParsers
                 |> List.map (OptionsParser.map UserParser)
@@ -50,8 +83,7 @@ try optionsParsers argv =
                         |> OptionsParser.map SystemParser
                    ]
                 |> List.map
-                    (argv
-                        |> List.drop 2
+                    (argsWithoutNodeAndScript
                         |> OptionsParser.tryMatch
                     )
 
@@ -139,7 +171,13 @@ try optionsParsers argv =
                                 ValidationErrors validationErrors
 
                     Nothing ->
-                        NoMatch aggregatedReasons
+                        -- Check for subcommand-specific help before returning NoMatch
+                        case subcommandHelpResult of
+                            Just helpResult ->
+                                helpResult
+
+                            Nothing ->
+                                NoMatch aggregatedReasons
            )
 
 
@@ -179,11 +217,11 @@ reasonToKey reason =
         WrongSubCommand { expectedSubCommand, actualSubCommand } ->
             "WrongSubCommand:" ++ expectedSubCommand ++ ":" ++ actualSubCommand
 
-        MissingRequiredPositionalArg { name } ->
-            "MissingRequiredPositionalArg:" ++ name
+        MissingRequiredPositionalArg { name, customMessage } ->
+            "MissingRequiredPositionalArg:" ++ name ++ Maybe.withDefault "" customMessage
 
-        MissingRequiredKeywordArg { name } ->
-            "MissingRequiredKeywordArg:" ++ name
+        MissingRequiredKeywordArg { name, customMessage } ->
+            "MissingRequiredKeywordArg:" ++ name ++ Maybe.withDefault "" customMessage
 
         MissingExpectedFlag { name } ->
             "MissingExpectedFlag:" ++ name

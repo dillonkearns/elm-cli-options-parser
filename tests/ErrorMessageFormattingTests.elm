@@ -105,6 +105,52 @@ verboseConfig =
             )
 
 
+{-| Config that demonstrates withMissingMessage for custom error messages.
+-}
+gitCloneWithCustomMessage : Program.Config String
+gitCloneWithCustomMessage =
+    Program.config
+        |> Program.add
+            (OptionsParser.buildSubCommand "clone" identity
+                |> OptionsParser.with
+                    (Option.requiredPositionalArg "repository"
+                        |> Option.withMissingMessage "You must specify a repository to clone."
+                    )
+            )
+
+
+{-| Config with custom missing message for keyword arg.
+-}
+configWithCustomKeywordMessage : Program.Config String
+configWithCustomKeywordMessage =
+    Program.config
+        |> Program.add
+            (OptionsParser.build identity
+                |> OptionsParser.with
+                    (Option.requiredKeywordArg "token"
+                        |> Option.withMissingMessage "Authentication token is required. Get one from https://example.com/settings/tokens"
+                    )
+            )
+
+
+{-| Config with descriptions for help text.
+-}
+configWithDescriptions : Program.Config ( String, Maybe String )
+configWithDescriptions =
+    Program.config
+        |> Program.add
+            (OptionsParser.build Tuple.pair
+                |> OptionsParser.with
+                    (Option.requiredKeywordArg "name"
+                        |> Option.withDescription "Your name for the greeting"
+                    )
+                |> OptionsParser.with
+                    (Option.optionalKeywordArg "greeting"
+                        |> Option.withDescription "Custom greeting message"
+                    )
+            )
+
+
 
 -- TESTS
 
@@ -200,5 +246,47 @@ myprog log [--author <author>] [--oneline]"""
                 \() ->
                     Program.run gitConfig [ "node", "myprog", "--version" ] "2.5.0"
                         |> expectSuccess "2.5.0"
+            ]
+        , describe "custom missing messages (withMissingMessage)"
+            [ test "positional arg with custom message" <|
+                \() ->
+                    runCli gitCloneWithCustomMessage [ "clone" ]
+                        |> expectError
+                            """You must specify a repository to clone.
+
+myprog clone <repository>"""
+            , test "keyword arg with custom message" <|
+                \() ->
+                    runCli configWithCustomKeywordMessage []
+                        |> expectError
+                            """Authentication token is required. Get one from https://example.com/settings/tokens
+
+myprog --token <token>"""
+            , test "custom message with successful parse" <|
+                \() ->
+                    runCli gitCloneWithCustomMessage [ "clone", "https://github.com/foo/bar" ]
+                        |> expectMatch "https://github.com/foo/bar"
+            ]
+        , describe "option descriptions (withDescription)"
+            [ test "config with descriptions parses correctly" <|
+                \() ->
+                    runCli configWithDescriptions [ "--name", "Alice", "--greeting", "Hello" ]
+                        |> expectMatch ( "Alice", Just "Hello" )
+            , test "descriptions are stored and available for help text" <|
+                \() ->
+                    -- This test verifies the basic synopsis still works
+                    -- Full description rendering would be a future enhancement
+                    runCli configWithDescriptions [ "--help" ]
+                        |> expectSuccess "myprog --name <name> [--greeting <greeting>]"
+            ]
+        , describe "subcommand-specific help"
+            [ test "subcommand --help shows only that subcommand's usage" <|
+                \() ->
+                    runCli gitConfig [ "clone", "--help" ]
+                        |> expectSuccess "myprog clone <repository>"
+            , test "subcommand with options --help shows usage" <|
+                \() ->
+                    runCli gitConfig [ "log", "--help" ]
+                        |> expectSuccess "myprog log [--author <author>] [--oneline]"
             ]
         ]

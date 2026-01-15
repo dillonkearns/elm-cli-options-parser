@@ -6,6 +6,7 @@ module Cli.Option exposing
     , oneOf
     , validate, validateIfPresent, validateMap, validateMapIfPresent
     , map, mapFlag, withDefault
+    , withDescription, withMissingMessage
     , Option, BeginningOption, OptionalPositionalArgOption, RestArgsOption
     )
 
@@ -99,6 +100,11 @@ with the following functions.
 @docs map, mapFlag, withDefault
 
 
+### Metadata
+
+@docs withDescription, withMissingMessage
+
+
 ## Types
 
 @docs Option, BeginningOption, OptionalPositionalArgOption, RestArgsOption
@@ -120,22 +126,25 @@ type alias Option from to middleOrEnding =
     Internal.Option from to middleOrEnding
 
 
-{-| `BeginningOption`s can only be used with `OptionsParser.with`.
+{-| Phantom type marker for beginning options.
 
-`OptionalPositionalArgOption`s can only be used with `OptionsParser.withOptionalPositionalArg`.
+`BeginningOption`s can only be used with `OptionsParser.with`.
 
 -}
 type BeginningOption
     = BeginningOption Never
 
 
-{-| `RestArgsOption`s can only be used with `OptionsParser.withRestArgs`.
+{-| Phantom type marker for rest args options.
+
+`RestArgsOption`s can only be used with `OptionsParser.withRestArgs`.
+
 -}
 type RestArgsOption
     = RestArgsOption Never
 
 
-{-| `BeginningOption`s can only be used with `OptionsParser.with`.
+{-| Phantom type marker for optional positional arg options.
 
 `OptionalPositionalArgOption`s can only be used with `OptionsParser.withOptionalPositionalArg`.
 
@@ -197,9 +206,9 @@ Parses to: `"src/Main.elm"`
     Option.requiredPositionalArg "input"
 
 -}
-requiredPositionalArg : String -> Option String String BeginningOption
+requiredPositionalArg : String -> Option String String { position : BeginningOption, canAddMissingMessage : () }
 requiredPositionalArg operandDescription =
-    buildOption
+    buildRequiredOption
         (\{ operands, operandsSoFar } ->
             case
                 operands
@@ -213,6 +222,7 @@ requiredPositionalArg operandDescription =
                         (Cli.Decode.MissingRequiredPositionalArg
                             { name = operandDescription
                             , operandsSoFar = operandsSoFar
+                            , customMessage = Nothing
                             }
                         )
                         |> Err
@@ -228,9 +238,9 @@ Parses to: `Just "main.js"` (or `Nothing` if omitted)
     Option.optionalKeywordArg "output"
 
 -}
-optionalKeywordArg : String -> Option (Maybe String) (Maybe String) BeginningOption
+optionalKeywordArg : String -> Option (Maybe String) (Maybe String) { position : BeginningOption }
 optionalKeywordArg optionName =
-    buildOption
+    buildOptionalOption
         (\{ options } ->
             case
                 options
@@ -259,9 +269,9 @@ Parses to: `"my-app"`
     Option.requiredKeywordArg "name"
 
 -}
-requiredKeywordArg : String -> Option String String BeginningOption
+requiredKeywordArg : String -> Option String String { position : BeginningOption, canAddMissingMessage : () }
 requiredKeywordArg optionName =
-    buildOption
+    buildRequiredOption
         (\{ options } ->
             case
                 options
@@ -270,7 +280,7 @@ requiredKeywordArg optionName =
             of
                 Nothing ->
                     Cli.Decode.MatchError
-                        (Cli.Decode.MissingRequiredKeywordArg { name = optionName })
+                        (Cli.Decode.MissingRequiredKeywordArg { name = optionName, customMessage = Nothing })
                         |> Err
 
                 Just (Tokenizer.ParsedOption _ (Tokenizer.KeywordArg optionArg)) ->
@@ -301,9 +311,9 @@ Parses to: `True` (or `False` if omitted)
     Option.flag "debug"
 
 -}
-flag : String -> Option Bool Bool BeginningOption
+flag : String -> Option Bool Bool { position : BeginningOption }
 flag flagName =
-    buildOption
+    buildOptionalOption
         (\{ options } ->
             if
                 options
@@ -317,13 +327,117 @@ flag flagName =
         (UsageSpec.flag flagName Optional)
 
 
-buildOption : Internal.DataGrabber a -> UsageSpec -> Option a a builderState
-buildOption dataGrabber usageSpec =
+{-| Build an option for required arguments (has canAddMissingMessage capability).
+-}
+buildRequiredOption : Internal.DataGrabber a -> UsageSpec -> Option a a { position : BeginningOption, canAddMissingMessage : () }
+buildRequiredOption dataGrabber usageSpec =
     Option
         { dataGrabber = dataGrabber
         , usageSpec = usageSpec
         , decoder = Cli.Decode.decoder
+        , meta = emptyMeta
         }
+
+
+{-| Build an option for optional arguments (no canAddMissingMessage capability).
+-}
+buildOptionalOption : Internal.DataGrabber a -> UsageSpec -> Option a a { position : BeginningOption }
+buildOptionalOption dataGrabber usageSpec =
+    Option
+        { dataGrabber = dataGrabber
+        , usageSpec = usageSpec
+        , decoder = Cli.Decode.decoder
+        , meta = emptyMeta
+        }
+
+
+{-| Build an ending option (like restArgs, optionalPositionalArg).
+-}
+buildEndingOption : Internal.DataGrabber a -> UsageSpec -> Option a a { position : position }
+buildEndingOption dataGrabber usageSpec =
+    Option
+        { dataGrabber = dataGrabber
+        , usageSpec = usageSpec
+        , decoder = Cli.Decode.decoder
+        , meta = emptyMeta
+        }
+
+
+{-| Default empty metadata.
+-}
+emptyMeta : Internal.OptionMeta
+emptyMeta =
+    { description = Nothing
+    , missingMessage = Nothing
+    }
+
+
+{-| Add a description to an option. This will be shown in help text.
+
+    Option.requiredKeywordArg "name"
+        |> Option.withDescription "Your name for the greeting"
+
+-}
+withDescription : String -> Option from to builderState -> Option from to builderState
+withDescription description (Option option) =
+    Option
+        { option
+            | usageSpec = UsageSpec.setDescription (Just description) option.usageSpec
+            , meta =
+                { description = Just description
+                , missingMessage = option.meta.missingMessage
+                }
+        }
+
+
+{-| Add a custom error message for when a required option is missing.
+
+This only works on required options (requiredPositionalArg, requiredKeywordArg).
+
+    Option.requiredPositionalArg "repository"
+        |> Option.withMissingMessage "You must specify a repository to clone."
+
+-}
+withMissingMessage : String -> Option from to { c | canAddMissingMessage : () } -> Option from to { c | canAddMissingMessage : () }
+withMissingMessage message (Option option) =
+    Option
+        { option
+            | dataGrabber =
+                \context ->
+                    option.dataGrabber context
+                        |> Result.mapError (addCustomMessageToError message)
+            , meta =
+                { description = option.meta.description
+                , missingMessage = Just message
+                }
+        }
+
+
+{-| Add custom message to an error if it's a missing required arg error.
+-}
+addCustomMessageToError : String -> Cli.Decode.ProcessingError -> Cli.Decode.ProcessingError
+addCustomMessageToError message error =
+    case error of
+        Cli.Decode.MatchError detail ->
+            Cli.Decode.MatchError (addCustomMessageToMatchError message detail)
+
+        other ->
+            other
+
+
+{-| Add custom message to a MatchErrorDetail if applicable.
+-}
+addCustomMessageToMatchError : String -> Cli.Decode.MatchErrorDetail -> Cli.Decode.MatchErrorDetail
+addCustomMessageToMatchError message detail =
+    case detail of
+        Cli.Decode.MissingRequiredPositionalArg record ->
+            Cli.Decode.MissingRequiredPositionalArg { record | customMessage = Just message }
+
+        Cli.Decode.MissingRequiredKeywordArg record ->
+            Cli.Decode.MissingRequiredKeywordArg { record | customMessage = Just message }
+
+        other ->
+            other
 
 
 {-| Transform an `Option`. For example, you may want to map an option from the
@@ -355,11 +469,12 @@ map mapFn option =
 
 
 updateDecoder : (Cli.Decode.Decoder from to -> Cli.Decode.Decoder from toNew) -> Option from to builderState -> Option from toNew builderState
-updateDecoder mappedDecoder (Option { dataGrabber, usageSpec, decoder }) =
+updateDecoder mappedDecoder (Option { dataGrabber, usageSpec, decoder, meta }) =
     Option
         { dataGrabber = dataGrabber
         , usageSpec = usageSpec
         , decoder = mappedDecoder decoder
+        , meta = meta
         }
 
 
@@ -573,9 +688,9 @@ Parses to: `["Auth: token", "Accept: json"]`
     Option.keywordArgList "header"
 
 -}
-keywordArgList : String -> Option (List String) (List String) BeginningOption
+keywordArgList : String -> Option (List String) (List String) { position : BeginningOption }
 keywordArgList flagName =
-    buildOption
+    buildOptionalOption
         (\{ options } ->
             options
                 |> List.filterMap
@@ -598,9 +713,9 @@ keywordArgList flagName =
 
 {-| Note that this must be used with `OptionsParser.withOptionalPositionalArg`.
 -}
-optionalPositionalArg : String -> Option (Maybe String) (Maybe String) OptionalPositionalArgOption
+optionalPositionalArg : String -> Option (Maybe String) (Maybe String) { position : OptionalPositionalArgOption }
 optionalPositionalArg operandDescription =
-    buildOption
+    buildEndingOption
         (\flagsAndOperands ->
             let
                 operandsSoFar : Int
@@ -620,9 +735,9 @@ optionalPositionalArg operandDescription =
 
 {-| Note that this must be used with `OptionsParser.withRestArgs`.
 -}
-restArgs : String -> Option (List String) (List String) RestArgsOption
+restArgs : String -> Option (List String) (List String) { position : RestArgsOption }
 restArgs restArgsDescription =
-    buildOption
+    buildEndingOption
         (\{ operands, usageSpecs } ->
             operands
                 |> List.drop (UsageSpec.operandCount usageSpecs)

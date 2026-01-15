@@ -391,6 +391,10 @@ run (Config { optionsParsers }) argv versionMessage =
             versionMessage
                 |> SystemMessage Cli.ExitStatus.Success
 
+        Cli.LowLevel.ShowSubcommandHelp subcommandName ->
+            subcommandHelpText programName optionsParsers subcommandName
+                |> SystemMessage Cli.ExitStatus.Success
+
 
 {-| Transform the return type for all of the registered `OptionsParser`'s in the `Config`.
 -}
@@ -401,6 +405,16 @@ mapConfig mapFn (Config configValue) =
             configValue.optionsParsers
                 |> List.map (OptionsParser.map mapFn)
         }
+
+
+{-| Generate help text for a specific subcommand.
+-}
+subcommandHelpText : String -> List (OptionsParser msg BuilderState.NoMoreOptions) -> String -> String
+subcommandHelpText programName optionsParsers subcommandName =
+    optionsParsers
+        |> List.filter (\parser -> OptionsParser.getSubCommand parser == Just subcommandName)
+        |> List.map (OptionsParser.synopsis programName)
+        |> String.join "\n"
 
 
 {-| Format NoMatchReasons into a user-friendly error message.
@@ -571,11 +585,21 @@ formatSingleReason reason programName optionsParsers =
         WrongSubCommand { expectedSubCommand, actualSubCommand } ->
             "Unknown command: `" ++ actualSubCommand ++ "`"
 
-        MissingRequiredPositionalArg { name } ->
-            "Missing required argument: <" ++ name ++ ">\n\n" ++ Cli.LowLevel.helpText programName optionsParsers
+        MissingRequiredPositionalArg { name, customMessage } ->
+            case customMessage of
+                Just message ->
+                    message ++ "\n\n" ++ Cli.LowLevel.helpText programName optionsParsers
 
-        MissingRequiredKeywordArg { name } ->
-            "Missing required option: --" ++ name ++ "\n\n" ++ Cli.LowLevel.helpText programName optionsParsers
+                Nothing ->
+                    "Missing required argument: <" ++ name ++ ">\n\n" ++ Cli.LowLevel.helpText programName optionsParsers
+
+        MissingRequiredKeywordArg { name, customMessage } ->
+            case customMessage of
+                Just message ->
+                    message ++ "\n\n" ++ Cli.LowLevel.helpText programName optionsParsers
+
+                Nothing ->
+                    "Missing required option: --" ++ name ++ "\n\n" ++ Cli.LowLevel.helpText programName optionsParsers
 
         MissingExpectedFlag { name } ->
             "Missing required flag: --" ++ name ++ "\n\n" ++ Cli.LowLevel.helpText programName optionsParsers

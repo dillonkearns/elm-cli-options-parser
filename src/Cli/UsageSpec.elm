@@ -13,6 +13,7 @@ module Cli.UsageSpec exposing
     , optionHasArg
     , optionalPositionalArg
     , restArgs
+    , setDescription
     , synopsis
     )
 
@@ -21,9 +22,9 @@ import Occurences exposing (Occurences)
 
 
 type UsageSpec
-    = FlagOrKeywordArg FlagOrKeywordArg (Maybe MutuallyExclusiveValues) Occurences
-    | Operand String (Maybe MutuallyExclusiveValues) Occurences
-    | RestArgs String
+    = FlagOrKeywordArg FlagOrKeywordArg (Maybe MutuallyExclusiveValues) Occurences (Maybe String)
+    | Operand String (Maybe MutuallyExclusiveValues) Occurences (Maybe String)
+    | RestArgs String (Maybe String)
 
 
 type FlagOrKeywordArg
@@ -37,37 +38,52 @@ type MutuallyExclusiveValues
 
 keywordArg : String -> Occurences -> UsageSpec
 keywordArg keywordArgName occurences =
-    FlagOrKeywordArg (KeywordArg keywordArgName) Nothing occurences
+    FlagOrKeywordArg (KeywordArg keywordArgName) Nothing occurences Nothing
 
 
 flag : String -> Occurences -> UsageSpec
 flag flagName occurences =
-    FlagOrKeywordArg (Flag flagName) Nothing occurences
+    FlagOrKeywordArg (Flag flagName) Nothing occurences Nothing
 
 
 operand : String -> UsageSpec
 operand operandName =
-    Operand operandName Nothing Occurences.Required
+    Operand operandName Nothing Occurences.Required Nothing
 
 
 optionalPositionalArg : String -> UsageSpec
 optionalPositionalArg positionalArgName =
-    Operand positionalArgName Nothing Occurences.Optional
+    Operand positionalArgName Nothing Occurences.Optional Nothing
 
 
 restArgs : String -> UsageSpec
 restArgs restArgsName =
-    RestArgs restArgsName
+    RestArgs restArgsName Nothing
+
+
+{-| Set the description for a UsageSpec.
+-}
+setDescription : Maybe String -> UsageSpec -> UsageSpec
+setDescription description usageSpec =
+    case usageSpec of
+        FlagOrKeywordArg option mutuallyExclusiveValues occurences _ ->
+            FlagOrKeywordArg option mutuallyExclusiveValues occurences description
+
+        Operand operandName mutuallyExclusiveValues occurences _ ->
+            Operand operandName mutuallyExclusiveValues occurences description
+
+        RestArgs restArgsName _ ->
+            RestArgs restArgsName description
 
 
 changeUsageSpec : List String -> UsageSpec -> UsageSpec
 changeUsageSpec possibleValues usageSpec =
     case usageSpec of
-        FlagOrKeywordArg option _ occurences ->
-            FlagOrKeywordArg option (MutuallyExclusiveValues possibleValues |> Just) occurences
+        FlagOrKeywordArg option _ occurences description ->
+            FlagOrKeywordArg option (MutuallyExclusiveValues possibleValues |> Just) occurences description
 
-        Operand operandName _ occurences ->
-            Operand operandName (MutuallyExclusiveValues possibleValues |> Just) occurences
+        Operand operandName _ occurences description ->
+            Operand operandName (MutuallyExclusiveValues possibleValues |> Just) occurences description
 
         _ ->
             usageSpec
@@ -79,13 +95,13 @@ operandCount usageSpecs =
         |> List.filterMap
             (\spec ->
                 case spec of
-                    FlagOrKeywordArg _ _ _ ->
+                    FlagOrKeywordArg _ _ _ _ ->
                         Nothing
 
-                    Operand operandName _ _ ->
+                    Operand operandName _ _ _ ->
                         Just operandName
 
-                    RestArgs _ ->
+                    RestArgs _ _ ->
                         Nothing
             )
         |> List.length
@@ -97,14 +113,14 @@ optionExists usageSpecs thisOptionName =
         |> List.filterMap
             (\usageSpec ->
                 case usageSpec of
-                    FlagOrKeywordArg option _ _ ->
+                    FlagOrKeywordArg option _ _ _ ->
                         option
                             |> Just
 
-                    Operand _ _ _ ->
+                    Operand _ _ _ _ ->
                         Nothing
 
-                    RestArgs _ ->
+                    RestArgs _ _ ->
                         Nothing
             )
         |> List.Extra.find (\option -> optionName option == thisOptionName)
@@ -113,13 +129,13 @@ optionExists usageSpecs thisOptionName =
 isOperand : UsageSpec -> Bool
 isOperand option =
     case option of
-        Operand _ _ _ ->
+        Operand _ _ _ _ ->
             True
 
-        FlagOrKeywordArg _ _ _ ->
+        FlagOrKeywordArg _ _ _ _ ->
             False
 
-        RestArgs _ ->
+        RestArgs _ _ ->
             False
 
 
@@ -128,7 +144,7 @@ hasRestArgs usageSpecs =
     List.any
         (\usageSpec ->
             case usageSpec of
-                RestArgs _ ->
+                RestArgs _ _ ->
                     True
 
                 _ ->
@@ -140,7 +156,7 @@ hasRestArgs usageSpecs =
 name : UsageSpec -> String
 name usageSpec =
     case usageSpec of
-        FlagOrKeywordArg option _ _ ->
+        FlagOrKeywordArg option _ _ _ ->
             case option of
                 Flag flagName ->
                     flagName
@@ -148,10 +164,10 @@ name usageSpec =
                 KeywordArg keywordArgName ->
                     keywordArgName
 
-        Operand operandOptionName _ _ ->
+        Operand operandOptionName _ _ _ ->
             operandOptionName
 
-        RestArgs restArgsDescription ->
+        RestArgs restArgsDescription _ ->
             restArgsDescription
 
 
@@ -164,10 +180,10 @@ synopsis programName { usageSpecs, description, subCommand } =
                         |> List.map
                             (\spec ->
                                 (case spec of
-                                    FlagOrKeywordArg option mutuallyExclusiveValues occurences ->
+                                    FlagOrKeywordArg option mutuallyExclusiveValues occurences _ ->
                                         optionSynopsis occurences option mutuallyExclusiveValues
 
-                                    Operand operandName mutuallyExclusiveValues occurences ->
+                                    Operand operandName mutuallyExclusiveValues occurences _ ->
                                         let
                                             positionalArgSummary =
                                                 mutuallyExclusiveValues
@@ -184,7 +200,7 @@ synopsis programName { usageSpecs, description, subCommand } =
                                             Occurences.ZeroOrMore ->
                                                 "TODO shouldn't reach this case"
 
-                                    RestArgs restArgsDescription ->
+                                    RestArgs restArgsDescription _ ->
                                         "<" ++ restArgsDescription ++ ">..."
                                 )
                                     |> Just
@@ -226,13 +242,13 @@ optionHasArg options optionNameToCheck =
             |> List.filterMap
                 (\spec ->
                     case spec of
-                        FlagOrKeywordArg option _ _ ->
+                        FlagOrKeywordArg option _ _ _ ->
                             Just option
 
-                        Operand _ _ _ ->
+                        Operand _ _ _ _ ->
                             Nothing
 
-                        RestArgs _ ->
+                        RestArgs _ _ ->
                             Nothing
                 )
             |> List.Extra.find
