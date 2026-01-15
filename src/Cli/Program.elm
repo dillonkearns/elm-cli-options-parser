@@ -384,7 +384,7 @@ run (Config { optionsParsers }) argv versionMessage =
                 |> CustomMatch
 
         Cli.LowLevel.ShowHelp ->
-            Cli.LowLevel.helpText programName optionsParsers
+            Cli.LowLevel.detailedHelpText programName optionsParsers
                 |> SystemMessage Cli.ExitStatus.Success
 
         Cli.LowLevel.ShowVersion ->
@@ -413,8 +413,8 @@ subcommandHelpText : String -> List (OptionsParser msg BuilderState.NoMoreOption
 subcommandHelpText programName optionsParsers subcommandName =
     optionsParsers
         |> List.filter (\parser -> OptionsParser.getSubCommand parser == Just subcommandName)
-        |> List.map (OptionsParser.synopsis programName)
-        |> String.join "\n"
+        |> List.map (OptionsParser.detailedHelp programName)
+        |> String.join "\n\n"
 
 
 {-| Format NoMatchReasons into a user-friendly error message.

@@ -1,4 +1,4 @@
-module Cli.LowLevel exposing (MatchResult(..), helpText, try)
+module Cli.LowLevel exposing (MatchResult(..), detailedHelpText, helpText, try)
 
 import Cli.Decode
 import Cli.OptionsParser as OptionsParser exposing (OptionsParser)
@@ -260,3 +260,13 @@ helpText programName optionsParsers =
     optionsParsers
         |> List.map (OptionsParser.synopsis programName)
         |> String.join "\n"
+
+
+{-| Generate detailed help text for --help output.
+Uses detailed format with Usage line and Options section when descriptions are present.
+-}
+detailedHelpText : String -> List (OptionsParser msg builderState) -> String
+detailedHelpText programName optionsParsers =
+    optionsParsers
+        |> List.map (OptionsParser.detailedHelp programName)
+        |> String.join "\n\n"

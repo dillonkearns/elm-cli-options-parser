@@ -7,7 +7,7 @@ module Cli.OptionsParser exposing
     , map
     , hardcoded
     , withDoc
-    , getSubCommand, getUsageSpecs, synopsis, tryMatch, end
+    , getSubCommand, getUsageSpecs, synopsis, detailedHelp, tryMatch, end
     )
 
 {-|
@@ -156,6 +156,16 @@ synopsis programName optionsParser =
     optionsParser
         |> (\(OptionsParser record) -> record)
         |> UsageSpec.synopsis programName
+
+
+{-| Low-level function, for internal use.
+Generate detailed help text with Usage line and Options section.
+-}
+detailedHelp : String -> OptionsParser decodesTo builderState -> String
+detailedHelp programName optionsParser =
+    optionsParser
+        |> (\(OptionsParser record) -> record)
+        |> UsageSpec.detailedHelp programName
 
 
 {-| Low-level function, for internal use.
