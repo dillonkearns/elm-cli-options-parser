@@ -21,8 +21,8 @@ type alias ValidationError =
 -}
 type MatchErrorDetail
     = MissingExpectedFlag { name : String }
-    | MissingRequiredPositionalArg { name : String, operandsSoFar : Int }
-    | MissingRequiredKeywordArg { name : String }
+    | MissingRequiredPositionalArg { name : String, operandsSoFar : Int, customMessage : Maybe String }
+    | MissingRequiredKeywordArg { name : String, customMessage : Maybe String }
     | KeywordArgMissingValue { name : String }
     | ExtraOperand
     | MissingSubCommand { expectedSubCommand : String }

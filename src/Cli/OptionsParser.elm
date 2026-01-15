@@ -256,15 +256,15 @@ matchErrorDetailToNoMatchReason detail =
         Cli.Decode.MissingExpectedFlag { name } ->
             Cli.OptionsParser.MatchResult.MissingExpectedFlag { name = name }
 
-        Cli.Decode.MissingRequiredPositionalArg { name } ->
-            Cli.OptionsParser.MatchResult.MissingRequiredPositionalArg { name = name }
+        Cli.Decode.MissingRequiredPositionalArg { name, customMessage } ->
+            Cli.OptionsParser.MatchResult.MissingRequiredPositionalArg { name = name, customMessage = customMessage }
 
-        Cli.Decode.MissingRequiredKeywordArg { name } ->
-            Cli.OptionsParser.MatchResult.MissingRequiredKeywordArg { name = name }
+        Cli.Decode.MissingRequiredKeywordArg { name, customMessage } ->
+            Cli.OptionsParser.MatchResult.MissingRequiredKeywordArg { name = name, customMessage = customMessage }
 
         Cli.Decode.KeywordArgMissingValue { name } ->
             -- Treat "keyword arg provided without value" same as "missing required keyword arg"
-            Cli.OptionsParser.MatchResult.MissingRequiredKeywordArg { name = name }
+            Cli.OptionsParser.MatchResult.MissingRequiredKeywordArg { name = name, customMessage = Nothing }
 
         Cli.Decode.ExtraOperand ->
             Cli.OptionsParser.MatchResult.ExtraOperand
@@ -522,7 +522,7 @@ expectFlag flagName (OptionsParser ({ usageSpecs, decoder } as optionsParser)) =
 {-| For chaining on any `Cli.Option.Option` besides a `restArg` or an `optionalPositionalArg`.
 See the `Cli.Option` module.
 -}
-with : Cli.Option.Option from to Cli.Option.BeginningOption -> OptionsParser (to -> cliOptions) BuilderState.AnyOptions -> OptionsParser cliOptions BuilderState.AnyOptions
+with : Cli.Option.Option from to { c | position : Cli.Option.BeginningOption } -> OptionsParser (to -> cliOptions) BuilderState.AnyOptions -> OptionsParser cliOptions BuilderState.AnyOptions
 with =
     withCommon
 
@@ -562,14 +562,14 @@ withCommon (Internal.Option innerOption) ((OptionsParser { decoder, usageSpecs }
 
 {-| For chaining on `Cli.Option.optionalPositionalArg`s.
 -}
-withOptionalPositionalArg : Cli.Option.Option from to Cli.Option.OptionalPositionalArgOption -> OptionsParser (to -> cliOptions) BuilderState.AnyOptions -> OptionsParser cliOptions BuilderState.NoBeginningOptions
+withOptionalPositionalArg : Cli.Option.Option from to { c | position : Cli.Option.OptionalPositionalArgOption } -> OptionsParser (to -> cliOptions) BuilderState.AnyOptions -> OptionsParser cliOptions BuilderState.NoBeginningOptions
 withOptionalPositionalArg =
     withCommon
 
 
 {-| For chaining on `Cli.Option.restArgs`.
 -}
-withRestArgs : Cli.Option.Option from to Cli.Option.RestArgsOption -> OptionsParser (to -> cliOptions) startingBuilderState -> OptionsParser cliOptions BuilderState.NoMoreOptions
+withRestArgs : Cli.Option.Option from to { c | position : Cli.Option.RestArgsOption } -> OptionsParser (to -> cliOptions) startingBuilderState -> OptionsParser cliOptions BuilderState.NoMoreOptions
 withRestArgs =
     withCommon
 

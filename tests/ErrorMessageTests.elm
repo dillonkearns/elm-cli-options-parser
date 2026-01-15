@@ -73,7 +73,7 @@ all =
                     in
                     OptionsParser.tryMatch argv parser
                         |> Expect.equal
-                            (NoMatch [ MissingRequiredPositionalArg { name = "url" } ])
+                            (NoMatch [ MissingRequiredPositionalArg { name = "url", customMessage = Nothing } ])
             , test "missing required keyword arg returns structured reason" <|
                 \() ->
                     -- User runs: program (without --name)
@@ -88,7 +88,7 @@ all =
                     in
                     OptionsParser.tryMatch argv parser
                         |> Expect.equal
-                            (NoMatch [ MissingRequiredKeywordArg { name = "name" } ])
+                            (NoMatch [ MissingRequiredKeywordArg { name = "name", customMessage = Nothing } ])
             ]
         , describe "expected flag not present"
             [ test "missing expected flag returns structured reason" <|

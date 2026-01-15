@@ -31,8 +31,8 @@ type MatchResult msg
   - `UnexpectedOption` - User provided a flag/option that isn't recognized (e.g., `--foo` when only `--bar` is defined)
   - `MissingSubCommand` - Parser expects a subcommand but none was provided. Contains the expected subcommand name.
   - `WrongSubCommand` - Parser expects a different subcommand. Contains `{ expected : String, actual : String }`.
-  - `MissingRequiredPositionalArg` - A required positional argument was not provided. Contains the argument name.
-  - `MissingRequiredKeywordArg` - A required keyword argument like `--name <value>` was not provided. Contains the option name.
+  - `MissingRequiredPositionalArg` - A required positional argument was not provided. Contains the argument name and optional custom message.
+  - `MissingRequiredKeywordArg` - A required keyword argument like `--name <value>` was not provided. Contains the option name and optional custom message.
   - `MissingExpectedFlag` - Parser requires a specific flag (via `expectFlag`) that wasn't provided. Contains the flag name.
   - `ExtraOperand` - More positional arguments were provided than expected.
 
@@ -41,8 +41,8 @@ type NoMatchReason
     = UnexpectedOption String
     | MissingSubCommand { expectedSubCommand : String }
     | WrongSubCommand { expectedSubCommand : String, actualSubCommand : String }
-    | MissingRequiredPositionalArg { name : String }
-    | MissingRequiredKeywordArg { name : String }
+    | MissingRequiredPositionalArg { name : String, customMessage : Maybe String }
+    | MissingRequiredKeywordArg { name : String, customMessage : Maybe String }
     | MissingExpectedFlag { name : String }
     | ExtraOperand
 
