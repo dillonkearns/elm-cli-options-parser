@@ -2,6 +2,7 @@ module Cli.UsageSpec exposing
     ( MutuallyExclusiveValues
     , UsageSpec
     , changeUsageSpec
+    , detailedHelp
     , flag
     , hasRestArgs
     , isOperand
@@ -211,6 +212,140 @@ synopsis programName { usageSpecs, description, subCommand } =
                 |> String.join " "
            )
         ++ (description |> Maybe.map (\doc -> " # " ++ doc) |> Maybe.withDefault "")
+
+
+{-| Generate detailed help text with Usage line and Options section.
+Only includes Options section if at least one option has a description.
+-}
+detailedHelp : String -> { optionsParser | usageSpecs : List UsageSpec, description : Maybe String, subCommand : Maybe String } -> String
+detailedHelp programName ({ usageSpecs, description, subCommand } as optionsParser) =
+    let
+        usageLine =
+            "Usage: " ++ synopsisLine programName optionsParser
+
+        descriptionSection =
+            description
+                |> Maybe.map (\doc -> "\n\n" ++ doc)
+                |> Maybe.withDefault ""
+
+        optionsWithDescriptions =
+            usageSpecs
+                |> List.filterMap
+                    (\spec ->
+                        case spec of
+                            FlagOrKeywordArg option mutuallyExclusiveValues occurences maybeDesc ->
+                                maybeDesc
+                                    |> Maybe.map
+                                        (\desc ->
+                                            ( optionSynopsisForHelp option mutuallyExclusiveValues
+                                            , desc
+                                            )
+                                        )
+
+                            Operand operandName mutuallyExclusiveValues _ maybeDesc ->
+                                maybeDesc
+                                    |> Maybe.map
+                                        (\desc ->
+                                            ( "<" ++ operandName ++ ">"
+                                            , desc
+                                            )
+                                        )
+
+                            RestArgs restArgsName maybeDesc ->
+                                maybeDesc
+                                    |> Maybe.map
+                                        (\desc ->
+                                            ( "<" ++ restArgsName ++ ">..."
+                                            , desc
+                                            )
+                                        )
+                    )
+
+        optionsSection =
+            if List.isEmpty optionsWithDescriptions then
+                ""
+
+            else
+                let
+                    maxOptionLength =
+                        optionsWithDescriptions
+                            |> List.map (Tuple.first >> String.length)
+                            |> List.maximum
+                            |> Maybe.withDefault 0
+
+                    padding optionStr =
+                        String.repeat (maxOptionLength - String.length optionStr + 3) " "
+
+                    formatOption ( optionStr, desc ) =
+                        "  " ++ optionStr ++ padding optionStr ++ desc
+                in
+                "\n\nOptions:\n"
+                    ++ (optionsWithDescriptions
+                            |> List.map formatOption
+                            |> String.join "\n"
+                       )
+    in
+    usageLine ++ descriptionSection ++ optionsSection
+
+
+{-| Generate just the synopsis line without the "Usage: " prefix or description suffix.
+-}
+synopsisLine : String -> { optionsParser | usageSpecs : List UsageSpec, description : Maybe String, subCommand : Maybe String } -> String
+synopsisLine programName { usageSpecs, subCommand } =
+    programName
+        ++ " "
+        ++ ((subCommand
+                :: (usageSpecs
+                        |> List.map
+                            (\spec ->
+                                (case spec of
+                                    FlagOrKeywordArg option mutuallyExclusiveValues occurences _ ->
+                                        optionSynopsis occurences option mutuallyExclusiveValues
+
+                                    Operand operandName mutuallyExclusiveValues occurences _ ->
+                                        let
+                                            positionalArgSummary =
+                                                mutuallyExclusiveValues
+                                                    |> Maybe.map mutuallyExclusiveSynopsis
+                                                    |> Maybe.withDefault operandName
+                                        in
+                                        case occurences of
+                                            Occurences.Required ->
+                                                "<" ++ positionalArgSummary ++ ">"
+
+                                            Occurences.Optional ->
+                                                "[<" ++ positionalArgSummary ++ ">]"
+
+                                            Occurences.ZeroOrMore ->
+                                                "TODO shouldn't reach this case"
+
+                                    RestArgs restArgsDescription _ ->
+                                        "<" ++ restArgsDescription ++ ">..."
+                                )
+                                    |> Just
+                            )
+                   )
+            )
+                |> List.filterMap identity
+                |> String.join " "
+           )
+
+
+{-| Generate option synopsis for the help Options section (without occurrence brackets).
+-}
+optionSynopsisForHelp : FlagOrKeywordArg -> Maybe MutuallyExclusiveValues -> String
+optionSynopsisForHelp option maybeMutuallyExclusiveValues =
+    case option of
+        Flag flagName ->
+            "--" ++ flagName
+
+        KeywordArg keywordArgName ->
+            case maybeMutuallyExclusiveValues of
+                Just mutuallyExclusiveValues ->
+                    "--" ++ keywordArgName ++ " <" ++ mutuallyExclusiveSynopsis mutuallyExclusiveValues ++ ">"
+
+                Nothing ->
+                    "--" ++ keywordArgName ++ " <" ++ keywordArgName ++ ">"
 
 
 mutuallyExclusiveSynopsis : MutuallyExclusiveValues -> String

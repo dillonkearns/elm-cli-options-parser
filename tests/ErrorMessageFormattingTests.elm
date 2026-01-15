@@ -239,9 +239,11 @@ myprog log [--author <author>] [--oneline]"""
                 \() ->
                     runCli gitConfig [ "--help" ]
                         |> expectSuccess
-                            """myprog init
-myprog clone <repository>
-myprog log [--author <author>] [--oneline]"""
+                            """Usage: myprog init
+
+Usage: myprog clone <repository>
+
+Usage: myprog log [--author <author>] [--oneline]"""
             , test "--version shows version" <|
                 \() ->
                     Program.run gitConfig [ "node", "myprog", "--version" ] "2.5.0"
@@ -272,21 +274,24 @@ myprog --token <token>"""
                 \() ->
                     runCli configWithDescriptions [ "--name", "Alice", "--greeting", "Hello" ]
                         |> expectMatch ( "Alice", Just "Hello" )
-            , test "descriptions are stored and available for help text" <|
+            , test "help text shows descriptions in Options section" <|
                 \() ->
-                    -- This test verifies the basic synopsis still works
-                    -- Full description rendering would be a future enhancement
                     runCli configWithDescriptions [ "--help" ]
-                        |> expectSuccess "myprog --name <name> [--greeting <greeting>]"
+                        |> expectSuccess
+                            """Usage: myprog --name <name> [--greeting <greeting>]
+
+Options:
+  --name <name>           Your name for the greeting
+  --greeting <greeting>   Custom greeting message"""
             ]
         , describe "subcommand-specific help"
             [ test "subcommand --help shows only that subcommand's usage" <|
                 \() ->
                     runCli gitConfig [ "clone", "--help" ]
-                        |> expectSuccess "myprog clone <repository>"
+                        |> expectSuccess "Usage: myprog clone <repository>"
             , test "subcommand with options --help shows usage" <|
                 \() ->
                     runCli gitConfig [ "log", "--help" ]
-                        |> expectSuccess "myprog log [--author <author>] [--oneline]"
+                        |> expectSuccess "Usage: myprog log [--author <author>] [--oneline]"
             ]
         ]
