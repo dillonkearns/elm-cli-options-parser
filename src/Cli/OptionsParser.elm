@@ -7,7 +7,7 @@ module Cli.OptionsParser exposing
     , map
     , hardcoded
     , withDoc
-    , getSubCommand, getUsageSpecs, synopsis, detailedHelp, tryMatch, end
+    , getSubCommand, getUsageSpecs, synopsis, tryMatch, end, detailedHelp
     )
 
 {-|
@@ -128,7 +128,7 @@ a valid number of positional arguments is passed in, as defined by these rules:
 
 You shouldn't need to use these functions to build a command line utility.
 
-@docs getSubCommand, getUsageSpecs, synopsis, tryMatch, end
+@docs getSubCommand, getUsageSpecs, synopsis, tryMatch, end, detailedHelp
 
 -}
 
