@@ -4,6 +4,7 @@ module Cli.Program exposing
     , StatelessProgram, StatefulProgram
     , FlagsIncludingArgv
     , mapConfig
+    , run, RunResult(..), ExitStatus(..)
     )
 
 {-|
@@ -65,19 +66,37 @@ See the [`examples`](https://github.com/dillonkearns/elm-cli-options-parser/tree
 @docs FlagsIncludingArgv
 @docs mapConfig
 
+
+## Low-Level / Testing
+
+@docs run, RunResult, ExitStatus
+
 -}
 
-import Cli.ExitStatus exposing (ExitStatus)
 import Cli.LowLevel
 import Cli.OptionsParser as OptionsParser exposing (OptionsParser)
 import Cli.OptionsParser.BuilderState as BuilderState
+import Cli.OptionsParser.MatchResult exposing (NoMatchReason(..))
 import List.Extra
 import TypoSuggestion
 
 
+{-| The result of running the CLI parser. Useful for testing.
+
+  - `SystemMessage exitStatus message` - A system message (help, version, or error) with exit status
+  - `CustomMatch match` - Successfully matched and parsed the CLI options
+
+-}
 type RunResult match
     = SystemMessage ExitStatus String
     | CustomMatch match
+
+
+{-| Exit status for CLI programs. `Failure` means exit code 1, `Success` means exit code 0.
+-}
+type ExitStatus
+    = Success
+    | Failure
 
 
 {-| A `Cli.Program.Config` is used to build up a set of `OptionsParser`s for your
@@ -248,10 +267,10 @@ init options flags =
             case matchResult of
                 SystemMessage exitStatus message ->
                     case exitStatus of
-                        Cli.ExitStatus.Failure ->
+                        Failure ->
                             options.printAndExitFailure message
 
-                        Cli.ExitStatus.Success ->
+                        Success ->
                             options.printAndExitSuccess message
 
                 CustomMatch msg ->
@@ -278,10 +297,10 @@ statefulInit options flags =
     case matchResult of
         SystemMessage exitStatus message ->
             case exitStatus of
-                Cli.ExitStatus.Failure ->
+                Failure ->
                     ( ShowSystemMessage, options.printAndExitFailure message )
 
-                Cli.ExitStatus.Success ->
+                Success ->
                     ( ShowSystemMessage, options.printAndExitSuccess message )
 
         CustomMatch cliOptions ->
@@ -292,6 +311,24 @@ statefulInit options flags =
             ( UserModel userModel cliOptions, userCmd )
 
 
+{-| Run the CLI parser directly and get back a `RunResult`. This is useful for testing
+your CLI configuration without needing to set up the full Platform.Program infrastructure.
+
+    import Cli.Program as Program
+
+    -- Test that missing required arg shows error
+    case Program.run myConfig [ "node", "myprog" ] "1.0.0" of
+        Program.SystemMessage Program.Failure message ->
+            -- Assert on the error message
+            String.contains "Missing" message
+
+        _ ->
+            False
+
+Note: `argv` should include the node path and script path as the first two elements,
+just like `process.argv` in Node.js.
+
+-}
 run : Config msg -> List String -> String -> RunResult msg
 run (Config { optionsParsers }) argv versionMessage =
     let
@@ -313,27 +350,23 @@ run (Config { optionsParsers }) argv versionMessage =
             Cli.LowLevel.try optionsParsers argv
     in
     case matchResult of
-        Cli.LowLevel.NoMatch unexpectedOptions ->
-            if List.isEmpty unexpectedOptions then
-                "\nNo matching optionsParser...\n\nUsage:\n\n"
-                    ++ Cli.LowLevel.helpText programName optionsParsers
-                    |> SystemMessage Cli.ExitStatus.Failure
-
-            else
-                unexpectedOptions
-                    |> List.map
-                        (TypoSuggestion.toMessage
-                            (optionsParsers
-                                |> List.map
-                                    (\optionsParser ->
-                                        { usageSpecs = OptionsParser.getUsageSpecs optionsParser
-                                        , subCommand = OptionsParser.getSubCommand optionsParser
-                                        }
-                                    )
+        Cli.LowLevel.NoMatch reasons ->
+            let
+                parserInfo =
+                    optionsParsers
+                        |> List.map
+                            (\optionsParser ->
+                                { usageSpecs = OptionsParser.getUsageSpecs optionsParser
+                                , subCommand = OptionsParser.getSubCommand optionsParser
+                                }
                             )
-                        )
-                    |> String.join "\n"
-                    |> SystemMessage Cli.ExitStatus.Failure
+
+                availableSubCommands =
+                    optionsParsers
+                        |> List.filterMap OptionsParser.getSubCommand
+            in
+            formatNoMatchReasons programName parserInfo availableSubCommands optionsParsers reasons
+                |> SystemMessage Failure
 
         Cli.LowLevel.ValidationErrors validationErrors ->
             ("Validation errors:\n\n"
@@ -350,19 +383,23 @@ run (Config { optionsParsers }) argv versionMessage =
                         |> String.join "\n"
                    )
             )
-                |> SystemMessage Cli.ExitStatus.Failure
+                |> SystemMessage Failure
 
         Cli.LowLevel.Match msg ->
             msg
                 |> CustomMatch
 
         Cli.LowLevel.ShowHelp ->
-            Cli.LowLevel.helpText programName optionsParsers
-                |> SystemMessage Cli.ExitStatus.Success
+            Cli.LowLevel.detailedHelpText programName optionsParsers
+                |> SystemMessage Success
 
         Cli.LowLevel.ShowVersion ->
             versionMessage
-                |> SystemMessage Cli.ExitStatus.Success
+                |> SystemMessage Success
+
+        Cli.LowLevel.ShowSubcommandHelp subcommandName ->
+            subcommandHelpText programName optionsParsers subcommandName
+                |> SystemMessage Success
 
 
 {-| Transform the return type for all of the registered `OptionsParser`'s in the `Config`.
@@ -374,3 +411,214 @@ mapConfig mapFn (Config configValue) =
             configValue.optionsParsers
                 |> List.map (OptionsParser.map mapFn)
         }
+
+
+{-| Generate help text for a specific subcommand.
+-}
+subcommandHelpText : String -> List (OptionsParser msg BuilderState.NoMoreOptions) -> String -> String
+subcommandHelpText programName optionsParsers subcommandName =
+    optionsParsers
+        |> List.filter (\parser -> OptionsParser.getSubCommand parser == Just subcommandName)
+        |> List.map (OptionsParser.detailedHelp programName)
+        |> String.join "\n\n"
+
+
+{-| Format NoMatchReasons into a user-friendly error message.
+-}
+formatNoMatchReasons :
+    String
+    -> List TypoSuggestion.OptionsParser
+    -> List String
+    -> List (OptionsParser msg BuilderState.NoMoreOptions)
+    -> List NoMatchReason
+    -> String
+formatNoMatchReasons programName parserInfo availableSubCommands optionsParsers reasons =
+    let
+        -- Separate unexpected options from other reasons
+        unexpectedOptions =
+            reasons
+                |> List.filterMap
+                    (\reason ->
+                        case reason of
+                            UnexpectedOption name ->
+                                Just name
+
+                            _ ->
+                                Nothing
+                    )
+    in
+    if not (List.isEmpty unexpectedOptions) then
+        -- Unexpected options - use typo suggestions
+        unexpectedOptions
+            |> List.map (TypoSuggestion.toMessage parserInfo)
+            |> String.join "\n"
+
+    else
+        let
+            otherReasons =
+                reasons
+                    |> List.filter
+                        (\reason ->
+                            case reason of
+                                UnexpectedOption _ ->
+                                    False
+
+                                _ ->
+                                    True
+                        )
+
+            -- "Specific" errors indicate a parser got further in matching
+            -- (matched subcommand or structure, but failed on argument details)
+            -- These should take priority over "subcommand not found" errors
+            -- Note: ExtraOperand is NOT included here because it's often from
+            -- system parsers (help/version) and isn't specific enough
+            missingArgErrors =
+                otherReasons
+                    |> List.filter
+                        (\reason ->
+                            case reason of
+                                MissingRequiredPositionalArg _ ->
+                                    True
+
+                                MissingRequiredKeywordArg _ ->
+                                    True
+
+                                _ ->
+                                    False
+                        )
+        in
+        case missingArgErrors of
+            reason :: _ ->
+                -- A parser matched the structure but is missing a required argument
+                formatSingleReason reason programName optionsParsers
+
+            [] ->
+                let
+                    wrongSubCommandReasons =
+                        otherReasons
+                            |> List.filterMap
+                                (\reason ->
+                                    case reason of
+                                        WrongSubCommand { actualSubCommand } ->
+                                            Just actualSubCommand
+
+                                        _ ->
+                                            Nothing
+                                )
+                in
+                if not (List.isEmpty wrongSubCommandReasons) then
+                    -- User may have provided an unknown subcommand
+                    -- But first check: is the "wrong" command actually a valid subcommand?
+                    -- If so, the error is something else (like ExtraOperand)
+                    let
+                        unknownCommands =
+                            wrongSubCommandReasons
+                                |> List.filter (\cmd -> not (List.member cmd availableSubCommands))
+                    in
+                    case List.head unknownCommands of
+                        Just unknownCommand ->
+                            "Unknown command: `"
+                                ++ unknownCommand
+                                ++ "`\n\nAvailable commands: "
+                                ++ String.join ", " availableSubCommands
+                                ++ "\n\nRun with --help for usage information."
+
+                        Nothing ->
+                            let
+                                -- ExtraOperand is only relevant if there are no subcommand-related issues
+                                extraOperandErrors =
+                                    otherReasons
+                                        |> List.filter
+                                            (\reason ->
+                                                case reason of
+                                                    ExtraOperand ->
+                                                        True
+
+                                                    _ ->
+                                                        False
+                                            )
+                            in
+                            -- The command was valid but something else went wrong
+                            -- Check for ExtraOperand
+                            if not (List.isEmpty extraOperandErrors) then
+                                formatSingleReason ExtraOperand programName optionsParsers
+
+                            else
+                                formatFallbackMessage programName optionsParsers
+
+                else
+                    let
+                        -- Check for subcommand-related errors
+                        hasSubCommandParsers =
+                            not (List.isEmpty availableSubCommands)
+
+                        missingSubCommandReasons =
+                            otherReasons
+                                |> List.filterMap
+                                    (\reason ->
+                                        case reason of
+                                            MissingSubCommand _ ->
+                                                Just reason
+
+                                            _ ->
+                                                Nothing
+                                    )
+                    in
+                    if hasSubCommandParsers && not (List.isEmpty missingSubCommandReasons) then
+                        -- Missing subcommand when subcommands are expected
+                        "Missing command.\n\nAvailable commands: "
+                            ++ String.join ", " availableSubCommands
+                            ++ "\n\nRun with --help for usage information."
+
+                    else
+                        -- Format other specific reasons
+                        case List.head otherReasons of
+                            Just reason ->
+                                formatSingleReason reason programName optionsParsers
+
+                            Nothing ->
+                                formatFallbackMessage programName optionsParsers
+
+
+{-| Format a single NoMatchReason into a message.
+-}
+formatSingleReason : NoMatchReason -> String -> List (OptionsParser msg BuilderState.NoMoreOptions) -> String
+formatSingleReason reason programName optionsParsers =
+    case reason of
+        UnexpectedOption name ->
+            "Unexpected option: --" ++ name
+
+        MissingSubCommand _ ->
+            "Missing command.\n\nRun with --help for usage information."
+
+        WrongSubCommand { actualSubCommand } ->
+            "Unknown command: `" ++ actualSubCommand ++ "`"
+
+        MissingRequiredPositionalArg { name, customMessage } ->
+            case customMessage of
+                Just message ->
+                    message ++ "\n\n" ++ Cli.LowLevel.helpText programName optionsParsers
+
+                Nothing ->
+                    "Missing required argument: <" ++ name ++ ">\n\n" ++ Cli.LowLevel.helpText programName optionsParsers
+
+        MissingRequiredKeywordArg { name, customMessage } ->
+            case customMessage of
+                Just message ->
+                    message ++ "\n\n" ++ Cli.LowLevel.helpText programName optionsParsers
+
+                Nothing ->
+                    "Missing required option: --" ++ name ++ "\n\n" ++ Cli.LowLevel.helpText programName optionsParsers
+
+        MissingExpectedFlag { name } ->
+            "Missing required flag: --" ++ name ++ "\n\n" ++ Cli.LowLevel.helpText programName optionsParsers
+
+        ExtraOperand ->
+            "Too many arguments provided.\n\n" ++ Cli.LowLevel.helpText programName optionsParsers
+
+
+{-| Fallback message when no specific reason is available.
+-}
+formatFallbackMessage : String -> List (OptionsParser msg BuilderState.NoMoreOptions) -> String
+formatFallbackMessage programName optionsParsers =
+    "Could not match arguments.\n\nUsage:\n\n" ++ Cli.LowLevel.helpText programName optionsParsers

@@ -52,7 +52,7 @@ all =
                     |> OptionsParser.with (Option.requiredKeywordArg "name")
                     |> OptionsParser.with (Option.optionalKeywordArg "prefix")
                     |> OptionsParser.end
-                    |> OptionsParser.withDoc "greets somebody in your terminal"
+                    |> OptionsParser.withDescription "greets somebody in your terminal"
                     |> OptionsParser.synopsis "greet"
                     |> Expect.equal "greet --name <name> [--prefix <prefix>] # greets somebody in your terminal"
         , test "print synopsis with zero or more arg option" <|

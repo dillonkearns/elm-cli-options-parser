@@ -2,6 +2,7 @@ module Cli.LowLevelTests exposing (all)
 
 import Cli.LowLevel
 import Cli.OptionsParser as OptionsParser
+import Cli.OptionsParser.MatchResult exposing (NoMatchReason(..))
 import Expect exposing (Expectation)
 import Test exposing (..)
 
@@ -20,7 +21,7 @@ all =
                 in
                 Cli.LowLevel.try cli [ "", "", "--help" ]
                     |> Expect.equal (Cli.LowLevel.Match 123)
-        , test "non-matching optionsParser" <|
+        , test "non-matching optionsParser returns reasons" <|
             \() ->
                 let
                     cli =
@@ -29,8 +30,23 @@ all =
                             |> OptionsParser.end
                         ]
                 in
-                Cli.LowLevel.try cli [ "", "" ]
-                    |> Expect.equal (Cli.LowLevel.NoMatch [])
+                case Cli.LowLevel.try cli [ "", "" ] of
+                    Cli.LowLevel.NoMatch reasons ->
+                        -- Should have MissingExpectedFlag reasons from parsers
+                        reasons
+                            |> List.any
+                                (\r ->
+                                    case r of
+                                        MissingExpectedFlag _ ->
+                                            True
+
+                                        _ ->
+                                            False
+                                )
+                            |> Expect.equal True
+
+                    other ->
+                        Expect.fail ("Expected NoMatch but got: " ++ Debug.toString other)
         , test "unknown flag" <|
             \() ->
                 let
@@ -40,8 +56,14 @@ all =
                             |> OptionsParser.end
                         ]
                 in
-                Cli.LowLevel.try cli [ "", "", "--unknown-flag" ]
-                    |> Expect.equal (Cli.LowLevel.NoMatch [ "unknown-flag" ])
+                case Cli.LowLevel.try cli [ "", "", "--unknown-flag" ] of
+                    Cli.LowLevel.NoMatch reasons ->
+                        reasons
+                            |> List.member (UnexpectedOption "unknown-flag")
+                            |> Expect.equal True
+
+                    other ->
+                        Expect.fail ("Expected NoMatch but got: " ++ Debug.toString other)
         , test "unknown flag with multiple usage specs" <|
             \() ->
                 let
@@ -54,8 +76,14 @@ all =
                             |> OptionsParser.end
                         ]
                 in
-                Cli.LowLevel.try cli [ "", "", "--unknown-flag" ]
-                    |> Expect.equal (Cli.LowLevel.NoMatch [ "unknown-flag" ])
+                case Cli.LowLevel.try cli [ "", "", "--unknown-flag" ] of
+                    Cli.LowLevel.NoMatch reasons ->
+                        reasons
+                            |> List.member (UnexpectedOption "unknown-flag")
+                            |> Expect.equal True
+
+                    other ->
+                        Expect.fail ("Expected NoMatch but got: " ++ Debug.toString other)
         , test "help" <|
             \() ->
                 let
@@ -86,6 +114,12 @@ all =
                             |> OptionsParser.end
                         ]
                 in
-                Cli.LowLevel.try cli [ "", "", "--unknown-flag" ]
-                    |> Expect.equal (Cli.LowLevel.NoMatch [ "unknown-flag" ])
+                case Cli.LowLevel.try cli [ "", "", "--unknown-flag" ] of
+                    Cli.LowLevel.NoMatch reasons ->
+                        reasons
+                            |> List.member (UnexpectedOption "unknown-flag")
+                            |> Expect.equal True
+
+                    other ->
+                        Expect.fail ("Expected NoMatch but got: " ++ Debug.toString other)
         ]

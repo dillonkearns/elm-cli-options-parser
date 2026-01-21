@@ -6,8 +6,8 @@ module Cli.OptionsParser exposing
     , expectFlag
     , map
     , hardcoded
-    , withDoc
-    , getSubCommand, getUsageSpecs, synopsis, tryMatch, end
+    , withDescription
+    , getSubCommand, getUsageSpecs, synopsis, tryMatch, end, detailedHelp
     )
 
 {-|
@@ -121,14 +121,14 @@ a valid number of positional arguments is passed in, as defined by these rules:
 
 ## Meta-Data
 
-@docs withDoc
+@docs withDescription
 
 
 ## Low-Level Functions
 
 You shouldn't need to use these functions to build a command line utility.
 
-@docs getSubCommand, getUsageSpecs, synopsis, tryMatch, end
+@docs getSubCommand, getUsageSpecs, synopsis, tryMatch, end, detailedHelp
 
 -}
 
@@ -159,6 +159,16 @@ synopsis programName optionsParser =
 
 
 {-| Low-level function, for internal use.
+Generate detailed help text with Usage line and Options section.
+-}
+detailedHelp : String -> OptionsParser decodesTo builderState -> String
+detailedHelp programName optionsParser =
+    optionsParser
+        |> (\(OptionsParser record) -> record)
+        |> UsageSpec.detailedHelp programName
+
+
+{-| Low-level function, for internal use.
 -}
 getSubCommand : OptionsParser cliOptions builderState -> Maybe String
 getSubCommand (OptionsParser { subCommand }) =
@@ -181,8 +191,8 @@ tryMatch argv ((OptionsParser { usageSpecs, subCommand }) as optionsParser) =
                                     , usageSpecs = usageSpecs
                                     }
 
-                            ( Just buildSubCommandName, actualSubCommand :: remainingOperands ) ->
-                                if actualSubCommand == buildSubCommandName then
+                            ( Just expectedSubCommandName, actualSubCommand :: remainingOperands ) ->
+                                if actualSubCommand == expectedSubCommandName then
                                     Ok
                                         { options = record.options
                                         , operands = remainingOperands
@@ -190,10 +200,22 @@ tryMatch argv ((OptionsParser { usageSpecs, subCommand }) as optionsParser) =
                                         }
 
                                 else
-                                    Err { errorMessage = "Sub optionsParser does not match", options = record.options }
+                                    Err
+                                        { subCommandError =
+                                            Cli.Decode.WrongSubCommand
+                                                { expectedSubCommand = expectedSubCommandName
+                                                , actualSubCommand = actualSubCommand
+                                                }
+                                        , options = record.options
+                                        }
 
-                            ( Just _, [] ) ->
-                                Err { errorMessage = "No sub optionsParser provided", options = record.options }
+                            ( Just expectedSubCommandName, [] ) ->
+                                Err
+                                    { subCommandError =
+                                        Cli.Decode.MissingSubCommand
+                                            { expectedSubCommand = expectedSubCommandName }
+                                    , options = record.options
+                                    }
                    )
     in
     case flagsAndOperands of
@@ -208,14 +230,16 @@ tryMatch argv ((OptionsParser { usageSpecs, subCommand }) as optionsParser) =
             case getDecoder parser actualFlagsAndOperands of
                 Err error ->
                     case error of
-                        Cli.Decode.MatchError errorMessage ->
-                            Cli.OptionsParser.MatchResult.NoMatch [ errorMessage ]
+                        Cli.Decode.MatchError matchErrorDetail ->
+                            Cli.OptionsParser.MatchResult.NoMatch
+                                [ matchErrorDetailToNoMatchReason matchErrorDetail ]
 
                         Cli.Decode.UnrecoverableValidationError validationError ->
                             Cli.OptionsParser.MatchResult.Match (Err [ validationError ])
 
                         Cli.Decode.UnexpectedOptions unexpectedOptions ->
-                            Cli.OptionsParser.MatchResult.NoMatch unexpectedOptions
+                            Cli.OptionsParser.MatchResult.NoMatch
+                                (List.map Cli.OptionsParser.MatchResult.UnexpectedOption unexpectedOptions)
 
                 Ok ( [], value ) ->
                     Cli.OptionsParser.MatchResult.Match (Ok value)
@@ -223,8 +247,46 @@ tryMatch argv ((OptionsParser { usageSpecs, subCommand }) as optionsParser) =
                 Ok ( validationErrors, _ ) ->
                     Cli.OptionsParser.MatchResult.Match (Err validationErrors)
 
-        Err { options } ->
-            Cli.OptionsParser.MatchResult.NoMatch (unexpectedOptions_ optionsParser options)
+        Err { subCommandError, options } ->
+            -- Include both the subcommand error AND any unexpected options
+            let
+                unexpectedOptionReasons =
+                    unexpectedOptions_ optionsParser options
+                        |> List.map Cli.OptionsParser.MatchResult.UnexpectedOption
+            in
+            Cli.OptionsParser.MatchResult.NoMatch
+                (matchErrorDetailToNoMatchReason subCommandError :: unexpectedOptionReasons)
+
+
+{-| Convert internal MatchErrorDetail to public NoMatchReason.
+-}
+matchErrorDetailToNoMatchReason : Cli.Decode.MatchErrorDetail -> Cli.OptionsParser.MatchResult.NoMatchReason
+matchErrorDetailToNoMatchReason detail =
+    case detail of
+        Cli.Decode.MissingExpectedFlag { name } ->
+            Cli.OptionsParser.MatchResult.MissingExpectedFlag { name = name }
+
+        Cli.Decode.MissingRequiredPositionalArg { name, customMessage } ->
+            Cli.OptionsParser.MatchResult.MissingRequiredPositionalArg { name = name, customMessage = customMessage }
+
+        Cli.Decode.MissingRequiredKeywordArg { name, customMessage } ->
+            Cli.OptionsParser.MatchResult.MissingRequiredKeywordArg { name = name, customMessage = customMessage }
+
+        Cli.Decode.KeywordArgMissingValue { name } ->
+            -- Treat "keyword arg provided without value" same as "missing required keyword arg"
+            Cli.OptionsParser.MatchResult.MissingRequiredKeywordArg { name = name, customMessage = Nothing }
+
+        Cli.Decode.ExtraOperand ->
+            Cli.OptionsParser.MatchResult.ExtraOperand
+
+        Cli.Decode.MissingSubCommand { expectedSubCommand } ->
+            Cli.OptionsParser.MatchResult.MissingSubCommand { expectedSubCommand = expectedSubCommand }
+
+        Cli.Decode.WrongSubCommand { expectedSubCommand, actualSubCommand } ->
+            Cli.OptionsParser.MatchResult.WrongSubCommand
+                { expectedSubCommand = expectedSubCommand
+                , actualSubCommand = actualSubCommand
+                }
 
 
 expectedPositionalArgCountOrFail : OptionsParser cliOptions builderState -> OptionsParser cliOptions builderState
@@ -241,7 +303,7 @@ expectedPositionalArgCountOrFail (OptionsParser ({ decoder, usageSpecs } as opti
                                 |> List.length
                               )
                     then
-                        Cli.Decode.MatchError "Wrong number of operands" |> Err
+                        Cli.Decode.MatchError Cli.Decode.ExtraOperand |> Err
 
                     else
                         decoder stuff
@@ -462,7 +524,7 @@ expectFlag flagName (OptionsParser ({ usageSpecs, decoder } as optionsParser)) =
                         decoder stuff
 
                     else
-                        Cli.Decode.MatchError ("Expect flag " ++ ("--" ++ flagName))
+                        Cli.Decode.MatchError (Cli.Decode.MissingExpectedFlag { name = flagName })
                             |> Err
         }
 
@@ -470,7 +532,7 @@ expectFlag flagName (OptionsParser ({ usageSpecs, decoder } as optionsParser)) =
 {-| For chaining on any `Cli.Option.Option` besides a `restArg` or an `optionalPositionalArg`.
 See the `Cli.Option` module.
 -}
-with : Cli.Option.Option from to Cli.Option.BeginningOption -> OptionsParser (to -> cliOptions) BuilderState.AnyOptions -> OptionsParser cliOptions BuilderState.AnyOptions
+with : Cli.Option.Option from to { c | position : Cli.Option.BeginningOption } -> OptionsParser (to -> cliOptions) BuilderState.AnyOptions -> OptionsParser cliOptions BuilderState.AnyOptions
 with =
     withCommon
 
@@ -510,14 +572,14 @@ withCommon (Internal.Option innerOption) ((OptionsParser { decoder, usageSpecs }
 
 {-| For chaining on `Cli.Option.optionalPositionalArg`s.
 -}
-withOptionalPositionalArg : Cli.Option.Option from to Cli.Option.OptionalPositionalArgOption -> OptionsParser (to -> cliOptions) BuilderState.AnyOptions -> OptionsParser cliOptions BuilderState.NoBeginningOptions
+withOptionalPositionalArg : Cli.Option.Option from to { c | position : Cli.Option.OptionalPositionalArgOption } -> OptionsParser (to -> cliOptions) BuilderState.AnyOptions -> OptionsParser cliOptions BuilderState.NoBeginningOptions
 withOptionalPositionalArg =
     withCommon
 
 
 {-| For chaining on `Cli.Option.restArgs`.
 -}
-withRestArgs : Cli.Option.Option from to Cli.Option.RestArgsOption -> OptionsParser (to -> cliOptions) startingBuilderState -> OptionsParser cliOptions BuilderState.NoMoreOptions
+withRestArgs : Cli.Option.Option from to { c | position : Cli.Option.RestArgsOption } -> OptionsParser (to -> cliOptions) startingBuilderState -> OptionsParser cliOptions BuilderState.NoMoreOptions
 withRestArgs =
     withCommon
 
@@ -541,11 +603,11 @@ git init # initialize a git repository
       gitInitOptionsParser =
         OptionsParser.build Init
          |> OptionsParser.end
-         |> OptionsParser.withDoc "initialize a git repository"
+         |> OptionsParser.withDescription "initialize a git repository"
 
 -}
-withDoc : String -> OptionsParser cliOptions anything -> OptionsParser cliOptions anything
-withDoc docString (OptionsParser optionsParserRecord) =
+withDescription : String -> OptionsParser cliOptions anything -> OptionsParser cliOptions anything
+withDescription docString (OptionsParser optionsParserRecord) =
     OptionsParser
         { optionsParserRecord
             | description = Just docString

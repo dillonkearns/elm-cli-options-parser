@@ -1,5 +1,6 @@
 module Cli.Decode exposing
     ( Decoder
+    , MatchErrorDetail(..)
     , ProcessingError(..)
     , ValidationError
     , decodeFunction
@@ -16,8 +17,20 @@ type alias ValidationError =
     }
 
 
+{-| Internal type representing why a parser failed to match.
+-}
+type MatchErrorDetail
+    = MissingExpectedFlag { name : String }
+    | MissingRequiredPositionalArg { name : String, operandsSoFar : Int, customMessage : Maybe String }
+    | MissingRequiredKeywordArg { name : String, customMessage : Maybe String }
+    | KeywordArgMissingValue { name : String }
+    | ExtraOperand
+    | MissingSubCommand { expectedSubCommand : String }
+    | WrongSubCommand { expectedSubCommand : String, actualSubCommand : String }
+
+
 type ProcessingError
-    = MatchError String
+    = MatchError MatchErrorDetail
     | UnexpectedOptions (List String)
     | UnrecoverableValidationError ValidationError
 
