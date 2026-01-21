@@ -10,7 +10,19 @@ module Cli.Validate exposing (predicate, ValidationResult(..), regex, regexWithM
 import Regex
 
 
-{-| -}
+{-| Used with [`Option.validate`](Cli-Option#validate) to check a parsed value.
+
+    Option.requiredKeywordArg "name"
+        |> Option.validate
+            (\name ->
+                if String.length name >= 2 then
+                    Validate.Valid
+
+                else
+                    Validate.Invalid "Name must be at least 2 characters"
+            )
+
+-}
 type ValidationResult
     = Valid
     | Invalid String
