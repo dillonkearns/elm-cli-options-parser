@@ -1,5 +1,7 @@
 module TypoSuggestion exposing (OptionsParser, TypoSuggestion(..), getSuggestions, toMessage)
 
+import Cli.ColorMode exposing (ColorMode, useColor)
+import Cli.Style
 import Cli.UsageSpec as UsageSpec
 import Fuzzy
 import List.Extra
@@ -16,29 +18,33 @@ type TypoSuggestion
     | SubCommand String
 
 
-suggestionToString : TypoSuggestion -> String
-suggestionToString typoSuggestion =
-    "`"
-        ++ (case typoSuggestion of
-                Flag flagName ->
-                    "--" ++ flagName
+{-| Format a styled suggestion showing the typo and the suggested correction.
+-}
+suggestionToStringStyled : ColorMode -> TypoSuggestion -> String
+suggestionToStringStyled colorMode typoSuggestion =
+    Cli.Style.applyGreen (useColor colorMode)
+        ("`"
+            ++ (case typoSuggestion of
+                    Flag flagName ->
+                        "--" ++ flagName
 
-                SubCommand buildSubCommandName ->
-                    buildSubCommandName
-           )
-        ++ "`"
+                    SubCommand buildSubCommandName ->
+                        buildSubCommandName
+               )
+            ++ "`"
+        )
 
 
-toMessage : List OptionsParser -> String -> String
-toMessage optionsParsers unexpectedOption =
+toMessage : ColorMode -> List OptionsParser -> String -> String
+toMessage colorMode optionsParsers unexpectedOption =
     case getSuggestions optionsParsers unexpectedOption |> List.head of
         Just bestSuggestion ->
-            "The `--"
-                ++ unexpectedOption
-                ++ "` flag was not found. Maybe it was one of these typos?\n\n`--"
-                ++ unexpectedOption
-                ++ "` <> "
-                ++ suggestionToString bestSuggestion
+            "The "
+                ++ Cli.Style.applyCyan (useColor colorMode) ("`--" ++ unexpectedOption ++ "`")
+                ++ " flag was not found. Maybe it was one of these typos?\n\n"
+                ++ Cli.Style.applyCyan (useColor colorMode) ("`--" ++ unexpectedOption ++ "`")
+                ++ " <> "
+                ++ suggestionToStringStyled colorMode bestSuggestion
 
         Nothing ->
             "TODO"

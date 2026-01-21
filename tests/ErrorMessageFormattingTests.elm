@@ -18,10 +18,26 @@ import Test exposing (..)
 
 
 {-| Run a CLI config with the given args and return the output.
+Uses WithoutColor so test assertions remain plain text.
 -}
 runCli : Program.Config msg -> List String -> Program.RunResult msg
 runCli config args =
-    Program.run config ("/usr/bin/node" :: "/path/to/myprog" :: args) "1.0.0"
+    Program.run config ("/usr/bin/node" :: "/path/to/myprog" :: args) "1.0.0" Program.WithoutColor
+
+
+{-| Run a CLI config with color enabled.
+-}
+runCliWithColor : Program.Config msg -> List String -> Program.RunResult msg
+runCliWithColor config args =
+    Program.run config ("/usr/bin/node" :: "/path/to/myprog" :: args) "1.0.0" Program.WithColor
+
+
+{-| Check if a string contains ANSI escape codes.
+ANSI codes start with ESC (0x1B) followed by '['.
+-}
+containsAnsiCodes : String -> Bool
+containsAnsiCodes str =
+    String.contains "\u{001B}[" str
 
 
 {-| Assert that the CLI run produced an error with the exact message.
@@ -291,7 +307,7 @@ Usage: myprog clone <repository>
 Usage: myprog log [--author <author>] [--oneline]"""
             , test "--version shows version" <|
                 \() ->
-                    Program.run gitConfig [ "node", "myprog", "--version" ] "2.5.0"
+                    Program.run gitConfig [ "node", "myprog", "--version" ] "2.5.0" Program.WithoutColor
                         |> expectSuccess "2.5.0"
             ]
         , describe "custom missing messages (withMissingMessage)"
@@ -357,5 +373,31 @@ Run with --help for usage information."""
                 \() ->
                     runCli gitConfig [ "clone", "--help", "extra-arg" ]
                         |> expectSuccess "Usage: myprog clone <repository>"
+            ]
+        , describe "color output"
+            [ test "WithColor includes ANSI escape codes in error messages" <|
+                \() ->
+                    case runCliWithColor gitConfig [] of
+                        Program.SystemMessage Program.Failure message ->
+                            if containsAnsiCodes message then
+                                Expect.pass
+
+                            else
+                                Expect.fail ("Expected ANSI escape codes in colored output, got:\n" ++ message)
+
+                        _ ->
+                            Expect.fail "Expected error message"
+            , test "WithoutColor produces no ANSI escape codes" <|
+                \() ->
+                    case runCli gitConfig [] of
+                        Program.SystemMessage Program.Failure message ->
+                            if containsAnsiCodes message then
+                                Expect.fail ("Expected no ANSI escape codes in plain output, got:\n" ++ message)
+
+                            else
+                                Expect.pass
+
+                        _ ->
+                            Expect.fail "Expected error message"
             ]
         ]
