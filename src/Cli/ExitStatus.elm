@@ -11,7 +11,7 @@ module Cli.ExitStatus exposing (ExitStatus(..))
 On success it should return an exit code of `0` (in optionsParser line interfaces,
 `0` exit status means success, non-zero means there was an error).
 
-Possible reasons for error include optionsParser not found, validtion error in optionsParser, etc.
+Possible reasons for error include optionsParser not found, validation error in optionsParser, etc.
 See the examples folder for Elm optionsParser line programs with an end-to-end setup.
 
 -}
