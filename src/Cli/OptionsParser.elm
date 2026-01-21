@@ -6,7 +6,7 @@ module Cli.OptionsParser exposing
     , expectFlag
     , map
     , hardcoded
-    , withDoc
+    , withDescription
     , getSubCommand, getUsageSpecs, synopsis, tryMatch, end, detailedHelp
     )
 
@@ -121,7 +121,7 @@ a valid number of positional arguments is passed in, as defined by these rules:
 
 ## Meta-Data
 
-@docs withDoc
+@docs withDescription
 
 
 ## Low-Level Functions
@@ -603,11 +603,11 @@ git init # initialize a git repository
       gitInitOptionsParser =
         OptionsParser.build Init
          |> OptionsParser.end
-         |> OptionsParser.withDoc "initialize a git repository"
+         |> OptionsParser.withDescription "initialize a git repository"
 
 -}
-withDoc : String -> OptionsParser cliOptions anything -> OptionsParser cliOptions anything
-withDoc docString (OptionsParser optionsParserRecord) =
+withDescription : String -> OptionsParser cliOptions anything -> OptionsParser cliOptions anything
+withDescription docString (OptionsParser optionsParserRecord) =
     OptionsParser
         { optionsParserRecord
             | description = Just docString
