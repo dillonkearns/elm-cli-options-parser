@@ -51,7 +51,7 @@ program =
                 |> with
                     (Option.optionalKeywordArg "report"
                         |> Option.withDefault "console"
-                        |> Option.oneOf Console
+                        |> Option.oneOf
                             [ ( "json", Json )
                             , ( "junit", Junit )
                             , ( "console", Console )

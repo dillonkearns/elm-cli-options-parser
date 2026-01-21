@@ -393,10 +393,6 @@ mapFlag { present, absent } option =
             )
 
 
-type alias MutuallyExclusiveValue union =
-    ( String, union )
-
-
 {-| Mutually exclusive option values.
 
     type ReportFormat
@@ -417,7 +413,7 @@ type alias MutuallyExclusiveValue union =
                     |> with
                         (Option.optionalKeywordArg "report"
                             |> Option.withDefault "console"
-                            |> Option.oneOf Console
+                            |> Option.oneOf
                                 [ "json" => Json
                                 , "junit" => Junit
                                 , "console" => Console
@@ -444,11 +440,9 @@ Value was:
 "xml"
 ```
 
-Note: the first argument is currently ignored. It will be removed in a future breaking API change.
-
 -}
-oneOf : value -> List (MutuallyExclusiveValue value) -> Option from String builderState -> Option from value builderState
-oneOf _ list (Option option) =
+oneOf : List ( String, value ) -> Option from String builderState -> Option from value builderState
+oneOf list (Option option) =
     validateMap
         (\argValue ->
             case
