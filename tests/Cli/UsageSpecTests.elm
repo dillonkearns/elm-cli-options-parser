@@ -87,7 +87,7 @@ all =
                 OptionsParser.build identity
                     |> OptionsParser.with
                         (Option.requiredKeywordArg "report"
-                            |> Option.oneOf 123
+                            |> Option.oneOf
                                 [ ( "json", 123 )
                                 , ( "junit", 123 )
                                 , ( "console", 123 )
@@ -101,7 +101,7 @@ all =
                 OptionsParser.build identity
                     |> OptionsParser.with
                         (Option.requiredPositionalArg "report"
-                            |> Option.oneOf 123
+                            |> Option.oneOf
                                 [ ( "json", 123 )
                                 , ( "junit", 123 )
                                 , ( "console", 123 )

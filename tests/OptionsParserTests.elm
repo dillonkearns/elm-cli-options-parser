@@ -343,7 +343,7 @@ all =
                         (OptionsParser.build identity
                             |> OptionsParser.with
                                 (Option.requiredKeywordArg "report"
-                                    |> Option.oneOf Console
+                                    |> Option.oneOf
                                         [ ( "json", Json )
                                         ]
                                 )
@@ -356,7 +356,7 @@ all =
                         (OptionsParser.build identity
                             |> OptionsParser.with
                                 (Option.requiredKeywordArg "report"
-                                    |> Option.oneOf Console
+                                    |> Option.oneOf
                                         [ ( "json", Json )
                                         ]
                                 )
