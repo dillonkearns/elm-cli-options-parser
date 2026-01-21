@@ -2,6 +2,7 @@ module Cli.LowLevel exposing (MatchResult(..), detailedHelpText, helpText, try)
 
 import Cli.Decode
 import Cli.OptionsParser as OptionsParser exposing (OptionsParser)
+import List.Extra
 import Cli.OptionsParser.BuilderState as BuilderState
 import Cli.OptionsParser.MatchResult as MatchResult exposing (NoMatchReason(..))
 import Set exposing (Set)
@@ -47,20 +48,12 @@ try optionsParsers argv =
 
         subcommandHelpResult =
             if hasHelpFlag then
-                let
-                    firstNonFlagArg =
-                        argsWithoutNodeAndScript
-                            |> List.filter (\arg -> not (String.startsWith "--" arg))
-                            |> List.head
-                in
-                case firstNonFlagArg of
+                case
+                    argsWithoutNodeAndScript
+                        |> List.Extra.find (\arg -> not (String.startsWith "--" arg))
+                of
                     Just arg ->
-                        let
-                            availableSubcommands =
-                                optionsParsers
-                                    |> List.filterMap OptionsParser.getSubCommand
-                        in
-                        if List.member arg availableSubcommands then
+                        if optionsParsers |> List.any (\parser -> OptionsParser.getSubCommand parser == Just arg) then
                             Just (ShowSubcommandHelp arg)
 
                         else
