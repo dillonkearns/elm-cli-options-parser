@@ -1,10 +1,11 @@
 module Cli.LowLevel exposing (MatchResult(..), detailedHelpText, helpText, try)
 
+import Cli.ColorMode exposing (ColorMode, useColor)
 import Cli.Decode
 import Cli.OptionsParser as OptionsParser exposing (OptionsParser)
-import List.Extra
 import Cli.OptionsParser.BuilderState as BuilderState
 import Cli.OptionsParser.MatchResult as MatchResult exposing (NoMatchReason(..))
+import List.Extra
 import Set exposing (Set)
 
 
@@ -250,18 +251,18 @@ oneOf =
         Nothing
 
 
-helpText : String -> List (OptionsParser msg builderState) -> String
-helpText programName optionsParsers =
+helpText : ColorMode -> String -> List (OptionsParser msg builderState) -> String
+helpText colorMode programName optionsParsers =
     optionsParsers
-        |> List.map (OptionsParser.synopsis programName)
+        |> List.map (OptionsParser.synopsis (useColor colorMode) programName)
         |> String.join "\n"
 
 
 {-| Generate detailed help text for --help output.
 Uses detailed format with Usage line and Options section when descriptions are present.
 -}
-detailedHelpText : String -> List (OptionsParser msg builderState) -> String
-detailedHelpText programName optionsParsers =
+detailedHelpText : ColorMode -> String -> List (OptionsParser msg builderState) -> String
+detailedHelpText colorMode programName optionsParsers =
     optionsParsers
-        |> List.map (OptionsParser.detailedHelp programName)
+        |> List.map (OptionsParser.detailedHelp (useColor colorMode) programName)
         |> String.join "\n\n"
