@@ -292,5 +292,24 @@ Options:
                 \() ->
                     runCli gitConfig [ "log", "--help" ]
                         |> expectSuccess "Usage: myprog log [--author <author>] [--oneline]"
+            , test "--help before subcommand shows that subcommand's usage" <|
+                \() ->
+                    runCli gitConfig [ "--help", "clone" ]
+                        |> expectSuccess "Usage: myprog clone <repository>"
+            , test "--help with unknown subcommand shows unknown command error" <|
+                \() ->
+                    -- When user types `--help unknown`, they likely made a typo
+                    -- So we tell them it's unknown rather than showing general help
+                    runCli gitConfig [ "--help", "unknown" ]
+                        |> expectError
+                            """Unknown command: `unknown`
+
+Available commands: init, clone, log
+
+Run with --help for usage information."""
+            , test "subcommand --help ignores extra arguments" <|
+                \() ->
+                    runCli gitConfig [ "clone", "--help", "extra-arg" ]
+                        |> expectSuccess "Usage: myprog clone <repository>"
             ]
         ]
