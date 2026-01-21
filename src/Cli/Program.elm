@@ -4,7 +4,7 @@ module Cli.Program exposing
     , StatelessProgram, StatefulProgram
     , FlagsIncludingArgv
     , mapConfig
-    , run, RunResult(..)
+    , run, RunResult(..), ExitStatus(..)
     )
 
 {-|
@@ -69,11 +69,10 @@ See the [`examples`](https://github.com/dillonkearns/elm-cli-options-parser/tree
 
 ## Low-Level / Testing
 
-@docs run, RunResult
+@docs run, RunResult, ExitStatus
 
 -}
 
-import Cli.ExitStatus exposing (ExitStatus)
 import Cli.LowLevel
 import Cli.OptionsParser as OptionsParser exposing (OptionsParser)
 import Cli.OptionsParser.BuilderState as BuilderState
@@ -91,6 +90,13 @@ import TypoSuggestion
 type RunResult match
     = SystemMessage ExitStatus String
     | CustomMatch match
+
+
+{-| Exit status for CLI programs. `Failure` means exit code 1, `Success` means exit code 0.
+-}
+type ExitStatus
+    = Success
+    | Failure
 
 
 {-| A `Cli.Program.Config` is used to build up a set of `OptionsParser`s for your
@@ -261,10 +267,10 @@ init options flags =
             case matchResult of
                 SystemMessage exitStatus message ->
                     case exitStatus of
-                        Cli.ExitStatus.Failure ->
+                        Failure ->
                             options.printAndExitFailure message
 
-                        Cli.ExitStatus.Success ->
+                        Success ->
                             options.printAndExitSuccess message
 
                 CustomMatch msg ->
@@ -291,10 +297,10 @@ statefulInit options flags =
     case matchResult of
         SystemMessage exitStatus message ->
             case exitStatus of
-                Cli.ExitStatus.Failure ->
+                Failure ->
                     ( ShowSystemMessage, options.printAndExitFailure message )
 
-                Cli.ExitStatus.Success ->
+                Success ->
                     ( ShowSystemMessage, options.printAndExitSuccess message )
 
         CustomMatch cliOptions ->
@@ -308,12 +314,11 @@ statefulInit options flags =
 {-| Run the CLI parser directly and get back a `RunResult`. This is useful for testing
 your CLI configuration without needing to set up the full Platform.Program infrastructure.
 
-    import Cli.ExitStatus
     import Cli.Program as Program
 
     -- Test that missing required arg shows error
     case Program.run myConfig [ "node", "myprog" ] "1.0.0" of
-        Program.SystemMessage Cli.ExitStatus.Failure message ->
+        Program.SystemMessage Program.Failure message ->
             -- Assert on the error message
             String.contains "Missing" message
 
@@ -361,7 +366,7 @@ run (Config { optionsParsers }) argv versionMessage =
                         |> List.filterMap OptionsParser.getSubCommand
             in
             formatNoMatchReasons programName parserInfo availableSubCommands optionsParsers reasons
-                |> SystemMessage Cli.ExitStatus.Failure
+                |> SystemMessage Failure
 
         Cli.LowLevel.ValidationErrors validationErrors ->
             ("Validation errors:\n\n"
@@ -378,7 +383,7 @@ run (Config { optionsParsers }) argv versionMessage =
                         |> String.join "\n"
                    )
             )
-                |> SystemMessage Cli.ExitStatus.Failure
+                |> SystemMessage Failure
 
         Cli.LowLevel.Match msg ->
             msg
@@ -386,15 +391,15 @@ run (Config { optionsParsers }) argv versionMessage =
 
         Cli.LowLevel.ShowHelp ->
             Cli.LowLevel.detailedHelpText programName optionsParsers
-                |> SystemMessage Cli.ExitStatus.Success
+                |> SystemMessage Success
 
         Cli.LowLevel.ShowVersion ->
             versionMessage
-                |> SystemMessage Cli.ExitStatus.Success
+                |> SystemMessage Success
 
         Cli.LowLevel.ShowSubcommandHelp subcommandName ->
             subcommandHelpText programName optionsParsers subcommandName
-                |> SystemMessage Cli.ExitStatus.Success
+                |> SystemMessage Success
 
 
 {-| Transform the return type for all of the registered `OptionsParser`'s in the `Config`.

@@ -6,7 +6,6 @@ These tests assert on the exact error message output to ensure
 users see clear, helpful messages.
 -}
 
-import Cli.ExitStatus
 import Cli.Option as Option
 import Cli.OptionsParser as OptionsParser
 import Cli.Program as Program
@@ -30,10 +29,10 @@ runCli config args =
 expectError : String -> Program.RunResult msg -> Expectation
 expectError expectedMessage result =
     case result of
-        Program.SystemMessage Cli.ExitStatus.Failure actualMessage ->
+        Program.SystemMessage Program.Failure actualMessage ->
             actualMessage |> Expect.equal expectedMessage
 
-        Program.SystemMessage Cli.ExitStatus.Success message ->
+        Program.SystemMessage Program.Success message ->
             Expect.fail ("Expected error but got success:\n\n" ++ message)
 
         Program.CustomMatch _ ->
@@ -57,10 +56,10 @@ expectMatch expectedValue result =
 expectSuccess : String -> Program.RunResult msg -> Expectation
 expectSuccess expectedMessage result =
     case result of
-        Program.SystemMessage Cli.ExitStatus.Success actualMessage ->
+        Program.SystemMessage Program.Success actualMessage ->
             actualMessage |> Expect.equal expectedMessage
 
-        Program.SystemMessage Cli.ExitStatus.Failure message ->
+        Program.SystemMessage Program.Failure message ->
             Expect.fail ("Expected success but got error:\n\n" ++ message)
 
         Program.CustomMatch _ ->
