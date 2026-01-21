@@ -174,43 +174,21 @@ name usageSpec =
 
 synopsis : String -> { optionsParser | usageSpecs : List UsageSpec, description : Maybe String, subCommand : Maybe String } -> String
 synopsis programName { usageSpecs, description, subCommand } =
+    let
+        specStrings =
+            usageSpecs |> List.map specToSynopsis
+
+        allParts =
+            case subCommand of
+                Just sub ->
+                    sub :: specStrings
+
+                Nothing ->
+                    specStrings
+    in
     programName
         ++ " "
-        ++ ((subCommand
-                :: (usageSpecs
-                        |> List.map
-                            (\spec ->
-                                (case spec of
-                                    FlagOrKeywordArg option mutuallyExclusiveValues occurences _ ->
-                                        optionSynopsis occurences option mutuallyExclusiveValues
-
-                                    Operand operandName mutuallyExclusiveValues occurences _ ->
-                                        let
-                                            positionalArgSummary =
-                                                mutuallyExclusiveValues
-                                                    |> Maybe.map mutuallyExclusiveSynopsis
-                                                    |> Maybe.withDefault operandName
-                                        in
-                                        case occurences of
-                                            Occurences.Required ->
-                                                "<" ++ positionalArgSummary ++ ">"
-
-                                            Occurences.Optional ->
-                                                "[<" ++ positionalArgSummary ++ ">]"
-
-                                            Occurences.ZeroOrMore ->
-                                                "TODO shouldn't reach this case"
-
-                                    RestArgs restArgsDescription _ ->
-                                        "<" ++ restArgsDescription ++ ">..."
-                                )
-                                    |> Just
-                            )
-                   )
-            )
-                |> List.filterMap identity
-                |> String.join " "
-           )
+        ++ String.join " " allParts
         ++ (description |> Maybe.map (\doc -> " # " ++ doc) |> Maybe.withDefault "")
 
 
@@ -292,43 +270,48 @@ detailedHelp programName ({ usageSpecs, description } as optionsParser) =
 -}
 synopsisLine : String -> { optionsParser | usageSpecs : List UsageSpec, description : Maybe String, subCommand : Maybe String } -> String
 synopsisLine programName { usageSpecs, subCommand } =
-    programName
-        ++ " "
-        ++ ((subCommand
-                :: (usageSpecs
-                        |> List.map
-                            (\spec ->
-                                (case spec of
-                                    FlagOrKeywordArg option mutuallyExclusiveValues occurences _ ->
-                                        optionSynopsis occurences option mutuallyExclusiveValues
+    let
+        specStrings =
+            usageSpecs |> List.map specToSynopsis
 
-                                    Operand operandName mutuallyExclusiveValues occurences _ ->
-                                        let
-                                            positionalArgSummary =
-                                                mutuallyExclusiveValues
-                                                    |> Maybe.map mutuallyExclusiveSynopsis
-                                                    |> Maybe.withDefault operandName
-                                        in
-                                        case occurences of
-                                            Occurences.Required ->
-                                                "<" ++ positionalArgSummary ++ ">"
+        allParts =
+            case subCommand of
+                Just sub ->
+                    sub :: specStrings
 
-                                            Occurences.Optional ->
-                                                "[<" ++ positionalArgSummary ++ ">]"
+                Nothing ->
+                    specStrings
+    in
+    programName ++ " " ++ String.join " " allParts
 
-                                            Occurences.ZeroOrMore ->
-                                                "TODO shouldn't reach this case"
 
-                                    RestArgs restArgsDescription _ ->
-                                        "<" ++ restArgsDescription ++ ">..."
-                                )
-                                    |> Just
-                            )
-                   )
-            )
-                |> List.filterMap identity
-                |> String.join " "
-           )
+{-| Convert a UsageSpec to its synopsis string representation.
+-}
+specToSynopsis : UsageSpec -> String
+specToSynopsis spec =
+    case spec of
+        FlagOrKeywordArg option mutuallyExclusiveValues occurences _ ->
+            optionSynopsis occurences option mutuallyExclusiveValues
+
+        Operand operandName mutuallyExclusiveValues occurences _ ->
+            let
+                positionalArgSummary =
+                    mutuallyExclusiveValues
+                        |> Maybe.map mutuallyExclusiveSynopsis
+                        |> Maybe.withDefault operandName
+            in
+            case occurences of
+                Occurences.Required ->
+                    "<" ++ positionalArgSummary ++ ">"
+
+                Occurences.Optional ->
+                    "[<" ++ positionalArgSummary ++ ">]"
+
+                Occurences.ZeroOrMore ->
+                    "TODO shouldn't reach this case"
+
+        RestArgs restArgsDescription _ ->
+            "<" ++ restArgsDescription ++ ">..."
 
 
 {-| Generate option synopsis for the help Options section (without occurrence brackets).
