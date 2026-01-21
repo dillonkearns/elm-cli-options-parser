@@ -218,7 +218,7 @@ synopsis programName { usageSpecs, description, subCommand } =
 Only includes Options section if at least one option has a description.
 -}
 detailedHelp : String -> { optionsParser | usageSpecs : List UsageSpec, description : Maybe String, subCommand : Maybe String } -> String
-detailedHelp programName ({ usageSpecs, description, subCommand } as optionsParser) =
+detailedHelp programName ({ usageSpecs, description } as optionsParser) =
     let
         usageLine =
             "Usage: " ++ synopsisLine programName optionsParser
@@ -233,7 +233,7 @@ detailedHelp programName ({ usageSpecs, description, subCommand } as optionsPars
                 |> List.filterMap
                     (\spec ->
                         case spec of
-                            FlagOrKeywordArg option mutuallyExclusiveValues occurences maybeDesc ->
+                            FlagOrKeywordArg option mutuallyExclusiveValues _ maybeDesc ->
                                 maybeDesc
                                     |> Maybe.map
                                         (\desc ->
@@ -242,7 +242,7 @@ detailedHelp programName ({ usageSpecs, description, subCommand } as optionsPars
                                             )
                                         )
 
-                            Operand operandName mutuallyExclusiveValues _ maybeDesc ->
+                            Operand operandName _ _ maybeDesc ->
                                 maybeDesc
                                     |> Maybe.map
                                         (\desc ->

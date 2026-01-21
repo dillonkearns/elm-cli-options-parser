@@ -45,19 +45,21 @@ try optionsParsers argv =
         hasHelpFlag =
             List.member "--help" argsWithoutNodeAndScript
 
-        availableSubcommands =
-            optionsParsers
-                |> List.filterMap OptionsParser.getSubCommand
-
-        firstNonFlagArg =
-            argsWithoutNodeAndScript
-                |> List.filter (\arg -> not (String.startsWith "--" arg))
-                |> List.head
-
         subcommandHelpResult =
             if hasHelpFlag then
+                let
+                    firstNonFlagArg =
+                        argsWithoutNodeAndScript
+                            |> List.filter (\arg -> not (String.startsWith "--" arg))
+                            |> List.head
+                in
                 case firstNonFlagArg of
                     Just arg ->
+                        let
+                            availableSubcommands =
+                                optionsParsers
+                                    |> List.filterMap OptionsParser.getSubCommand
+                        in
                         if List.member arg availableSubcommands then
                             Just (ShowSubcommandHelp arg)
 
@@ -87,51 +89,51 @@ try optionsParsers argv =
                         |> OptionsParser.tryMatch
                     )
 
-        -- Extract UnexpectedOption strings and find the common ones (truly unknown)
-        commonUnexpectedOptions : Set String
-        commonUnexpectedOptions =
-            matchResults
-                |> List.map
-                    (\matchResult ->
-                        case matchResult of
-                            MatchResult.NoMatch reasons ->
-                                reasons
-                                    |> List.filterMap
-                                        (\reason ->
-                                            case reason of
-                                                UnexpectedOption name ->
-                                                    Just name
-
-                                                _ ->
-                                                    Nothing
-                                        )
-                                    |> Set.fromList
-
-                            _ ->
-                                Set.empty
-                    )
-                |> intersection
-
-        -- Collect all NoMatchReasons from all parsers
-        allNoMatchReasons : List MatchResult.NoMatchReason
-        allNoMatchReasons =
-            matchResults
-                |> List.concatMap
-                    (\matchResult ->
-                        case matchResult of
-                            MatchResult.NoMatch reasons ->
-                                reasons
-
-                            _ ->
-                                []
-                    )
-
         -- Build the aggregated list of reasons:
         -- 1. Common unexpected options (wrapped back into UnexpectedOption)
         -- 2. All other reasons (deduplicated)
         aggregatedReasons : List MatchResult.NoMatchReason
         aggregatedReasons =
             let
+                -- Extract UnexpectedOption strings and find the common ones (truly unknown)
+                commonUnexpectedOptions : Set String
+                commonUnexpectedOptions =
+                    matchResults
+                        |> List.map
+                            (\matchResult ->
+                                case matchResult of
+                                    MatchResult.NoMatch reasons ->
+                                        reasons
+                                            |> List.filterMap
+                                                (\reason ->
+                                                    case reason of
+                                                        UnexpectedOption name ->
+                                                            Just name
+
+                                                        _ ->
+                                                            Nothing
+                                                )
+                                            |> Set.fromList
+
+                                    _ ->
+                                        Set.empty
+                            )
+                        |> intersection
+
+                -- Collect all NoMatchReasons from all parsers
+                allNoMatchReasons : List MatchResult.NoMatchReason
+                allNoMatchReasons =
+                    matchResults
+                        |> List.concatMap
+                            (\matchResult ->
+                                case matchResult of
+                                    MatchResult.NoMatch reasons ->
+                                        reasons
+
+                                    _ ->
+                                        []
+                            )
+
                 unexpectedOptionReasons =
                     commonUnexpectedOptions
                         |> Set.toList

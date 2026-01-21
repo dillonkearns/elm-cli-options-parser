@@ -343,22 +343,23 @@ run (Config { optionsParsers }) argv versionMessage =
 
         matchResult =
             Cli.LowLevel.try optionsParsers argv
-
-        parserInfo =
-            optionsParsers
-                |> List.map
-                    (\optionsParser ->
-                        { usageSpecs = OptionsParser.getUsageSpecs optionsParser
-                        , subCommand = OptionsParser.getSubCommand optionsParser
-                        }
-                    )
-
-        availableSubCommands =
-            optionsParsers
-                |> List.filterMap OptionsParser.getSubCommand
     in
     case matchResult of
         Cli.LowLevel.NoMatch reasons ->
+            let
+                parserInfo =
+                    optionsParsers
+                        |> List.map
+                            (\optionsParser ->
+                                { usageSpecs = OptionsParser.getUsageSpecs optionsParser
+                                , subCommand = OptionsParser.getSubCommand optionsParser
+                                }
+                            )
+
+                availableSubCommands =
+                    optionsParsers
+                        |> List.filterMap OptionsParser.getSubCommand
+            in
             formatNoMatchReasons programName parserInfo availableSubCommands optionsParsers reasons
                 |> SystemMessage Cli.ExitStatus.Failure
 
@@ -440,79 +441,6 @@ formatNoMatchReasons programName parserInfo availableSubCommands optionsParsers 
                             _ ->
                                 Nothing
                     )
-
-        otherReasons =
-            reasons
-                |> List.filter
-                    (\reason ->
-                        case reason of
-                            UnexpectedOption _ ->
-                                False
-
-                            _ ->
-                                True
-                    )
-
-        -- Check for subcommand-related errors
-        hasSubCommandParsers =
-            not (List.isEmpty availableSubCommands)
-
-        missingSubCommandReasons =
-            otherReasons
-                |> List.filterMap
-                    (\reason ->
-                        case reason of
-                            MissingSubCommand _ ->
-                                Just reason
-
-                            _ ->
-                                Nothing
-                    )
-
-        wrongSubCommandReasons =
-            otherReasons
-                |> List.filterMap
-                    (\reason ->
-                        case reason of
-                            WrongSubCommand { actualSubCommand } ->
-                                Just actualSubCommand
-
-                            _ ->
-                                Nothing
-                    )
-
-        -- "Specific" errors indicate a parser got further in matching
-        -- (matched subcommand or structure, but failed on argument details)
-        -- These should take priority over "subcommand not found" errors
-        -- Note: ExtraOperand is NOT included here because it's often from
-        -- system parsers (help/version) and isn't specific enough
-        missingArgErrors =
-            otherReasons
-                |> List.filter
-                    (\reason ->
-                        case reason of
-                            MissingRequiredPositionalArg _ ->
-                                True
-
-                            MissingRequiredKeywordArg _ ->
-                                True
-
-                            _ ->
-                                False
-                    )
-
-        -- ExtraOperand is only relevant if there are no subcommand-related issues
-        extraOperandErrors =
-            otherReasons
-                |> List.filter
-                    (\reason ->
-                        case reason of
-                            ExtraOperand ->
-                                True
-
-                            _ ->
-                                False
-                    )
     in
     if not (List.isEmpty unexpectedOptions) then
         -- Unexpected options - use typo suggestions
@@ -520,55 +448,135 @@ formatNoMatchReasons programName parserInfo availableSubCommands optionsParsers 
             |> List.map (TypoSuggestion.toMessage parserInfo)
             |> String.join "\n"
 
-    else if not (List.isEmpty missingArgErrors) then
-        -- A parser matched the structure but is missing a required argument
-        case List.head missingArgErrors of
-            Just reason ->
-                formatSingleReason reason programName optionsParsers
-
-            Nothing ->
-                formatFallbackMessage programName optionsParsers
-
-    else if not (List.isEmpty wrongSubCommandReasons) then
-        -- User may have provided an unknown subcommand
-        -- But first check: is the "wrong" command actually a valid subcommand?
-        -- If so, the error is something else (like ExtraOperand)
+    else
         let
-            unknownCommands =
-                wrongSubCommandReasons
-                    |> List.filter (\cmd -> not (List.member cmd availableSubCommands))
+            otherReasons =
+                reasons
+                    |> List.filter
+                        (\reason ->
+                            case reason of
+                                UnexpectedOption _ ->
+                                    False
+
+                                _ ->
+                                    True
+                        )
+
+            -- "Specific" errors indicate a parser got further in matching
+            -- (matched subcommand or structure, but failed on argument details)
+            -- These should take priority over "subcommand not found" errors
+            -- Note: ExtraOperand is NOT included here because it's often from
+            -- system parsers (help/version) and isn't specific enough
+            missingArgErrors =
+                otherReasons
+                    |> List.filter
+                        (\reason ->
+                            case reason of
+                                MissingRequiredPositionalArg _ ->
+                                    True
+
+                                MissingRequiredKeywordArg _ ->
+                                    True
+
+                                _ ->
+                                    False
+                        )
         in
-        case List.head unknownCommands of
-            Just unknownCommand ->
-                "Unknown command: `"
-                    ++ unknownCommand
-                    ++ "`\n\nAvailable commands: "
-                    ++ String.join ", " availableSubCommands
-                    ++ "\n\nRun with --help for usage information."
+        if not (List.isEmpty missingArgErrors) then
+            -- A parser matched the structure but is missing a required argument
+            case List.head missingArgErrors of
+                Just reason ->
+                    formatSingleReason reason programName optionsParsers
 
-            Nothing ->
-                -- The command was valid but something else went wrong
-                -- Check for ExtraOperand
-                if not (List.isEmpty extraOperandErrors) then
-                    formatSingleReason ExtraOperand programName optionsParsers
-
-                else
+                Nothing ->
                     formatFallbackMessage programName optionsParsers
 
-    else if hasSubCommandParsers && not (List.isEmpty missingSubCommandReasons) then
-        -- Missing subcommand when subcommands are expected
-        "Missing command.\n\nAvailable commands: "
-            ++ String.join ", " availableSubCommands
-            ++ "\n\nRun with --help for usage information."
+        else
+            let
+                wrongSubCommandReasons =
+                    otherReasons
+                        |> List.filterMap
+                            (\reason ->
+                                case reason of
+                                    WrongSubCommand { actualSubCommand } ->
+                                        Just actualSubCommand
 
-    else
-        -- Format other specific reasons
-        case List.head otherReasons of
-            Just reason ->
-                formatSingleReason reason programName optionsParsers
+                                    _ ->
+                                        Nothing
+                            )
+            in
+            if not (List.isEmpty wrongSubCommandReasons) then
+                -- User may have provided an unknown subcommand
+                -- But first check: is the "wrong" command actually a valid subcommand?
+                -- If so, the error is something else (like ExtraOperand)
+                let
+                    unknownCommands =
+                        wrongSubCommandReasons
+                            |> List.filter (\cmd -> not (List.member cmd availableSubCommands))
+                in
+                case List.head unknownCommands of
+                    Just unknownCommand ->
+                        "Unknown command: `"
+                            ++ unknownCommand
+                            ++ "`\n\nAvailable commands: "
+                            ++ String.join ", " availableSubCommands
+                            ++ "\n\nRun with --help for usage information."
 
-            Nothing ->
-                formatFallbackMessage programName optionsParsers
+                    Nothing ->
+                        let
+                            -- ExtraOperand is only relevant if there are no subcommand-related issues
+                            extraOperandErrors =
+                                otherReasons
+                                    |> List.filter
+                                        (\reason ->
+                                            case reason of
+                                                ExtraOperand ->
+                                                    True
+
+                                                _ ->
+                                                    False
+                                        )
+                        in
+                        -- The command was valid but something else went wrong
+                        -- Check for ExtraOperand
+                        if not (List.isEmpty extraOperandErrors) then
+                            formatSingleReason ExtraOperand programName optionsParsers
+
+                        else
+                            formatFallbackMessage programName optionsParsers
+
+            else
+                let
+                    -- Check for subcommand-related errors
+                    hasSubCommandParsers =
+                        not (List.isEmpty availableSubCommands)
+
+                    missingSubCommandReasons =
+                        otherReasons
+                            |> List.filterMap
+                                (\reason ->
+                                    case reason of
+                                        MissingSubCommand _ ->
+                                            Just reason
+
+                                        _ ->
+                                            Nothing
+                                )
+                in
+                if hasSubCommandParsers && not (List.isEmpty missingSubCommandReasons) then
+                    -- Missing subcommand when subcommands are expected
+                    "Missing command.\n\nAvailable commands: "
+                        ++ String.join ", " availableSubCommands
+                        ++ "\n\nRun with --help for usage information."
+
+                else
+                    -- Format other specific reasons
+                    case List.head otherReasons of
+                        Just reason ->
+                            formatSingleReason reason programName optionsParsers
+
+                        Nothing ->
+                            formatFallbackMessage programName optionsParsers
 
 
 {-| Format a single NoMatchReason into a message.
@@ -579,10 +587,10 @@ formatSingleReason reason programName optionsParsers =
         UnexpectedOption name ->
             "Unexpected option: --" ++ name
 
-        MissingSubCommand { expectedSubCommand } ->
+        MissingSubCommand _ ->
             "Missing command.\n\nRun with --help for usage information."
 
-        WrongSubCommand { expectedSubCommand, actualSubCommand } ->
+        WrongSubCommand { actualSubCommand } ->
             "Unknown command: `" ++ actualSubCommand ++ "`"
 
         MissingRequiredPositionalArg { name, customMessage } ->
