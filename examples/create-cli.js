@@ -4,8 +4,15 @@ const readline = require('readline');
 global.XMLHttpRequest = require("xhr2");
 
 module.exports = (name, opts) => {
+  // Detect color support: enabled for TTY unless NO_COLOR is set
+  const useColor = !!(process.stdout.isTTY && !process.env.NO_COLOR);
+
   const program = Elm[name].init({
-    flags: { argv: process.argv, versionMessage: "1.2.3" }
+    flags: {
+      argv: process.argv,
+      versionMessage: "1.2.3",
+      colorMode: useColor
+    }
   });
 
   program.ports.print.subscribe(message => {

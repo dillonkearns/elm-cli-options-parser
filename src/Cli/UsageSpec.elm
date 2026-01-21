@@ -18,6 +18,9 @@ module Cli.UsageSpec exposing
     , synopsis
     )
 
+import Ansi.String
+import Cli.ColorMode exposing (ColorMode, useColor)
+import Cli.Style
 import List.Extra
 import Occurences exposing (Occurences)
 
@@ -172,11 +175,11 @@ name usageSpec =
             restArgsDescription
 
 
-synopsis : String -> { optionsParser | usageSpecs : List UsageSpec, description : Maybe String, subCommand : Maybe String } -> String
-synopsis programName { usageSpecs, description, subCommand } =
+synopsis : ColorMode -> String -> { optionsParser | usageSpecs : List UsageSpec, description : Maybe String, subCommand : Maybe String } -> String
+synopsis colorMode programName { usageSpecs, description, subCommand } =
     let
         specStrings =
-            usageSpecs |> List.map specToSynopsis
+            usageSpecs |> List.map (specToSynopsis colorMode)
 
         allParts =
             case subCommand of
@@ -186,20 +189,21 @@ synopsis programName { usageSpecs, description, subCommand } =
                 Nothing ->
                     specStrings
     in
-    programName
+    Cli.Style.applyBold (useColor colorMode) programName
         ++ " "
         ++ String.join " " allParts
         ++ (description |> Maybe.map (\doc -> " # " ++ doc) |> Maybe.withDefault "")
 
 
 {-| Generate detailed help text with Usage line and Options section.
-Only includes Options section if at least one option has a description.
 -}
-detailedHelp : String -> { optionsParser | usageSpecs : List UsageSpec, description : Maybe String, subCommand : Maybe String } -> String
-detailedHelp programName ({ usageSpecs, description } as optionsParser) =
+detailedHelp : ColorMode -> String -> { optionsParser | usageSpecs : List UsageSpec, description : Maybe String, subCommand : Maybe String } -> String
+detailedHelp colorMode programName ({ usageSpecs, description } as optionsParser) =
     let
         usageLine =
-            "Usage: " ++ synopsisLine programName optionsParser
+            Cli.Style.applyBold (useColor colorMode) "Usage:"
+                ++ " "
+                ++ synopsisLine colorMode programName optionsParser
 
         descriptionSection =
             description
@@ -215,7 +219,7 @@ detailedHelp programName ({ usageSpecs, description } as optionsParser) =
                                 maybeDesc
                                     |> Maybe.map
                                         (\desc ->
-                                            ( optionSynopsisForHelp option mutuallyExclusiveValues
+                                            ( optionSynopsisForHelp colorMode option mutuallyExclusiveValues
                                             , desc
                                             )
                                         )
@@ -224,7 +228,7 @@ detailedHelp programName ({ usageSpecs, description } as optionsParser) =
                                 maybeDesc
                                     |> Maybe.map
                                         (\desc ->
-                                            ( "<" ++ operandName ++ ">"
+                                            ( Cli.Style.applyCyan (useColor colorMode) ("<" ++ operandName ++ ">")
                                             , desc
                                             )
                                         )
@@ -233,7 +237,7 @@ detailedHelp programName ({ usageSpecs, description } as optionsParser) =
                                 maybeDesc
                                     |> Maybe.map
                                         (\desc ->
-                                            ( "<" ++ restArgsName ++ ">..."
+                                            ( Cli.Style.applyCyan (useColor colorMode) ("<" ++ restArgsName ++ ">...")
                                             , desc
                                             )
                                         )
@@ -247,17 +251,19 @@ detailedHelp programName ({ usageSpecs, description } as optionsParser) =
                 let
                     maxOptionLength =
                         optionsWithDescriptions
-                            |> List.map (Tuple.first >> String.length)
+                            |> List.map (Tuple.first >> Ansi.String.width)
                             |> List.maximum
                             |> Maybe.withDefault 0
 
                     padding optionStr =
-                        String.repeat (maxOptionLength - String.length optionStr + 3) " "
+                        String.repeat (maxOptionLength - Ansi.String.width optionStr + 3) " "
 
                     formatOption ( optionStr, desc ) =
                         "  " ++ optionStr ++ padding optionStr ++ desc
                 in
-                "\n\nOptions:\n"
+                "\n\n"
+                    ++ Cli.Style.applyBold (useColor colorMode) "Options:"
+                    ++ "\n"
                     ++ (optionsWithDescriptions
                             |> List.map formatOption
                             |> String.join "\n"
@@ -266,13 +272,13 @@ detailedHelp programName ({ usageSpecs, description } as optionsParser) =
     usageLine ++ descriptionSection ++ optionsSection
 
 
-{-| Generate just the synopsis line without the "Usage: " prefix or description suffix.
+{-| Generate synopsis line without "Usage:" prefix or description suffix.
 -}
-synopsisLine : String -> { optionsParser | usageSpecs : List UsageSpec, description : Maybe String, subCommand : Maybe String } -> String
-synopsisLine programName { usageSpecs, subCommand } =
+synopsisLine : ColorMode -> String -> { optionsParser | usageSpecs : List UsageSpec, description : Maybe String, subCommand : Maybe String } -> String
+synopsisLine colorMode programName { usageSpecs, subCommand } =
     let
         specStrings =
-            usageSpecs |> List.map specToSynopsis
+            usageSpecs |> List.map (specToSynopsis colorMode)
 
         allParts =
             case subCommand of
@@ -282,16 +288,35 @@ synopsisLine programName { usageSpecs, subCommand } =
                 Nothing ->
                     specStrings
     in
-    programName ++ " " ++ String.join " " allParts
+    Cli.Style.applyBold (useColor colorMode) programName
+        ++ " "
+        ++ String.join " " allParts
+
+
+{-| Generate option synopsis for help text (without occurrence brackets).
+-}
+optionSynopsisForHelp : ColorMode -> FlagOrKeywordArg -> Maybe MutuallyExclusiveValues -> String
+optionSynopsisForHelp colorMode option maybeMutuallyExclusiveValues =
+    case option of
+        Flag flagName ->
+            Cli.Style.applyCyan (useColor colorMode) ("--" ++ flagName)
+
+        KeywordArg keywordArgName ->
+            case maybeMutuallyExclusiveValues of
+                Just mutuallyExclusiveValues ->
+                    Cli.Style.applyCyan (useColor colorMode) ("--" ++ keywordArgName ++ " <" ++ mutuallyExclusiveSynopsis mutuallyExclusiveValues ++ ">")
+
+                Nothing ->
+                    Cli.Style.applyCyan (useColor colorMode) ("--" ++ keywordArgName ++ " <" ++ keywordArgName ++ ">")
 
 
 {-| Convert a UsageSpec to its synopsis string representation.
 -}
-specToSynopsis : UsageSpec -> String
-specToSynopsis spec =
+specToSynopsis : ColorMode -> UsageSpec -> String
+specToSynopsis colorMode spec =
     case spec of
         FlagOrKeywordArg option mutuallyExclusiveValues occurences _ ->
-            optionSynopsis occurences option mutuallyExclusiveValues
+            optionSynopsisStyled colorMode occurences option mutuallyExclusiveValues
 
         Operand operandName mutuallyExclusiveValues occurences _ ->
             let
@@ -302,33 +327,16 @@ specToSynopsis spec =
             in
             case occurences of
                 Occurences.Required ->
-                    "<" ++ positionalArgSummary ++ ">"
+                    Cli.Style.applyCyan (useColor colorMode) ("<" ++ positionalArgSummary ++ ">")
 
                 Occurences.Optional ->
-                    "[<" ++ positionalArgSummary ++ ">]"
+                    "[" ++ Cli.Style.applyCyan (useColor colorMode) ("<" ++ positionalArgSummary ++ ">") ++ "]"
 
                 Occurences.ZeroOrMore ->
                     "TODO shouldn't reach this case"
 
         RestArgs restArgsDescription _ ->
-            "<" ++ restArgsDescription ++ ">..."
-
-
-{-| Generate option synopsis for the help Options section (without occurrence brackets).
--}
-optionSynopsisForHelp : FlagOrKeywordArg -> Maybe MutuallyExclusiveValues -> String
-optionSynopsisForHelp option maybeMutuallyExclusiveValues =
-    case option of
-        Flag flagName ->
-            "--" ++ flagName
-
-        KeywordArg keywordArgName ->
-            case maybeMutuallyExclusiveValues of
-                Just mutuallyExclusiveValues ->
-                    "--" ++ keywordArgName ++ " <" ++ mutuallyExclusiveSynopsis mutuallyExclusiveValues ++ ">"
-
-                Nothing ->
-                    "--" ++ keywordArgName ++ " <" ++ keywordArgName ++ ">"
+            Cli.Style.applyCyan (useColor colorMode) ("<" ++ restArgsDescription ++ ">...")
 
 
 mutuallyExclusiveSynopsis : MutuallyExclusiveValues -> String
@@ -336,21 +344,33 @@ mutuallyExclusiveSynopsis (MutuallyExclusiveValues values) =
     String.join "|" values
 
 
-optionSynopsis : Occurences -> FlagOrKeywordArg -> Maybe MutuallyExclusiveValues -> String
-optionSynopsis occurences option maybeMutuallyExclusiveValues =
-    (case option of
-        Flag flagName ->
-            "--" ++ flagName
+{-| Generate styled option synopsis with occurrence brackets.
+-}
+optionSynopsisStyled : ColorMode -> Occurences -> FlagOrKeywordArg -> Maybe MutuallyExclusiveValues -> String
+optionSynopsisStyled colorMode occurences option maybeMutuallyExclusiveValues =
+    let
+        styledOption =
+            case option of
+                Flag flagName ->
+                    Cli.Style.applyCyan (useColor colorMode) ("--" ++ flagName)
 
-        KeywordArg keywordArgName ->
-            case maybeMutuallyExclusiveValues of
-                Just mutuallyExclusiveValues ->
-                    "--" ++ keywordArgName ++ " <" ++ mutuallyExclusiveSynopsis mutuallyExclusiveValues ++ ">"
+                KeywordArg keywordArgName ->
+                    case maybeMutuallyExclusiveValues of
+                        Just mutuallyExclusiveValues ->
+                            Cli.Style.applyCyan (useColor colorMode) ("--" ++ keywordArgName ++ " <" ++ mutuallyExclusiveSynopsis mutuallyExclusiveValues ++ ">")
 
-                Nothing ->
-                    "--" ++ keywordArgName ++ " <" ++ keywordArgName ++ ">"
-    )
-        |> Occurences.qualifySynopsis occurences
+                        Nothing ->
+                            Cli.Style.applyCyan (useColor colorMode) ("--" ++ keywordArgName ++ " <" ++ keywordArgName ++ ">")
+    in
+    case occurences of
+        Occurences.Required ->
+            styledOption
+
+        Occurences.Optional ->
+            "[" ++ styledOption ++ "]"
+
+        Occurences.ZeroOrMore ->
+            "[" ++ styledOption ++ "]..."
 
 
 optionHasArg : List UsageSpec -> String -> Bool
