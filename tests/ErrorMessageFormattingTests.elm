@@ -219,6 +219,52 @@ myprog init
 myprog clone <repository>
 myprog log [--author <author>] [--oneline]"""
             ]
+        , describe "error priority (documents which error is shown when multiple apply)"
+            [ test "unexpected option takes priority over missing subcommand" <|
+                \() ->
+                    -- User runs: git --unknown-flag
+                    -- Both "unknown flag" and "missing subcommand" could apply
+                    -- We show the typo suggestion since it's more actionable
+                    runCli gitConfig [ "--unknown-flag" ]
+                        |> expectError
+                            """The `--unknown-flag` flag was not found. Maybe it was one of these typos?
+
+`--unknown-flag` <> `--oneline`"""
+            , test "missing required arg takes priority over wrong subcommand errors" <|
+                \() ->
+                    -- User runs: git clone (missing <repository>)
+                    -- The "clone" parser matches but is missing an arg
+                    -- We show the specific missing arg error
+                    runCli gitConfig [ "clone" ]
+                        |> expectError
+                            """Missing required argument: <repository>
+
+myprog init
+myprog clone <repository>
+myprog log [--author <author>] [--oneline]"""
+            , test "unknown subcommand shows available commands" <|
+                \() ->
+                    -- User runs: git stauts (typo)
+                    -- No parser matches, show unknown command error
+                    runCli gitConfig [ "stauts" ]
+                        |> expectError
+                            """Unknown command: `stauts`
+
+Available commands: init, clone, log
+
+Run with --help for usage information."""
+            , test "valid subcommand with extra args shows too many arguments" <|
+                \() ->
+                    -- User runs: git init foo bar
+                    -- "init" matches but has extra operands
+                    runCli gitConfig [ "init", "foo", "bar" ]
+                        |> expectError
+                            """Too many arguments provided.
+
+myprog init
+myprog clone <repository>
+myprog log [--author <author>] [--oneline]"""
+            ]
         , describe "successful parsing"
             [ test "subcommand matches" <|
                 \() ->
