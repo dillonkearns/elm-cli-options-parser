@@ -358,8 +358,7 @@ buildEndingOption dataGrabber usageSpec =
 -}
 emptyMeta : Internal.OptionMeta
 emptyMeta =
-    { description = Nothing
-    , missingMessage = Nothing
+    { missingMessage = Nothing
     }
 
 
@@ -374,10 +373,6 @@ withDescription description (Option option) =
     Option
         { option
             | usageSpec = UsageSpec.setDescription (Just description) option.usageSpec
-            , meta =
-                { description = Just description
-                , missingMessage = option.meta.missingMessage
-                }
         }
 
 
@@ -398,8 +393,7 @@ withMissingMessage message (Option option) =
                     option.dataGrabber context
                         |> Result.mapError (addCustomMessageToError message)
             , meta =
-                { description = option.meta.description
-                , missingMessage = Just message
+                { missingMessage = Just message
                 }
         }
 

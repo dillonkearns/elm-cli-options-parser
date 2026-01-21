@@ -22,11 +22,10 @@ type alias InnerOption from to =
     }
 
 
-{-| Metadata for an option that can be set via withDescription, withMissingMessage, etc.
+{-| Metadata for an option that can be set via withMissingMessage.
 -}
 type alias OptionMeta =
-    { description : Maybe String
-    , missingMessage : Maybe String
+    { missingMessage : Maybe String
     }
 
 
