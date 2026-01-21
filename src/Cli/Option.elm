@@ -294,15 +294,6 @@ requiredKeywordArg optionName =
         (UsageSpec.keywordArg optionName Required)
 
 
-listToString : List String -> String
-listToString list =
-    String.concat
-        [ "["
-        , list |> String.join ", "
-        , "]"
-        ]
-
-
 {-| A flag with no argument.
 
 Example: `--debug` in `elm make --debug`
