@@ -1,7 +1,5 @@
 # Elm CLI Options Parser
 
-[![Build Status](https://travis-ci.org/dillonkearns/elm-cli-options-parser.svg?branch=master)](https://travis-ci.org/dillonkearns/elm-cli-options-parser)
-
 `elm-cli-options-parser` allows you to build command-line options parsers in Elm.
 It uses a syntax similar to `Json.Decode.Pipeline`.
 
