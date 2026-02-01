@@ -1,0 +1,5 @@
+$ myprog --unknown-flag
+
+The [36m`--unknown-flag`[39m flag was not found. Maybe it was one of these typos?
+
+[36m`--unknown-flag`[39m <> [32m`--oneline`[39m

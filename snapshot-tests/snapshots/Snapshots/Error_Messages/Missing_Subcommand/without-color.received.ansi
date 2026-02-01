@@ -1,0 +1,7 @@
+$ myprog 
+
+Missing command.
+
+Available commands: init, clone, log
+
+Run with --help for usage information.

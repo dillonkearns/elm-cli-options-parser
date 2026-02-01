@@ -1,0 +1,12 @@
+{
+  "name": "cli-options-parser-snapshot-tests",
+  "private": true,
+  "scripts": {
+    "test": "cd snapshot-tests && elm-pages run src/Snapshots.elm",
+    "test:approve": "cd snapshot-tests && elm-pages run src/Snapshots.elm --approve=all",
+    "test:ci": "cd snapshot-tests && elm-pages run src/Snapshots.elm --ci"
+  },
+  "devDependencies": {
+    "elm-pages": "^3.0.28"
+  }
+}

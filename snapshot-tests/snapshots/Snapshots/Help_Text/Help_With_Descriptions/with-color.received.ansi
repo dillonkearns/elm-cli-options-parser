@@ -1,0 +1,7 @@
+$ myprog --help
+
+[1mUsage:[22m [1mmyprog[22m [36m--name <name>[39m [[36m--greeting <greeting>[39m]
+
+[1mOptions:[22m
+  [36m--name <name>[39m           Your name for the greeting
+  [36m--greeting <greeting>[39m   Custom greeting message

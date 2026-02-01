@@ -1,0 +1,7 @@
+$ myprog --help
+
+Usage: myprog init
+
+Usage: myprog clone <repository>
+
+Usage: myprog log [--author <author>] [--oneline]
