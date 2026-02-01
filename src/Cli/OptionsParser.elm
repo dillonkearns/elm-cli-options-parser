@@ -519,7 +519,7 @@ map mapFunction ((OptionsParser { decoder }) as optionsParser) =
     updateDecoder (decoder >> Result.map (Tuple.mapSecond mapFunction)) optionsParser
 
 
-{-| TODO
+{-| Internal helper to map over the value inside a Result with validation errors.
 -}
 resultMap :
     (a -> value)
@@ -607,26 +607,26 @@ withRestArgs =
     withCommon
 
 
-{-| Add documentation for the optionsParser.
-The output shows up after a `#` in the help output:
+{-| Add a description to an `OptionsParser`. This description appears in help output
+and error messages.
 
-```bash
-$ git --help
-git init # initialize a git repository
-...
-```
+    import Cli.OptionsParser as OptionsParser exposing (OptionsParser, with)
 
-      import Cli.OptionsParser as OptionsParser exposing (OptionsParser, with)
-
-      type GitOptionsParser =
-        Init
+    type GitCommand
+        = Init
         | Clone String
 
-      gitInitOptionsParser : OptionsParser GitOptionsParser
-      gitInitOptionsParser =
-        OptionsParser.build Init
-         |> OptionsParser.end
-         |> OptionsParser.withDescription "initialize a git repository"
+    gitInitParser : OptionsParser GitCommand
+    gitInitParser =
+        OptionsParser.buildSubCommand "init" Init
+            |> OptionsParser.withDescription "initialize a git repository"
+
+In error messages, the description appears after `#` in the usage line:
+
+    git init # initialize a git repository
+
+When using subcommand-specific help (`git init --help`), the description
+appears below the usage line.
 
 -}
 withDescription : String -> OptionsParser cliOptions anything -> OptionsParser cliOptions anything
