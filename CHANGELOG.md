@@ -11,14 +11,30 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [4.0.0]
 
+See the [V4 Upgrade Guide](V4-UPGRADE-GUIDE.md) for migration instructions.
+
+### Added
+
+- **Color support**: Help text and error messages now support ANSI colors. Pass `colorMode: true/false` in your JavaScript flags to enable/disable.
+- **`Option.withDescription`**: Add descriptions to individual options that appear in `--help` output.
+- **`Option.withMissingMessage`**: Provide custom error messages for required options when they're missing.
+- **`Program.run`**: Test your CLI configuration without the full Platform.Program infrastructure. Returns a `RunResult` that you can pattern match on in tests.
+- **`Program.ColorMode`**, **`Program.ExitStatus`**, **`Program.RunResult`**: New types for the testing API.
+- **Subcommand-specific help**: Users can now run `myprogram subcommand --help` to get help for a specific subcommand.
+
 ### Changed
 
-- `Option` type is now opaque. This shouldn't require any changes to your codebase but is a drop-in change.
+- **Breaking**: JavaScript flags must now include `colorMode: Bool` field.
+- **Breaking**: `OptionsParser.withDoc` renamed to `OptionsParser.withDescription` for consistency with `Option.withDescription`.
+- **Breaking**: `Option.oneOf` no longer takes a default value as its first argument (it was ignored anyway).
+- `Option` type is now a type alias to an internal type. This shouldn't require changes to your code.
 - `subscriptions` in `StatefulOptions` now receives `cliOptions` as first argument, allowing access to parsed CLI options from subscriptions.
 
 ### Improved
 
-- Added and improved documentation throughout
+- Better error messages with color highlighting for option names and error text.
+- Typo suggestions now highlight the suggested option name.
+- Documentation improvements throughout.
 
 ## [3.2.0] - 2022-10-19
 
