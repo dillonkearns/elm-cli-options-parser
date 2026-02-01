@@ -22,7 +22,7 @@ program =
                 |> with (Option.optionalKeywordArg "output")
                 |> with (Option.flag "excludeDeprecated")
                 |> with (Option.keywordArgList "header")
-                |> OptionsParser.withDoc "generate files based on the schema at `url`"
+                |> OptionsParser.withDescription "generate files based on the schema at `url`"
             )
         |> Program.add
             (OptionsParser.build FromFile
@@ -33,7 +33,7 @@ program =
             )
 
 
-baseOption : Option.Option (Maybe String) (Maybe String) Option.BeginningOption
+baseOption : Option.Option (Maybe String) (Maybe String) { position : Option.BeginningOption }
 baseOption =
     Option.optionalKeywordArg "base"
         |> Option.validateIfPresent

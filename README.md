@@ -47,7 +47,7 @@ programConfig =
     Program.config
         |> Program.add
             (OptionsParser.buildSubCommand "init" Init
-                |> OptionsParser.withDoc "initialize a git repository"
+                |> OptionsParser.withDescription "initialize a git repository"
             )
         |> Program.add
             (OptionsParser.buildSubCommand "clone" Clone
