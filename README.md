@@ -97,6 +97,44 @@ git log [--author <author>] [--max-count <max-count>] [--stat] [<revision range>
 
 Note: the `--help` option is a built-in command, so no need to write a `OptionsParser` for that.
 
+## Color Support
+
+The library automatically adds ANSI color codes to help text and error messages when enabled. To enable colors, pass `colorMode: true` in your flags from JavaScript:
+
+```javascript
+const useColor = !!(process.stdout.isTTY && !process.env.NO_COLOR);
+
+Elm.Main.init({
+  flags: {
+    argv: process.argv,
+    versionMessage: "1.0.0",
+    colorMode: useColor
+  }
+});
+```
+
+This simple approach:
+- Disables color when output is piped (not a TTY)
+- Respects the [`NO_COLOR`](https://no-color.org) environment variable
+
+For more robust detection (CI environments, `FORCE_COLOR`, etc.):
+
+```javascript
+function detectColorSupport() {
+  const env = process.env;
+  if ('FORCE_COLOR' in env) {
+    return env.FORCE_COLOR !== '0' && env.FORCE_COLOR !== 'false';
+  }
+  if ('NO_COLOR' in env) return false;
+  if (env.TERM === 'dumb') return false;
+  if (!process.stdout.isTTY) return false;
+  if (env.CI && (env.GITHUB_ACTIONS || env.GITLAB_CI || env.CIRCLECI)) return true;
+  return true;
+}
+
+const colorMode = detectColorSupport();
+```
+
 ## Design Goals
 
 1. **Build in great UX by design**

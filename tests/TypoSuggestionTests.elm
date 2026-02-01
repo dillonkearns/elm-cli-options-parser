@@ -1,5 +1,6 @@
 module TypoSuggestionTests exposing (all)
 
+import Cli.ColorMode exposing (ColorMode(..))
 import Cli.UsageSpec as UsageSpec
 import Expect exposing (Expectation)
 import Occurences exposing (Occurences(..))
@@ -45,7 +46,7 @@ all =
                         , requiredFlagOptionsParser "output"
                         ]
                 in
-                TypoSuggestion.toMessage cli "outupt"
+                TypoSuggestion.toMessage WithoutColor cli "outupt"
                     |> Expect.equal "The `--outupt` flag was not found. Maybe it was one of these typos?\n\n`--outupt` <> `--output`"
         ]
 

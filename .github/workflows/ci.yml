@@ -93,6 +93,35 @@ jobs:
       - name: Check examples
         run: ./approve.sh
 
+  snapshot-tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+      - uses: actions/cache@v4
+        id: elm-cache
+        with:
+          path: ~/.elm
+          key: ${{ runner.os }}-elm--home-${{ hashFiles('**/elm.json', 'elm-tooling.json') }}
+      - run: npm ci
+        env:
+          NO_ELM_TOOLING_INSTALL: 1
+      - run: npx elm-tooling install
+      - name: Install snapshot test dependencies
+        run: cd snapshot-tests && npm ci
+      - name: Run snapshot tests
+        run: cd snapshot-tests && npx elm-pages run src/Snapshots.elm --ci
+
   validate-package:
     runs-on: ubuntu-latest
 
@@ -122,7 +151,7 @@ jobs:
         run: ./node_modules/.bin/elm make --docs docs.json
 
   publish-elm-package:
-    needs: [test, lint, validate-package]
+    needs: [test, lint, validate-package, snapshot-tests]
     runs-on: ubuntu-latest
 
     steps:
@@ -148,7 +177,7 @@ jobs:
       - run: npx elm-tooling install
       - run: npx --no-install elm make --output /dev/null && cd examples && npx --no-install elm make src/*.elm --output /dev/null && cd ..
       - name: Elm Publish
-        uses: dillonkearns/elm-publish-action@v1
+        uses: dillonkearns/elm-publish-action@v2
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           path-to-elm: ./node_modules/.bin/elm

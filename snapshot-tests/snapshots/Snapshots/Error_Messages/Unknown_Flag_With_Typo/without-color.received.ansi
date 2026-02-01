@@ -1,0 +1,5 @@
+$ myprog --unknown-flag
+
+The `--unknown-flag` flag was not found. Maybe it was one of these typos?
+
+`--unknown-flag` <> `--oneline`

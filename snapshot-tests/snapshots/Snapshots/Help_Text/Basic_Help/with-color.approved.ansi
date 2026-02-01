@@ -1,0 +1,7 @@
+$ myprog --help
+
+[1mUsage:[22m [1mmyprog[22m init
+
+[1mUsage:[22m [1mmyprog[22m clone [36m<repository>[39m
+
+[1mUsage:[22m [1mmyprog[22m log [[36m--author <author>[39m] [[36m--oneline[39m]

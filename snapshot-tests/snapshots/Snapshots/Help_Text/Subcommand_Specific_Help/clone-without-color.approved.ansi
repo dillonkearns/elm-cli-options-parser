@@ -1,0 +1,3 @@
+$ myprog clone --help
+
+Usage: myprog clone <repository>

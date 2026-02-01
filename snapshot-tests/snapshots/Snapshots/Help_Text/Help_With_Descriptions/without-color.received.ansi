@@ -1,0 +1,7 @@
+$ myprog --help
+
+Usage: myprog --name <name> [--greeting <greeting>]
+
+Options:
+  --name <name>           Your name for the greeting
+  --greeting <greeting>   Custom greeting message
