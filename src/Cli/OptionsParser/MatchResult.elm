@@ -1,6 +1,5 @@
 module Cli.OptionsParser.MatchResult exposing
-    ( MatchResult(..)
-    , NoMatchReason(..)
+    ( MatchResult(..), NoMatchReason(..)
     , matchResultToMaybe
     )
 

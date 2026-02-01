@@ -1,7 +1,7 @@
 module Cli.Option.Internal exposing
-    ( Option(..)
+    ( DataGrabber
     , InnerOption
-    , DataGrabber
+    , Option(..)
     , OptionMeta
     )
 
