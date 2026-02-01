@@ -7,7 +7,8 @@ module Cli.OptionsParser exposing
     , map
     , hardcoded
     , withDescription
-    , getSubCommand, getUsageSpecs, synopsis, tryMatch, end, detailedHelp
+    , end
+    , getSubCommand, getUsageSpecs, tryMatch, synopsis, detailedHelp
     )
 
 {-|
@@ -124,14 +125,20 @@ a valid number of positional arguments is passed in, as defined by these rules:
 @docs withDescription
 
 
-## Low-Level Functions
+## Finalizing
 
-You shouldn't need to use these functions to build a command line utility.
+@docs end
 
-@docs getSubCommand, getUsageSpecs, synopsis, tryMatch, end, detailedHelp
+
+## Internal
+
+These functions are exposed for internal use and testing. They are not part of the public API.
+
+@docs getSubCommand, getUsageSpecs, tryMatch, synopsis, detailedHelp
 
 -}
 
+import Cli.ColorMode
 import Cli.Decode
 import Cli.Option
 import Cli.Option.Internal as Internal
@@ -151,21 +158,37 @@ getUsageSpecs (OptionsParser { usageSpecs }) =
 
 {-| Low-level function, for internal use.
 -}
-synopsis : String -> OptionsParser decodesTo builderState -> String
-synopsis programName optionsParser =
+synopsis : Bool -> String -> OptionsParser decodesTo builderState -> String
+synopsis useColor programName optionsParser =
+    let
+        colorMode =
+            if useColor then
+                Cli.ColorMode.WithColor
+
+            else
+                Cli.ColorMode.WithoutColor
+    in
     optionsParser
         |> (\(OptionsParser record) -> record)
-        |> UsageSpec.synopsis programName
+        |> UsageSpec.synopsis colorMode programName
 
 
 {-| Low-level function, for internal use.
 Generate detailed help text with Usage line and Options section.
 -}
-detailedHelp : String -> OptionsParser decodesTo builderState -> String
-detailedHelp programName optionsParser =
+detailedHelp : Bool -> String -> OptionsParser decodesTo builderState -> String
+detailedHelp useColor programName optionsParser =
+    let
+        colorMode =
+            if useColor then
+                Cli.ColorMode.WithColor
+
+            else
+                Cli.ColorMode.WithoutColor
+    in
     optionsParser
         |> (\(OptionsParser record) -> record)
-        |> UsageSpec.detailedHelp programName
+        |> UsageSpec.detailedHelp colorMode programName
 
 
 {-| Low-level function, for internal use.

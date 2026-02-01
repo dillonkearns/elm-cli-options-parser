@@ -16,14 +16,14 @@ all =
                     |> OptionsParser.with (Option.requiredKeywordArg "last-name")
                     |> OptionsParser.end
                 )
-                    |> OptionsParser.synopsis "greet"
+                    |> OptionsParser.synopsis False "greet"
                     |> Expect.equal "greet --first-name <first-name> --last-name <last-name>"
         , test "print synopsis with required flag" <|
             \() ->
                 OptionsParser.build (\a b -> ( a, b ))
                     |> OptionsParser.expectFlag "version"
                     |> OptionsParser.end
-                    |> OptionsParser.synopsis "greet"
+                    |> OptionsParser.synopsis False "greet"
                     |> Expect.equal "greet --version"
         , test "print synopsis with optional arg" <|
             \() ->
@@ -31,20 +31,20 @@ all =
                     |> OptionsParser.with (Option.requiredKeywordArg "name")
                     |> OptionsParser.with (Option.optionalKeywordArg "prefix")
                     |> OptionsParser.end
-                    |> OptionsParser.synopsis "greet"
+                    |> OptionsParser.synopsis False "greet"
                     |> Expect.equal "greet --name <name> [--prefix <prefix>]"
         , test "print synopsis with required operand" <|
             \() ->
                 OptionsParser.build identity
                     |> OptionsParser.with (Option.requiredPositionalArg "MyApp.elm")
                     |> OptionsParser.end
-                    |> OptionsParser.synopsis "elm-interop"
+                    |> OptionsParser.synopsis False "elm-interop"
                     |> Expect.equal "elm-interop <MyApp.elm>"
         , test "synopsis for optional positional argument" <|
             \() ->
                 OptionsParser.build identity
                     |> OptionsParser.withOptionalPositionalArg (Option.optionalPositionalArg "revision range")
-                    |> OptionsParser.synopsis "git"
+                    |> OptionsParser.synopsis False "git"
                     |> Expect.equal "git [<revision range>]"
         , test "print synopsis with doc string" <|
             \() ->
@@ -53,7 +53,7 @@ all =
                     |> OptionsParser.with (Option.optionalKeywordArg "prefix")
                     |> OptionsParser.end
                     |> OptionsParser.withDescription "greets somebody in your terminal"
-                    |> OptionsParser.synopsis "greet"
+                    |> OptionsParser.synopsis False "greet"
                     |> Expect.equal "greet --name <name> [--prefix <prefix>] # greets somebody in your terminal"
         , test "print synopsis with zero or more arg option" <|
             \() ->
@@ -61,26 +61,26 @@ all =
                     |> OptionsParser.with (Option.keywordArgList "header")
                 )
                     |> OptionsParser.end
-                    |> OptionsParser.synopsis "curl"
+                    |> OptionsParser.synopsis False "curl"
                     |> Expect.equal "curl [--header <header>]..."
         , test "print rest operands synopsis" <|
             \() ->
                 OptionsParser.build identity
                     |> OptionsParser.withRestArgs (Option.restArgs "files")
-                    |> OptionsParser.synopsis "rm"
+                    |> OptionsParser.synopsis False "rm"
                     |> Expect.equal "rm <files>..."
         , test "prints rest args at the end of the synopsis" <|
             \() ->
                 OptionsParser.build (\a b -> ( a, b ))
                     |> OptionsParser.with (Option.flag "dry-run")
                     |> OptionsParser.withRestArgs (Option.restArgs "files")
-                    |> OptionsParser.synopsis "rm"
+                    |> OptionsParser.synopsis False "rm"
                     |> Expect.equal "rm [--dry-run] <files>..."
         , test "shows sub optionsParsers" <|
             \() ->
                 OptionsParser.buildSubCommand "init" identity
                     |> OptionsParser.end
-                    |> OptionsParser.synopsis "elm-test"
+                    |> OptionsParser.synopsis False "elm-test"
                     |> Expect.equal "elm-test init"
         , test "mutually exclusive keyword arg" <|
             \() ->
@@ -94,7 +94,7 @@ all =
                                 ]
                         )
                     |> OptionsParser.end
-                    |> OptionsParser.synopsis "elm-test"
+                    |> OptionsParser.synopsis False "elm-test"
                     |> Expect.equal "elm-test --report <json|junit|console>"
         , test "mutually exclusive positional arg" <|
             \() ->
@@ -108,13 +108,13 @@ all =
                                 ]
                         )
                     |> OptionsParser.end
-                    |> OptionsParser.synopsis "elm-test"
+                    |> OptionsParser.synopsis False "elm-test"
                     |> Expect.equal "elm-test <json|junit|console>"
         , test "sub-optionsParser with flag" <|
             \() ->
                 OptionsParser.buildSubCommand "log" identity
                     |> OptionsParser.with (Option.flag "stat")
                     |> OptionsParser.end
-                    |> OptionsParser.synopsis "git"
+                    |> OptionsParser.synopsis False "git"
                     |> Expect.equal "git log [--stat]"
         ]

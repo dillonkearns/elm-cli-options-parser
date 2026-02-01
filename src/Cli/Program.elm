@@ -4,7 +4,7 @@ module Cli.Program exposing
     , StatelessProgram, StatefulProgram
     , FlagsIncludingArgv
     , mapConfig
-    , run, RunResult(..), ExitStatus(..)
+    , run, RunResult(..), ExitStatus(..), ColorMode(..)
     )
 
 {-|
@@ -69,16 +69,55 @@ See the [`examples`](https://github.com/dillonkearns/elm-cli-options-parser/tree
 
 ## Low-Level / Testing
 
-@docs run, RunResult, ExitStatus
+@docs run, RunResult, ExitStatus, ColorMode
 
 -}
 
+import Cli.ColorMode
 import Cli.LowLevel
 import Cli.OptionsParser as OptionsParser exposing (OptionsParser)
 import Cli.OptionsParser.BuilderState as BuilderState
 import Cli.OptionsParser.MatchResult exposing (NoMatchReason(..))
+import Cli.Style
 import List.Extra
 import TypoSuggestion
+
+
+{-| Control whether ANSI color codes are included in output.
+
+  - `WithColor` - Include ANSI color codes for styled terminal output
+  - `WithoutColor` - Plain text output without any ANSI codes
+
+Used with `run` for testing, and internally by the CLI infrastructure.
+
+-}
+type ColorMode
+    = WithColor
+    | WithoutColor
+
+
+{-| Convert public ColorMode to internal ColorMode.
+-}
+toInternalColorMode : ColorMode -> Cli.ColorMode.ColorMode
+toInternalColorMode colorMode =
+    case colorMode of
+        WithColor ->
+            Cli.ColorMode.WithColor
+
+        WithoutColor ->
+            Cli.ColorMode.WithoutColor
+
+
+{-| Convert ColorMode to a boolean for internal use.
+-}
+useColor : ColorMode -> Bool
+useColor colorMode =
+    case colorMode of
+        WithColor ->
+            True
+
+        WithoutColor ->
+            False
 
 
 {-| The result of running the CLI parser. Useful for testing.
@@ -97,6 +136,30 @@ type RunResult match
 type ExitStatus
     = Success
     | Failure
+
+
+
+-- INTERNAL STYLING HELPERS
+
+
+applyBold : ColorMode -> String -> String
+applyBold colorMode =
+    Cli.Style.applyBold (useColor colorMode)
+
+
+applyCyan : ColorMode -> String -> String
+applyCyan colorMode =
+    Cli.Style.applyCyan (useColor colorMode)
+
+
+applyRed : ColorMode -> String -> String
+applyRed colorMode =
+    Cli.Style.applyRed (useColor colorMode)
+
+
+applyDim : ColorMode -> String -> String
+applyDim colorMode =
+    Cli.Style.applyDim (useColor colorMode)
 
 
 {-| A `Cli.Program.Config` is used to build up a set of `OptionsParser`s for your
@@ -129,7 +192,7 @@ add optionsParser (Config ({ optionsParsers } as programRecord)) =
 
 
 {-| Flags in Cli Programs can contain any data as long as it is a record
-at the top-level which contains an `argv` field of type `List String`.
+at the top-level which contains the required fields.
 In other words, it must be a record of type `FlagsIncludingArgv`
 (if you aren't familiar with them, you can [read more about extensible records here](https://medium.com/@ckoster22/advanced-types-in-elm-extensible-records-67e9d804030d)).
 
@@ -138,8 +201,14 @@ You pass in the flags like this (see the [`examples`](https://github.com/dillonk
 ```javascript
 #!/usr/bin/env node
 
+const useColor = process.stdout.isTTY && !process.env.NO_COLOR;
+
 let program = require("./elm.js").Elm.Main.init({
-  flags: { argv: process.argv, versionMessage: "1.2.3" }
+  flags: {
+    argv: process.argv,
+    versionMessage: "1.2.3",
+    colorMode: useColor
+  }
 });
 ```
 
@@ -148,7 +217,20 @@ type alias FlagsIncludingArgv flagsRecord =
     { flagsRecord
         | argv : List String
         , versionMessage : String
+        , colorMode : Bool
     }
+
+
+{-| Convert a colorMode boolean from JavaScript into a ColorMode.
+True = WithColor (colored output), False = WithoutColor (plain text).
+-}
+parseColorMode : Bool -> ColorMode
+parseColorMode useColors =
+    if useColors then
+        WithColor
+
+    else
+        WithoutColor
 
 
 {-| A program that processes arguments and exits. Use with `stateless`.
@@ -261,7 +343,7 @@ init options flags =
     let
         matchResult : RunResult options
         matchResult =
-            run options.config flags.argv flags.versionMessage
+            run options.config flags.argv flags.versionMessage (parseColorMode flags.colorMode)
 
         cmd =
             case matchResult of
@@ -292,7 +374,7 @@ statefulInit options flags =
     let
         matchResult : RunResult cliOptions
         matchResult =
-            run options.config flags.argv flags.versionMessage
+            run options.config flags.argv flags.versionMessage (parseColorMode flags.colorMode)
     in
     case matchResult of
         SystemMessage exitStatus message ->
@@ -316,8 +398,8 @@ your CLI configuration without needing to set up the full Platform.Program infra
 
     import Cli.Program as Program
 
-    -- Test that missing required arg shows error
-    case Program.run myConfig [ "node", "myprog" ] "1.0.0" of
+    -- Test that missing required arg shows error (use WithoutColor for tests)
+    case Program.run myConfig [ "node", "myprog" ] "1.0.0" Program.WithoutColor of
         Program.SystemMessage Program.Failure message ->
             -- Assert on the error message
             String.contains "Missing" message
@@ -329,8 +411,8 @@ Note: `argv` should include the node path and script path as the first two eleme
 just like `process.argv` in Node.js.
 
 -}
-run : Config msg -> List String -> String -> RunResult msg
-run (Config { optionsParsers }) argv versionMessage =
+run : Config msg -> List String -> String -> ColorMode -> RunResult msg
+run (Config { optionsParsers }) argv versionMessage colorMode =
     let
         programName =
             case argv of
@@ -365,7 +447,7 @@ run (Config { optionsParsers }) argv versionMessage =
                     optionsParsers
                         |> List.filterMap OptionsParser.getSubCommand
             in
-            formatNoMatchReasons programName parserInfo availableSubCommands optionsParsers reasons
+            formatNoMatchReasons colorMode programName parserInfo availableSubCommands optionsParsers reasons
                 |> SystemMessage Failure
 
         Cli.LowLevel.ValidationErrors validationErrors ->
@@ -390,7 +472,7 @@ run (Config { optionsParsers }) argv versionMessage =
                 |> CustomMatch
 
         Cli.LowLevel.ShowHelp ->
-            Cli.LowLevel.detailedHelpText programName optionsParsers
+            Cli.LowLevel.detailedHelpText (toInternalColorMode colorMode) programName optionsParsers
                 |> SystemMessage Success
 
         Cli.LowLevel.ShowVersion ->
@@ -398,7 +480,7 @@ run (Config { optionsParsers }) argv versionMessage =
                 |> SystemMessage Success
 
         Cli.LowLevel.ShowSubcommandHelp subcommandName ->
-            subcommandHelpText programName optionsParsers subcommandName
+            subcommandHelpText colorMode programName optionsParsers subcommandName
                 |> SystemMessage Success
 
 
@@ -415,24 +497,25 @@ mapConfig mapFn (Config configValue) =
 
 {-| Generate help text for a specific subcommand.
 -}
-subcommandHelpText : String -> List (OptionsParser msg BuilderState.NoMoreOptions) -> String -> String
-subcommandHelpText programName optionsParsers subcommandName =
+subcommandHelpText : ColorMode -> String -> List (OptionsParser msg BuilderState.NoMoreOptions) -> String -> String
+subcommandHelpText colorMode programName optionsParsers subcommandName =
     optionsParsers
         |> List.filter (\parser -> OptionsParser.getSubCommand parser == Just subcommandName)
-        |> List.map (OptionsParser.detailedHelp programName)
+        |> List.map (OptionsParser.detailedHelp (Cli.ColorMode.useColor (toInternalColorMode colorMode)) programName)
         |> String.join "\n\n"
 
 
 {-| Format NoMatchReasons into a user-friendly error message.
 -}
 formatNoMatchReasons :
-    String
+    ColorMode
+    -> String
     -> List TypoSuggestion.OptionsParser
     -> List String
     -> List (OptionsParser msg BuilderState.NoMoreOptions)
     -> List NoMatchReason
     -> String
-formatNoMatchReasons programName parserInfo availableSubCommands optionsParsers reasons =
+formatNoMatchReasons colorMode programName parserInfo availableSubCommands optionsParsers reasons =
     let
         -- Separate unexpected options from other reasons
         unexpectedOptions =
@@ -450,7 +533,7 @@ formatNoMatchReasons programName parserInfo availableSubCommands optionsParsers 
     if not (List.isEmpty unexpectedOptions) then
         -- Unexpected options - use typo suggestions
         unexpectedOptions
-            |> List.map (TypoSuggestion.toMessage parserInfo)
+            |> List.map (TypoSuggestion.toMessage (toInternalColorMode colorMode) parserInfo)
             |> String.join "\n"
 
     else
@@ -490,7 +573,7 @@ formatNoMatchReasons programName parserInfo availableSubCommands optionsParsers 
         case missingArgErrors of
             reason :: _ ->
                 -- A parser matched the structure but is missing a required argument
-                formatSingleReason reason programName optionsParsers
+                formatSingleReason colorMode reason programName optionsParsers
 
             [] ->
                 let
@@ -517,11 +600,13 @@ formatNoMatchReasons programName parserInfo availableSubCommands optionsParsers 
                     in
                     case List.head unknownCommands of
                         Just unknownCommand ->
-                            "Unknown command: `"
+                            applyRed colorMode "Unknown command: "
+                                ++ "`"
                                 ++ unknownCommand
                                 ++ "`\n\nAvailable commands: "
                                 ++ String.join ", " availableSubCommands
-                                ++ "\n\nRun with --help for usage information."
+                                ++ "\n\n"
+                                ++ applyDim colorMode "Run with --help for usage information."
 
                         Nothing ->
                             let
@@ -541,10 +626,10 @@ formatNoMatchReasons programName parserInfo availableSubCommands optionsParsers 
                             -- The command was valid but something else went wrong
                             -- Check for ExtraOperand
                             if not (List.isEmpty extraOperandErrors) then
-                                formatSingleReason ExtraOperand programName optionsParsers
+                                formatSingleReason colorMode ExtraOperand programName optionsParsers
 
                             else
-                                formatFallbackMessage programName optionsParsers
+                                formatFallbackMessage colorMode programName optionsParsers
 
                 else
                     let
@@ -566,59 +651,86 @@ formatNoMatchReasons programName parserInfo availableSubCommands optionsParsers 
                     in
                     if hasSubCommandParsers && not (List.isEmpty missingSubCommandReasons) then
                         -- Missing subcommand when subcommands are expected
-                        "Missing command.\n\nAvailable commands: "
+                        applyRed colorMode "Missing command."
+                            ++ "\n\nAvailable commands: "
                             ++ String.join ", " availableSubCommands
-                            ++ "\n\nRun with --help for usage information."
+                            ++ "\n\n"
+                            ++ applyDim colorMode "Run with --help for usage information."
 
                     else
                         -- Format other specific reasons
                         case List.head otherReasons of
                             Just reason ->
-                                formatSingleReason reason programName optionsParsers
+                                formatSingleReason colorMode reason programName optionsParsers
 
                             Nothing ->
-                                formatFallbackMessage programName optionsParsers
+                                formatFallbackMessage colorMode programName optionsParsers
 
 
 {-| Format a single NoMatchReason into a message.
 -}
-formatSingleReason : NoMatchReason -> String -> List (OptionsParser msg BuilderState.NoMoreOptions) -> String
-formatSingleReason reason programName optionsParsers =
+formatSingleReason : ColorMode -> NoMatchReason -> String -> List (OptionsParser msg BuilderState.NoMoreOptions) -> String
+formatSingleReason colorMode reason programName optionsParsers =
     case reason of
         UnexpectedOption name ->
-            "Unexpected option: --" ++ name
+            applyRed colorMode "Unexpected option: "
+                ++ applyCyan colorMode ("--" ++ name)
 
         MissingSubCommand _ ->
-            "Missing command.\n\nRun with --help for usage information."
+            applyRed colorMode "Missing command."
+                ++ "\n\n"
+                ++ applyDim colorMode "Run with --help for usage information."
 
         WrongSubCommand { actualSubCommand } ->
-            "Unknown command: `" ++ actualSubCommand ++ "`"
+            applyRed colorMode "Unknown command: "
+                ++ "`"
+                ++ actualSubCommand
+                ++ "`"
 
         MissingRequiredPositionalArg { name, customMessage } ->
             case customMessage of
                 Just message ->
-                    message ++ "\n\n" ++ Cli.LowLevel.helpText programName optionsParsers
+                    applyRed colorMode message
+                        ++ "\n\n"
+                        ++ Cli.LowLevel.helpText (toInternalColorMode colorMode) programName optionsParsers
 
                 Nothing ->
-                    "Missing required argument: <" ++ name ++ ">\n\n" ++ Cli.LowLevel.helpText programName optionsParsers
+                    applyRed colorMode "Missing required argument: "
+                        ++ applyCyan colorMode ("<" ++ name ++ ">")
+                        ++ "\n\n"
+                        ++ Cli.LowLevel.helpText (toInternalColorMode colorMode) programName optionsParsers
 
         MissingRequiredKeywordArg { name, customMessage } ->
             case customMessage of
                 Just message ->
-                    message ++ "\n\n" ++ Cli.LowLevel.helpText programName optionsParsers
+                    applyRed colorMode message
+                        ++ "\n\n"
+                        ++ Cli.LowLevel.helpText (toInternalColorMode colorMode) programName optionsParsers
 
                 Nothing ->
-                    "Missing required option: --" ++ name ++ "\n\n" ++ Cli.LowLevel.helpText programName optionsParsers
+                    applyRed colorMode "Missing required option: "
+                        ++ applyCyan colorMode ("--" ++ name)
+                        ++ "\n\n"
+                        ++ Cli.LowLevel.helpText (toInternalColorMode colorMode) programName optionsParsers
 
         MissingExpectedFlag { name } ->
-            "Missing required flag: --" ++ name ++ "\n\n" ++ Cli.LowLevel.helpText programName optionsParsers
+            applyRed colorMode "Missing required flag: "
+                ++ applyCyan colorMode ("--" ++ name)
+                ++ "\n\n"
+                ++ Cli.LowLevel.helpText (toInternalColorMode colorMode) programName optionsParsers
 
         ExtraOperand ->
-            "Too many arguments provided.\n\n" ++ Cli.LowLevel.helpText programName optionsParsers
+            applyRed colorMode "Too many arguments provided."
+                ++ "\n\n"
+                ++ Cli.LowLevel.helpText (toInternalColorMode colorMode) programName optionsParsers
 
 
 {-| Fallback message when no specific reason is available.
 -}
-formatFallbackMessage : String -> List (OptionsParser msg BuilderState.NoMoreOptions) -> String
-formatFallbackMessage programName optionsParsers =
-    "Could not match arguments.\n\nUsage:\n\n" ++ Cli.LowLevel.helpText programName optionsParsers
+formatFallbackMessage : ColorMode -> String -> List (OptionsParser msg BuilderState.NoMoreOptions) -> String
+formatFallbackMessage colorMode programName optionsParsers =
+    applyRed colorMode "Could not match arguments."
+        ++ "\n\n"
+        ++ applyBold colorMode "Usage:"
+        ++ "\n\n"
+        ++ Cli.LowLevel.helpText (toInternalColorMode colorMode) programName optionsParsers
