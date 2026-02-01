@@ -6,7 +6,7 @@ module Cli.Option exposing
     , oneOf
     , validate, validateIfPresent, validateMap, validateMapIfPresent
     , map, mapFlag, withDefault
-    , Option(..), BeginningOption, OptionalPositionalArgOption, RestArgsOption
+    , Option, BeginningOption, OptionalPositionalArgOption, RestArgsOption
     )
 
 {-| Here is the terminology used for building up Command-Line parsers with this library.
@@ -106,6 +106,7 @@ with the following functions.
 -}
 
 import Cli.Decode
+import Cli.Option.Internal as Internal exposing (Option(..))
 import Cli.UsageSpec as UsageSpec exposing (UsageSpec)
 import Cli.Validate as Validate
 import List.Extra
@@ -115,8 +116,8 @@ import Tokenizer
 
 {-| The type returned by the builder functions below. Use with `OptionsParser.with`.
 -}
-type Option from to middleOrEnding
-    = Option (InnerOption from to)
+type alias Option from to middleOrEnding =
+    Internal.Option from to middleOrEnding
 
 
 {-| `BeginningOption`s can only be used with `OptionsParser.with`.
@@ -125,13 +126,13 @@ type Option from to middleOrEnding
 
 -}
 type BeginningOption
-    = BeginningOption
+    = BeginningOption Never
 
 
 {-| `RestArgsOption`s can only be used with `OptionsParser.withRestArgs`.
 -}
 type RestArgsOption
-    = RestArgsOption
+    = RestArgsOption Never
 
 
 {-| `BeginningOption`s can only be used with `OptionsParser.with`.
@@ -140,23 +141,7 @@ type RestArgsOption
 
 -}
 type OptionalPositionalArgOption
-    = OptionalPositionalArgOption
-
-
-type alias InnerOption from to =
-    { dataGrabber : DataGrabber from
-    , usageSpec : UsageSpec
-    , decoder : Cli.Decode.Decoder from to
-    }
-
-
-type alias DataGrabber decodesTo =
-    { usageSpecs : List UsageSpec
-    , operands : List String
-    , options : List Tokenizer.ParsedOption
-    , operandsSoFar : Int
-    }
-    -> Result Cli.Decode.ProcessingError decodesTo
+    = OptionalPositionalArgOption Never
 
 
 {-| Run a validation. (See an example in the Validation section above, or
@@ -320,7 +305,7 @@ flag flagName =
         (UsageSpec.flag flagName Optional)
 
 
-buildOption : DataGrabber a -> UsageSpec -> Option a a builderState
+buildOption : Internal.DataGrabber a -> UsageSpec -> Option a a builderState
 buildOption dataGrabber usageSpec =
     Option
         { dataGrabber = dataGrabber
@@ -408,10 +393,6 @@ mapFlag { present, absent } option =
             )
 
 
-type alias MutuallyExclusiveValue union =
-    ( String, union )
-
-
 {-| Mutually exclusive option values.
 
     type ReportFormat
@@ -432,7 +413,7 @@ type alias MutuallyExclusiveValue union =
                     |> with
                         (Option.optionalKeywordArg "report"
                             |> Option.withDefault "console"
-                            |> Option.oneOf Console
+                            |> Option.oneOf
                                 [ "json" => Json
                                 , "junit" => Junit
                                 , "console" => Console
@@ -459,11 +440,9 @@ Value was:
 "xml"
 ```
 
-Note: the first argument is currently ignored. It will be removed in a future breaking API change.
-
 -}
-oneOf : value -> List (MutuallyExclusiveValue value) -> Option from String builderState -> Option from value builderState
-oneOf _ list (Option option) =
+oneOf : List ( String, value ) -> Option from String builderState -> Option from value builderState
+oneOf list (Option option) =
     validateMap
         (\argValue ->
             case
