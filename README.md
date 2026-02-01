@@ -81,7 +81,7 @@ matchResult =
         { maybeAuthorPattern = Just "dillon"
         , maybeMaxCount = Just 5
         , statisticsMode = True
-        , revisionRange = Just "a410067"
+        , maybeRevisionRange = Just "a410067"
         }
 ```
 
@@ -161,8 +161,8 @@ const colorMode = detectColorSupport();
    discovers it's missing something it requires. For example, if you
    pass in an unrecognized flag, you will immediately get an error with typo
    suggestions.
-   Another example, this library [enforces that you don't specify an ambiguous mix of optional
-   and required positional args](#todo-link). This could easily be fixed with
+   Another example, this library enforces that you don't specify an ambiguous mix of optional
+   and required positional args. This could easily be fixed with
    some convention to move all optional arguments to the very end regardless of
    what order you specify them in, but this would go against this value of
    explicitness.
