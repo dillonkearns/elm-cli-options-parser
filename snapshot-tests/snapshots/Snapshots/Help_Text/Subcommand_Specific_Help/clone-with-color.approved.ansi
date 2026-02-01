@@ -1,0 +1,3 @@
+$ myprog clone --help
+
+[1mUsage:[22m [1mmyprog[22m clone [36m<repository>[39m

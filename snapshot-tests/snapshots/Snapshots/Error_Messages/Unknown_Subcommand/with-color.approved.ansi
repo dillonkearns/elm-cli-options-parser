@@ -1,0 +1,7 @@
+$ myprog status
+
+[31mUnknown command: [39m`status`
+
+Available commands: init, clone, log
+
+[2mRun with --help for usage information.[22m

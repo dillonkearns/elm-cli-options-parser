@@ -1,0 +1,9 @@
+$ myprog --help
+
+[1mUsage:[22m [1mmyprog[22m [[36m--output <output>[39m] [[36m--verbose[39m] [[36m--force[39m] [36m<input>[39m
+
+[1mOptions:[22m
+  [36m--output <output>[39m   Output file path
+  [36m--verbose[39m           Enable verbose output
+  [36m--force[39m             Force overwrite existing files
+  [36m<input>[39m             Input file to process

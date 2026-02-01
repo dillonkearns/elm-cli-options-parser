@@ -1,0 +1,3 @@
+$ myprog log --help
+
+[1mUsage:[22m [1mmyprog[22m log [[36m--author <author>[39m] [[36m--oneline[39m]
