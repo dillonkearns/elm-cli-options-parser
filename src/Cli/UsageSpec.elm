@@ -114,12 +114,15 @@ operandCount usageSpecs =
 optionExists : List UsageSpec -> String -> Maybe FlagOrKeywordArg
 optionExists usageSpecs thisOptionName =
     usageSpecs
-        |> List.filterMap
+        |> List.Extra.findMap
             (\usageSpec ->
                 case usageSpec of
                     FlagOrKeywordArg option _ _ _ ->
-                        option
-                            |> Just
+                        if optionName option == thisOptionName then
+                            Just option
+
+                        else
+                            Nothing
 
                     Operand _ _ _ _ ->
                         Nothing
@@ -127,7 +130,6 @@ optionExists usageSpecs thisOptionName =
                     RestArgs _ _ ->
                         Nothing
             )
-        |> List.Extra.find (\option -> optionName option == thisOptionName)
 
 
 isOperand : UsageSpec -> Bool
@@ -377,11 +379,15 @@ optionHasArg : List UsageSpec -> String -> Bool
 optionHasArg options optionNameToCheck =
     case
         options
-            |> List.filterMap
+            |> List.Extra.findMap
                 (\spec ->
                     case spec of
                         FlagOrKeywordArg option _ _ _ ->
-                            Just option
+                            if optionName option == optionNameToCheck then
+                                Just option
+
+                            else
+                                Nothing
 
                         Operand _ _ _ _ ->
                             Nothing
@@ -389,8 +395,6 @@ optionHasArg options optionNameToCheck =
                         RestArgs _ _ ->
                             Nothing
                 )
-            |> List.Extra.find
-                (\spec -> optionName spec == optionNameToCheck)
     of
         Just option ->
             case option of
