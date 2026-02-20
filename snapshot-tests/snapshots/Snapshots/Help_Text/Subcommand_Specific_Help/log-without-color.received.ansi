@@ -1,3 +1,0 @@
-$ myprog log --help
-
-Usage: myprog log [--author <author>] [--oneline]

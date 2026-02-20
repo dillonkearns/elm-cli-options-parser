@@ -1,9 +1,9 @@
 $ myprog --help
 
-Usage: myprog [--output <output>] [--verbose] [--force] <input>
+Usage: myprog [--output <OUTPUT>] [--verbose] [--force] <input>
 
 Options:
-  --output <output>   Output file path
+  --output <OUTPUT>   Output file path
   --verbose           Enable verbose output
   --force             Force overwrite existing files
   <input>             Input file to process

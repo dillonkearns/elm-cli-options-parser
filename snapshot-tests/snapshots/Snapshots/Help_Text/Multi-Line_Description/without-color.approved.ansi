@@ -1,0 +1,9 @@
+$ myprog --help
+
+Usage: myprog --output <OUTPUT> [--format <FORMAT>]
+
+Options:
+  --output <OUTPUT>   Output file path.
+                      Defaults to stdout if not specified.
+                      Supports - for piping.
+  --format <FORMAT>   Output format

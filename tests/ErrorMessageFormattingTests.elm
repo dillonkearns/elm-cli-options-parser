@@ -204,7 +204,7 @@ Run with --help for usage information."""
 
 myprog init
 myprog clone <repository>
-myprog log [--author <author>] [--oneline]"""
+myprog log [--author <AUTHOR>] [--oneline]"""
             ]
         , describe "missing required keyword arg"
             [ test "names the missing option and shows usage" <|
@@ -213,7 +213,7 @@ myprog log [--author <author>] [--oneline]"""
                         |> expectError
                             """Missing required option: --name
 
-myprog --name <name>"""
+myprog --name <NAME>"""
             ]
         , describe "unknown flag"
             [ test "suggests similar flags" <|
@@ -233,7 +233,7 @@ myprog --name <name>"""
 
 myprog init
 myprog clone <repository>
-myprog log [--author <author>] [--oneline]"""
+myprog log [--author <AUTHOR>] [--oneline]"""
             ]
         , describe "error priority (documents which error is shown when multiple apply)"
             [ test "unexpected option takes priority over missing subcommand" <|
@@ -257,7 +257,7 @@ myprog log [--author <author>] [--oneline]"""
 
 myprog init
 myprog clone <repository>
-myprog log [--author <author>] [--oneline]"""
+myprog log [--author <AUTHOR>] [--oneline]"""
             , test "unknown subcommand shows available commands" <|
                 \() ->
                     -- User runs: git stauts (typo)
@@ -279,7 +279,7 @@ Run with --help for usage information."""
 
 myprog init
 myprog clone <repository>
-myprog log [--author <author>] [--oneline]"""
+myprog log [--author <AUTHOR>] [--oneline]"""
             ]
         , describe "successful parsing"
             [ test "subcommand matches" <|
@@ -304,7 +304,7 @@ myprog log [--author <author>] [--oneline]"""
 
 Usage: myprog clone <repository>
 
-Usage: myprog log [--author <author>] [--oneline]"""
+Usage: myprog log [--author <AUTHOR>] [--oneline]"""
             , test "--version shows version" <|
                 \() ->
                     Program.run gitConfig [ "node", "myprog", "--version" ] "2.5.0" Program.WithoutColor
@@ -324,7 +324,7 @@ myprog clone <repository>"""
                         |> expectError
                             """Authentication token is required. Get one from https://example.com/settings/tokens
 
-myprog --token <token>"""
+myprog --token <TOKEN>"""
             , test "custom message with successful parse" <|
                 \() ->
                     runCli gitCloneWithCustomMessage [ "clone", "https://github.com/foo/bar" ]
@@ -339,11 +339,11 @@ myprog --token <token>"""
                 \() ->
                     runCli configWithDescriptions [ "--help" ]
                         |> expectSuccess
-                            """Usage: myprog --name <name> [--greeting <greeting>]
+                            """Usage: myprog --name <NAME> [--greeting <GREETING>]
 
 Options:
-  --name <name>           Your name for the greeting
-  --greeting <greeting>   Custom greeting message"""
+  --name <NAME>           Your name for the greeting
+  --greeting <GREETING>   Custom greeting message"""
             ]
         , describe "subcommand-specific help"
             [ test "subcommand --help shows only that subcommand's usage" <|
@@ -353,7 +353,7 @@ Options:
             , test "subcommand with options --help shows usage" <|
                 \() ->
                     runCli gitConfig [ "log", "--help" ]
-                        |> expectSuccess "Usage: myprog log [--author <author>] [--oneline]"
+                        |> expectSuccess "Usage: myprog log [--author <AUTHOR>] [--oneline]"
             , test "--help before subcommand shows that subcommand's usage" <|
                 \() ->
                     runCli gitConfig [ "--help", "clone" ]

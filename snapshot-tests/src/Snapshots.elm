@@ -112,6 +112,81 @@ comprehensiveConfig =
 
 
 
+{-| Config with a multi-line description using \\n.
+-}
+multiLineDescConfig : Program.Config ( String, Maybe String )
+multiLineDescConfig =
+    Program.config
+        |> Program.add
+            (OptionsParser.build Tuple.pair
+                |> OptionsParser.with
+                    (Option.requiredKeywordArg "output"
+                        |> Option.withDescription "Output file path.\nDefaults to stdout if not specified.\nSupports - for piping."
+                    )
+                |> OptionsParser.with
+                    (Option.optionalKeywordArg "format"
+                        |> Option.withDescription "Output format"
+                    )
+            )
+
+
+{-| Config with long descriptions that trigger word wrapping.
+-}
+longDescConfig : Program.Config ( String, Bool )
+longDescConfig =
+    Program.config
+        |> Program.add
+            (OptionsParser.build Tuple.pair
+                |> OptionsParser.with
+                    (Option.requiredKeywordArg "config"
+                        |> Option.withDescription "Path to the configuration file that controls how the application behaves during processing of the input data"
+                    )
+                |> OptionsParser.with
+                    (Option.flag "verbose"
+                        |> Option.withDescription "Enable verbose logging output to help with debugging issues in production environments"
+                    )
+            )
+
+
+{-| Config demonstrating withDisplayName for custom metavar placeholders.
+-}
+displayNameConfig : Program.Config ( String, Maybe String )
+displayNameConfig =
+    Program.config
+        |> Program.add
+            (OptionsParser.build Tuple.pair
+                |> OptionsParser.with
+                    (Option.requiredKeywordArg "output-dir"
+                        |> Option.withDisplayName "PATH"
+                        |> Option.withDescription "Directory for generated output files"
+                    )
+                |> OptionsParser.with
+                    (Option.optionalKeywordArg "log-level"
+                        |> Option.withDisplayName "LEVEL"
+                        |> Option.withDescription "Set the logging level"
+                    )
+            )
+
+
+{-| Config with many options to trigger usage line wrapping.
+-}
+manyOptionsConfig : Program.Config { a : String, b : Maybe String, c : Maybe String, d : Bool, e : Bool, f : String }
+manyOptionsConfig =
+    Program.config
+        |> Program.add
+            (OptionsParser.build
+                (\a b c d e f ->
+                    { a = a, b = b, c = c, d = d, e = e, f = f }
+                )
+                |> OptionsParser.with (Option.requiredKeywordArg "input-file")
+                |> OptionsParser.with (Option.optionalKeywordArg "output-directory")
+                |> OptionsParser.with (Option.optionalKeywordArg "configuration")
+                |> OptionsParser.with (Option.flag "dry-run")
+                |> OptionsParser.with (Option.flag "verbose")
+                |> OptionsParser.with (Option.requiredPositionalArg "target")
+            )
+
+
 -- HELPERS
 
 
@@ -246,6 +321,38 @@ run =
                 , Snapshot.custom ansiPrinter "without-color" <|
                     \() ->
                         runAndGetOutput comprehensiveConfig [ "--help" ] "1.0.0" Program.WithoutColor
+                ]
+            , Snapshot.describe "Multi-Line Description"
+                [ Snapshot.custom ansiPrinter "with-color" <|
+                    \() ->
+                        runAndGetOutput multiLineDescConfig [ "--help" ] "1.0.0" Program.WithColor
+                , Snapshot.custom ansiPrinter "without-color" <|
+                    \() ->
+                        runAndGetOutput multiLineDescConfig [ "--help" ] "1.0.0" Program.WithoutColor
+                ]
+            , Snapshot.describe "Long Description Wrapping"
+                [ Snapshot.custom ansiPrinter "with-color" <|
+                    \() ->
+                        runAndGetOutput longDescConfig [ "--help" ] "1.0.0" Program.WithColor
+                , Snapshot.custom ansiPrinter "without-color" <|
+                    \() ->
+                        runAndGetOutput longDescConfig [ "--help" ] "1.0.0" Program.WithoutColor
+                ]
+            , Snapshot.describe "Custom Display Name"
+                [ Snapshot.custom ansiPrinter "with-color" <|
+                    \() ->
+                        runAndGetOutput displayNameConfig [ "--help" ] "1.0.0" Program.WithColor
+                , Snapshot.custom ansiPrinter "without-color" <|
+                    \() ->
+                        runAndGetOutput displayNameConfig [ "--help" ] "1.0.0" Program.WithoutColor
+                ]
+            , Snapshot.describe "Usage Line Wrapping"
+                [ Snapshot.custom ansiPrinter "with-color" <|
+                    \() ->
+                        runAndGetOutput manyOptionsConfig [ "--help" ] "1.0.0" Program.WithColor
+                , Snapshot.custom ansiPrinter "without-color" <|
+                    \() ->
+                        runAndGetOutput manyOptionsConfig [ "--help" ] "1.0.0" Program.WithoutColor
                 ]
             ]
         ]

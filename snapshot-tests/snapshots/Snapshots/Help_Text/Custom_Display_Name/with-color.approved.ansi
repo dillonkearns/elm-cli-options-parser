@@ -1,0 +1,7 @@
+$ myprog --help
+
+[1mUsage:[22m [1mmyprog[22m [36m--output-dir <PATH>[39m [[36m--log-level <LEVEL>[39m]
+
+[1mOptions:[22m
+  [36m--output-dir <PATH>[39m   Directory for generated output files
+  [36m--log-level <LEVEL>[39m   Set the logging level

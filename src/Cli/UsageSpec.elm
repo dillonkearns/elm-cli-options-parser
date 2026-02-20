@@ -15,6 +15,7 @@ module Cli.UsageSpec exposing
     , optionalPositionalArg
     , restArgs
     , setDescription
+    , setDisplayName
     , synopsis
     )
 
@@ -33,7 +34,7 @@ type UsageSpec
 
 type FlagOrKeywordArg
     = Flag String
-    | KeywordArg String
+    | KeywordArg String (Maybe String)
 
 
 type MutuallyExclusiveValues
@@ -42,7 +43,7 @@ type MutuallyExclusiveValues
 
 keywordArg : String -> Occurences -> UsageSpec
 keywordArg keywordArgName occurences =
-    FlagOrKeywordArg (KeywordArg keywordArgName) Nothing occurences Nothing
+    FlagOrKeywordArg (KeywordArg keywordArgName Nothing) Nothing occurences Nothing
 
 
 flag : String -> Occurences -> UsageSpec
@@ -78,6 +79,23 @@ setDescription description usageSpec =
 
         RestArgs restArgsName _ ->
             RestArgs restArgsName description
+
+
+{-| Set the display name for a keyword arg's metavar.
+-}
+setDisplayName : String -> UsageSpec -> UsageSpec
+setDisplayName displayName usageSpec =
+    case usageSpec of
+        FlagOrKeywordArg option mutuallyExclusiveValues occurences description ->
+            case option of
+                KeywordArg kwName _ ->
+                    FlagOrKeywordArg (KeywordArg kwName (Just displayName)) mutuallyExclusiveValues occurences description
+
+                Flag _ ->
+                    usageSpec
+
+        _ ->
+            usageSpec
 
 
 changeUsageSpec : List String -> UsageSpec -> UsageSpec
@@ -167,7 +185,7 @@ name usageSpec =
                 Flag flagName ->
                     flagName
 
-                KeywordArg keywordArgName ->
+                KeywordArg keywordArgName _ ->
                     keywordArgName
 
         Operand operandOptionName _ _ _ ->
@@ -260,8 +278,32 @@ detailedHelp colorMode programName ({ usageSpecs, description } as optionsParser
                     padding optionStr =
                         String.repeat (maxOptionLength - Ansi.String.width optionStr + 3) " "
 
+                    descColumnStart =
+                        2 + maxOptionLength + 3
+
+                    descMaxWidth =
+                        80 - descColumnStart
+
+                    continuationPad =
+                        String.repeat descColumnStart " "
+
+                    wrapAndIndentDesc desc =
+                        let
+                            wrappedLines =
+                                wrapText (max 20 descMaxWidth) desc
+
+                            indentedLines =
+                                case wrappedLines of
+                                    [] ->
+                                        []
+
+                                    firstLine :: rest ->
+                                        firstLine :: List.map (\line -> continuationPad ++ line) rest
+                        in
+                        String.join "\n" indentedLines
+
                     formatOption ( optionStr, desc ) =
-                        "  " ++ optionStr ++ padding optionStr ++ desc
+                        "  " ++ optionStr ++ padding optionStr ++ wrapAndIndentDesc desc
                 in
                 "\n\n"
                     ++ Cli.Style.applyBold (useColor colorMode) "Options:"
@@ -289,10 +331,11 @@ synopsisLine colorMode programName { usageSpecs, subCommand } =
 
                 Nothing ->
                     specStrings
+
+        prefix =
+            Cli.Style.applyBold (useColor colorMode) programName
     in
-    Cli.Style.applyBold (useColor colorMode) programName
-        ++ " "
-        ++ String.join " " allParts
+    wrapParts 80 "  " prefix allParts
 
 
 {-| Generate option synopsis for help text (without occurrence brackets).
@@ -303,13 +346,13 @@ optionSynopsisForHelp colorMode option maybeMutuallyExclusiveValues =
         Flag flagName ->
             Cli.Style.applyCyan (useColor colorMode) ("--" ++ flagName)
 
-        KeywordArg keywordArgName ->
+        KeywordArg keywordArgName _ ->
             case maybeMutuallyExclusiveValues of
                 Just mutuallyExclusiveValues ->
                     Cli.Style.applyCyan (useColor colorMode) ("--" ++ keywordArgName ++ " <" ++ mutuallyExclusiveSynopsis mutuallyExclusiveValues ++ ">")
 
                 Nothing ->
-                    Cli.Style.applyCyan (useColor colorMode) ("--" ++ keywordArgName ++ " <" ++ keywordArgName ++ ">")
+                    Cli.Style.applyCyan (useColor colorMode) ("--" ++ keywordArgName ++ " <" ++ keywordArgMetavar option ++ ">")
 
 
 {-| Convert a UsageSpec to its synopsis string representation.
@@ -356,13 +399,13 @@ optionSynopsisStyled colorMode occurences option maybeMutuallyExclusiveValues =
                 Flag flagName ->
                     Cli.Style.applyCyan (useColor colorMode) ("--" ++ flagName)
 
-                KeywordArg keywordArgName ->
+                KeywordArg keywordArgName _ ->
                     case maybeMutuallyExclusiveValues of
                         Just mutuallyExclusiveValues ->
                             Cli.Style.applyCyan (useColor colorMode) ("--" ++ keywordArgName ++ " <" ++ mutuallyExclusiveSynopsis mutuallyExclusiveValues ++ ">")
 
                         Nothing ->
-                            Cli.Style.applyCyan (useColor colorMode) ("--" ++ keywordArgName ++ " <" ++ keywordArgName ++ ">")
+                            Cli.Style.applyCyan (useColor colorMode) ("--" ++ keywordArgName ++ " <" ++ keywordArgMetavar option ++ ">")
     in
     case occurences of
         Occurences.Required ->
@@ -401,7 +444,7 @@ optionHasArg options optionNameToCheck =
                 Flag _ ->
                     False
 
-                KeywordArg _ ->
+                KeywordArg _ _ ->
                     True
 
         Nothing ->
@@ -414,5 +457,129 @@ optionName option =
         Flag flagName ->
             flagName
 
-        KeywordArg keywordArgName ->
+        KeywordArg keywordArgName _ ->
             keywordArgName
+
+
+{-| Convert a kebab-case name to UPPER\_SNAKE\_CASE for metavar display.
+e.g., "output-dir" -> "OUTPUT\_DIR"
+-}
+toUpperSnakeCase : String -> String
+toUpperSnakeCase str =
+    str
+        |> String.map
+            (\c ->
+                if c == '-' then
+                    '_'
+
+                else
+                    Char.toUpper c
+            )
+
+
+{-| Get the metavar text for a keyword arg.
+Uses display name if set, otherwise uppercases the keyword arg name.
+-}
+keywordArgMetavar : FlagOrKeywordArg -> String
+keywordArgMetavar option =
+    case option of
+        KeywordArg kwName maybeDisplayName ->
+            case maybeDisplayName of
+                Just displayName ->
+                    displayName
+
+                Nothing ->
+                    toUpperSnakeCase kwName
+
+        Flag _ ->
+            ""
+
+
+{-| Wrap a list of parts onto lines, breaking when adding a part would exceed maxWidth.
+Uses Ansi.String.width for accurate measurement with ANSI escape codes.
+Each continuation line is prefixed with the given indent string.
+-}
+wrapParts : Int -> String -> String -> List String -> String
+wrapParts maxWidth indent prefix parts =
+    case parts of
+        [] ->
+            prefix
+
+        first :: rest ->
+            let
+                firstLine =
+                    prefix ++ " " ++ first
+
+                result =
+                    wrapPartsHelper maxWidth indent rest firstLine []
+            in
+            result
+
+
+wrapPartsHelper : Int -> String -> List String -> String -> List String -> String
+wrapPartsHelper maxWidth indent parts currentLine accLines =
+    case parts of
+        [] ->
+            (List.reverse (currentLine :: accLines))
+                |> String.join "\n"
+
+        part :: rest ->
+            let
+                candidate =
+                    currentLine ++ " " ++ part
+            in
+            if Ansi.String.width candidate <= maxWidth then
+                wrapPartsHelper maxWidth indent rest candidate accLines
+
+            else
+                wrapPartsHelper maxWidth indent rest (indent ++ part) (currentLine :: accLines)
+
+
+{-| Wrap text to a maximum width, breaking on word boundaries.
+Each paragraph (separated by existing newlines) is wrapped independently.
+Returns a list of lines.
+-}
+wrapText : Int -> String -> List String
+wrapText maxWidth text =
+    text
+        |> String.split "\n"
+        |> List.concatMap (wrapParagraph maxWidth)
+
+
+{-| Wrap a single paragraph (no embedded newlines) to max width.
+-}
+wrapParagraph : Int -> String -> List String
+wrapParagraph maxWidth paragraph =
+    if String.isEmpty paragraph then
+        [ "" ]
+
+    else
+        let
+            words =
+                String.words paragraph
+        in
+        case words of
+            [] ->
+                [ "" ]
+
+            first :: rest ->
+                wrapWordsHelper maxWidth rest first []
+                    |> List.reverse
+
+
+wrapWordsHelper : Int -> List String -> String -> List String -> List String
+wrapWordsHelper maxWidth words currentLine accLines =
+    case words of
+        [] ->
+            currentLine :: accLines
+
+        word :: rest ->
+            let
+                candidate =
+                    currentLine ++ " " ++ word
+            in
+            if String.length candidate <= maxWidth then
+                wrapWordsHelper maxWidth rest candidate accLines
+
+            else
+                wrapWordsHelper maxWidth rest word (currentLine :: accLines)

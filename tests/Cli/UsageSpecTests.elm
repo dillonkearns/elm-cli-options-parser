@@ -17,7 +17,7 @@ all =
                     |> OptionsParser.end
                 )
                     |> OptionsParser.synopsis False "greet"
-                    |> Expect.equal "greet --first-name <first-name> --last-name <last-name>"
+                    |> Expect.equal "greet --first-name <FIRST_NAME> --last-name <LAST_NAME>"
         , test "print synopsis with required flag" <|
             \() ->
                 OptionsParser.build (\a b -> ( a, b ))
@@ -32,7 +32,7 @@ all =
                     |> OptionsParser.with (Option.optionalKeywordArg "prefix")
                     |> OptionsParser.end
                     |> OptionsParser.synopsis False "greet"
-                    |> Expect.equal "greet --name <name> [--prefix <prefix>]"
+                    |> Expect.equal "greet --name <NAME> [--prefix <PREFIX>]"
         , test "print synopsis with required operand" <|
             \() ->
                 OptionsParser.build identity
@@ -54,7 +54,7 @@ all =
                     |> OptionsParser.end
                     |> OptionsParser.withDescription "greets somebody in your terminal"
                     |> OptionsParser.synopsis False "greet"
-                    |> Expect.equal "greet --name <name> [--prefix <prefix>] # greets somebody in your terminal"
+                    |> Expect.equal "greet --name <NAME> [--prefix <PREFIX>] # greets somebody in your terminal"
         , test "print synopsis with zero or more arg option" <|
             \() ->
                 (OptionsParser.build identity
@@ -62,7 +62,7 @@ all =
                 )
                     |> OptionsParser.end
                     |> OptionsParser.synopsis False "curl"
-                    |> Expect.equal "curl [--header <header>]..."
+                    |> Expect.equal "curl [--header <HEADER>]..."
         , test "print rest operands synopsis" <|
             \() ->
                 OptionsParser.build identity

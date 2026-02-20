@@ -4,4 +4,4 @@ Usage: myprog init
 
 Usage: myprog clone <repository>
 
-Usage: myprog log [--author <author>] [--oneline]
+Usage: myprog log [--author <AUTHOR>] [--oneline]

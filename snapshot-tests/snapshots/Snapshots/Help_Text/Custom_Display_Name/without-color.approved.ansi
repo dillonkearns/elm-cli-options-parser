@@ -1,0 +1,7 @@
+$ myprog --help
+
+Usage: myprog --output-dir <PATH> [--log-level <LEVEL>]
+
+Options:
+  --output-dir <PATH>   Directory for generated output files
+  --log-level <LEVEL>   Set the logging level

@@ -1,0 +1,4 @@
+$ myprog --help
+
+[1mUsage:[22m [1mmyprog[22m [36m--input-file <INPUT_FILE>[39m [[36m--output-directory <OUTPUT_DIRECTORY>[39m]
+  [[36m--configuration <CONFIGURATION>[39m] [[36m--dry-run[39m] [[36m--verbose[39m] [36m<target>[39m

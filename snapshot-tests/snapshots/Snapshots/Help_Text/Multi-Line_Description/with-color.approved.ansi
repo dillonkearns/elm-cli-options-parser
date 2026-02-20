@@ -1,0 +1,9 @@
+$ myprog --help
+
+[1mUsage:[22m [1mmyprog[22m [36m--output <OUTPUT>[39m [[36m--format <FORMAT>[39m]
+
+[1mOptions:[22m
+  [36m--output <OUTPUT>[39m   Output file path.
+                      Defaults to stdout if not specified.
+                      Supports - for piping.
+  [36m--format <FORMAT>[39m   Output format

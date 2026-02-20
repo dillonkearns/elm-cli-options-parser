@@ -1,0 +1,9 @@
+$ myprog --help
+
+[1mUsage:[22m [1mmyprog[22m [36m--config <CONFIG>[39m [[36m--verbose[39m]
+
+[1mOptions:[22m
+  [36m--config <CONFIG>[39m   Path to the configuration file that controls how the
+                      application behaves during processing of the input data
+  [36m--verbose[39m           Enable verbose logging output to help with debugging
+                      issues in production environments

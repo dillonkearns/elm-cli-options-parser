@@ -1,0 +1,4 @@
+$ myprog --help
+
+Usage: myprog --input-file <INPUT_FILE> [--output-directory <OUTPUT_DIRECTORY>]
+  [--configuration <CONFIGURATION>] [--dry-run] [--verbose] <target>

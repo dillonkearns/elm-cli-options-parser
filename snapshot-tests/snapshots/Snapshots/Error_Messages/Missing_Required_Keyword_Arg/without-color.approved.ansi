@@ -2,4 +2,4 @@ $ myprog
 
 Missing required option: --name
 
-myprog --name <name>
+myprog --name <NAME>

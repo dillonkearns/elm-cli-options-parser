@@ -6,7 +6,7 @@ module Cli.Option exposing
     , oneOf
     , validate, validateIfPresent, validateMap, validateMapIfPresent
     , map, mapFlag, withDefault
-    , withDescription, withMissingMessage
+    , withDescription, withDisplayName, withMissingMessage
     , Option, BeginningOption, OptionalPositionalArgOption, RestArgsOption
     )
 
@@ -102,7 +102,7 @@ with the following functions.
 
 ### Metadata
 
-@docs withDescription, withMissingMessage
+@docs withDescription, withDisplayName, withMissingMessage
 
 
 ## Types
@@ -373,6 +373,25 @@ withDescription description (Option option) =
     Option
         { option
             | usageSpec = UsageSpec.setDescription (Just description) option.usageSpec
+        }
+
+
+{-| Set a custom display name (metavar) for a keyword argument's value placeholder
+in help text and usage synopsis.
+
+By default, the keyword arg name is uppercased (e.g., `--output-dir <OUTPUT_DIR>`).
+Use this to provide a more descriptive placeholder.
+
+    Option.requiredKeywordArg "output-dir"
+        |> Option.withDisplayName "PATH"
+    -- Shows as: --output-dir <PATH>
+
+-}
+withDisplayName : String -> Option from to builderState -> Option from to builderState
+withDisplayName displayName (Option option) =
+    Option
+        { option
+            | usageSpec = UsageSpec.setDisplayName displayName option.usageSpec
         }
 
 
