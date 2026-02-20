@@ -195,8 +195,8 @@ name usageSpec =
             restArgsDescription
 
 
-synopsis : ColorMode -> String -> { optionsParser | usageSpecs : List UsageSpec, description : Maybe String, subCommand : Maybe String } -> String
-synopsis colorMode programName { usageSpecs, description, subCommand } =
+synopsis : ColorMode -> Int -> String -> { optionsParser | usageSpecs : List UsageSpec, description : Maybe String, subCommand : Maybe String } -> String
+synopsis colorMode maxWidth programName { usageSpecs, description, subCommand } =
     let
         specStrings =
             usageSpecs |> List.map (specToSynopsis colorMode)
@@ -217,13 +217,13 @@ synopsis colorMode programName { usageSpecs, description, subCommand } =
 
 {-| Generate detailed help text with Usage line and Options section.
 -}
-detailedHelp : ColorMode -> String -> { optionsParser | usageSpecs : List UsageSpec, description : Maybe String, subCommand : Maybe String } -> String
-detailedHelp colorMode programName ({ usageSpecs, description } as optionsParser) =
+detailedHelp : ColorMode -> Int -> String -> { optionsParser | usageSpecs : List UsageSpec, description : Maybe String, subCommand : Maybe String } -> String
+detailedHelp colorMode maxWidth programName ({ usageSpecs, description } as optionsParser) =
     let
         usageLine =
             Cli.Style.applyBold (useColor colorMode) "Usage:"
                 ++ " "
-                ++ synopsisLine colorMode programName optionsParser
+                ++ synopsisLine colorMode maxWidth programName optionsParser
 
         descriptionSection =
             description
@@ -282,7 +282,7 @@ detailedHelp colorMode programName ({ usageSpecs, description } as optionsParser
                         2 + maxOptionLength + 3
 
                     descMaxWidth =
-                        80 - descColumnStart
+                        maxWidth - descColumnStart
 
                     continuationPad =
                         String.repeat descColumnStart " "
@@ -318,8 +318,8 @@ detailedHelp colorMode programName ({ usageSpecs, description } as optionsParser
 
 {-| Generate synopsis line without "Usage:" prefix or description suffix.
 -}
-synopsisLine : ColorMode -> String -> { optionsParser | usageSpecs : List UsageSpec, description : Maybe String, subCommand : Maybe String } -> String
-synopsisLine colorMode programName { usageSpecs, subCommand } =
+synopsisLine : ColorMode -> Int -> String -> { optionsParser | usageSpecs : List UsageSpec, description : Maybe String, subCommand : Maybe String } -> String
+synopsisLine colorMode maxWidth programName { usageSpecs, subCommand } =
     let
         specStrings =
             usageSpecs |> List.map (specToSynopsis colorMode)
@@ -335,7 +335,7 @@ synopsisLine colorMode programName { usageSpecs, subCommand } =
         prefix =
             Cli.Style.applyBold (useColor colorMode) programName
     in
-    wrapParts 80 "  " prefix allParts
+    wrapParts maxWidth "  " prefix allParts
 
 
 {-| Generate option synopsis for help text (without occurrence brackets).

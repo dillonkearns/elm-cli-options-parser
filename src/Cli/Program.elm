@@ -5,6 +5,7 @@ module Cli.Program exposing
     , FlagsIncludingArgv
     , mapConfig
     , run, RunResult(..), ExitStatus(..), ColorMode(..)
+    , RunOptions, defaultRunOptions, withMaxWidth, withColorMode, runWith
     )
 
 {-|
@@ -71,6 +72,11 @@ See the [`examples`](https://github.com/dillonkearns/elm-cli-options-parser/tree
 
 @docs run, RunResult, ExitStatus, ColorMode
 
+
+## Advanced Running
+
+@docs RunOptions, defaultRunOptions, withMaxWidth, withColorMode, runWith
+
 -}
 
 import Cli.ColorMode
@@ -79,6 +85,7 @@ import Cli.OptionsParser as OptionsParser exposing (OptionsParser)
 import Cli.OptionsParser.BuilderState as BuilderState
 import Cli.OptionsParser.MatchResult exposing (NoMatchReason(..))
 import Cli.Style
+import Cli.UsageSpec as UsageSpec
 import List.Extra
 import TypoSuggestion
 
@@ -94,6 +101,46 @@ Used with `run` for testing, and internally by the CLI infrastructure.
 type ColorMode
     = WithColor
     | WithoutColor
+
+
+{-| Options for configuring how the CLI parser runs.
+
+Build up `RunOptions` using the builder functions:
+
+    Program.defaultRunOptions
+        |> Program.withColorMode Program.WithColor
+        |> Program.withMaxWidth 120
+
+-}
+type RunOptions
+    = RunOptions
+        { colorMode : ColorMode
+        , maxWidth : Int
+        }
+
+
+{-| Default run options: no color, 80 column width.
+-}
+defaultRunOptions : RunOptions
+defaultRunOptions =
+    RunOptions
+        { colorMode = WithoutColor
+        , maxWidth = 80
+        }
+
+
+{-| Set the maximum line width for help text wrapping.
+-}
+withMaxWidth : Int -> RunOptions -> RunOptions
+withMaxWidth maxWidth (RunOptions options) =
+    RunOptions { options | maxWidth = maxWidth }
+
+
+{-| Set the color mode for output.
+-}
+withColorMode : ColorMode -> RunOptions -> RunOptions
+withColorMode colorMode (RunOptions options) =
+    RunOptions { options | colorMode = colorMode }
 
 
 {-| Convert public ColorMode to internal ColorMode.
@@ -412,7 +459,34 @@ just like `process.argv` in Node.js.
 
 -}
 run : Config msg -> List String -> String -> ColorMode -> RunResult msg
-run (Config { optionsParsers }) argv versionMessage colorMode =
+run programConfig argv versionMessage colorMode =
+    runWith programConfig argv versionMessage (defaultRunOptions |> withColorMode colorMode)
+
+
+{-| Run the CLI parser with full `RunOptions`. This gives you control over
+both color mode and terminal width for help text wrapping.
+
+    import Cli.Program as Program
+
+    runOptions =
+        Program.defaultRunOptions
+            |> Program.withColorMode Program.WithColor
+            |> Program.withMaxWidth 120
+
+    case Program.runWith myConfig [ "node", "myprog" ] "1.0.0" runOptions of
+        Program.SystemMessage Program.Failure message ->
+            -- error message formatted to 120 columns
+            ...
+
+        _ ->
+            ...
+
+Note: `argv` should include the node path and script path as the first two elements,
+just like `process.argv` in Node.js.
+
+-}
+runWith : Config msg -> List String -> String -> RunOptions -> RunResult msg
+runWith (Config { optionsParsers }) argv versionMessage (RunOptions { colorMode, maxWidth }) =
     let
         programName =
             case argv of
@@ -447,7 +521,7 @@ run (Config { optionsParsers }) argv versionMessage colorMode =
                     optionsParsers
                         |> List.filterMap OptionsParser.getSubCommand
             in
-            formatNoMatchReasons colorMode programName parserInfo availableSubCommands optionsParsers reasons
+            formatNoMatchReasons colorMode maxWidth programName parserInfo availableSubCommands optionsParsers reasons
                 |> SystemMessage Failure
 
         Cli.LowLevel.ValidationErrors validationErrors ->
@@ -472,7 +546,7 @@ run (Config { optionsParsers }) argv versionMessage colorMode =
                 |> CustomMatch
 
         Cli.LowLevel.ShowHelp ->
-            Cli.LowLevel.detailedHelpText (toInternalColorMode colorMode) programName optionsParsers
+            Cli.LowLevel.detailedHelpText (toInternalColorMode colorMode) maxWidth programName optionsParsers
                 |> SystemMessage Success
 
         Cli.LowLevel.ShowVersion ->
@@ -480,7 +554,7 @@ run (Config { optionsParsers }) argv versionMessage colorMode =
                 |> SystemMessage Success
 
         Cli.LowLevel.ShowSubcommandHelp subcommandName ->
-            subcommandHelpText colorMode programName optionsParsers subcommandName
+            subcommandHelpText colorMode maxWidth programName optionsParsers subcommandName
                 |> SystemMessage Success
 
 
@@ -497,11 +571,20 @@ mapConfig mapFn (Config configValue) =
 
 {-| Generate help text for a specific subcommand.
 -}
-subcommandHelpText : ColorMode -> String -> List (OptionsParser msg BuilderState.NoMoreOptions) -> String -> String
-subcommandHelpText colorMode programName optionsParsers subcommandName =
+subcommandHelpText : ColorMode -> Int -> String -> List (OptionsParser msg BuilderState.NoMoreOptions) -> String -> String
+subcommandHelpText colorMode maxWidth programName optionsParsers subcommandName =
     optionsParsers
         |> List.filter (\parser -> OptionsParser.getSubCommand parser == Just subcommandName)
-        |> List.map (OptionsParser.detailedHelp (Cli.ColorMode.useColor (toInternalColorMode colorMode)) programName)
+        |> List.map
+            (\parser ->
+                UsageSpec.detailedHelp (toInternalColorMode colorMode)
+                    maxWidth
+                    programName
+                    { usageSpecs = OptionsParser.getUsageSpecs parser
+                    , description = OptionsParser.getDescription parser
+                    , subCommand = OptionsParser.getSubCommand parser
+                    }
+            )
         |> String.join "\n\n"
 
 
@@ -509,13 +592,14 @@ subcommandHelpText colorMode programName optionsParsers subcommandName =
 -}
 formatNoMatchReasons :
     ColorMode
+    -> Int
     -> String
     -> List TypoSuggestion.OptionsParser
     -> List String
     -> List (OptionsParser msg BuilderState.NoMoreOptions)
     -> List NoMatchReason
     -> String
-formatNoMatchReasons colorMode programName parserInfo availableSubCommands optionsParsers reasons =
+formatNoMatchReasons colorMode maxWidth programName parserInfo availableSubCommands optionsParsers reasons =
     let
         -- Separate unexpected options from other reasons
         unexpectedOptions =
@@ -573,7 +657,7 @@ formatNoMatchReasons colorMode programName parserInfo availableSubCommands optio
         case missingArgErrors of
             reason :: _ ->
                 -- A parser matched the structure but is missing a required argument
-                formatSingleReason colorMode reason programName optionsParsers
+                formatSingleReason colorMode maxWidth reason programName optionsParsers
 
             [] ->
                 let
@@ -626,10 +710,10 @@ formatNoMatchReasons colorMode programName parserInfo availableSubCommands optio
                             -- The command was valid but something else went wrong
                             -- Check for ExtraOperand
                             if not (List.isEmpty extraOperandErrors) then
-                                formatSingleReason colorMode ExtraOperand programName optionsParsers
+                                formatSingleReason colorMode maxWidth ExtraOperand programName optionsParsers
 
                             else
-                                formatFallbackMessage colorMode programName optionsParsers
+                                formatFallbackMessage colorMode maxWidth programName optionsParsers
 
                 else
                     let
@@ -661,16 +745,16 @@ formatNoMatchReasons colorMode programName parserInfo availableSubCommands optio
                         -- Format other specific reasons
                         case List.head otherReasons of
                             Just reason ->
-                                formatSingleReason colorMode reason programName optionsParsers
+                                formatSingleReason colorMode maxWidth reason programName optionsParsers
 
                             Nothing ->
-                                formatFallbackMessage colorMode programName optionsParsers
+                                formatFallbackMessage colorMode maxWidth programName optionsParsers
 
 
 {-| Format a single NoMatchReason into a message.
 -}
-formatSingleReason : ColorMode -> NoMatchReason -> String -> List (OptionsParser msg BuilderState.NoMoreOptions) -> String
-formatSingleReason colorMode reason programName optionsParsers =
+formatSingleReason : ColorMode -> Int -> NoMatchReason -> String -> List (OptionsParser msg BuilderState.NoMoreOptions) -> String
+formatSingleReason colorMode maxWidth reason programName optionsParsers =
     case reason of
         UnexpectedOption name ->
             applyRed colorMode "Unexpected option: "
@@ -692,45 +776,45 @@ formatSingleReason colorMode reason programName optionsParsers =
                 Just message ->
                     applyRed colorMode message
                         ++ "\n\n"
-                        ++ Cli.LowLevel.helpText (toInternalColorMode colorMode) programName optionsParsers
+                        ++ Cli.LowLevel.helpText (toInternalColorMode colorMode) maxWidth programName optionsParsers
 
                 Nothing ->
                     applyRed colorMode "Missing required argument: "
                         ++ applyCyan colorMode ("<" ++ name ++ ">")
                         ++ "\n\n"
-                        ++ Cli.LowLevel.helpText (toInternalColorMode colorMode) programName optionsParsers
+                        ++ Cli.LowLevel.helpText (toInternalColorMode colorMode) maxWidth programName optionsParsers
 
         MissingRequiredKeywordArg { name, customMessage } ->
             case customMessage of
                 Just message ->
                     applyRed colorMode message
                         ++ "\n\n"
-                        ++ Cli.LowLevel.helpText (toInternalColorMode colorMode) programName optionsParsers
+                        ++ Cli.LowLevel.helpText (toInternalColorMode colorMode) maxWidth programName optionsParsers
 
                 Nothing ->
                     applyRed colorMode "Missing required option: "
                         ++ applyCyan colorMode ("--" ++ name)
                         ++ "\n\n"
-                        ++ Cli.LowLevel.helpText (toInternalColorMode colorMode) programName optionsParsers
+                        ++ Cli.LowLevel.helpText (toInternalColorMode colorMode) maxWidth programName optionsParsers
 
         MissingExpectedFlag { name } ->
             applyRed colorMode "Missing required flag: "
                 ++ applyCyan colorMode ("--" ++ name)
                 ++ "\n\n"
-                ++ Cli.LowLevel.helpText (toInternalColorMode colorMode) programName optionsParsers
+                ++ Cli.LowLevel.helpText (toInternalColorMode colorMode) maxWidth programName optionsParsers
 
         ExtraOperand ->
             applyRed colorMode "Too many arguments provided."
                 ++ "\n\n"
-                ++ Cli.LowLevel.helpText (toInternalColorMode colorMode) programName optionsParsers
+                ++ Cli.LowLevel.helpText (toInternalColorMode colorMode) maxWidth programName optionsParsers
 
 
 {-| Fallback message when no specific reason is available.
 -}
-formatFallbackMessage : ColorMode -> String -> List (OptionsParser msg BuilderState.NoMoreOptions) -> String
-formatFallbackMessage colorMode programName optionsParsers =
+formatFallbackMessage : ColorMode -> Int -> String -> List (OptionsParser msg BuilderState.NoMoreOptions) -> String
+formatFallbackMessage colorMode maxWidth programName optionsParsers =
     applyRed colorMode "Could not match arguments."
         ++ "\n\n"
         ++ applyBold colorMode "Usage:"
         ++ "\n\n"
-        ++ Cli.LowLevel.helpText (toInternalColorMode colorMode) programName optionsParsers
+        ++ Cli.LowLevel.helpText (toInternalColorMode colorMode) maxWidth programName optionsParsers
