@@ -5,6 +5,7 @@ import Cli.Decode
 import Cli.OptionsParser as OptionsParser exposing (OptionsParser)
 import Cli.OptionsParser.BuilderState as BuilderState
 import Cli.OptionsParser.MatchResult as MatchResult exposing (NoMatchReason(..))
+import Cli.UsageSpec as UsageSpec
 import List.Extra
 import Set exposing (Set)
 
@@ -251,18 +252,36 @@ oneOf =
         Nothing
 
 
-helpText : ColorMode -> String -> List (OptionsParser msg builderState) -> String
-helpText colorMode programName optionsParsers =
+helpText : ColorMode -> Int -> String -> List (OptionsParser msg builderState) -> String
+helpText colorMode maxWidth programName optionsParsers =
     optionsParsers
-        |> List.map (OptionsParser.synopsis (useColor colorMode) programName)
+        |> List.map
+            (\parser ->
+                UsageSpec.synopsis colorMode
+                    maxWidth
+                    programName
+                    { usageSpecs = OptionsParser.getUsageSpecs parser
+                    , description = OptionsParser.getDescription parser
+                    , subCommand = OptionsParser.getSubCommand parser
+                    }
+            )
         |> String.join "\n"
 
 
 {-| Generate detailed help text for --help output.
 Uses detailed format with Usage line and Options section when descriptions are present.
 -}
-detailedHelpText : ColorMode -> String -> List (OptionsParser msg builderState) -> String
-detailedHelpText colorMode programName optionsParsers =
+detailedHelpText : ColorMode -> Int -> String -> List (OptionsParser msg builderState) -> String
+detailedHelpText colorMode maxWidth programName optionsParsers =
     optionsParsers
-        |> List.map (OptionsParser.detailedHelp (useColor colorMode) programName)
+        |> List.map
+            (\parser ->
+                UsageSpec.detailedHelp colorMode
+                    maxWidth
+                    programName
+                    { usageSpecs = OptionsParser.getUsageSpecs parser
+                    , description = OptionsParser.getDescription parser
+                    , subCommand = OptionsParser.getSubCommand parser
+                    }
+            )
         |> String.join "\n\n"

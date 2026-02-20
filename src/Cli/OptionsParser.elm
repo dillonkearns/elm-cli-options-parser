@@ -8,7 +8,7 @@ module Cli.OptionsParser exposing
     , hardcoded
     , withDescription
     , end
-    , getSubCommand, getUsageSpecs, tryMatch, synopsis, detailedHelp
+    , getSubCommand, getDescription, getUsageSpecs, tryMatch, synopsis, detailedHelp
     )
 
 {-|
@@ -134,7 +134,7 @@ a valid number of positional arguments is passed in, as defined by these rules:
 
 These functions are exposed for internal use and testing. They are not part of the public API.
 
-@docs getSubCommand, getUsageSpecs, tryMatch, synopsis, detailedHelp
+@docs getSubCommand, getDescription, getUsageSpecs, tryMatch, synopsis, detailedHelp
 
 -}
 
@@ -170,7 +170,7 @@ synopsis useColor programName optionsParser =
     in
     optionsParser
         |> (\(OptionsParser record) -> record)
-        |> UsageSpec.synopsis colorMode programName
+        |> UsageSpec.synopsis colorMode 80 programName
 
 
 {-| Low-level function, for internal use.
@@ -188,7 +188,7 @@ detailedHelp useColor programName optionsParser =
     in
     optionsParser
         |> (\(OptionsParser record) -> record)
-        |> UsageSpec.detailedHelp colorMode programName
+        |> UsageSpec.detailedHelp colorMode 80 programName
 
 
 {-| Low-level function, for internal use.
@@ -196,6 +196,13 @@ detailedHelp useColor programName optionsParser =
 getSubCommand : OptionsParser cliOptions builderState -> Maybe String
 getSubCommand (OptionsParser { subCommand }) =
     subCommand
+
+
+{-| Low-level function, for internal use.
+-}
+getDescription : OptionsParser cliOptions builderState -> Maybe String
+getDescription (OptionsParser { description }) =
+    description
 
 
 {-| Low-level function, for internal use.
