@@ -1,13 +1,16 @@
 module Cli.Option.Internal exposing
     ( DataGrabber
     , InnerOption
+    , JsonGrabber
     , Option(..)
     , OptionMeta
     )
 
 import Cli.Decode
 import Cli.UsageSpec exposing (UsageSpec)
+import Json.Decode
 import Tokenizer
+import TsJson.Type
 
 
 type Option from to constraints
@@ -19,7 +22,16 @@ type alias InnerOption from to =
     , usageSpec : UsageSpec
     , decoder : Cli.Decode.Decoder from to
     , meta : OptionMeta
+    , tsType : TsJson.Type.Type
+    , jsonGrabber : JsonGrabber to
     }
+
+
+{-| Extracts a decoded value from a JSON blob for JSON input mode.
+Produces the final `to` type (after all validation/mapping).
+-}
+type alias JsonGrabber to =
+    Json.Decode.Value -> Result Cli.Decode.ProcessingError ( List Cli.Decode.ValidationError, to )
 
 
 {-| Metadata for an option that can be set via withMissingMessage.

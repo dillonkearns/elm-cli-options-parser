@@ -1,10 +1,11 @@
-module Cli.LowLevel exposing (MatchResult(..), detailedHelpText, helpText, try)
+module Cli.LowLevel exposing (MatchResult(..), detailedHelpText, helpText, try, tryJson)
 
 import Cli.ColorMode exposing (ColorMode, useColor)
 import Cli.Decode
 import Cli.OptionsParser as OptionsParser exposing (OptionsParser)
 import Cli.OptionsParser.BuilderState as BuilderState
 import Cli.OptionsParser.MatchResult as MatchResult exposing (NoMatchReason(..))
+import Json.Decode
 import List.Extra
 import Set exposing (Set)
 
@@ -266,3 +267,42 @@ detailedHelpText colorMode programName optionsParsers =
     optionsParsers
         |> List.map (OptionsParser.detailedHelp (useColor colorMode) programName)
         |> String.join "\n\n"
+
+
+{-| Try to match a JSON blob against a list of OptionsParsers using direct JSON decoding.
+No lossy argv translation — each parser's jsonGrabber decodes directly from the JSON value.
+-}
+tryJson : List (OptionsParser.OptionsParser msg builderState) -> Json.Decode.Value -> MatchResult msg
+tryJson optionsParsers blob =
+    let
+        matchResults =
+            optionsParsers
+                |> List.map (OptionsParser.tryMatchJson blob)
+    in
+    matchResults
+        |> List.map MatchResult.matchResultToMaybe
+        |> oneOf
+        |> (\maybeResult ->
+                case maybeResult of
+                    Just result ->
+                        case result of
+                            Ok msg ->
+                                Match msg
+
+                            Err validationErrors ->
+                                ValidationErrors validationErrors
+
+                    Nothing ->
+                        NoMatch
+                            (matchResults
+                                |> List.concatMap
+                                    (\matchResult ->
+                                        case matchResult of
+                                            MatchResult.NoMatch reasons ->
+                                                reasons
+
+                                            _ ->
+                                                []
+                                    )
+                            )
+           )

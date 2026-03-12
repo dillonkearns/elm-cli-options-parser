@@ -1,6 +1,7 @@
 module Cli.UsageSpec exposing
-    ( MutuallyExclusiveValues
-    , UsageSpec
+    ( FlagOrKeywordArg(..)
+    , MutuallyExclusiveValues(..)
+    , UsageSpec(..)
     , changeUsageSpec
     , detailedHelp
     , flag
@@ -96,6 +97,7 @@ setDisplayName displayName usageSpec =
 
         _ ->
             usageSpec
+
 
 
 changeUsageSpec : List String -> UsageSpec -> UsageSpec
