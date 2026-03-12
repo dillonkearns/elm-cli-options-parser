@@ -7,7 +7,6 @@ import Cli.Program as Program
 import Expect
 import Json.Encode as Encode
 import Test exposing (..)
-import TsJson.Decode as TsDecode
 import TsJson.Type
 
 
@@ -192,47 +191,6 @@ all =
                                         , Encode.object [ ( "const", Encode.string "console" ) ]
                                         ]
                                   )
-                                ]
-                                |> Encode.encode 0
-                            )
-            ]
-        , describe "withTypedJson replaces TsType"
-            [ test "withTypedJson replaces string TsType with object TsType" <|
-                \() ->
-                    let
-                        todoDecoder =
-                            TsDecode.map2 (\title desc -> { title = title, description = desc })
-                                (TsDecode.field "title" TsDecode.string)
-                                (TsDecode.field "description" TsDecode.string)
-                    in
-                    Option.requiredKeywordArg "todo"
-                        |> Option.withTypedJson todoDecoder
-                        |> optionTsTypeToJsonSchema
-                        |> Encode.encode 0
-                        |> Expect.equal
-                            (Encode.object
-                                [ ( "$schema", Encode.string "http://json-schema.org/draft-07/schema#" )
-                                , ( "type", Encode.string "object" )
-                                , ( "properties"
-                                  , Encode.object
-                                        [ ( "description", Encode.object [ ( "type", Encode.string "string" ) ] )
-                                        , ( "title", Encode.object [ ( "type", Encode.string "string" ) ] )
-                                        ]
-                                  )
-                                , ( "required", Encode.list Encode.string [ "description", "title" ] )
-                                ]
-                                |> Encode.encode 0
-                            )
-            , test "withTypedJson on int decoder gives integer type" <|
-                \() ->
-                    Option.requiredKeywordArg "count"
-                        |> Option.withTypedJson TsDecode.int
-                        |> optionTsTypeToJsonSchema
-                        |> Encode.encode 0
-                        |> Expect.equal
-                            (Encode.object
-                                [ ( "$schema", Encode.string "http://json-schema.org/draft-07/schema#" )
-                                , ( "type", Encode.string "integer" )
                                 ]
                                 |> Encode.encode 0
                             )

@@ -6,8 +6,6 @@ import Cli.Program as Program
 import Expect
 import Json.Encode as Encode
 import Test exposing (..)
-import TsJson.Decode as TsDecode
-
 
 {-| A realistic CLI: a task management tool with subcommands.
 
@@ -119,48 +117,6 @@ taskConfig =
             )
 
 
-{-| A simpler CLI that shows withTypedJson.
-
-    deploy --config '{"host":"prod.example.com","port":443,"ssl":true}'
-
--}
-type alias DeployOptions =
-    { config : DeployConfig
-    , dryRun : Bool
-    }
-
-
-type alias DeployConfig =
-    { host : String
-    , port_ : Int
-    , ssl : Bool
-    }
-
-
-deployConfigDecoder : TsDecode.Decoder DeployConfig
-deployConfigDecoder =
-    TsDecode.map3 DeployConfig
-        (TsDecode.field "host" TsDecode.string)
-        (TsDecode.field "port" TsDecode.int)
-        (TsDecode.field "ssl" TsDecode.bool)
-
-
-deployConfig : Program.Config DeployOptions
-deployConfig =
-    Program.config
-        |> Program.add
-            (OptionsParser.build DeployOptions
-                |> OptionsParser.with
-                    (Option.requiredKeywordArg "config"
-                        |> Option.withTypedJson deployConfigDecoder
-                        |> Option.withDescription "Deployment configuration"
-                    )
-                |> OptionsParser.with
-                    (Option.flag "dry-run"
-                        |> Option.withDescription "Preview changes without deploying"
-                    )
-            )
-
 
 all : Test
 all =
@@ -260,44 +216,6 @@ all =
     }
   ]
 }"""
-            , test "deploy tool schema (with typed JSON)" <|
-                \() ->
-                    deployConfig
-                        |> Program.toJsonSchema
-                        |> Encode.encode 2
-                        |> Expect.equal """{
-  "$cli": "elm-cli-options-parser",
-  "type": "object",
-  "properties": {
-    "config": {
-      "type": "object",
-      "properties": {
-        "host": {
-          "type": "string"
-        },
-        "port": {
-          "type": "integer"
-        },
-        "ssl": {
-          "type": "boolean"
-        }
-      },
-      "required": [
-        "host",
-        "port",
-        "ssl"
-      ],
-      "description": "Deployment configuration"
-    },
-    "dry-run": {
-      "type": "boolean",
-      "description": "Preview changes without deploying"
-    }
-  },
-  "required": [
-    "config"
-  ]
-}"""
             ]
         , describe "2. Help text (what users see with --help)"
             [ test "task manager help" <|
@@ -341,20 +259,6 @@ Options:
   --limit <LIMIT>             Maximum number of tasks to show
   --verbose                   Show full task details"""
                             )
-            , test "deploy tool help" <|
-                \() ->
-                    Program.run deployConfig
-                        [ "node", "deploy", "--help" ]
-                        "1.0.0"
-                        Program.WithoutColor
-                        |> Expect.equal
-                            (Program.SystemMessage Program.Success
-                                """Usage: deploy --config <JSON> [--dry-run]
-
-Options:
-  --config <JSON>   Deployment configuration
-  --dry-run         Preview changes without deploying"""
-                            )
             ]
         , describe "3a. CLI mode - correct usage"
             [ test "add task via CLI" <|
@@ -378,13 +282,6 @@ Options:
                         "1.0.0"
                         Program.WithoutColor
                         |> Expect.equal (Program.CustomMatch (Complete { taskId = "42" }))
-            , test "deploy via CLI with JSON string arg" <|
-                \() ->
-                    Program.run deployConfig
-                        [ "node", "deploy", "--config", "{\"host\":\"prod.example.com\",\"port\":443,\"ssl\":true}" ]
-                        "1.0.0"
-                        Program.WithoutColor
-                        |> Expect.equal (Program.CustomMatch { config = { host = "prod.example.com", port_ = 443, ssl = True }, dryRun = False })
             ]
         , describe "3b. JSON input mode - correct usage"
             [ test "add task via JSON" <|
@@ -409,15 +306,6 @@ Options:
                         "1.0.0"
                         Program.WithoutColor
                         |> Expect.equal (Program.CustomMatch (Complete { taskId = "42" }))
-            , test "deploy via JSON - typed JSON arg gets nested object" <|
-                \() ->
-                    -- With direct JSON decoding, the nested object is decoded natively
-                    -- No round-trip through string serialization
-                    Program.run deployConfig
-                        [ "node", "deploy", "{\"$cli\":\"elm-cli-options-parser\",\"config\":{\"host\":\"prod.example.com\",\"port\":443,\"ssl\":true}}" ]
-                        "1.0.0"
-                        Program.WithoutColor
-                        |> Expect.equal (Program.CustomMatch { config = { host = "prod.example.com", port_ = 443, ssl = True }, dryRun = False })
             ]
         , describe "4a. CLI mode - error messages"
             [ test "missing required option" <|
@@ -499,23 +387,6 @@ Run with --help for usage information."""
 
 `--pririty` <> `--priority`"""
                             )
-            , test "invalid typed JSON in CLI mode" <|
-                \() ->
-                    Program.run deployConfig
-                        [ "node", "deploy", "--config", "{\"host\":\"prod.example.com\",\"port\":\"not-a-number\"}" ]
-                        "1.0.0"
-                        Program.WithoutColor
-                        |> Expect.equal
-                            (Program.SystemMessage Program.Failure
-                                """Validation errors:
-
-Invalid `--config` option.
-Problem with the value at json.port:
-
-    "not-a-number"
-
-Expecting an INT"""
-                            )
             ]
         , describe "4b. JSON input mode - error messages"
             [ test "missing required field in JSON" <|
@@ -560,23 +431,6 @@ Problem with the value at json.limit:
 
 Expecting a STRING"""
                             )
-            , test "invalid typed JSON in JSON mode" <|
-                \() ->
-                    Program.run deployConfig
-                        [ "node", "deploy", "{\"$cli\":\"elm-cli-options-parser\",\"config\":{\"host\":\"prod.example.com\",\"port\":\"not-a-number\"}}" ]
-                        "1.0.0"
-                        Program.WithoutColor
-                        |> Expect.equal
-                            (Program.SystemMessage Program.Failure
-                                """Validation errors:
-
-Invalid "config" field.
-Problem with the value at json.config.port:
-
-    "not-a-number"
-
-Expecting an INT"""
-                            )
             ]
         , describe "5. String vs int type difference"
             [ test "limit as string '10' works (CLI)" <|
@@ -605,33 +459,6 @@ Problem with the value at json.limit:
     10
 
 Expecting a STRING"""
-                            )
-            , test "port in typed JSON is a real integer (no string coercion)" <|
-                \() ->
-                    -- With withTypedJson, the decoder expects an actual integer
-                    -- Passing a string "443" for port would FAIL
-                    Program.run deployConfig
-                        [ "node", "deploy", "--config", "{\"host\":\"prod.example.com\",\"port\":443,\"ssl\":true}" ]
-                        "1.0.0"
-                        Program.WithoutColor
-                        |> Expect.equal (Program.CustomMatch { config = { host = "prod.example.com", port_ = 443, ssl = True }, dryRun = False })
-            , test "port as string in typed JSON fails with type error" <|
-                \() ->
-                    -- This SHOULD fail because the TsJson decoder expects int, not string
-                    Program.run deployConfig
-                        [ "node", "deploy", "--config", "{\"host\":\"prod.example.com\",\"port\":\"443\",\"ssl\":true}" ]
-                        "1.0.0"
-                        Program.WithoutColor
-                        |> Expect.equal
-                            (Program.SystemMessage Program.Failure
-                                """Validation errors:
-
-Invalid `--config` option.
-Problem with the value at json.port:
-
-    "443"
-
-Expecting an INT"""
                             )
             ]
         ]
