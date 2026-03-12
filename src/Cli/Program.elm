@@ -632,7 +632,6 @@ toJsonSchema (Config { optionsParsers }) =
         baseSchema
 
 
-
 parserToJsonSchemaFromTsTypes : OptionsParser msg BuilderState.NoMoreOptions -> Encode.Value
 parserToJsonSchemaFromTsTypes parser =
     let
@@ -728,7 +727,6 @@ usageSpecDescription spec =
             maybeDescription
 
 
-
 usageSpecToRequired : UsageSpec -> Maybe String
 usageSpecToRequired spec =
     case spec of
@@ -755,7 +753,6 @@ usageSpecToRequired spec =
 
         UsageSpec.RestArgs _ _ ->
             Nothing
-
 
 
 {-| Merge additional key-value pairs into a JSON object value.

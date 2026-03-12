@@ -99,7 +99,6 @@ setDisplayName displayName usageSpec =
             usageSpec
 
 
-
 changeUsageSpec : List String -> UsageSpec -> UsageSpec
 changeUsageSpec possibleValues usageSpec =
     case usageSpec of
@@ -522,7 +521,7 @@ wrapPartsHelper : Int -> String -> List String -> String -> List String -> Strin
 wrapPartsHelper maxWidth indent parts currentLine accLines =
     case parts of
         [] ->
-            (List.reverse (currentLine :: accLines))
+            List.reverse (currentLine :: accLines)
                 |> String.join "\n"
 
         part :: rest ->

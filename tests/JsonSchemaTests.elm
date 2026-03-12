@@ -7,6 +7,7 @@ import Expect
 import Json.Encode as Encode
 import Test exposing (..)
 
+
 all : Test
 all =
     describe "toJsonSchema"

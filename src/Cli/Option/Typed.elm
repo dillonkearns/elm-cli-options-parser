@@ -1,5 +1,6 @@
 module Cli.Option.Typed exposing
-    ( requiredKeywordArg, optionalKeywordArg, keywordArgList
+    ( Option
+    , requiredKeywordArg, optionalKeywordArg, keywordArgList
     , requiredPositionalArg, optionalPositionalArg
     , flag, restArgs
     , oneOf, validateMap, validateMapIfPresent, withDefault
@@ -12,6 +13,11 @@ schema from the same decoder.
 
 Use this module instead of `Cli.Option` when you want typed JSON schemas
 (e.g., `"type": "integer"` instead of `"type": "string"` with manual validation).
+
+
+## Types
+
+@docs Option
 
 
 ## Keyword Arguments
@@ -50,6 +56,12 @@ import Tokenizer
 import TsJson.Decode as TsDecode
 
 
+{-| Re-exported from `Cli.Option` for convenience. See `Cli.Option.Option`.
+-}
+type alias Option from to builderState =
+    Internal.Option from to builderState
+
+
 {-| A required keyword argument with a typed decoder.
 
     Option.requiredKeywordArg "count" TsDecode.int
@@ -58,7 +70,7 @@ import TsJson.Decode as TsDecode
     -- Schema: {"type": "integer"}
 
 -}
-requiredKeywordArg : String -> TsDecode.Decoder value -> Option String value { position : BeginningOption, canAddMissingMessage : ()}
+requiredKeywordArg : String -> TsDecode.Decoder value -> Option String value { position : BeginningOption, canAddMissingMessage : () }
 requiredKeywordArg optionName tsDecoder =
     let
         elmJsonDecoder =
@@ -92,7 +104,8 @@ requiredKeywordArg optionName tsDecoder =
         , meta = { missingMessage = Nothing }
         , tsType = TsDecode.tsType tsDecoder
         , jsonGrabber =
-            jsonFieldGrabber optionName elmJsonDecoder
+            jsonFieldGrabber optionName
+                elmJsonDecoder
                 (Cli.Decode.MissingRequiredKeywordArg { name = optionName, customMessage = Nothing })
         }
 
@@ -104,7 +117,7 @@ requiredKeywordArg optionName tsDecoder =
     -- JSON: {"greeting": "hi"} → Just "hi", absent → Nothing
 
 -}
-optionalKeywordArg : String -> TsDecode.Decoder value -> Option (Maybe String) (Maybe value) { position : BeginningOption}
+optionalKeywordArg : String -> TsDecode.Decoder value -> Option (Maybe String) (Maybe value) { position : BeginningOption }
 optionalKeywordArg optionName tsDecoder =
     let
         elmJsonDecoder =
@@ -170,7 +183,7 @@ optionalKeywordArg optionName tsDecoder =
     -- CLI: --header "X-A: 1" --header "X-B: 2" → ["X-A: 1", "X-B: 2"]
 
 -}
-keywordArgList : String -> TsDecode.Decoder value -> Option (List String) (List value) { position : BeginningOption}
+keywordArgList : String -> TsDecode.Decoder value -> Option (List String) (List value) { position : BeginningOption }
 keywordArgList flagName tsDecoder =
     let
         elmJsonDecoder =
@@ -235,7 +248,7 @@ keywordArgList flagName tsDecoder =
     -- JSON: {"port": 8080} → 8080
 
 -}
-requiredPositionalArg : String -> TsDecode.Decoder value -> Option String value { position : BeginningOption, canAddMissingMessage : ()}
+requiredPositionalArg : String -> TsDecode.Decoder value -> Option String value { position : BeginningOption, canAddMissingMessage : () }
 requiredPositionalArg operandDescription tsDecoder =
     let
         elmJsonDecoder =
@@ -268,7 +281,8 @@ requiredPositionalArg operandDescription tsDecoder =
         , meta = { missingMessage = Nothing }
         , tsType = TsDecode.tsType tsDecoder
         , jsonGrabber =
-            jsonFieldGrabber operandDescription elmJsonDecoder
+            jsonFieldGrabber operandDescription
+                elmJsonDecoder
                 (Cli.Decode.MissingRequiredPositionalArg
                     { name = operandDescription, operandsSoFar = 0, customMessage = Nothing }
                 )
@@ -281,7 +295,7 @@ Must be used with `OptionsParser.withOptionalPositionalArg`.
     Option.optionalPositionalArg "revision" TsDecode.string
 
 -}
-optionalPositionalArg : String -> TsDecode.Decoder value -> Option (Maybe String) (Maybe value) { position : OptionalPositionalArgOption}
+optionalPositionalArg : String -> TsDecode.Decoder value -> Option (Maybe String) (Maybe value) { position : OptionalPositionalArgOption }
 optionalPositionalArg operandDescription tsDecoder =
     let
         elmJsonDecoder =
@@ -342,7 +356,7 @@ optionalPositionalArg operandDescription tsDecoder =
     -- JSON: {"verbose": true} → True, absent → False
 
 -}
-flag : String -> Option Bool Bool { position : BeginningOption}
+flag : String -> Option Bool Bool { position : BeginningOption }
 flag flagName =
     Option
         { dataGrabber =
@@ -376,7 +390,7 @@ flag flagName =
     -- CLI: mytool a.txt b.txt → ["a.txt", "b.txt"]
 
 -}
-restArgs : String -> Option (List String) (List String) { position : RestArgsOption}
+restArgs : String -> Option (List String) (List String) { position : RestArgsOption }
 restArgs restArgsDescription =
     Option
         { dataGrabber =

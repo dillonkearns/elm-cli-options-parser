@@ -7,10 +7,13 @@ import Expect
 import Json.Encode as Encode
 import Test exposing (..)
 
+
 {-| A realistic CLI: a task management tool with subcommands.
 
     mytool add --title "Buy milk" --priority high
+
     mytool list --format json --limit 10
+
     mytool complete 42
 
 -}
@@ -115,7 +118,6 @@ taskConfig =
                     )
                 |> OptionsParser.map Complete
             )
-
 
 
 all : Test

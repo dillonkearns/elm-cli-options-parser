@@ -156,7 +156,6 @@ type OptionalPositionalArgOption
     = OptionalPositionalArgOption Never
 
 
-
 {-| Run a validation. (See an example in the Validation section above, or
 in the [`examples`](https://github.com/dillonkearns/elm-cli-options-parser/tree/master/examples/src) folder).
 -}
@@ -228,7 +227,7 @@ Parses to: `"src/Main.elm"`
     Option.requiredPositionalArg "input"
 
 -}
-requiredPositionalArg : String -> Option String String { position : BeginningOption, canAddMissingMessage : ()}
+requiredPositionalArg : String -> Option String String { position : BeginningOption, canAddMissingMessage : () }
 requiredPositionalArg operandDescription =
     buildRequiredOption
         (\{ operands, operandsSoFar } ->
@@ -251,7 +250,8 @@ requiredPositionalArg operandDescription =
         )
         (UsageSpec.operand operandDescription)
         (TsDecode.tsType TsDecode.string)
-        (jsonFieldGrabber operandDescription Json.Decode.string
+        (jsonFieldGrabber operandDescription
+            Json.Decode.string
             (Cli.Decode.MissingRequiredPositionalArg
                 { name = operandDescription, operandsSoFar = 0, customMessage = Nothing }
             )
@@ -266,7 +266,7 @@ Parses to: `Just "main.js"` (or `Nothing` if omitted)
     Option.optionalKeywordArg "output"
 
 -}
-optionalKeywordArg : String -> Option (Maybe String) (Maybe String) { position : BeginningOption}
+optionalKeywordArg : String -> Option (Maybe String) (Maybe String) { position : BeginningOption }
 optionalKeywordArg optionName =
     buildOptionalOption
         (\{ options } ->
@@ -299,7 +299,7 @@ Parses to: `"my-app"`
     Option.requiredKeywordArg "name"
 
 -}
-requiredKeywordArg : String -> Option String String { position : BeginningOption, canAddMissingMessage : ()}
+requiredKeywordArg : String -> Option String String { position : BeginningOption, canAddMissingMessage : () }
 requiredKeywordArg optionName =
     buildRequiredOption
         (\{ options } ->
@@ -323,7 +323,8 @@ requiredKeywordArg optionName =
         )
         (UsageSpec.keywordArg optionName Required)
         (TsDecode.tsType TsDecode.string)
-        (jsonFieldGrabber optionName Json.Decode.string
+        (jsonFieldGrabber optionName
+            Json.Decode.string
             (Cli.Decode.MissingRequiredKeywordArg { name = optionName, customMessage = Nothing })
         )
 
@@ -336,7 +337,7 @@ Parses to: `True` (or `False` if omitted)
     Option.flag "debug"
 
 -}
-flag : String -> Option Bool Bool { position : BeginningOption}
+flag : String -> Option Bool Bool { position : BeginningOption }
 flag flagName =
     buildOptionalOption
         (\{ options } ->
@@ -356,7 +357,7 @@ flag flagName =
 
 {-| Build an option for required arguments (has canAddMissingMessage capability).
 -}
-buildRequiredOption : Internal.DataGrabber a -> UsageSpec -> TsJson.Type.Type -> Internal.JsonGrabber a -> Option a a { position : BeginningOption, canAddMissingMessage : ()}
+buildRequiredOption : Internal.DataGrabber a -> UsageSpec -> TsJson.Type.Type -> Internal.JsonGrabber a -> Option a a { position : BeginningOption, canAddMissingMessage : () }
 buildRequiredOption dataGrabber usageSpec tsType jsonGrabber =
     Option
         { dataGrabber = dataGrabber
@@ -370,7 +371,7 @@ buildRequiredOption dataGrabber usageSpec tsType jsonGrabber =
 
 {-| Build an option for optional arguments (no canAddMissingMessage capability).
 -}
-buildOptionalOption : Internal.DataGrabber a -> UsageSpec -> TsJson.Type.Type -> Internal.JsonGrabber a -> Option a a { position : BeginningOption}
+buildOptionalOption : Internal.DataGrabber a -> UsageSpec -> TsJson.Type.Type -> Internal.JsonGrabber a -> Option a a { position : BeginningOption }
 buildOptionalOption dataGrabber usageSpec tsType jsonGrabber =
     Option
         { dataGrabber = dataGrabber
@@ -384,7 +385,7 @@ buildOptionalOption dataGrabber usageSpec tsType jsonGrabber =
 
 {-| Build an ending option (like restArgs, optionalPositionalArg).
 -}
-buildEndingOption : Internal.DataGrabber a -> UsageSpec -> TsJson.Type.Type -> Internal.JsonGrabber a -> Option a a { position : position}
+buildEndingOption : Internal.DataGrabber a -> UsageSpec -> TsJson.Type.Type -> Internal.JsonGrabber a -> Option a a { position : position }
 buildEndingOption dataGrabber usageSpec tsType jsonGrabber =
     Option
         { dataGrabber = dataGrabber
@@ -843,7 +844,7 @@ Parses to: `["Auth: token", "Accept: json"]`
     Option.keywordArgList "header"
 
 -}
-keywordArgList : String -> Option (List String) (List String) { position : BeginningOption}
+keywordArgList : String -> Option (List String) (List String) { position : BeginningOption }
 keywordArgList flagName =
     buildOptionalOption
         (\{ options } ->
@@ -870,7 +871,7 @@ keywordArgList flagName =
 
 {-| Note that this must be used with `OptionsParser.withOptionalPositionalArg`.
 -}
-optionalPositionalArg : String -> Option (Maybe String) (Maybe String) { position : OptionalPositionalArgOption}
+optionalPositionalArg : String -> Option (Maybe String) (Maybe String) { position : OptionalPositionalArgOption }
 optionalPositionalArg operandDescription =
     buildEndingOption
         (\flagsAndOperands ->
@@ -894,7 +895,7 @@ optionalPositionalArg operandDescription =
 
 {-| Note that this must be used with `OptionsParser.withRestArgs`.
 -}
-restArgs : String -> Option (List String) (List String) { position : RestArgsOption}
+restArgs : String -> Option (List String) (List String) { position : RestArgsOption }
 restArgs restArgsDescription =
     buildEndingOption
         (\{ operands, usageSpecs } ->

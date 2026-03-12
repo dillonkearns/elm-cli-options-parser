@@ -4,6 +4,7 @@ module ErrorMessageFormattingTests exposing (all)
 
 These tests assert on the exact error message output to ensure
 users see clear, helpful messages.
+
 -}
 
 import Cli.Option as Option
