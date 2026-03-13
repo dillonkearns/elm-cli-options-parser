@@ -58,11 +58,30 @@ all =
                                 , ( "type", Encode.string "object" )
                                 , ( "properties"
                                   , Encode.object
-                                        [ ( "$cli", Encode.object [ ( "type", Encode.string "object" ) ] )
-                                        , ( "name", Encode.object [ ( "type", Encode.string "string" ) ] )
+                                        [ ( "$cli"
+                                          , Encode.object
+                                                [ ( "type", Encode.string "object" )
+                                                , ( "properties"
+                                                  , Encode.object
+                                                        [ ( "keywordValues"
+                                                          , Encode.object
+                                                                [ ( "type", Encode.string "object" )
+                                                                , ( "description", Encode.string "Keyword arguments with values (e.g., --name <value>)" )
+                                                                , ( "properties"
+                                                                  , Encode.object
+                                                                        [ ( "name", Encode.object [ ( "type", Encode.string "string" ) ] ) ]
+                                                                  )
+                                                                , ( "required", Encode.list Encode.string [ "name" ] )
+                                                                ]
+                                                          )
+                                                        ]
+                                                  )
+                                                , ( "required", Encode.list Encode.string [ "keywordValues" ] )
+                                                ]
+                                          )
                                         ]
                                   )
-                                , ( "required", Encode.list Encode.string [ "$cli", "name" ] )
+                                , ( "required", Encode.list Encode.string [ "$cli" ] )
                                 ]
                                 |> Encode.encode 0
                             )
@@ -112,11 +131,30 @@ all =
                                 , ( "type", Encode.string "object" )
                                 , ( "properties"
                                   , Encode.object
-                                        [ ( "$cli", Encode.object [ ( "type", Encode.string "object" ) ] )
-                                        , ( "count", Encode.object [ ( "type", Encode.string "integer" ) ] )
+                                        [ ( "$cli"
+                                          , Encode.object
+                                                [ ( "type", Encode.string "object" )
+                                                , ( "properties"
+                                                  , Encode.object
+                                                        [ ( "keywordValues"
+                                                          , Encode.object
+                                                                [ ( "type", Encode.string "object" )
+                                                                , ( "description", Encode.string "Keyword arguments with values (e.g., --name <value>)" )
+                                                                , ( "properties"
+                                                                  , Encode.object
+                                                                        [ ( "count", Encode.object [ ( "type", Encode.string "integer" ) ] ) ]
+                                                                  )
+                                                                , ( "required", Encode.list Encode.string [ "count" ] )
+                                                                ]
+                                                          )
+                                                        ]
+                                                  )
+                                                , ( "required", Encode.list Encode.string [ "keywordValues" ] )
+                                                ]
+                                          )
                                         ]
                                   )
-                                , ( "required", Encode.list Encode.string [ "$cli", "count" ] )
+                                , ( "required", Encode.list Encode.string [ "$cli" ] )
                                 ]
                                 |> Encode.encode 0
                             )
@@ -469,9 +507,12 @@ all =
                                           , Encode.object
                                                 [ ( "header", Encode.list Encode.string [ "X-A: 1" ] ) ]
                                           )
+                                        , ( "keywordValues"
+                                          , Encode.object
+                                                [ ( "limit", Encode.string "10" ) ]
+                                          )
                                         ]
                                   )
-                                , ( "limit", Encode.string "10" )
                                 ]
                                 |> Encode.encode 0
                     in
@@ -518,16 +559,36 @@ all =
                                 , ( "type", Encode.string "object" )
                                 , ( "properties"
                                   , Encode.object
-                                        [ ( "$cli", Encode.object [ ( "type", Encode.string "object" ) ] )
-                                        , ( "count"
+                                        [ ( "$cli"
                                           , Encode.object
-                                                [ ( "type", Encode.string "integer" )
-                                                , ( "description", Encode.string "Number of items" )
+                                                [ ( "type", Encode.string "object" )
+                                                , ( "properties"
+                                                  , Encode.object
+                                                        [ ( "keywordValues"
+                                                          , Encode.object
+                                                                [ ( "type", Encode.string "object" )
+                                                                , ( "description", Encode.string "Keyword arguments with values (e.g., --name <value>)" )
+                                                                , ( "properties"
+                                                                  , Encode.object
+                                                                        [ ( "count"
+                                                                          , Encode.object
+                                                                                [ ( "type", Encode.string "integer" )
+                                                                                , ( "description", Encode.string "Number of items" )
+                                                                                ]
+                                                                          )
+                                                                        ]
+                                                                  )
+                                                                , ( "required", Encode.list Encode.string [ "count" ] )
+                                                                ]
+                                                          )
+                                                        ]
+                                                  )
+                                                , ( "required", Encode.list Encode.string [ "keywordValues" ] )
                                                 ]
                                           )
                                         ]
                                   )
-                                , ( "required", Encode.list Encode.string [ "$cli", "count" ] )
+                                , ( "required", Encode.list Encode.string [ "$cli" ] )
                                 ]
                                 |> Encode.encode 0
                             )
@@ -573,7 +634,12 @@ runJsonWith : Option.Option from to { c | position : Cli.Option.BeginningOption 
 runJsonWith option fields =
     let
         jsonArg =
-            Encode.object (( "$cli", Encode.object [] ) :: fields)
+            Encode.object
+                [ ( "$cli"
+                  , Encode.object
+                        [ ( "keywordValues", Encode.object fields ) ]
+                  )
+                ]
                 |> Encode.encode 0
     in
     Program.config

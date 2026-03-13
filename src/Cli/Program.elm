@@ -612,7 +612,7 @@ field, giving LLMs a concise overview of how to invoke the command.
             )
         |> Program.toJsonSchema "my-script"
         |> Json.Encode.encode 0
-    --> """{"description":"my-script --name <NAME>","type":"object","properties":{"$cli":{"type":"object"},"name":{"type":"string"}},"required":["$cli","name"]}"""
+    --> """{"description":"my-script --name <NAME>","type":"object","properties":{"$cli":{"type":"object","properties":{"keywordValues":{"type":"object","description":"Keyword arguments with values (e.g., --name <value>)","properties":{"name":{"type":"string"}},"required":["name"]}},"required":["keywordValues"]}},"required":["$cli"]}"""
 
 -}
 toJsonSchema : String -> Config msg -> Encode.Value
@@ -645,8 +645,8 @@ parserToJsonSchemaFromTsTypes programName parser =
             OptionsParser.synopsis False programName parser
                 |> String.trim
 
-        -- Subcommand fields (flat properties)
-        subCommandFields =
+        -- Subcommand → $cli.subcommand
+        subCommandProperty =
             case OptionsParser.getSubCommand parser of
                 Just subName ->
                     [ ( "subcommand"
@@ -660,7 +660,7 @@ parserToJsonSchemaFromTsTypes programName parser =
                 Nothing ->
                     []
 
-        -- Keyword args (non-ZeroOrMore) → flat properties
+        -- Keyword args (non-ZeroOrMore) → $cli.keywordValues
         keywordArgProperties =
             specsWithTypes
                 |> List.filterMap
@@ -672,6 +672,18 @@ parserToJsonSchemaFromTsTypes programName parser =
 
                                 else
                                     Nothing
+
+                            _ ->
+                                Nothing
+                    )
+
+        requiredKeywordArgs =
+            specsWithTypes
+                |> List.filterMap
+                    (\( spec, _ ) ->
+                        case spec of
+                            UsageSpec.FlagOrKeywordArg (UsageSpec.KeywordArg kwName _) _ Required _ ->
+                                Just kwName
 
                             _ ->
                                 Nothing
@@ -689,6 +701,10 @@ parserToJsonSchemaFromTsTypes programName parser =
                             _ ->
                                 Nothing
                     )
+
+        hasRequiredFlags =
+            flagSpecs
+                |> List.any (\( _, _, occ ) -> occ == Required)
 
         -- Keyword arg lists → $cli.keywordLists
         keywordListProperties =
@@ -730,11 +746,57 @@ parserToJsonSchemaFromTsTypes programName parser =
                     )
                 |> List.head
 
-        -- Build $cli object schema
+        -- Build $cli.keywordValues schema
+        keywordValuesProperty =
+            if List.isEmpty keywordArgProperties then
+                []
+
+            else
+                [ ( "keywordValues"
+                  , Encode.object
+                        ([ ( "type", Encode.string "object" )
+                         , ( "description", Encode.string "Keyword arguments with values (e.g., --name <value>)" )
+                         , ( "properties", Encode.object keywordArgProperties )
+                         ]
+                            ++ (if List.isEmpty requiredKeywordArgs then
+                                    []
+
+                                else
+                                    [ ( "required", Encode.list Encode.string requiredKeywordArgs ) ]
+                               )
+                        )
+                  )
+                ]
+
+        -- Build all $cli sub-properties
         cliSubProperties =
-            positionalSchemaProperty positionalSpecs restArgSpec
+            subCommandProperty
+                ++ keywordValuesProperty
+                ++ positionalSchemaProperty positionalSpecs restArgSpec
                 ++ flagsSchemaProperty flagSpecs
                 ++ keywordListsSchemaProperty keywordListProperties
+
+        -- $cli.required: subcommand, keywordValues (if has required kw args), flags (if has expectFlag)
+        cliRequired =
+            (case OptionsParser.getSubCommand parser of
+                Just _ ->
+                    [ "subcommand" ]
+
+                Nothing ->
+                    []
+            )
+                ++ (if not (List.isEmpty requiredKeywordArgs) then
+                        [ "keywordValues" ]
+
+                    else
+                        []
+                   )
+                ++ (if hasRequiredFlags then
+                        [ "flags" ]
+
+                    else
+                        []
+                   )
 
         cliSchema =
             Encode.object
@@ -745,41 +807,19 @@ parserToJsonSchemaFromTsTypes programName parser =
                         else
                             [ ( "properties", Encode.object cliSubProperties ) ]
                        )
-                )
-
-        -- All properties
-        allProperties =
-            [ ( "$cli", cliSchema ) ]
-                ++ subCommandFields
-                ++ keywordArgProperties
-
-        -- Required: $cli is always required, plus required keyword args and subcommand
-        requiredFields =
-            [ "$cli" ]
-                ++ (case OptionsParser.getSubCommand parser of
-                        Just _ ->
-                            [ "subcommand" ]
-
-                        Nothing ->
+                    ++ (if List.isEmpty cliRequired then
                             []
-                   )
-                ++ (specsWithTypes
-                        |> List.filterMap
-                            (\( spec, _ ) ->
-                                case spec of
-                                    UsageSpec.FlagOrKeywordArg (UsageSpec.KeywordArg kwName _) _ Required _ ->
-                                        Just kwName
 
-                                    _ ->
-                                        Nothing
-                            )
-                   )
+                        else
+                            [ ( "required", Encode.list Encode.string cliRequired ) ]
+                       )
+                )
     in
     Encode.object
         [ ( "description", Encode.string usageSynopsis )
         , ( "type", Encode.string "object" )
-        , ( "properties", Encode.object allProperties )
-        , ( "required", Encode.list Encode.string requiredFields )
+        , ( "properties", Encode.object [ ( "$cli", cliSchema ) ] )
+        , ( "required", Encode.list Encode.string [ "$cli" ] )
         ]
 
 

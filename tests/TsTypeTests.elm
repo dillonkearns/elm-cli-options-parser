@@ -222,22 +222,42 @@ all =
                                 , ( "type", Encode.string "object" )
                                 , ( "properties"
                                   , Encode.object
-                                        [ ( "$cli", Encode.object [ ( "type", Encode.string "object" ) ] )
-                                        , ( "format"
+                                        [ ( "$cli"
                                           , Encode.object
-                                                [ ( "type", Encode.string "string" )
-                                                , ( "anyOf"
-                                                  , Encode.list identity
-                                                        [ Encode.object [ ( "const", Encode.string "json" ) ]
-                                                        , Encode.object [ ( "const", Encode.string "junit" ) ]
-                                                        , Encode.object [ ( "const", Encode.string "console" ) ]
+                                                [ ( "type", Encode.string "object" )
+                                                , ( "properties"
+                                                  , Encode.object
+                                                        [ ( "keywordValues"
+                                                          , Encode.object
+                                                                [ ( "type", Encode.string "object" )
+                                                                , ( "description", Encode.string "Keyword arguments with values (e.g., --name <value>)" )
+                                                                , ( "properties"
+                                                                  , Encode.object
+                                                                        [ ( "format"
+                                                                          , Encode.object
+                                                                                [ ( "type", Encode.string "string" )
+                                                                                , ( "anyOf"
+                                                                                  , Encode.list identity
+                                                                                        [ Encode.object [ ( "const", Encode.string "json" ) ]
+                                                                                        , Encode.object [ ( "const", Encode.string "junit" ) ]
+                                                                                        , Encode.object [ ( "const", Encode.string "console" ) ]
+                                                                                        ]
+                                                                                  )
+                                                                                ]
+                                                                          )
+                                                                        ]
+                                                                  )
+                                                                , ( "required", Encode.list Encode.string [ "format" ] )
+                                                                ]
+                                                          )
                                                         ]
                                                   )
+                                                , ( "required", Encode.list Encode.string [ "keywordValues" ] )
                                                 ]
                                           )
                                         ]
                                   )
-                                , ( "required", Encode.list Encode.string [ "$cli", "format" ] )
+                                , ( "required", Encode.list Encode.string [ "$cli" ] )
                                 ]
                                 |> Encode.encode 0
                             )

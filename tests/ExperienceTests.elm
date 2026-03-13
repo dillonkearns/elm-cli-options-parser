@@ -136,37 +136,50 @@ all =
       "type": "object",
       "properties": {
         "$cli": {
-          "type": "object"
-        },
-        "subcommand": {
-          "type": "string",
-          "const": "add"
-        },
-        "title": {
-          "type": "string",
-          "description": "The task title"
-        },
-        "priority": {
-          "type": "string",
-          "anyOf": [
-            {
-              "const": "low"
+          "type": "object",
+          "properties": {
+            "subcommand": {
+              "type": "string",
+              "const": "add"
             },
-            {
-              "const": "medium"
-            },
-            {
-              "const": "high"
+            "keywordValues": {
+              "type": "object",
+              "description": "Keyword arguments with values (e.g., --name <value>)",
+              "properties": {
+                "title": {
+                  "type": "string",
+                  "description": "The task title"
+                },
+                "priority": {
+                  "type": "string",
+                  "anyOf": [
+                    {
+                      "const": "low"
+                    },
+                    {
+                      "const": "medium"
+                    },
+                    {
+                      "const": "high"
+                    }
+                  ],
+                  "description": "Task priority level"
+                }
+              },
+              "required": [
+                "title",
+                "priority"
+              ]
             }
-          ],
-          "description": "Task priority level"
+          },
+          "required": [
+            "subcommand",
+            "keywordValues"
+          ]
         }
       },
       "required": [
-        "$cli",
-        "subcommand",
-        "title",
-        "priority"
+        "$cli"
       ]
     },
     {
@@ -176,6 +189,38 @@ all =
         "$cli": {
           "type": "object",
           "properties": {
+            "subcommand": {
+              "type": "string",
+              "const": "list"
+            },
+            "keywordValues": {
+              "type": "object",
+              "description": "Keyword arguments with values (e.g., --name <value>)",
+              "properties": {
+                "format": {
+                  "type": "string",
+                  "anyOf": [
+                    {
+                      "const": "json"
+                    },
+                    {
+                      "const": "table"
+                    },
+                    {
+                      "const": "csv"
+                    }
+                  ],
+                  "description": "Output format"
+                },
+                "limit": {
+                  "type": "string",
+                  "description": "Maximum number of tasks to show"
+                }
+              },
+              "required": [
+                "limit"
+              ]
+            },
             "flags": {
               "type": "object",
               "description": "Boolean flags, passed as --flag (e.g., --verbose)",
@@ -186,36 +231,15 @@ all =
                 }
               }
             }
-          }
-        },
-        "subcommand": {
-          "type": "string",
-          "const": "list"
-        },
-        "format": {
-          "type": "string",
-          "anyOf": [
-            {
-              "const": "json"
-            },
-            {
-              "const": "table"
-            },
-            {
-              "const": "csv"
-            }
-          ],
-          "description": "Output format"
-        },
-        "limit": {
-          "type": "string",
-          "description": "Maximum number of tasks to show"
+          },
+          "required": [
+            "subcommand",
+            "keywordValues"
+          ]
         }
       },
       "required": [
-        "$cli",
-        "subcommand",
-        "limit"
+        "$cli"
       ]
     },
     {
@@ -225,6 +249,10 @@ all =
         "$cli": {
           "type": "object",
           "properties": {
+            "subcommand": {
+              "type": "string",
+              "const": "complete"
+            },
             "positional": {
               "type": "array",
               "description": "Positional arguments, passed in order (e.g., mytool <source> <dest>)",
@@ -237,16 +265,14 @@ all =
               "items": false,
               "minItems": 1
             }
-          }
-        },
-        "subcommand": {
-          "type": "string",
-          "const": "complete"
+          },
+          "required": [
+            "subcommand"
+          ]
         }
       },
       "required": [
-        "$cli",
-        "subcommand"
+        "$cli"
       ]
     }
   ]
@@ -322,14 +348,14 @@ Options:
             [ test "add task via JSON" <|
                 \() ->
                     Program.run taskConfig
-                        [ "node", "mytool", "{\"$cli\":{},\"subcommand\":\"add\",\"title\":\"Buy milk\",\"priority\":\"high\"}" ]
+                        [ "node", "mytool", "{\"$cli\":{\"subcommand\":\"add\",\"keywordValues\":{\"title\":\"Buy milk\",\"priority\":\"high\"}}}" ]
                         "1.0.0"
                         Program.WithoutColor
                         |> Expect.equal (Program.CustomMatch (Add { title = "Buy milk", priority = High }))
             , test "list tasks via JSON" <|
                 \() ->
                     Program.run taskConfig
-                        [ "node", "mytool", "{\"$cli\":{\"flags\":{\"verbose\":true}},\"subcommand\":\"list\",\"format\":\"json\",\"limit\":\"10\"}" ]
+                        [ "node", "mytool", "{\"$cli\":{\"subcommand\":\"list\",\"flags\":{\"verbose\":true},\"keywordValues\":{\"format\":\"json\",\"limit\":\"10\"}}}" ]
                         "1.0.0"
                         Program.WithoutColor
                         |> Expect.equal (Program.CustomMatch (ListTasks { format = Json, limit = 10, verbose = True }))
@@ -337,7 +363,7 @@ Options:
                 \() ->
                     -- Direct JSON decoding: positional args come from $cli.positional
                     Program.run taskConfig
-                        [ "node", "mytool", "{\"$cli\":{\"positional\":[\"42\"]},\"subcommand\":\"complete\"}" ]
+                        [ "node", "mytool", "{\"$cli\":{\"subcommand\":\"complete\",\"positional\":[\"42\"]}}" ]
                         "1.0.0"
                         Program.WithoutColor
                         |> Expect.equal (Program.CustomMatch (Complete { taskId = "42" }))
@@ -427,7 +453,7 @@ Run with --help for usage information."""
             [ test "missing required field in JSON" <|
                 \() ->
                     Program.run taskConfig
-                        [ "node", "mytool", "{\"$cli\":{},\"subcommand\":\"add\",\"priority\":\"high\"}" ]
+                        [ "node", "mytool", "{\"$cli\":{\"subcommand\":\"add\",\"keywordValues\":{\"priority\":\"high\"}}}" ]
                         "1.0.0"
                         Program.WithoutColor
                         |> Expect.equal
@@ -437,7 +463,7 @@ Run with --help for usage information."""
             , test "invalid oneOf value in JSON" <|
                 \() ->
                     Program.run taskConfig
-                        [ "node", "mytool", "{\"$cli\":{},\"subcommand\":\"add\",\"title\":\"Buy milk\",\"priority\":\"urgent\"}" ]
+                        [ "node", "mytool", "{\"$cli\":{\"subcommand\":\"add\",\"keywordValues\":{\"title\":\"Buy milk\",\"priority\":\"urgent\"}}}" ]
                         "1.0.0"
                         Program.WithoutColor
                         |> Expect.equal
@@ -452,7 +478,7 @@ Must be one of [low, medium, high]"""
                     -- With direct JSON decoding, JSON number 10 for a string field is a type error
                     -- The schema says "type": "string", so LLMs should send "10" not 10
                     Program.run taskConfig
-                        [ "node", "mytool", "{\"$cli\":{},\"subcommand\":\"list\",\"format\":\"json\",\"limit\":10}" ]
+                        [ "node", "mytool", "{\"$cli\":{\"subcommand\":\"list\",\"keywordValues\":{\"format\":\"json\",\"limit\":10}}}" ]
                         "1.0.0"
                         Program.WithoutColor
                         |> Expect.equal
@@ -481,7 +507,7 @@ Expecting a STRING"""
                     -- The schema says "type": "string" for limit. LLMs should send "10" not 10.
                     -- No more silent number-to-string coercion.
                     Program.run taskConfig
-                        [ "node", "mytool", "{\"$cli\":{},\"subcommand\":\"list\",\"format\":\"table\",\"limit\":10}" ]
+                        [ "node", "mytool", "{\"$cli\":{\"subcommand\":\"list\",\"keywordValues\":{\"format\":\"table\",\"limit\":10}}}" ]
                         "1.0.0"
                         Program.WithoutColor
                         |> Expect.equal

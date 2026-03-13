@@ -748,8 +748,10 @@ withDescription docString (OptionsParser optionsParserRecord) =
 
 Transforms:
 
+  - `$cli.subcommand` → flat `subcommand` field
+  - `$cli.keywordValues.*` → flat fields for each keyword arg
   - `$cli.positional[N]` → flat field named by Nth operand's UsageSpec name
-  - `$cli.flags` array → flat boolean fields for each flag in usageSpecs
+  - `$cli.flags` object → flat boolean fields for each flag in usageSpecs
   - `$cli.keywordLists.*` → flat array fields
   - Strips the `$cli` key from the result
 
@@ -760,11 +762,30 @@ normalizeCliJson usageSpecs blob =
         maybeCli =
             Json.Decode.decodeValue (Json.Decode.field "$cli" Json.Decode.value) blob
 
-        -- Original fields minus $cli
-        originalFields =
-            case Json.Decode.decodeValue (Json.Decode.keyValuePairs Json.Decode.value) blob of
-                Ok pairs ->
-                    pairs |> List.filter (\( k, _ ) -> k /= "$cli")
+        -- Build subcommand field from $cli.subcommand
+        subcommandField =
+            case maybeCli of
+                Ok cliValue ->
+                    case Json.Decode.decodeValue (Json.Decode.field "subcommand" Json.Decode.string) cliValue of
+                        Ok subName ->
+                            [ ( "subcommand", Encode.string subName ) ]
+
+                        Err _ ->
+                            []
+
+                Err _ ->
+                    []
+
+        -- Build keyword value fields from $cli.keywordValues
+        keywordValueFields =
+            case maybeCli of
+                Ok cliValue ->
+                    case Json.Decode.decodeValue (Json.Decode.field "keywordValues" (Json.Decode.keyValuePairs Json.Decode.value)) cliValue of
+                        Ok pairs ->
+                            pairs
+
+                        Err _ ->
+                            []
 
                 Err _ ->
                     []
@@ -871,4 +892,4 @@ normalizeCliJson usageSpecs blob =
                 Err _ ->
                     []
     in
-    Encode.object (originalFields ++ positionalFields ++ flagFields ++ keywordListFields)
+    Encode.object (subcommandField ++ keywordValueFields ++ positionalFields ++ flagFields ++ keywordListFields)
