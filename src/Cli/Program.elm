@@ -791,13 +791,16 @@ positionalSchemaProperty positionalArgs maybeRestArgs =
                             let
                                 baseSchema =
                                     stripSchemaKey (TsJson.Type.toJsonSchema tsType)
-                            in
-                            case usageSpecDescription spec of
-                                Just desc ->
-                                    appendJsonFields [ ( "description", Encode.string desc ) ] baseSchema
 
-                                Nothing ->
-                                    baseSchema
+                                desc =
+                                    case usageSpecDescription spec of
+                                        Just d ->
+                                            d
+
+                                        Nothing ->
+                                            UsageSpec.name spec
+                            in
+                            appendJsonFields [ ( "description", Encode.string desc ) ] baseSchema
                         )
 
             requiredCount =
@@ -858,6 +861,7 @@ positionalSchemaProperty positionalArgs maybeRestArgs =
 
 
 {-| Build the `$cli.flags` schema property.
+Flags are an object with boolean properties. Required flags (expectFlag) go in `required`.
 -}
 flagsSchemaProperty : List ( String, Maybe String, Occurences ) -> List ( String, Encode.Value )
 flagsSchemaProperty flags =
@@ -866,33 +870,23 @@ flagsSchemaProperty flags =
 
     else
         let
-            anyHasDescription =
-                flags |> List.any (\( _, desc, _ ) -> desc /= Nothing)
+            flagProperties =
+                flags
+                    |> List.map
+                        (\( flagName, maybeDesc, _ ) ->
+                            ( flagName
+                            , Encode.object
+                                ([ ( "type", Encode.string "boolean" ) ]
+                                    ++ (case maybeDesc of
+                                            Just desc ->
+                                                [ ( "description", Encode.string desc ) ]
 
-            itemsSchema =
-                if anyHasDescription then
-                    Encode.object
-                        [ ( "anyOf"
-                          , Encode.list
-                                (\( flagName, maybeDesc, _ ) ->
-                                    case maybeDesc of
-                                        Just desc ->
-                                            Encode.object
-                                                [ ( "const", Encode.string flagName )
-                                                , ( "description", Encode.string desc )
-                                                ]
-
-                                        Nothing ->
-                                            Encode.object
-                                                [ ( "const", Encode.string flagName ) ]
+                                            Nothing ->
+                                                []
+                                       )
                                 )
-                                flags
-                          )
-                        ]
-
-                else
-                    Encode.object
-                        [ ( "enum", Encode.list Encode.string (List.map (\( name, _, _ ) -> name) flags) ) ]
+                            )
+                        )
 
             requiredFlags =
                 flags
@@ -904,33 +898,19 @@ flagsSchemaProperty flags =
                             else
                                 Nothing
                         )
-
-            containsConstraints =
-                case requiredFlags of
-                    [] ->
-                        []
-
-                    [ singleFlag ] ->
-                        [ ( "contains", Encode.object [ ( "const", Encode.string singleFlag ) ] ) ]
-
-                    multipleFlags ->
-                        [ ( "allOf"
-                          , Encode.list
-                                (\flagName ->
-                                    Encode.object
-                                        [ ( "contains", Encode.object [ ( "const", Encode.string flagName ) ] ) ]
-                                )
-                                multipleFlags
-                          )
-                        ]
         in
         [ ( "flags"
           , Encode.object
-                ([ ( "type", Encode.string "array" )
+                ([ ( "type", Encode.string "object" )
                  , ( "description", Encode.string "Boolean flags, passed as --flag (e.g., --verbose)" )
-                 , ( "items", itemsSchema )
+                 , ( "properties", Encode.object flagProperties )
                  ]
-                    ++ containsConstraints
+                    ++ (if List.isEmpty requiredFlags then
+                            []
+
+                        else
+                            [ ( "required", Encode.list Encode.string requiredFlags ) ]
+                       )
                 )
           )
         ]

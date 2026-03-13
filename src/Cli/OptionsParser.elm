@@ -819,7 +819,7 @@ normalizeCliJson usageSpecs blob =
                 Err _ ->
                     []
 
-        -- Build flag fields from $cli.flags
+        -- Build flag fields from $cli.flags (object with boolean values)
         flagFields =
             case maybeCli of
                 Ok cliValue ->
@@ -836,12 +836,17 @@ normalizeCliJson usageSpecs blob =
                                                 Nothing
                                     )
                     in
-                    case Json.Decode.decodeValue (Json.Decode.field "flags" (Json.Decode.list Json.Decode.string)) cliValue of
-                        Ok activeFlagNames ->
+                    case Json.Decode.decodeValue (Json.Decode.field "flags" (Json.Decode.keyValuePairs Json.Decode.bool)) cliValue of
+                        Ok flagPairs ->
                             allFlagNames
                                 |> List.map
                                     (\flagName ->
-                                        ( flagName, Encode.bool (List.member flagName activeFlagNames) )
+                                        ( flagName
+                                        , Encode.bool
+                                            (flagPairs
+                                                |> List.any (\( k, v ) -> k == flagName && v)
+                                            )
+                                        )
                                     )
 
                         Err _ ->

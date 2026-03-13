@@ -417,7 +417,7 @@ all =
                             Encode.object
                                 [ ( "$cli"
                                   , Encode.object
-                                        [ ( "flags", Encode.list Encode.string [ "verbose" ] ) ]
+                                        [ ( "flags", Encode.object [ ( "verbose", Encode.bool True ) ] ) ]
                                   )
                                 ]
                                 |> Encode.encode 0
@@ -462,7 +462,7 @@ all =
                                 [ ( "$cli"
                                   , Encode.object
                                         [ ( "positional", Encode.list Encode.string [ "input.txt" ] )
-                                        , ( "flags", Encode.list Encode.string [ "verbose" ] )
+                                        , ( "flags", Encode.object [ ( "verbose", Encode.bool True ) ] )
                                         , ( "keywordLists"
                                           , Encode.object
                                                 [ ( "header", Encode.list Encode.string [ "X-A: 1" ] ) ]

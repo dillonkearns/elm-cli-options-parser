@@ -174,15 +174,13 @@ all =
           "type": "object",
           "properties": {
             "flags": {
-              "type": "array",
+              "type": "object",
               "description": "Boolean flags, passed as --flag (e.g., --verbose)",
-              "items": {
-                "anyOf": [
-                  {
-                    "const": "verbose",
-                    "description": "Show full task details"
-                  }
-                ]
+              "properties": {
+                "verbose": {
+                  "type": "boolean",
+                  "description": "Show full task details"
+                }
               }
             }
           }
@@ -326,7 +324,7 @@ Options:
             , test "list tasks via JSON" <|
                 \() ->
                     Program.run taskConfig
-                        [ "node", "mytool", "{\"$cli\":{\"flags\":[\"verbose\"]},\"subcommand\":\"list\",\"format\":\"json\",\"limit\":\"10\"}" ]
+                        [ "node", "mytool", "{\"$cli\":{\"flags\":{\"verbose\":true}},\"subcommand\":\"list\",\"format\":\"json\",\"limit\":\"10\"}" ]
                         "1.0.0"
                         Program.WithoutColor
                         |> Expect.equal (Program.CustomMatch (ListTasks { format = Json, limit = 10, verbose = True }))

@@ -57,11 +57,11 @@ all =
                                                   , Encode.object
                                                         [ ( "flags"
                                                           , Encode.object
-                                                                [ ( "type", Encode.string "array" )
+                                                                [ ( "type", Encode.string "object" )
                                                                 , ( "description", Encode.string "Boolean flags, passed as --flag (e.g., --verbose)" )
-                                                                , ( "items"
+                                                                , ( "properties"
                                                                   , Encode.object
-                                                                        [ ( "enum", Encode.list Encode.string [ "verbose" ] ) ]
+                                                                        [ ( "verbose", Encode.object [ ( "type", Encode.string "boolean" ) ] ) ]
                                                                   )
                                                                 ]
                                                           )
@@ -100,7 +100,7 @@ all =
                                                                 , ( "description", Encode.string "Positional arguments, passed in order (e.g., mytool <source> <dest>)" )
                                                                 , ( "prefixItems"
                                                                   , Encode.list identity
-                                                                        [ Encode.object [ ( "type", Encode.string "string" ) ] ]
+                                                                        [ Encode.object [ ( "type", Encode.string "string" ), ( "description", Encode.string "file" ) ] ]
                                                                   )
                                                                 , ( "items", Encode.bool False )
                                                                 , ( "minItems", Encode.int 1 )
@@ -141,7 +141,7 @@ all =
                                                                 , ( "description", Encode.string "Positional arguments, passed in order (e.g., mytool <source> <dest>)" )
                                                                 , ( "prefixItems"
                                                                   , Encode.list identity
-                                                                        [ Encode.object [ ( "type", Encode.string "string" ) ] ]
+                                                                        [ Encode.object [ ( "type", Encode.string "string" ), ( "description", Encode.string "revision" ) ] ]
                                                                   )
                                                                 , ( "items", Encode.bool False )
                                                                 ]
@@ -319,11 +319,11 @@ all =
                                                   , Encode.object
                                                         [ ( "flags"
                                                           , Encode.object
-                                                                [ ( "type", Encode.string "array" )
+                                                                [ ( "type", Encode.string "object" )
                                                                 , ( "description", Encode.string "Boolean flags, passed as --flag (e.g., --verbose)" )
-                                                                , ( "items"
+                                                                , ( "properties"
                                                                   , Encode.object
-                                                                        [ ( "enum", Encode.list Encode.string [ "verbose" ] ) ]
+                                                                        [ ( "verbose", Encode.object [ ( "type", Encode.string "boolean" ) ] ) ]
                                                                   )
                                                                 ]
                                                           )
@@ -339,7 +339,7 @@ all =
                                 ]
                                 |> Encode.encode 0
                             )
-            , test "expectFlag produces contains constraint in schema" <|
+            , test "expectFlag produces required constraint in schema" <|
                 \() ->
                     Program.config
                         |> Program.add
@@ -360,13 +360,13 @@ all =
                                                   , Encode.object
                                                         [ ( "flags"
                                                           , Encode.object
-                                                                [ ( "type", Encode.string "array" )
+                                                                [ ( "type", Encode.string "object" )
                                                                 , ( "description", Encode.string "Boolean flags, passed as --flag (e.g., --verbose)" )
-                                                                , ( "items"
+                                                                , ( "properties"
                                                                   , Encode.object
-                                                                        [ ( "enum", Encode.list Encode.string [ "init" ] ) ]
+                                                                        [ ( "init", Encode.object [ ( "type", Encode.string "boolean" ) ] ) ]
                                                                   )
-                                                                , ( "contains", Encode.object [ ( "const", Encode.string "init" ) ] )
+                                                                , ( "required", Encode.list Encode.string [ "init" ] )
                                                                 ]
                                                           )
                                                         ]
@@ -379,7 +379,7 @@ all =
                                 ]
                                 |> Encode.encode 0
                             )
-            , test "multiple expectFlags produce allOf with contains" <|
+            , test "multiple expectFlags produce required on flags object" <|
                 \() ->
                     Program.config
                         |> Program.add
@@ -401,18 +401,15 @@ all =
                                                   , Encode.object
                                                         [ ( "flags"
                                                           , Encode.object
-                                                                [ ( "type", Encode.string "array" )
+                                                                [ ( "type", Encode.string "object" )
                                                                 , ( "description", Encode.string "Boolean flags, passed as --flag (e.g., --verbose)" )
-                                                                , ( "items"
+                                                                , ( "properties"
                                                                   , Encode.object
-                                                                        [ ( "enum", Encode.list Encode.string [ "init", "force" ] ) ]
-                                                                  )
-                                                                , ( "allOf"
-                                                                  , Encode.list identity
-                                                                        [ Encode.object [ ( "contains", Encode.object [ ( "const", Encode.string "init" ) ] ) ]
-                                                                        , Encode.object [ ( "contains", Encode.object [ ( "const", Encode.string "force" ) ] ) ]
+                                                                        [ ( "init", Encode.object [ ( "type", Encode.string "boolean" ) ] )
+                                                                        , ( "force", Encode.object [ ( "type", Encode.string "boolean" ) ] )
                                                                         ]
                                                                   )
+                                                                , ( "required", Encode.list Encode.string [ "init", "force" ] )
                                                                 ]
                                                           )
                                                         ]
@@ -425,7 +422,7 @@ all =
                                 ]
                                 |> Encode.encode 0
                             )
-            , test "mixed flag and expectFlag — only expectFlag gets contains" <|
+            , test "mixed flag and expectFlag — only expectFlag gets required" <|
                 \() ->
                     Program.config
                         |> Program.add
@@ -447,13 +444,15 @@ all =
                                                   , Encode.object
                                                         [ ( "flags"
                                                           , Encode.object
-                                                                [ ( "type", Encode.string "array" )
+                                                                [ ( "type", Encode.string "object" )
                                                                 , ( "description", Encode.string "Boolean flags, passed as --flag (e.g., --verbose)" )
-                                                                , ( "items"
+                                                                , ( "properties"
                                                                   , Encode.object
-                                                                        [ ( "enum", Encode.list Encode.string [ "verbose", "init" ] ) ]
+                                                                        [ ( "verbose", Encode.object [ ( "type", Encode.string "boolean" ) ] )
+                                                                        , ( "init", Encode.object [ ( "type", Encode.string "boolean" ) ] )
+                                                                        ]
                                                                   )
-                                                                , ( "contains", Encode.object [ ( "const", Encode.string "init" ) ] )
+                                                                , ( "required", Encode.list Encode.string [ "init" ] )
                                                                 ]
                                                           )
                                                         ]
@@ -466,7 +465,7 @@ all =
                                 ]
                                 |> Encode.encode 0
                             )
-            , test "discriminated union with expectFlag produces anyOf with contains" <|
+            , test "discriminated union with expectFlag produces anyOf with required flags" <|
                 \() ->
                     Program.config
                         |> Program.add
@@ -498,13 +497,13 @@ all =
                                                               , Encode.object
                                                                     [ ( "flags"
                                                                       , Encode.object
-                                                                            [ ( "type", Encode.string "array" )
+                                                                            [ ( "type", Encode.string "object" )
                                                                             , ( "description", Encode.string "Boolean flags, passed as --flag (e.g., --verbose)" )
-                                                                            , ( "items"
+                                                                            , ( "properties"
                                                                               , Encode.object
-                                                                                    [ ( "enum", Encode.list Encode.string [ "init" ] ) ]
+                                                                                    [ ( "init", Encode.object [ ( "type", Encode.string "boolean" ) ] ) ]
                                                                               )
-                                                                            , ( "contains", Encode.object [ ( "const", Encode.string "init" ) ] )
+                                                                            , ( "required", Encode.list Encode.string [ "init" ] )
                                                                             ]
                                                                       )
                                                                     ]
@@ -527,13 +526,15 @@ all =
                                                               , Encode.object
                                                                     [ ( "flags"
                                                                       , Encode.object
-                                                                            [ ( "type", Encode.string "array" )
+                                                                            [ ( "type", Encode.string "object" )
                                                                             , ( "description", Encode.string "Boolean flags, passed as --flag (e.g., --verbose)" )
-                                                                            , ( "items"
+                                                                            , ( "properties"
                                                                               , Encode.object
-                                                                                    [ ( "enum", Encode.list Encode.string [ "build", "verbose" ] ) ]
+                                                                                    [ ( "build", Encode.object [ ( "type", Encode.string "boolean" ) ] )
+                                                                                    , ( "verbose", Encode.object [ ( "type", Encode.string "boolean" ) ] )
+                                                                                    ]
                                                                               )
-                                                                            , ( "contains", Encode.object [ ( "const", Encode.string "build" ) ] )
+                                                                            , ( "required", Encode.list Encode.string [ "build" ] )
                                                                             ]
                                                                       )
                                                                     ]
@@ -591,11 +592,11 @@ all =
                                                   , Encode.object
                                                         [ ( "flags"
                                                           , Encode.object
-                                                                [ ( "type", Encode.string "array" )
+                                                                [ ( "type", Encode.string "object" )
                                                                 , ( "description", Encode.string "Boolean flags, passed as --flag (e.g., --verbose)" )
-                                                                , ( "items"
+                                                                , ( "properties"
                                                                   , Encode.object
-                                                                        [ ( "enum", Encode.list Encode.string [ "bare" ] ) ]
+                                                                        [ ( "bare", Encode.object [ ( "type", Encode.string "boolean" ) ] ) ]
                                                                   )
                                                                 ]
                                                           )
@@ -653,7 +654,7 @@ all =
                                                                             , ( "description", Encode.string "Positional arguments, passed in order (e.g., mytool <source> <dest>)" )
                                                                             , ( "prefixItems"
                                                                               , Encode.list identity
-                                                                                    [ Encode.object [ ( "type", Encode.string "string" ) ] ]
+                                                                                    [ Encode.object [ ( "type", Encode.string "string" ), ( "description", Encode.string "repository" ) ] ]
                                                                               )
                                                                             , ( "items", Encode.bool False )
                                                                             , ( "minItems", Encode.int 1 )
@@ -701,7 +702,7 @@ all =
                             )
                         |> (\cfg ->
                                 Program.run cfg
-                                    [ "node", "test", "{\"$cli\":{\"flags\":[\"verbose\"]},\"name\":\"World\"}" ]
+                                    [ "node", "test", "{\"$cli\":{\"flags\":{\"verbose\":true}},\"name\":\"World\"}" ]
                                     "1.0.0"
                                     Program.WithoutColor
                            )
@@ -793,7 +794,7 @@ Expecting a STRING"""
                                     )
                     in
                     Program.run cfg
-                        [ "node", "test", "{\"$cli\":{\"flags\":[\"init\"]},\"name\":\"my-project\"}" ]
+                        [ "node", "test", "{\"$cli\":{\"flags\":{\"init\":true}},\"name\":\"my-project\"}" ]
                         "1.0.0"
                         Program.WithoutColor
                         |> Expect.equal (Program.CustomMatch "init:my-project")
@@ -823,7 +824,7 @@ Expecting a STRING"""
                                     )
                     in
                     Program.run cfg
-                        [ "node", "test", "{\"$cli\":{\"flags\":[\"build\",\"verbose\"]}}" ]
+                        [ "node", "test", "{\"$cli\":{\"flags\":{\"build\":true,\"verbose\":true}}}" ]
                         "1.0.0"
                         Program.WithoutColor
                         |> Expect.equal (Program.CustomMatch "build:verbose")
