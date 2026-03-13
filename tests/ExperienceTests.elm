@@ -127,11 +127,12 @@ all =
             [ test "task manager schema" <|
                 \() ->
                     taskConfig
-                        |> Program.toJsonSchema
+                        |> Program.toJsonSchema "test"
                         |> Encode.encode 2
                         |> Expect.equal """{
   "anyOf": [
     {
+      "description": "test add --title <TITLE> --priority <low|medium|high>",
       "type": "object",
       "properties": {
         "$cli": {
@@ -168,6 +169,7 @@ all =
       ]
     },
     {
+      "description": "test list [--format <json|table|csv>] --limit <LIMIT> [--verbose]",
       "type": "object",
       "properties": {
         "$cli": {
@@ -215,6 +217,7 @@ all =
       ]
     },
     {
+      "description": "test complete <task-id>",
       "type": "object",
       "properties": {
         "$cli": {

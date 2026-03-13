@@ -214,11 +214,12 @@ all =
                                     )
                     in
                     cfg
-                        |> Program.toJsonSchema
+                        |> Program.toJsonSchema "test"
                         |> Encode.encode 0
                         |> Expect.equal
                             (Encode.object
-                                [ ( "type", Encode.string "object" )
+                                [ ( "description", Encode.string "test --format <json|junit|console>" )
+                                , ( "type", Encode.string "object" )
                                 , ( "properties"
                                   , Encode.object
                                         [ ( "$cli", Encode.object [ ( "type", Encode.string "object" ) ] )

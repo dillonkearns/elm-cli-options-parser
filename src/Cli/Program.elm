@@ -597,6 +597,9 @@ The schema follows the [JSON Schema](https://json-schema.org/) format used by th
 [Model Context Protocol (MCP)](https://modelcontextprotocol.io/specification/draft/server/tools)
 for tool `inputSchema` definitions.
 
+The `programName` argument is used to generate a usage synopsis in the schema's `description`
+field, giving LLMs a concise overview of how to invoke the command.
+
     import Cli.Option as Option
     import Cli.OptionsParser as OptionsParser
     import Cli.Program as Program
@@ -607,27 +610,27 @@ for tool `inputSchema` definitions.
             (OptionsParser.build identity
                 |> OptionsParser.with (Option.requiredKeywordArg "name")
             )
-        |> Program.toJsonSchema
+        |> Program.toJsonSchema "my-script"
         |> Json.Encode.encode 0
-    --> """{"type":"object","properties":{"name":{"type":"string"}},"required":["name"]}"""
+    --> """{"description":"my-script --name <NAME>","type":"object","properties":{"$cli":{"type":"object"},"name":{"type":"string"}},"required":["$cli","name"]}"""
 
 -}
-toJsonSchema : Config msg -> Encode.Value
-toJsonSchema (Config { optionsParsers }) =
+toJsonSchema : String -> Config msg -> Encode.Value
+toJsonSchema programName (Config { optionsParsers }) =
     case optionsParsers of
         [ singleParser ] ->
-            parserToJsonSchemaFromTsTypes singleParser
+            parserToJsonSchemaFromTsTypes programName singleParser
 
         multipleParsers ->
             Encode.object
                 [ ( "anyOf"
-                  , Encode.list parserToJsonSchemaFromTsTypes multipleParsers
+                  , Encode.list (parserToJsonSchemaFromTsTypes programName) multipleParsers
                   )
                 ]
 
 
-parserToJsonSchemaFromTsTypes : OptionsParser msg BuilderState.NoMoreOptions -> Encode.Value
-parserToJsonSchemaFromTsTypes parser =
+parserToJsonSchemaFromTsTypes : String -> OptionsParser msg BuilderState.NoMoreOptions -> Encode.Value
+parserToJsonSchemaFromTsTypes programName parser =
     let
         specs =
             OptionsParser.getUsageSpecs parser
@@ -637,6 +640,10 @@ parserToJsonSchemaFromTsTypes parser =
 
         specsWithTypes =
             List.map2 Tuple.pair specs tsTypes
+
+        usageSynopsis =
+            OptionsParser.synopsis False programName parser
+                |> String.trim
 
         -- Subcommand fields (flat properties)
         subCommandFields =
@@ -769,7 +776,8 @@ parserToJsonSchemaFromTsTypes parser =
                    )
     in
     Encode.object
-        [ ( "type", Encode.string "object" )
+        [ ( "description", Encode.string usageSynopsis )
+        , ( "type", Encode.string "object" )
         , ( "properties", Encode.object allProperties )
         , ( "required", Encode.list Encode.string requiredFields )
         ]

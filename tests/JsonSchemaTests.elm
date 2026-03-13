@@ -20,7 +20,8 @@ all =
                                 |> OptionsParser.with (Option.requiredKeywordArg "name")
                             )
                         |> expectJsonSchema
-                            { properties =
+                            { description = "test --name <NAME>"
+                            , properties =
                                 [ ( "name", [ ( "type", Encode.string "string" ) ] ) ]
                             , required = [ "name" ]
                             }
@@ -32,7 +33,8 @@ all =
                                 |> OptionsParser.with (Option.optionalKeywordArg "greeting")
                             )
                         |> expectJsonSchema
-                            { properties =
+                            { description = "test [--greeting <GREETING>]"
+                            , properties =
                                 [ ( "greeting", [ ( "type", Encode.string "string" ) ] ) ]
                             , required = []
                             }
@@ -43,11 +45,12 @@ all =
                             (OptionsParser.build identity
                                 |> OptionsParser.with (Option.flag "verbose")
                             )
-                        |> Program.toJsonSchema
+                        |> Program.toJsonSchema "test"
                         |> Encode.encode 0
                         |> Expect.equal
                             (Encode.object
-                                [ ( "type", Encode.string "object" )
+                                [ ( "description", Encode.string "test [--verbose]" )
+                                , ( "type", Encode.string "object" )
                                 , ( "properties"
                                   , Encode.object
                                         [ ( "$cli"
@@ -82,11 +85,12 @@ all =
                             (OptionsParser.build identity
                                 |> OptionsParser.with (Option.requiredPositionalArg "file")
                             )
-                        |> Program.toJsonSchema
+                        |> Program.toJsonSchema "test"
                         |> Encode.encode 0
                         |> Expect.equal
                             (Encode.object
-                                [ ( "type", Encode.string "object" )
+                                [ ( "description", Encode.string "test <file>" )
+                                , ( "type", Encode.string "object" )
                                 , ( "properties"
                                   , Encode.object
                                         [ ( "$cli"
@@ -123,11 +127,12 @@ all =
                             (OptionsParser.build identity
                                 |> OptionsParser.withOptionalPositionalArg (Option.optionalPositionalArg "revision")
                             )
-                        |> Program.toJsonSchema
+                        |> Program.toJsonSchema "test"
                         |> Encode.encode 0
                         |> Expect.equal
                             (Encode.object
-                                [ ( "type", Encode.string "object" )
+                                [ ( "description", Encode.string "test [<revision>]" )
+                                , ( "type", Encode.string "object" )
                                 , ( "properties"
                                   , Encode.object
                                         [ ( "$cli"
@@ -163,11 +168,12 @@ all =
                             (OptionsParser.build identity
                                 |> OptionsParser.withRestArgs (Option.restArgs "files")
                             )
-                        |> Program.toJsonSchema
+                        |> Program.toJsonSchema "test"
                         |> Encode.encode 0
                         |> Expect.equal
                             (Encode.object
-                                [ ( "type", Encode.string "object" )
+                                [ ( "description", Encode.string "test <files>..." )
+                                , ( "type", Encode.string "object" )
                                 , ( "properties"
                                   , Encode.object
                                         [ ( "$cli"
@@ -199,11 +205,12 @@ all =
                             (OptionsParser.build identity
                                 |> OptionsParser.with (Option.keywordArgList "header")
                             )
-                        |> Program.toJsonSchema
+                        |> Program.toJsonSchema "test"
                         |> Encode.encode 0
                         |> Expect.equal
                             (Encode.object
-                                [ ( "type", Encode.string "object" )
+                                [ ( "description", Encode.string "test [--header <HEADER>]..." )
+                                , ( "type", Encode.string "object" )
                                 , ( "properties"
                                   , Encode.object
                                         [ ( "$cli"
@@ -248,7 +255,8 @@ all =
                                     )
                             )
                         |> expectJsonSchema
-                            { properties =
+                            { description = "test --name <NAME>"
+                            , properties =
                                 [ ( "name"
                                   , [ ( "type", Encode.string "string" )
                                     , ( "description", Encode.string "The user's name" )
@@ -271,11 +279,12 @@ all =
                                             ]
                                     )
                             )
-                        |> Program.toJsonSchema
+                        |> Program.toJsonSchema "test"
                         |> Encode.encode 0
                         |> Expect.equal
                             (Encode.object
-                                [ ( "type", Encode.string "object" )
+                                [ ( "description", Encode.string "test --format <json|junit|console>" )
+                                , ( "type", Encode.string "object" )
                                 , ( "properties"
                                   , Encode.object
                                         [ ( "$cli", Encode.object [ ( "type", Encode.string "object" ) ] )
@@ -305,11 +314,12 @@ all =
                                 |> OptionsParser.with (Option.optionalKeywordArg "greeting")
                                 |> OptionsParser.with (Option.flag "verbose")
                             )
-                        |> Program.toJsonSchema
+                        |> Program.toJsonSchema "test"
                         |> Encode.encode 0
                         |> Expect.equal
                             (Encode.object
-                                [ ( "type", Encode.string "object" )
+                                [ ( "description", Encode.string "test --name <NAME> [--greeting <GREETING>] [--verbose]" )
+                                , ( "type", Encode.string "object" )
                                 , ( "properties"
                                   , Encode.object
                                         [ ( "$cli"
@@ -346,11 +356,12 @@ all =
                             (OptionsParser.build ()
                                 |> OptionsParser.expectFlag "init"
                             )
-                        |> Program.toJsonSchema
+                        |> Program.toJsonSchema "test"
                         |> Encode.encode 0
                         |> Expect.equal
                             (Encode.object
-                                [ ( "type", Encode.string "object" )
+                                [ ( "description", Encode.string "test --init" )
+                                , ( "type", Encode.string "object" )
                                 , ( "properties"
                                   , Encode.object
                                         [ ( "$cli"
@@ -387,11 +398,12 @@ all =
                                 |> OptionsParser.expectFlag "init"
                                 |> OptionsParser.expectFlag "force"
                             )
-                        |> Program.toJsonSchema
+                        |> Program.toJsonSchema "test"
                         |> Encode.encode 0
                         |> Expect.equal
                             (Encode.object
-                                [ ( "type", Encode.string "object" )
+                                [ ( "description", Encode.string "test --init --force" )
+                                , ( "type", Encode.string "object" )
                                 , ( "properties"
                                   , Encode.object
                                         [ ( "$cli"
@@ -430,11 +442,12 @@ all =
                                 |> OptionsParser.with (Option.flag "verbose")
                                 |> OptionsParser.expectFlag "init"
                             )
-                        |> Program.toJsonSchema
+                        |> Program.toJsonSchema "test"
                         |> Encode.encode 0
                         |> Expect.equal
                             (Encode.object
-                                [ ( "type", Encode.string "object" )
+                                [ ( "description", Encode.string "test [--verbose] --init" )
+                                , ( "type", Encode.string "object" )
                                 , ( "properties"
                                   , Encode.object
                                         [ ( "$cli"
@@ -480,14 +493,15 @@ all =
                                 |> OptionsParser.with (Option.flag "verbose")
                                 |> OptionsParser.map (\_ -> ())
                             )
-                        |> Program.toJsonSchema
+                        |> Program.toJsonSchema "test"
                         |> Encode.encode 0
                         |> Expect.equal
                             (Encode.object
                                 [ ( "anyOf"
                                   , Encode.list identity
                                         [ Encode.object
-                                            [ ( "type", Encode.string "object" )
+                                            [ ( "description", Encode.string "test --init --name <NAME>" )
+                                            , ( "type", Encode.string "object" )
                                             , ( "properties"
                                               , Encode.object
                                                     [ ( "$cli"
@@ -516,7 +530,8 @@ all =
                                             , ( "required", Encode.list Encode.string [ "$cli", "name" ] )
                                             ]
                                         , Encode.object
-                                            [ ( "type", Encode.string "object" )
+                                            [ ( "description", Encode.string "test --build [--verbose]" )
+                                            , ( "type", Encode.string "object" )
                                             , ( "properties"
                                               , Encode.object
                                                     [ ( "$cli"
@@ -555,11 +570,12 @@ all =
                     Program.config
                         |> Program.add
                             (OptionsParser.build ())
-                        |> Program.toJsonSchema
+                        |> Program.toJsonSchema "test"
                         |> Encode.encode 0
                         |> Expect.equal
                             (Encode.object
-                                [ ( "type", Encode.string "object" )
+                                [ ( "description", Encode.string "test" )
+                                , ( "type", Encode.string "object" )
                                 , ( "properties"
                                   , Encode.object
                                         [ ( "$cli", Encode.object [ ( "type", Encode.string "object" ) ] )
@@ -578,11 +594,12 @@ all =
                             (OptionsParser.buildSubCommand "init" identity
                                 |> OptionsParser.with (Option.flag "bare")
                             )
-                        |> Program.toJsonSchema
+                        |> Program.toJsonSchema "test"
                         |> Encode.encode 0
                         |> Expect.equal
                             (Encode.object
-                                [ ( "type", Encode.string "object" )
+                                [ ( "description", Encode.string "test init [--bare]" )
+                                , ( "type", Encode.string "object" )
                                 , ( "properties"
                                   , Encode.object
                                         [ ( "$cli"
@@ -623,14 +640,15 @@ all =
                                 |> OptionsParser.with (Option.requiredPositionalArg "repository")
                                 |> OptionsParser.map (\_ -> ())
                             )
-                        |> Program.toJsonSchema
+                        |> Program.toJsonSchema "test"
                         |> Encode.encode 0
                         |> Expect.equal
                             (Encode.object
                                 [ ( "anyOf"
                                   , Encode.list identity
                                         [ Encode.object
-                                            [ ( "type", Encode.string "object" )
+                                            [ ( "description", Encode.string "test init" )
+                                            , ( "type", Encode.string "object" )
                                             , ( "properties"
                                               , Encode.object
                                                     [ ( "$cli", Encode.object [ ( "type", Encode.string "object" ) ] )
@@ -640,7 +658,8 @@ all =
                                             , ( "required", Encode.list Encode.string [ "$cli", "subcommand" ] )
                                             ]
                                         , Encode.object
-                                            [ ( "type", Encode.string "object" )
+                                            [ ( "description", Encode.string "test clone <repository>" )
+                                            , ( "type", Encode.string "object" )
                                             , ( "properties"
                                               , Encode.object
                                                     [ ( "$cli"
@@ -878,18 +897,20 @@ or keyword arg lists). Adds `$cli` as a `{"type": "object"}` property and
 always includes `$cli` in `required`.
 -}
 expectJsonSchema :
-    { properties : List ( String, List ( String, Encode.Value ) )
+    { description : String
+    , properties : List ( String, List ( String, Encode.Value ) )
     , required : List String
     }
     -> Program.Config msg
     -> Expect.Expectation
-expectJsonSchema { properties, required } config =
+expectJsonSchema { description, properties, required } config =
     config
-        |> Program.toJsonSchema
+        |> Program.toJsonSchema "test"
         |> Encode.encode 0
         |> Expect.equal
             (Encode.object
-                [ ( "type", Encode.string "object" )
+                [ ( "description", Encode.string description )
+                , ( "type", Encode.string "object" )
                 , ( "properties"
                   , Encode.object
                         (( "$cli", Encode.object [ ( "type", Encode.string "object" ) ] )

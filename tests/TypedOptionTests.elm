@@ -54,7 +54,8 @@ all =
                     schemaFor (Option.requiredKeywordArg "name" Option.string)
                         |> Expect.equal
                             (Encode.object
-                                [ ( "type", Encode.string "object" )
+                                [ ( "description", Encode.string "test --name <NAME>" )
+                                , ( "type", Encode.string "object" )
                                 , ( "properties"
                                   , Encode.object
                                         [ ( "$cli", Encode.object [ ( "type", Encode.string "object" ) ] )
@@ -107,7 +108,8 @@ all =
                     schemaFor (Option.requiredKeywordArg "count" Option.int)
                         |> Expect.equal
                             (Encode.object
-                                [ ( "type", Encode.string "object" )
+                                [ ( "description", Encode.string "test --count <COUNT>" )
+                                , ( "type", Encode.string "object" )
                                 , ( "properties"
                                   , Encode.object
                                         [ ( "$cli", Encode.object [ ( "type", Encode.string "object" ) ] )
@@ -512,7 +514,8 @@ all =
                         )
                         |> Expect.equal
                             (Encode.object
-                                [ ( "type", Encode.string "object" )
+                                [ ( "description", Encode.string "test --count <COUNT>" )
+                                , ( "type", Encode.string "object" )
                                 , ( "properties"
                                   , Encode.object
                                         [ ( "$cli", Encode.object [ ( "type", Encode.string "object" ) ] )
@@ -593,7 +596,7 @@ schemaFor option =
             (OptionsParser.build identity
                 |> OptionsParser.with option
             )
-        |> Program.toJsonSchema
+        |> Program.toJsonSchema "test"
         |> Encode.encode 0
 
 
