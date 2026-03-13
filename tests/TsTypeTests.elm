@@ -215,7 +215,7 @@ all =
                         |> Encode.encode 0
                         |> Expect.equal
                             (Encode.object
-                                [ ( "description", Encode.string "Usage: test --format <json|junit|console>" )
+                                [ ( "description", Encode.string "test --format <json|junit|console>" )
                                 , ( "type", Encode.string "object" )
                                 , ( "properties"
                                   , Encode.object

@@ -54,7 +54,7 @@ all =
                     schemaFor (Option.requiredKeywordArg "name" Option.string)
                         |> Expect.equal
                             (Encode.object
-                                [ ( "description", Encode.string "Usage: test --name <NAME>" )
+                                [ ( "description", Encode.string "test --name <NAME>" )
                                 , ( "type", Encode.string "object" )
                                 , ( "properties"
                                   , Encode.object
@@ -128,7 +128,7 @@ all =
                     schemaFor (Option.requiredKeywordArg "count" Option.int)
                         |> Expect.equal
                             (Encode.object
-                                [ ( "description", Encode.string "Usage: test --count <COUNT>" )
+                                [ ( "description", Encode.string "test --count <COUNT>" )
                                 , ( "type", Encode.string "object" )
                                 , ( "properties"
                                   , Encode.object
@@ -557,7 +557,7 @@ all =
                         )
                         |> Expect.equal
                             (Encode.object
-                                [ ( "description", Encode.string "Usage: test --count <COUNT>\n\nOptions:\n  --count <COUNT>   Number of items" )
+                                [ ( "description", Encode.string "test --count <COUNT>" )
                                 , ( "type", Encode.string "object" )
                                 , ( "properties"
                                   , Encode.object

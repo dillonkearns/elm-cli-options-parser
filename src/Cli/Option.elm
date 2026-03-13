@@ -118,7 +118,6 @@ import Cli.Validate as Validate
 import Json.Decode
 import List.Extra
 import Occurences exposing (Occurences(..))
-import Tokenizer
 import TsJson.Decode as TsDecode
 import TsJson.Type
 
@@ -230,27 +229,10 @@ Parses to: `"src/Main.elm"`
 requiredPositionalArg : String -> Option String String { position : BeginningOption, canAddMissingMessage : () }
 requiredPositionalArg operandDescription =
     buildRequiredOption
-        (\{ operands, operandsSoFar } ->
-            case
-                operands
-                    |> List.Extra.getAt operandsSoFar
-            of
-                Just operandValue ->
-                    Ok operandValue
-
-                Nothing ->
-                    Cli.Decode.MatchError
-                        (Cli.Decode.MissingRequiredPositionalArg
-                            { name = operandDescription
-                            , operandsSoFar = operandsSoFar
-                            , customMessage = Nothing
-                            }
-                        )
-                        |> Err
-        )
+        (Internal.requiredPositionalArgGrabber operandDescription)
         (UsageSpec.operand operandDescription)
         (TsDecode.tsType TsDecode.string)
-        (jsonFieldGrabber operandDescription
+        (Internal.jsonFieldGrabber operandDescription
             Json.Decode.string
             (Cli.Decode.MissingRequiredPositionalArg
                 { name = operandDescription, operandsSoFar = 0, customMessage = Nothing }
@@ -269,26 +251,10 @@ Parses to: `Just "main.js"` (or `Nothing` if omitted)
 optionalKeywordArg : String -> Option (Maybe String) (Maybe String) { position : BeginningOption }
 optionalKeywordArg optionName =
     buildOptionalOption
-        (\{ options } ->
-            case
-                options
-                    |> List.Extra.find
-                        (\(Tokenizer.ParsedOption thisOptionName _) -> thisOptionName == optionName)
-            of
-                Nothing ->
-                    Ok Nothing
-
-                Just (Tokenizer.ParsedOption _ (Tokenizer.KeywordArg optionArg)) ->
-                    Ok (Just optionArg)
-
-                _ ->
-                    Cli.Decode.MatchError
-                        (Cli.Decode.KeywordArgMissingValue { name = optionName })
-                        |> Err
-        )
+        (Internal.optionalKeywordArgGrabber optionName)
         (UsageSpec.keywordArg optionName Optional)
         (TsDecode.tsType TsDecode.string)
-        (jsonOptionalFieldGrabber optionName Json.Decode.string)
+        (Internal.jsonOptionalFieldGrabber optionName Json.Decode.string)
 
 
 {-| A keyword argument that must be provided.
@@ -302,28 +268,10 @@ Parses to: `"my-app"`
 requiredKeywordArg : String -> Option String String { position : BeginningOption, canAddMissingMessage : () }
 requiredKeywordArg optionName =
     buildRequiredOption
-        (\{ options } ->
-            case
-                options
-                    |> List.Extra.find
-                        (\(Tokenizer.ParsedOption thisOptionName _) -> thisOptionName == optionName)
-            of
-                Nothing ->
-                    Cli.Decode.MatchError
-                        (Cli.Decode.MissingRequiredKeywordArg { name = optionName, customMessage = Nothing })
-                        |> Err
-
-                Just (Tokenizer.ParsedOption _ (Tokenizer.KeywordArg optionArg)) ->
-                    Ok optionArg
-
-                _ ->
-                    Cli.Decode.MatchError
-                        (Cli.Decode.KeywordArgMissingValue { name = optionName })
-                        |> Err
-        )
+        (Internal.requiredKeywordArgGrabber optionName)
         (UsageSpec.keywordArg optionName Required)
         (TsDecode.tsType TsDecode.string)
-        (jsonFieldGrabber optionName
+        (Internal.jsonFieldGrabber optionName
             Json.Decode.string
             (Cli.Decode.MissingRequiredKeywordArg { name = optionName, customMessage = Nothing })
         )
@@ -340,19 +288,10 @@ Parses to: `True` (or `False` if omitted)
 flag : String -> Option Bool Bool { position : BeginningOption }
 flag flagName =
     buildOptionalOption
-        (\{ options } ->
-            if
-                options
-                    |> List.member (Tokenizer.ParsedOption flagName Tokenizer.Flag)
-            then
-                Ok True
-
-            else
-                Ok False
-        )
+        (Internal.flagGrabber flagName)
         (UsageSpec.flag flagName Optional)
         (TsDecode.tsType TsDecode.bool)
-        (jsonFlagGrabber flagName)
+        (Internal.jsonFlagGrabber flagName)
 
 
 {-| Build an option for required arguments (has canAddMissingMessage capability).
@@ -363,7 +302,7 @@ buildRequiredOption dataGrabber usageSpec tsType jsonGrabber =
         { dataGrabber = dataGrabber
         , usageSpec = usageSpec
         , decoder = Cli.Decode.decoder
-        , meta = emptyMeta
+        , meta = Internal.emptyMeta
         , tsType = tsType
         , jsonGrabber = jsonGrabber
         }
@@ -377,7 +316,7 @@ buildOptionalOption dataGrabber usageSpec tsType jsonGrabber =
         { dataGrabber = dataGrabber
         , usageSpec = usageSpec
         , decoder = Cli.Decode.decoder
-        , meta = emptyMeta
+        , meta = Internal.emptyMeta
         , tsType = tsType
         , jsonGrabber = jsonGrabber
         }
@@ -391,100 +330,10 @@ buildEndingOption dataGrabber usageSpec tsType jsonGrabber =
         { dataGrabber = dataGrabber
         , usageSpec = usageSpec
         , decoder = Cli.Decode.decoder
-        , meta = emptyMeta
+        , meta = Internal.emptyMeta
         , tsType = tsType
         , jsonGrabber = jsonGrabber
         }
-
-
-{-| Default empty metadata.
--}
-emptyMeta : Internal.OptionMeta
-emptyMeta =
-    { missingMessage = Nothing
-    }
-
-
-{-| Create a jsonGrabber for a required field. Extracts the field from JSON,
-or returns a MatchError if the field is absent. If the field is present but
-the wrong type, returns an UnrecoverableValidationError.
--}
-jsonFieldGrabber : String -> Json.Decode.Decoder a -> Cli.Decode.MatchErrorDetail -> Internal.JsonGrabber a
-jsonFieldGrabber fieldName valueDecoder missingError =
-    \blob ->
-        case Json.Decode.decodeValue (Json.Decode.field fieldName valueDecoder) blob of
-            Ok value ->
-                Ok ( [], value )
-
-            Err decodeError ->
-                -- Distinguish between "field absent" and "field present, wrong type"
-                case Json.Decode.decodeValue (Json.Decode.field fieldName Json.Decode.value) blob of
-                    Ok _ ->
-                        -- Field exists but wrong type
-                        Err
-                            (Cli.Decode.UnrecoverableValidationError
-                                { name = fieldName
-                                , invalidReason = Json.Decode.errorToString decodeError
-                                }
-                            )
-
-                    Err _ ->
-                        -- Field entirely absent
-                        Err (Cli.Decode.MatchError missingError)
-
-
-{-| Create a jsonGrabber for an optional field. Returns Nothing if absent.
--}
-jsonOptionalFieldGrabber : String -> Json.Decode.Decoder a -> Internal.JsonGrabber (Maybe a)
-jsonOptionalFieldGrabber fieldName valueDecoder =
-    \blob ->
-        case Json.Decode.decodeValue (Json.Decode.field fieldName valueDecoder) blob of
-            Ok value ->
-                Ok ( [], Just value )
-
-            Err decodeError ->
-                -- Check if the field is absent (ok, return Nothing) or wrong type (error)
-                case Json.Decode.decodeValue (Json.Decode.field fieldName Json.Decode.value) blob of
-                    Ok _ ->
-                        -- Field exists but wrong type
-                        Err
-                            (Cli.Decode.UnrecoverableValidationError
-                                { name = fieldName
-                                , invalidReason = Json.Decode.errorToString decodeError
-                                }
-                            )
-
-                    Err _ ->
-                        -- Field absent, that's fine for optional
-                        Ok ( [], Nothing )
-
-
-{-| Create a jsonGrabber for an optional field with a default value.
--}
-jsonOptionalFieldGrabberWithDefault : String -> Json.Decode.Decoder a -> a -> Internal.JsonGrabber a
-jsonOptionalFieldGrabberWithDefault fieldName valueDecoder defaultValue =
-    \blob ->
-        case Json.Decode.decodeValue (Json.Decode.field fieldName valueDecoder) blob of
-            Ok value ->
-                Ok ( [], value )
-
-            Err _ ->
-                -- Field absent or wrong type — use default
-                Ok ( [], defaultValue )
-
-
-{-| Create a jsonGrabber for a boolean flag. Defaults to False if absent.
--}
-jsonFlagGrabber : String -> Internal.JsonGrabber Bool
-jsonFlagGrabber fieldName =
-    \blob ->
-        case Json.Decode.decodeValue (Json.Decode.field fieldName Json.Decode.bool) blob of
-            Ok value ->
-                Ok ( [], value )
-
-            Err _ ->
-                -- Flag absent or wrong type — default to False
-                Ok ( [], False )
 
 
 {-| Add a description to an option. This will be shown in help text.
@@ -847,26 +696,10 @@ Parses to: `["Auth: token", "Accept: json"]`
 keywordArgList : String -> Option (List String) (List String) { position : BeginningOption }
 keywordArgList flagName =
     buildOptionalOption
-        (\{ options } ->
-            options
-                |> List.filterMap
-                    (\(Tokenizer.ParsedOption optionName optionKind) ->
-                        case ( optionName == flagName, optionKind ) of
-                            ( False, _ ) ->
-                                Nothing
-
-                            ( True, Tokenizer.KeywordArg optionValue ) ->
-                                Just optionValue
-
-                            ( True, _ ) ->
-                                -- TODO this should probably be an error
-                                Nothing
-                    )
-                |> Ok
-        )
+        (Internal.keywordArgListGrabber flagName)
         (UsageSpec.keywordArg flagName ZeroOrMore)
         (TsDecode.tsType (TsDecode.list TsDecode.string))
-        (jsonOptionalFieldGrabberWithDefault flagName (Json.Decode.list Json.Decode.string) [])
+        (Internal.jsonOptionalFieldGrabberWithDefault flagName (Json.Decode.list Json.Decode.string) [])
 
 
 {-| Note that this must be used with `OptionsParser.withOptionalPositionalArg`.
@@ -874,23 +707,10 @@ keywordArgList flagName =
 optionalPositionalArg : String -> Option (Maybe String) (Maybe String) { position : OptionalPositionalArgOption }
 optionalPositionalArg operandDescription =
     buildEndingOption
-        (\flagsAndOperands ->
-            let
-                operandsSoFar : Int
-                operandsSoFar =
-                    UsageSpec.operandCount flagsAndOperands.usageSpecs
-                        - 1
-
-                maybeArg : Maybe String
-                maybeArg =
-                    flagsAndOperands.operands
-                        |> List.Extra.getAt operandsSoFar
-            in
-            Ok maybeArg
-        )
+        Internal.optionalPositionalArgGrabber
         (UsageSpec.optionalPositionalArg operandDescription)
         (TsDecode.tsType TsDecode.string)
-        (jsonOptionalFieldGrabber operandDescription Json.Decode.string)
+        (Internal.jsonOptionalFieldGrabber operandDescription Json.Decode.string)
 
 
 {-| Note that this must be used with `OptionsParser.withRestArgs`.
@@ -898,11 +718,7 @@ optionalPositionalArg operandDescription =
 restArgs : String -> Option (List String) (List String) { position : RestArgsOption }
 restArgs restArgsDescription =
     buildEndingOption
-        (\{ operands, usageSpecs } ->
-            operands
-                |> List.drop (UsageSpec.operandCount usageSpecs)
-                |> Ok
-        )
+        Internal.restArgsGrabber
         (UsageSpec.restArgs restArgsDescription)
         (TsDecode.tsType (TsDecode.list TsDecode.string))
-        (jsonOptionalFieldGrabberWithDefault restArgsDescription (Json.Decode.list Json.Decode.string) [])
+        (Internal.jsonOptionalFieldGrabberWithDefault restArgsDescription (Json.Decode.list Json.Decode.string) [])

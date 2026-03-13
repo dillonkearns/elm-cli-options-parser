@@ -20,7 +20,7 @@ all =
                                 |> OptionsParser.with (Option.requiredKeywordArg "name")
                             )
                         |> expectJsonSchema
-                            { description = "Usage: test --name <NAME>"
+                            { description = "test --name <NAME>"
                             , properties =
                                 [ ( "name", [ ( "type", Encode.string "string" ) ] ) ]
                             , required = [ "name" ]
@@ -33,7 +33,7 @@ all =
                                 |> OptionsParser.with (Option.optionalKeywordArg "greeting")
                             )
                         |> expectJsonSchema
-                            { description = "Usage: test [--greeting <GREETING>]"
+                            { description = "test [--greeting <GREETING>]"
                             , properties =
                                 [ ( "greeting", [ ( "type", Encode.string "string" ) ] ) ]
                             , required = []
@@ -49,7 +49,7 @@ all =
                         |> Encode.encode 0
                         |> Expect.equal
                             (Encode.object
-                                [ ( "description", Encode.string "Usage: test [--verbose]" )
+                                [ ( "description", Encode.string "test [--verbose]" )
                                 , ( "type", Encode.string "object" )
                                 , ( "properties"
                                   , Encode.object
@@ -90,7 +90,7 @@ all =
                         |> Encode.encode 0
                         |> Expect.equal
                             (Encode.object
-                                [ ( "description", Encode.string "Usage: test <file>" )
+                                [ ( "description", Encode.string "test <file>" )
                                 , ( "type", Encode.string "object" )
                                 , ( "properties"
                                   , Encode.object
@@ -133,7 +133,7 @@ all =
                         |> Encode.encode 0
                         |> Expect.equal
                             (Encode.object
-                                [ ( "description", Encode.string "Usage: test [<revision>]" )
+                                [ ( "description", Encode.string "test [<revision>]" )
                                 , ( "type", Encode.string "object" )
                                 , ( "properties"
                                   , Encode.object
@@ -175,7 +175,7 @@ all =
                         |> Encode.encode 0
                         |> Expect.equal
                             (Encode.object
-                                [ ( "description", Encode.string "Usage: test <files>..." )
+                                [ ( "description", Encode.string "test <files>..." )
                                 , ( "type", Encode.string "object" )
                                 , ( "properties"
                                   , Encode.object
@@ -213,7 +213,7 @@ all =
                         |> Encode.encode 0
                         |> Expect.equal
                             (Encode.object
-                                [ ( "description", Encode.string "Usage: test [--header <HEADER>]..." )
+                                [ ( "description", Encode.string "test [--header <HEADER>]..." )
                                 , ( "type", Encode.string "object" )
                                 , ( "properties"
                                   , Encode.object
@@ -260,7 +260,7 @@ all =
                                     )
                             )
                         |> expectJsonSchema
-                            { description = "Usage: test --name <NAME>\n\nOptions:\n  --name <NAME>   The user's name"
+                            { description = "test --name <NAME>"
                             , properties =
                                 [ ( "name"
                                   , [ ( "type", Encode.string "string" )
@@ -288,7 +288,7 @@ all =
                         |> Encode.encode 0
                         |> Expect.equal
                             (Encode.object
-                                [ ( "description", Encode.string "Usage: test --format <json|junit|console>" )
+                                [ ( "description", Encode.string "test --format <json|junit|console>" )
                                 , ( "type", Encode.string "object" )
                                 , ( "properties"
                                   , Encode.object
@@ -341,7 +341,7 @@ all =
                         |> Encode.encode 0
                         |> Expect.equal
                             (Encode.object
-                                [ ( "description", Encode.string "Usage: test --name <NAME> [--greeting <GREETING>] [--verbose]" )
+                                [ ( "description", Encode.string "test --name <NAME> [--greeting <GREETING>] [--verbose]" )
                                 , ( "type", Encode.string "object" )
                                 , ( "properties"
                                   , Encode.object
@@ -396,7 +396,7 @@ all =
                         |> Encode.encode 0
                         |> Expect.equal
                             (Encode.object
-                                [ ( "description", Encode.string "Usage: test --init" )
+                                [ ( "description", Encode.string "test --init" )
                                 , ( "type", Encode.string "object" )
                                 , ( "properties"
                                   , Encode.object
@@ -440,7 +440,7 @@ all =
                         |> Encode.encode 0
                         |> Expect.equal
                             (Encode.object
-                                [ ( "description", Encode.string "Usage: test --init --force" )
+                                [ ( "description", Encode.string "test --init --force" )
                                 , ( "type", Encode.string "object" )
                                 , ( "properties"
                                   , Encode.object
@@ -486,7 +486,7 @@ all =
                         |> Encode.encode 0
                         |> Expect.equal
                             (Encode.object
-                                [ ( "description", Encode.string "Usage: test [--verbose] --init" )
+                                [ ( "description", Encode.string "test [--verbose] --init" )
                                 , ( "type", Encode.string "object" )
                                 , ( "properties"
                                   , Encode.object
@@ -542,7 +542,7 @@ all =
                                 [ ( "anyOf"
                                   , Encode.list identity
                                         [ Encode.object
-                                            [ ( "description", Encode.string "Usage: test --init --name <NAME>" )
+                                            [ ( "description", Encode.string "test --init --name <NAME>" )
                                             , ( "type", Encode.string "object" )
                                             , ( "properties"
                                               , Encode.object
@@ -584,7 +584,7 @@ all =
                                             , ( "required", Encode.list Encode.string [ "$cli" ] )
                                             ]
                                         , Encode.object
-                                            [ ( "description", Encode.string "Usage: test --build [--verbose]" )
+                                            [ ( "description", Encode.string "test --build [--verbose]" )
                                             , ( "type", Encode.string "object" )
                                             , ( "properties"
                                               , Encode.object
@@ -630,7 +630,7 @@ all =
                         |> Encode.encode 0
                         |> Expect.equal
                             (Encode.object
-                                [ ( "description", Encode.string "Usage: test" )
+                                [ ( "description", Encode.string "test" )
                                 , ( "type", Encode.string "object" )
                                 , ( "properties"
                                   , Encode.object
@@ -654,7 +654,7 @@ all =
                         |> Encode.encode 0
                         |> Expect.equal
                             (Encode.object
-                                [ ( "description", Encode.string "Usage: test init [--bare]" )
+                                [ ( "description", Encode.string "test init [--bare]" )
                                 , ( "type", Encode.string "object" )
                                 , ( "properties"
                                   , Encode.object
@@ -705,7 +705,7 @@ all =
                                 [ ( "anyOf"
                                   , Encode.list identity
                                         [ Encode.object
-                                            [ ( "description", Encode.string "Usage: test init" )
+                                            [ ( "description", Encode.string "test init" )
                                             , ( "type", Encode.string "object" )
                                             , ( "properties"
                                               , Encode.object
@@ -726,7 +726,7 @@ all =
                                             , ( "required", Encode.list Encode.string [ "$cli" ] )
                                             ]
                                         , Encode.object
-                                            [ ( "description", Encode.string "Usage: test clone <repository>" )
+                                            [ ( "description", Encode.string "test clone <repository>" )
                                             , ( "type", Encode.string "object" )
                                             , ( "properties"
                                               , Encode.object

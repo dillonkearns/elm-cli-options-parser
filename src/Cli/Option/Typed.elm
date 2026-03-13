@@ -53,9 +53,7 @@ import Cli.Option exposing (BeginningOption, OptionalPositionalArgOption, RestAr
 import Cli.Option.Internal as Internal exposing (Option(..))
 import Cli.UsageSpec as UsageSpec
 import Json.Decode
-import List.Extra
 import Occurences exposing (Occurences(..))
-import Tokenizer
 import TsJson.Decode as TsDecode
 
 
@@ -183,34 +181,16 @@ fromDecoder tsDecoder =
 requiredKeywordArg : String -> CliDecoder value -> Option String value { position : BeginningOption, canAddMissingMessage : () }
 requiredKeywordArg optionName (CliDecoder decoder) =
     Option
-        { dataGrabber =
-            \{ options } ->
-                case
-                    options
-                        |> List.Extra.find
-                            (\(Tokenizer.ParsedOption thisOptionName _) -> thisOptionName == optionName)
-                of
-                    Nothing ->
-                        Cli.Decode.MatchError
-                            (Cli.Decode.MissingRequiredKeywordArg { name = optionName, customMessage = Nothing })
-                            |> Err
-
-                    Just (Tokenizer.ParsedOption _ (Tokenizer.KeywordArg optionArg)) ->
-                        Ok optionArg
-
-                    _ ->
-                        Cli.Decode.MatchError
-                            (Cli.Decode.KeywordArgMissingValue { name = optionName })
-                            |> Err
+        { dataGrabber = Internal.requiredKeywordArgGrabber optionName
         , usageSpec = UsageSpec.keywordArg optionName Required
         , decoder =
             Cli.Decode.decoder
                 |> Cli.Decode.mapProcessingError
                     (decoder.cliParser optionName)
-        , meta = { missingMessage = Nothing }
+        , meta = Internal.emptyMeta
         , tsType = TsDecode.tsType decoder.tsDecoder
         , jsonGrabber =
-            jsonFieldGrabber optionName
+            Internal.jsonFieldGrabber optionName
                 decoder.jsonDecoder
                 (Cli.Decode.MissingRequiredKeywordArg { name = optionName, customMessage = Nothing })
         }
@@ -226,23 +206,7 @@ requiredKeywordArg optionName (CliDecoder decoder) =
 optionalKeywordArg : String -> CliDecoder value -> Option (Maybe String) (Maybe value) { position : BeginningOption }
 optionalKeywordArg optionName (CliDecoder decoder) =
     Option
-        { dataGrabber =
-            \{ options } ->
-                case
-                    options
-                        |> List.Extra.find
-                            (\(Tokenizer.ParsedOption thisOptionName _) -> thisOptionName == optionName)
-                of
-                    Nothing ->
-                        Ok Nothing
-
-                    Just (Tokenizer.ParsedOption _ (Tokenizer.KeywordArg optionArg)) ->
-                        Ok (Just optionArg)
-
-                    _ ->
-                        Cli.Decode.MatchError
-                            (Cli.Decode.KeywordArgMissingValue { name = optionName })
-                            |> Err
+        { dataGrabber = Internal.optionalKeywordArgGrabber optionName
         , usageSpec = UsageSpec.keywordArg optionName Optional
         , decoder =
             Cli.Decode.decoder
@@ -256,26 +220,9 @@ optionalKeywordArg optionName (CliDecoder decoder) =
                             Nothing ->
                                 Ok Nothing
                     )
-        , meta = { missingMessage = Nothing }
+        , meta = Internal.emptyMeta
         , tsType = TsDecode.tsType decoder.tsDecoder
-        , jsonGrabber =
-            \blob ->
-                case Json.Decode.decodeValue (Json.Decode.field optionName decoder.jsonDecoder) blob of
-                    Ok value ->
-                        Ok ( [], Just value )
-
-                    Err decodeError ->
-                        case Json.Decode.decodeValue (Json.Decode.field optionName Json.Decode.value) blob of
-                            Ok _ ->
-                                Err
-                                    (Cli.Decode.UnrecoverableValidationError
-                                        { name = optionName
-                                        , invalidReason = Json.Decode.errorToString decodeError
-                                        }
-                                    )
-
-                            Err _ ->
-                                Ok ( [], Nothing )
+        , jsonGrabber = Internal.jsonOptionalFieldGrabber optionName decoder.jsonDecoder
         }
 
 
@@ -288,22 +235,7 @@ optionalKeywordArg optionName (CliDecoder decoder) =
 keywordArgList : String -> CliDecoder value -> Option (List String) (List value) { position : BeginningOption }
 keywordArgList flagName (CliDecoder decoder) =
     Option
-        { dataGrabber =
-            \{ options } ->
-                options
-                    |> List.filterMap
-                        (\(Tokenizer.ParsedOption optionName optionKind) ->
-                            case ( optionName == flagName, optionKind ) of
-                                ( False, _ ) ->
-                                    Nothing
-
-                                ( True, Tokenizer.KeywordArg optionValue ) ->
-                                    Just optionValue
-
-                                ( True, _ ) ->
-                                    Nothing
-                        )
-                    |> Ok
+        { dataGrabber = Internal.keywordArgListGrabber flagName
         , usageSpec = UsageSpec.keywordArg flagName ZeroOrMore
         , decoder =
             Cli.Decode.decoder
@@ -326,16 +258,9 @@ keywordArgList flagName (CliDecoder decoder) =
                                 )
                                 (Ok [])
                     )
-        , meta = { missingMessage = Nothing }
+        , meta = Internal.emptyMeta
         , tsType = TsDecode.tsType (TsDecode.list decoder.tsDecoder)
-        , jsonGrabber =
-            \blob ->
-                case Json.Decode.decodeValue (Json.Decode.field flagName (Json.Decode.list decoder.jsonDecoder)) blob of
-                    Ok value ->
-                        Ok ( [], value )
-
-                    Err _ ->
-                        Ok ( [], [] )
+        , jsonGrabber = Internal.jsonOptionalFieldGrabberWithDefault flagName (Json.Decode.list decoder.jsonDecoder) []
         }
 
 
@@ -349,33 +274,16 @@ keywordArgList flagName (CliDecoder decoder) =
 requiredPositionalArg : String -> CliDecoder value -> Option String value { position : BeginningOption, canAddMissingMessage : () }
 requiredPositionalArg operandDescription (CliDecoder decoder) =
     Option
-        { dataGrabber =
-            \{ operands, operandsSoFar } ->
-                case
-                    operands
-                        |> List.Extra.getAt operandsSoFar
-                of
-                    Just operandValue ->
-                        Ok operandValue
-
-                    Nothing ->
-                        Cli.Decode.MatchError
-                            (Cli.Decode.MissingRequiredPositionalArg
-                                { name = operandDescription
-                                , operandsSoFar = operandsSoFar
-                                , customMessage = Nothing
-                                }
-                            )
-                            |> Err
+        { dataGrabber = Internal.requiredPositionalArgGrabber operandDescription
         , usageSpec = UsageSpec.operand operandDescription
         , decoder =
             Cli.Decode.decoder
                 |> Cli.Decode.mapProcessingError
                     (decoder.cliParser operandDescription)
-        , meta = { missingMessage = Nothing }
+        , meta = Internal.emptyMeta
         , tsType = TsDecode.tsType decoder.tsDecoder
         , jsonGrabber =
-            jsonFieldGrabber operandDescription
+            Internal.jsonFieldGrabber operandDescription
                 decoder.jsonDecoder
                 (Cli.Decode.MissingRequiredPositionalArg
                     { name = operandDescription, operandsSoFar = 0, customMessage = Nothing }
@@ -392,17 +300,7 @@ Must be used with `OptionsParser.withOptionalPositionalArg`.
 optionalPositionalArg : String -> CliDecoder value -> Option (Maybe String) (Maybe value) { position : OptionalPositionalArgOption }
 optionalPositionalArg operandDescription (CliDecoder decoder) =
     Option
-        { dataGrabber =
-            \flagsAndOperands ->
-                let
-                    operandsSoFar =
-                        UsageSpec.operandCount flagsAndOperands.usageSpecs - 1
-
-                    maybeArg =
-                        flagsAndOperands.operands
-                            |> List.Extra.getAt operandsSoFar
-                in
-                Ok maybeArg
+        { dataGrabber = Internal.optionalPositionalArgGrabber
         , usageSpec = UsageSpec.optionalPositionalArg operandDescription
         , decoder =
             Cli.Decode.decoder
@@ -416,26 +314,9 @@ optionalPositionalArg operandDescription (CliDecoder decoder) =
                             Nothing ->
                                 Ok Nothing
                     )
-        , meta = { missingMessage = Nothing }
+        , meta = Internal.emptyMeta
         , tsType = TsDecode.tsType decoder.tsDecoder
-        , jsonGrabber =
-            \blob ->
-                case Json.Decode.decodeValue (Json.Decode.field operandDescription decoder.jsonDecoder) blob of
-                    Ok value ->
-                        Ok ( [], Just value )
-
-                    Err decodeError ->
-                        case Json.Decode.decodeValue (Json.Decode.field operandDescription Json.Decode.value) blob of
-                            Ok _ ->
-                                Err
-                                    (Cli.Decode.UnrecoverableValidationError
-                                        { name = operandDescription
-                                        , invalidReason = Json.Decode.errorToString decodeError
-                                        }
-                                    )
-
-                            Err _ ->
-                                Ok ( [], Nothing )
+        , jsonGrabber = Internal.jsonOptionalFieldGrabber operandDescription decoder.jsonDecoder
         }
 
 
@@ -449,28 +330,12 @@ optionalPositionalArg operandDescription (CliDecoder decoder) =
 flag : String -> Option Bool Bool { position : BeginningOption }
 flag flagName =
     Option
-        { dataGrabber =
-            \{ options } ->
-                if
-                    options
-                        |> List.member (Tokenizer.ParsedOption flagName Tokenizer.Flag)
-                then
-                    Ok True
-
-                else
-                    Ok False
+        { dataGrabber = Internal.flagGrabber flagName
         , usageSpec = UsageSpec.flag flagName Optional
         , decoder = Cli.Decode.decoder
-        , meta = { missingMessage = Nothing }
+        , meta = Internal.emptyMeta
         , tsType = TsDecode.tsType TsDecode.bool
-        , jsonGrabber =
-            \blob ->
-                case Json.Decode.decodeValue (Json.Decode.field flagName Json.Decode.bool) blob of
-                    Ok value ->
-                        Ok ( [], value )
-
-                    Err _ ->
-                        Ok ( [], False )
+        , jsonGrabber = Internal.jsonFlagGrabber flagName
         }
 
 
@@ -483,23 +348,12 @@ flag flagName =
 restArgs : String -> Option (List String) (List String) { position : RestArgsOption }
 restArgs restArgsDescription =
     Option
-        { dataGrabber =
-            \{ operands, usageSpecs } ->
-                operands
-                    |> List.drop (UsageSpec.operandCount usageSpecs)
-                    |> Ok
+        { dataGrabber = Internal.restArgsGrabber
         , usageSpec = UsageSpec.restArgs restArgsDescription
         , decoder = Cli.Decode.decoder
-        , meta = { missingMessage = Nothing }
+        , meta = Internal.emptyMeta
         , tsType = TsDecode.tsType (TsDecode.list TsDecode.string)
-        , jsonGrabber =
-            \blob ->
-                case Json.Decode.decodeValue (Json.Decode.field restArgsDescription (Json.Decode.list Json.Decode.string)) blob of
-                    Ok value ->
-                        Ok ( [], value )
-
-                    Err _ ->
-                        Ok ( [], [] )
+        , jsonGrabber = Internal.jsonOptionalFieldGrabberWithDefault restArgsDescription (Json.Decode.list Json.Decode.string) []
         }
 
 
@@ -568,23 +422,3 @@ decodeCliJson elmJsonDecoder optionName stringValue =
                     , invalidReason = Json.Decode.errorToString err
                     }
                 )
-
-
-jsonFieldGrabber : String -> Json.Decode.Decoder a -> Cli.Decode.MatchErrorDetail -> Internal.JsonGrabber a
-jsonFieldGrabber fieldName elmJsonDecoder missingError blob =
-    case Json.Decode.decodeValue (Json.Decode.field fieldName elmJsonDecoder) blob of
-        Ok value ->
-            Ok ( [], value )
-
-        Err decodeError ->
-            case Json.Decode.decodeValue (Json.Decode.field fieldName Json.Decode.value) blob of
-                Ok _ ->
-                    Err
-                        (Cli.Decode.UnrecoverableValidationError
-                            { name = fieldName
-                            , invalidReason = Json.Decode.errorToString decodeError
-                            }
-                        )
-
-                Err _ ->
-                    Err (Cli.Decode.MatchError missingError)

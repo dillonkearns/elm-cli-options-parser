@@ -642,7 +642,7 @@ parserToJsonSchemaFromTsTypes programName parser =
             List.map2 Tuple.pair specs tsTypes
 
         usageSynopsis =
-            OptionsParser.detailedHelp False programName parser
+            OptionsParser.synopsis False programName parser
                 |> String.trim
 
         -- Subcommand → $cli.subcommand

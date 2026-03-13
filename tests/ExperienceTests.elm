@@ -132,7 +132,7 @@ all =
                         |> Expect.equal """{
   "anyOf": [
     {
-      "description": "Usage: test add --title <TITLE> --priority <low|medium|high>\\n\\nOptions:\\n  --title <TITLE>                The task title\\n  --priority <low|medium|high>   Task priority level",
+      "description": "test add --title <TITLE> --priority <low|medium|high>",
       "type": "object",
       "properties": {
         "$cli": {
@@ -178,7 +178,7 @@ all =
       ]
     },
     {
-      "description": "Usage: test list [--format <json|table|csv>] --limit <LIMIT> [--verbose]\\n\\nOptions:\\n  --format <json|table|csv>   Output format\\n  --limit <LIMIT>             Maximum number of tasks to show\\n  --verbose                   Show full task details",
+      "description": "test list [--format <json|table|csv>] --limit <LIMIT> [--verbose]",
       "type": "object",
       "properties": {
         "$cli": {
@@ -233,7 +233,7 @@ all =
       ]
     },
     {
-      "description": "Usage: test complete <task-id>\\n\\nOptions:\\n  <task-id>   The ID of the task to mark complete",
+      "description": "test complete <task-id>",
       "type": "object",
       "properties": {
         "$cli": {
