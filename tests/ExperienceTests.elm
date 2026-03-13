@@ -130,11 +130,13 @@ all =
                         |> Program.toJsonSchema
                         |> Encode.encode 2
                         |> Expect.equal """{
-  "$cli": "elm-cli-options-parser",
   "anyOf": [
     {
       "type": "object",
       "properties": {
+        "$cli": {
+          "type": "object"
+        },
         "subcommand": {
           "type": "string",
           "const": "add"
@@ -159,6 +161,7 @@ all =
         }
       },
       "required": [
+        "$cli",
         "subcommand",
         "title",
         "priority"
@@ -167,6 +170,23 @@ all =
     {
       "type": "object",
       "properties": {
+        "$cli": {
+          "type": "object",
+          "properties": {
+            "flags": {
+              "type": "array",
+              "description": "Boolean flags, passed as --flag (e.g., --verbose)",
+              "items": {
+                "anyOf": [
+                  {
+                    "const": "verbose",
+                    "description": "Show full task details"
+                  }
+                ]
+              }
+            }
+          }
+        },
         "subcommand": {
           "type": "string",
           "const": "list"
@@ -188,13 +208,10 @@ all =
         "limit": {
           "type": "string",
           "description": "Maximum number of tasks to show"
-        },
-        "verbose": {
-          "type": "boolean",
-          "description": "Show full task details"
         }
       },
       "required": [
+        "$cli",
         "subcommand",
         "limit"
       ]
@@ -202,18 +219,31 @@ all =
     {
       "type": "object",
       "properties": {
+        "$cli": {
+          "type": "object",
+          "properties": {
+            "positional": {
+              "type": "array",
+              "description": "Positional arguments, passed in order (e.g., mytool <source> <dest>)",
+              "prefixItems": [
+                {
+                  "type": "string",
+                  "description": "The ID of the task to mark complete"
+                }
+              ],
+              "items": false,
+              "minItems": 1
+            }
+          }
+        },
         "subcommand": {
           "type": "string",
           "const": "complete"
-        },
-        "task-id": {
-          "type": "string",
-          "description": "The ID of the task to mark complete"
         }
       },
       "required": [
-        "subcommand",
-        "task-id"
+        "$cli",
+        "subcommand"
       ]
     }
   ]
@@ -289,22 +319,22 @@ Options:
             [ test "add task via JSON" <|
                 \() ->
                     Program.run taskConfig
-                        [ "node", "mytool", "{\"$cli\":\"elm-cli-options-parser\",\"subcommand\":\"add\",\"title\":\"Buy milk\",\"priority\":\"high\"}" ]
+                        [ "node", "mytool", "{\"$cli\":{},\"subcommand\":\"add\",\"title\":\"Buy milk\",\"priority\":\"high\"}" ]
                         "1.0.0"
                         Program.WithoutColor
                         |> Expect.equal (Program.CustomMatch (Add { title = "Buy milk", priority = High }))
             , test "list tasks via JSON" <|
                 \() ->
                     Program.run taskConfig
-                        [ "node", "mytool", "{\"$cli\":\"elm-cli-options-parser\",\"subcommand\":\"list\",\"format\":\"json\",\"limit\":\"10\",\"verbose\":true}" ]
+                        [ "node", "mytool", "{\"$cli\":{\"flags\":[\"verbose\"]},\"subcommand\":\"list\",\"format\":\"json\",\"limit\":\"10\"}" ]
                         "1.0.0"
                         Program.WithoutColor
                         |> Expect.equal (Program.CustomMatch (ListTasks { format = Json, limit = 10, verbose = True }))
             , test "complete task via JSON" <|
                 \() ->
-                    -- Direct JSON decoding: positional args are just named fields in JSON
+                    -- Direct JSON decoding: positional args come from $cli.positional
                     Program.run taskConfig
-                        [ "node", "mytool", "{\"$cli\":\"elm-cli-options-parser\",\"subcommand\":\"complete\",\"task-id\":\"42\"}" ]
+                        [ "node", "mytool", "{\"$cli\":{\"positional\":[\"42\"]},\"subcommand\":\"complete\"}" ]
                         "1.0.0"
                         Program.WithoutColor
                         |> Expect.equal (Program.CustomMatch (Complete { taskId = "42" }))
@@ -394,7 +424,7 @@ Run with --help for usage information."""
             [ test "missing required field in JSON" <|
                 \() ->
                     Program.run taskConfig
-                        [ "node", "mytool", "{\"$cli\":\"elm-cli-options-parser\",\"subcommand\":\"add\",\"priority\":\"high\"}" ]
+                        [ "node", "mytool", "{\"$cli\":{},\"subcommand\":\"add\",\"priority\":\"high\"}" ]
                         "1.0.0"
                         Program.WithoutColor
                         |> Expect.equal
@@ -404,7 +434,7 @@ Run with --help for usage information."""
             , test "invalid oneOf value in JSON" <|
                 \() ->
                     Program.run taskConfig
-                        [ "node", "mytool", "{\"$cli\":\"elm-cli-options-parser\",\"subcommand\":\"add\",\"title\":\"Buy milk\",\"priority\":\"urgent\"}" ]
+                        [ "node", "mytool", "{\"$cli\":{},\"subcommand\":\"add\",\"title\":\"Buy milk\",\"priority\":\"urgent\"}" ]
                         "1.0.0"
                         Program.WithoutColor
                         |> Expect.equal
@@ -419,7 +449,7 @@ Must be one of [low, medium, high]"""
                     -- With direct JSON decoding, JSON number 10 for a string field is a type error
                     -- The schema says "type": "string", so LLMs should send "10" not 10
                     Program.run taskConfig
-                        [ "node", "mytool", "{\"$cli\":\"elm-cli-options-parser\",\"subcommand\":\"list\",\"format\":\"json\",\"limit\":10,\"verbose\":true}" ]
+                        [ "node", "mytool", "{\"$cli\":{},\"subcommand\":\"list\",\"format\":\"json\",\"limit\":10}" ]
                         "1.0.0"
                         Program.WithoutColor
                         |> Expect.equal
@@ -448,7 +478,7 @@ Expecting a STRING"""
                     -- The schema says "type": "string" for limit. LLMs should send "10" not 10.
                     -- No more silent number-to-string coercion.
                     Program.run taskConfig
-                        [ "node", "mytool", "{\"$cli\":\"elm-cli-options-parser\",\"subcommand\":\"list\",\"format\":\"table\",\"limit\":10}" ]
+                        [ "node", "mytool", "{\"$cli\":{},\"subcommand\":\"list\",\"format\":\"table\",\"limit\":10}" ]
                         "1.0.0"
                         Program.WithoutColor
                         |> Expect.equal

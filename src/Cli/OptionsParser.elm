@@ -146,6 +146,7 @@ import Cli.OptionsParser.BuilderState as BuilderState
 import Cli.OptionsParser.MatchResult
 import Cli.UsageSpec as UsageSpec exposing (UsageSpec)
 import Json.Decode
+import Json.Encode as Encode
 import Occurences exposing (Occurences(..))
 import Tokenizer exposing (ParsedOption)
 import TsJson.Decode as TsDecode
@@ -295,10 +296,15 @@ tryMatch argv ((OptionsParser { usageSpecs, subCommand }) as optionsParser) =
 
 {-| Low-level function, for internal use.
 Try to match a JSON blob against this parser's jsonGrabber.
+Normalizes the `$cli` object into flat fields before passing to jsonGrabber.
 -}
 tryMatchJson : Json.Decode.Value -> OptionsParser cliOptions builderState -> Cli.OptionsParser.MatchResult.MatchResult cliOptions
-tryMatchJson blob (OptionsParser { jsonGrabber }) =
-    case jsonGrabber blob of
+tryMatchJson blob (OptionsParser { jsonGrabber, usageSpecs }) =
+    let
+        normalizedBlob =
+            normalizeCliJson usageSpecs blob
+    in
+    case jsonGrabber normalizedBlob of
         Err error ->
             case error of
                 Cli.Decode.MatchError matchErrorDetail ->
@@ -736,3 +742,128 @@ withDescription docString (OptionsParser optionsParserRecord) =
         { optionsParserRecord
             | description = Just docString
         }
+
+
+{-| Normalize a JSON blob with `$cli` object structure into flat fields.
+
+Transforms:
+
+  - `$cli.positional[N]` → flat field named by Nth operand's UsageSpec name
+  - `$cli.flags` array → flat boolean fields for each flag in usageSpecs
+  - `$cli.keywordLists.*` → flat array fields
+  - Strips the `$cli` key from the result
+
+-}
+normalizeCliJson : List UsageSpec -> Json.Decode.Value -> Json.Decode.Value
+normalizeCliJson usageSpecs blob =
+    let
+        maybeCli =
+            Json.Decode.decodeValue (Json.Decode.field "$cli" Json.Decode.value) blob
+
+        -- Original fields minus $cli
+        originalFields =
+            case Json.Decode.decodeValue (Json.Decode.keyValuePairs Json.Decode.value) blob of
+                Ok pairs ->
+                    pairs |> List.filter (\( k, _ ) -> k /= "$cli")
+
+                Err _ ->
+                    []
+
+        -- Build positional arg fields from $cli.positional
+        positionalFields =
+            case maybeCli of
+                Ok cliValue ->
+                    case Json.Decode.decodeValue (Json.Decode.field "positional" (Json.Decode.list Json.Decode.value)) cliValue of
+                        Ok positionalValues ->
+                            let
+                                operandSpecs =
+                                    usageSpecs
+                                        |> List.filter UsageSpec.isOperand
+
+                                fixedFields =
+                                    List.map2
+                                        (\spec val -> ( UsageSpec.name spec, val ))
+                                        operandSpecs
+                                        positionalValues
+
+                                restArgsName =
+                                    usageSpecs
+                                        |> List.filterMap
+                                            (\spec ->
+                                                case spec of
+                                                    UsageSpec.RestArgs restName _ ->
+                                                        Just restName
+
+                                                    _ ->
+                                                        Nothing
+                                            )
+                                        |> List.head
+
+                                restFields =
+                                    case restArgsName of
+                                        Just rName ->
+                                            [ ( rName
+                                              , Encode.list identity
+                                                    (List.drop (List.length operandSpecs) positionalValues)
+                                              )
+                                            ]
+
+                                        Nothing ->
+                                            []
+                            in
+                            fixedFields ++ restFields
+
+                        Err _ ->
+                            []
+
+                Err _ ->
+                    []
+
+        -- Build flag fields from $cli.flags
+        flagFields =
+            case maybeCli of
+                Ok cliValue ->
+                    let
+                        allFlagNames =
+                            usageSpecs
+                                |> List.filterMap
+                                    (\spec ->
+                                        case spec of
+                                            UsageSpec.FlagOrKeywordArg (UsageSpec.Flag flagName) _ _ _ ->
+                                                Just flagName
+
+                                            _ ->
+                                                Nothing
+                                    )
+                    in
+                    case Json.Decode.decodeValue (Json.Decode.field "flags" (Json.Decode.list Json.Decode.string)) cliValue of
+                        Ok activeFlagNames ->
+                            allFlagNames
+                                |> List.map
+                                    (\flagName ->
+                                        ( flagName, Encode.bool (List.member flagName activeFlagNames) )
+                                    )
+
+                        Err _ ->
+                            -- No flags in $cli — set all flags to false
+                            allFlagNames
+                                |> List.map (\flagName -> ( flagName, Encode.bool False ))
+
+                Err _ ->
+                    []
+
+        -- Build keyword list fields from $cli.keywordLists
+        keywordListFields =
+            case maybeCli of
+                Ok cliValue ->
+                    case Json.Decode.decodeValue (Json.Decode.field "keywordLists" (Json.Decode.keyValuePairs Json.Decode.value)) cliValue of
+                        Ok pairs ->
+                            pairs
+
+                        Err _ ->
+                            []
+
+                Err _ ->
+                    []
+    in
+    Encode.object (originalFields ++ positionalFields ++ flagFields ++ keywordListFields)

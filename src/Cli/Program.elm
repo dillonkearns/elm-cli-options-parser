@@ -437,11 +437,11 @@ run (Config { optionsParsers }) argv versionMessage colorMode =
         errorMessage =
             "TODO - show error message explaining that user needs to pass unmodified `process.argv` from node here."
 
-        -- Check for JSON input mode: a single arg that's JSON with the $cli sentinel key
+        -- Check for JSON input mode: a single arg that's JSON with $cli as an object
         maybeJsonBlob =
             case argv |> List.drop 2 of
                 [ singleArg ] ->
-                    case Json.Decode.decodeString (Json.Decode.field "$cli" Json.Decode.string) singleArg of
+                    case Json.Decode.decodeString (Json.Decode.field "$cli" (Json.Decode.keyValuePairs Json.Decode.value)) singleArg of
                         Ok _ ->
                             Json.Decode.decodeString Json.Decode.value singleArg
                                 |> Result.toMaybe
@@ -614,22 +614,16 @@ for tool `inputSchema` definitions.
 -}
 toJsonSchema : Config msg -> Encode.Value
 toJsonSchema (Config { optionsParsers }) =
-    let
-        baseSchema =
-            case optionsParsers of
-                [ singleParser ] ->
-                    parserToJsonSchemaFromTsTypes singleParser
+    case optionsParsers of
+        [ singleParser ] ->
+            parserToJsonSchemaFromTsTypes singleParser
 
-                multipleParsers ->
-                    Encode.object
-                        [ ( "anyOf"
-                          , Encode.list parserToJsonSchemaFromTsTypes multipleParsers
-                          )
-                        ]
-    in
-    mergeJsonObject
-        [ ( "$cli", Encode.string "elm-cli-options-parser" ) ]
-        baseSchema
+        multipleParsers ->
+            Encode.object
+                [ ( "anyOf"
+                  , Encode.list parserToJsonSchemaFromTsTypes multipleParsers
+                  )
+                ]
 
 
 parserToJsonSchemaFromTsTypes : OptionsParser msg BuilderState.NoMoreOptions -> Encode.Value
@@ -641,6 +635,10 @@ parserToJsonSchemaFromTsTypes parser =
         tsTypes =
             OptionsParser.getTsTypes parser
 
+        specsWithTypes =
+            List.map2 Tuple.pair specs tsTypes
+
+        -- Subcommand fields (flat properties)
         subCommandFields =
             case OptionsParser.getSubCommand parser of
                 Just subName ->
@@ -655,56 +653,297 @@ parserToJsonSchemaFromTsTypes parser =
                 Nothing ->
                     []
 
-        properties =
-            subCommandFields
-                ++ List.map2 tsTypeToProperty specs tsTypes
+        -- Keyword args (non-ZeroOrMore) → flat properties
+        keywordArgProperties =
+            specsWithTypes
+                |> List.filterMap
+                    (\( spec, ( optionName, tsType ) ) ->
+                        case spec of
+                            UsageSpec.FlagOrKeywordArg (UsageSpec.KeywordArg _ _) _ occurences _ ->
+                                if occurences /= ZeroOrMore then
+                                    Just (tsTypeToProperty spec ( optionName, tsType ))
 
-        required =
-            (case OptionsParser.getSubCommand parser of
-                Just _ ->
-                    [ "subcommand" ]
+                                else
+                                    Nothing
 
-                Nothing ->
-                    []
-            )
-                ++ List.filterMap usageSpecToRequired specs
+                            _ ->
+                                Nothing
+                    )
+
+        -- Flags → $cli.flags
+        flagSpecs =
+            specsWithTypes
+                |> List.filterMap
+                    (\( spec, ( optionName, _ ) ) ->
+                        case spec of
+                            UsageSpec.FlagOrKeywordArg (UsageSpec.Flag _) _ _ maybeDescription ->
+                                Just ( optionName, maybeDescription )
+
+                            _ ->
+                                Nothing
+                    )
+
+        -- Keyword arg lists → $cli.keywordLists
+        keywordListProperties =
+            specsWithTypes
+                |> List.filterMap
+                    (\( spec, ( optionName, tsType ) ) ->
+                        case spec of
+                            UsageSpec.FlagOrKeywordArg (UsageSpec.KeywordArg _ _) _ ZeroOrMore _ ->
+                                Just (tsTypeToProperty spec ( optionName, tsType ))
+
+                            _ ->
+                                Nothing
+                    )
+
+        -- Positional args → $cli.positional
+        positionalSpecs =
+            specsWithTypes
+                |> List.filterMap
+                    (\( spec, ( _, tsType ) ) ->
+                        case spec of
+                            UsageSpec.Operand _ _ occurences _ ->
+                                Just ( spec, tsType, occurences )
+
+                            _ ->
+                                Nothing
+                    )
+
+        -- Rest args → $cli.positional.items
+        restArgSpec =
+            specsWithTypes
+                |> List.filterMap
+                    (\( spec, ( _, tsType ) ) ->
+                        case spec of
+                            UsageSpec.RestArgs _ _ ->
+                                Just ( spec, tsType )
+
+                            _ ->
+                                Nothing
+                    )
+                |> List.head
+
+        -- Build $cli object schema
+        cliSubProperties =
+            positionalSchemaProperty positionalSpecs restArgSpec
+                ++ flagsSchemaProperty flagSpecs
+                ++ keywordListsSchemaProperty keywordListProperties
+
+        cliSchema =
+            Encode.object
+                ([ ( "type", Encode.string "object" ) ]
+                    ++ (if List.isEmpty cliSubProperties then
+                            []
+
+                        else
+                            [ ( "properties", Encode.object cliSubProperties ) ]
+                       )
+                )
+
+        -- All properties
+        allProperties =
+            [ ( "$cli", cliSchema ) ]
+                ++ subCommandFields
+                ++ keywordArgProperties
+
+        -- Required: $cli is always required, plus required keyword args and subcommand
+        requiredFields =
+            [ "$cli" ]
+                ++ (case OptionsParser.getSubCommand parser of
+                        Just _ ->
+                            [ "subcommand" ]
+
+                        Nothing ->
+                            []
+                   )
+                ++ (specsWithTypes
+                        |> List.filterMap
+                            (\( spec, _ ) ->
+                                case spec of
+                                    UsageSpec.FlagOrKeywordArg (UsageSpec.KeywordArg kwName _) _ Required _ ->
+                                        Just kwName
+
+                                    _ ->
+                                        Nothing
+                            )
+                   )
     in
     Encode.object
-        ([ ( "type", Encode.string "object" )
-         , ( "properties", Encode.object properties )
-         ]
-            ++ (if List.isEmpty required then
-                    []
+        [ ( "type", Encode.string "object" )
+        , ( "properties", Encode.object allProperties )
+        , ( "required", Encode.list Encode.string requiredFields )
+        ]
+
+
+{-| Build the `$cli.positional` schema property.
+-}
+positionalSchemaProperty : List ( UsageSpec, TsJson.Type.Type, Occurences ) -> Maybe ( UsageSpec, TsJson.Type.Type ) -> List ( String, Encode.Value )
+positionalSchemaProperty positionalArgs maybeRestArgs =
+    if List.isEmpty positionalArgs && maybeRestArgs == Nothing then
+        []
+
+    else
+        let
+            prefixItemsList =
+                positionalArgs
+                    |> List.map
+                        (\( spec, tsType, _ ) ->
+                            let
+                                baseSchema =
+                                    stripSchemaKey (TsJson.Type.toJsonSchema tsType)
+                            in
+                            case usageSpecDescription spec of
+                                Just desc ->
+                                    appendJsonFields [ ( "description", Encode.string desc ) ] baseSchema
+
+                                Nothing ->
+                                    baseSchema
+                        )
+
+            requiredCount =
+                positionalArgs
+                    |> List.filter (\( _, _, occ ) -> occ == Required)
+                    |> List.length
+
+            itemsField =
+                case maybeRestArgs of
+                    Just ( spec, tsType ) ->
+                        let
+                            arraySchema =
+                                stripSchemaKey (TsJson.Type.toJsonSchema tsType)
+                        in
+                        -- Extract items from the array type's schema
+                        case Json.Decode.decodeValue (Json.Decode.field "items" Json.Decode.value) arraySchema of
+                            Ok itemSchema ->
+                                let
+                                    withDesc =
+                                        case usageSpecDescription spec of
+                                            Just desc ->
+                                                appendJsonFields [ ( "description", Encode.string desc ) ] itemSchema
+
+                                            Nothing ->
+                                                itemSchema
+                                in
+                                [ ( "items", withDesc ) ]
+
+                            Err _ ->
+                                []
+
+                    Nothing ->
+                        if List.isEmpty positionalArgs then
+                            []
+
+                        else
+                            [ ( "items", Encode.bool False ) ]
+
+            schemaFields =
+                [ ( "type", Encode.string "array" )
+                , ( "description", Encode.string "Positional arguments, passed in order (e.g., mytool <source> <dest>)" )
+                ]
+                    ++ (if List.isEmpty prefixItemsList then
+                            []
+
+                        else
+                            [ ( "prefixItems", Encode.list identity prefixItemsList ) ]
+                       )
+                    ++ itemsField
+                    ++ (if requiredCount > 0 then
+                            [ ( "minItems", Encode.int requiredCount ) ]
+
+                        else
+                            []
+                       )
+        in
+        [ ( "positional", Encode.object schemaFields ) ]
+
+
+{-| Build the `$cli.flags` schema property.
+-}
+flagsSchemaProperty : List ( String, Maybe String ) -> List ( String, Encode.Value )
+flagsSchemaProperty flags =
+    if List.isEmpty flags then
+        []
+
+    else
+        let
+            anyHasDescription =
+                flags |> List.any (\( _, desc ) -> desc /= Nothing)
+
+            itemsSchema =
+                if anyHasDescription then
+                    Encode.object
+                        [ ( "anyOf"
+                          , Encode.list
+                                (\( flagName, maybeDesc ) ->
+                                    case maybeDesc of
+                                        Just desc ->
+                                            Encode.object
+                                                [ ( "const", Encode.string flagName )
+                                                , ( "description", Encode.string desc )
+                                                ]
+
+                                        Nothing ->
+                                            Encode.object
+                                                [ ( "const", Encode.string flagName ) ]
+                                )
+                                flags
+                          )
+                        ]
 
                 else
-                    [ ( "required", Encode.list Encode.string required ) ]
-               )
-        )
+                    Encode.object
+                        [ ( "enum", Encode.list Encode.string (List.map Tuple.first flags) ) ]
+        in
+        [ ( "flags"
+          , Encode.object
+                [ ( "type", Encode.string "array" )
+                , ( "description", Encode.string "Boolean flags, passed as --flag (e.g., --verbose)" )
+                , ( "items", itemsSchema )
+                ]
+          )
+        ]
+
+
+{-| Build the `$cli.keywordLists` schema property.
+-}
+keywordListsSchemaProperty : List ( String, Encode.Value ) -> List ( String, Encode.Value )
+keywordListsSchemaProperty keywordListProps =
+    if List.isEmpty keywordListProps then
+        []
+
+    else
+        [ ( "keywordLists"
+          , Encode.object
+                [ ( "type", Encode.string "object" )
+                , ( "description", Encode.string "Keyword arguments that can be repeated (e.g., --header X --header Y)" )
+                , ( "properties", Encode.object keywordListProps )
+                ]
+          )
+        ]
+
+
+{-| Strip the `$schema` key from a TsJson-generated JSON schema value.
+-}
+stripSchemaKey : Encode.Value -> Encode.Value
+stripSchemaKey baseSchema =
+    case Json.Decode.decodeValue (Json.Decode.keyValuePairs Json.Decode.value) baseSchema of
+        Ok pairs ->
+            pairs
+                |> List.filter (\( k, _ ) -> k /= "$schema")
+                |> Encode.object
+
+        Err _ ->
+            baseSchema
 
 
 tsTypeToProperty : UsageSpec -> ( String, TsJson.Type.Type ) -> ( String, Encode.Value )
 tsTypeToProperty spec ( optionName, tsType ) =
     let
-        baseSchema =
-            TsJson.Type.toJsonSchema tsType
-
-        -- Strip $schema from the TsJson output since we're embedding this
-        -- as a property within a larger schema
         strippedSchema =
-            case Json.Decode.decodeValue (Json.Decode.keyValuePairs Json.Decode.value) baseSchema of
-                Ok pairs ->
-                    pairs
-                        |> List.filter (\( k, _ ) -> k /= "$schema")
-                        |> Encode.object
-
-                Err _ ->
-                    baseSchema
-
-        maybeDescription =
-            usageSpecDescription spec
+            stripSchemaKey (TsJson.Type.toJsonSchema tsType)
 
         schemaWithDescription =
-            case maybeDescription of
+            case usageSpecDescription spec of
                 Just desc ->
                     appendJsonFields [ ( "description", Encode.string desc ) ] strippedSchema
 
@@ -727,50 +966,7 @@ usageSpecDescription spec =
             maybeDescription
 
 
-usageSpecToRequired : UsageSpec -> Maybe String
-usageSpecToRequired spec =
-    case spec of
-        UsageSpec.FlagOrKeywordArg flagOrKw _ occurences _ ->
-            case occurences of
-                Required ->
-                    case flagOrKw of
-                        UsageSpec.Flag flagName ->
-                            Just flagName
-
-                        UsageSpec.KeywordArg kwName _ ->
-                            Just kwName
-
-                _ ->
-                    Nothing
-
-        UsageSpec.Operand operandName _ occurences _ ->
-            case occurences of
-                Required ->
-                    Just operandName
-
-                _ ->
-                    Nothing
-
-        UsageSpec.RestArgs _ _ ->
-            Nothing
-
-
-{-| Merge additional key-value pairs into a JSON object value.
-New fields are prepended (appear first in the output).
-If the value is not a decodable object, wraps the pairs as a new object.
--}
-mergeJsonObject : List ( String, Encode.Value ) -> Encode.Value -> Encode.Value
-mergeJsonObject extraFields jsonValue =
-    case Json.Decode.decodeValue (Json.Decode.keyValuePairs Json.Decode.value) jsonValue of
-        Ok existingFields ->
-            Encode.object (extraFields ++ existingFields)
-
-        Err _ ->
-            Encode.object extraFields
-
-
 {-| Append additional key-value pairs to the end of a JSON object value.
-Similar to mergeJsonObject but new fields appear last in the output.
 -}
 appendJsonFields : List ( String, Encode.Value ) -> Encode.Value -> Encode.Value
 appendJsonFields extraFields jsonValue =

@@ -218,11 +218,11 @@ all =
                         |> Encode.encode 0
                         |> Expect.equal
                             (Encode.object
-                                [ ( "$cli", Encode.string "elm-cli-options-parser" )
-                                , ( "type", Encode.string "object" )
+                                [ ( "type", Encode.string "object" )
                                 , ( "properties"
                                   , Encode.object
-                                        [ ( "format"
+                                        [ ( "$cli", Encode.object [ ( "type", Encode.string "object" ) ] )
+                                        , ( "format"
                                           , Encode.object
                                                 [ ( "anyOf"
                                                   , Encode.list identity
@@ -235,7 +235,7 @@ all =
                                           )
                                         ]
                                   )
-                                , ( "required", Encode.list Encode.string [ "format" ] )
+                                , ( "required", Encode.list Encode.string [ "$cli", "format" ] )
                                 ]
                                 |> Encode.encode 0
                             )

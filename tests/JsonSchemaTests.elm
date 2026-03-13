@@ -43,11 +43,38 @@ all =
                             (OptionsParser.build identity
                                 |> OptionsParser.with (Option.flag "verbose")
                             )
-                        |> expectJsonSchema
-                            { properties =
-                                [ ( "verbose", [ ( "type", Encode.string "boolean" ) ] ) ]
-                            , required = []
-                            }
+                        |> Program.toJsonSchema
+                        |> Encode.encode 0
+                        |> Expect.equal
+                            (Encode.object
+                                [ ( "type", Encode.string "object" )
+                                , ( "properties"
+                                  , Encode.object
+                                        [ ( "$cli"
+                                          , Encode.object
+                                                [ ( "type", Encode.string "object" )
+                                                , ( "properties"
+                                                  , Encode.object
+                                                        [ ( "flags"
+                                                          , Encode.object
+                                                                [ ( "type", Encode.string "array" )
+                                                                , ( "description", Encode.string "Boolean flags, passed as --flag (e.g., --verbose)" )
+                                                                , ( "items"
+                                                                  , Encode.object
+                                                                        [ ( "enum", Encode.list Encode.string [ "verbose" ] ) ]
+                                                                  )
+                                                                ]
+                                                          )
+                                                        ]
+                                                  )
+                                                ]
+                                          )
+                                        ]
+                                  )
+                                , ( "required", Encode.list Encode.string [ "$cli" ] )
+                                ]
+                                |> Encode.encode 0
+                            )
             , test "required positional arg" <|
                 \() ->
                     Program.config
@@ -55,11 +82,40 @@ all =
                             (OptionsParser.build identity
                                 |> OptionsParser.with (Option.requiredPositionalArg "file")
                             )
-                        |> expectJsonSchema
-                            { properties =
-                                [ ( "file", [ ( "type", Encode.string "string" ) ] ) ]
-                            , required = [ "file" ]
-                            }
+                        |> Program.toJsonSchema
+                        |> Encode.encode 0
+                        |> Expect.equal
+                            (Encode.object
+                                [ ( "type", Encode.string "object" )
+                                , ( "properties"
+                                  , Encode.object
+                                        [ ( "$cli"
+                                          , Encode.object
+                                                [ ( "type", Encode.string "object" )
+                                                , ( "properties"
+                                                  , Encode.object
+                                                        [ ( "positional"
+                                                          , Encode.object
+                                                                [ ( "type", Encode.string "array" )
+                                                                , ( "description", Encode.string "Positional arguments, passed in order (e.g., mytool <source> <dest>)" )
+                                                                , ( "prefixItems"
+                                                                  , Encode.list identity
+                                                                        [ Encode.object [ ( "type", Encode.string "string" ) ] ]
+                                                                  )
+                                                                , ( "items", Encode.bool False )
+                                                                , ( "minItems", Encode.int 1 )
+                                                                ]
+                                                          )
+                                                        ]
+                                                  )
+                                                ]
+                                          )
+                                        ]
+                                  )
+                                , ( "required", Encode.list Encode.string [ "$cli" ] )
+                                ]
+                                |> Encode.encode 0
+                            )
             , test "optional positional arg" <|
                 \() ->
                     Program.config
@@ -67,11 +123,39 @@ all =
                             (OptionsParser.build identity
                                 |> OptionsParser.withOptionalPositionalArg (Option.optionalPositionalArg "revision")
                             )
-                        |> expectJsonSchema
-                            { properties =
-                                [ ( "revision", [ ( "type", Encode.string "string" ) ] ) ]
-                            , required = []
-                            }
+                        |> Program.toJsonSchema
+                        |> Encode.encode 0
+                        |> Expect.equal
+                            (Encode.object
+                                [ ( "type", Encode.string "object" )
+                                , ( "properties"
+                                  , Encode.object
+                                        [ ( "$cli"
+                                          , Encode.object
+                                                [ ( "type", Encode.string "object" )
+                                                , ( "properties"
+                                                  , Encode.object
+                                                        [ ( "positional"
+                                                          , Encode.object
+                                                                [ ( "type", Encode.string "array" )
+                                                                , ( "description", Encode.string "Positional arguments, passed in order (e.g., mytool <source> <dest>)" )
+                                                                , ( "prefixItems"
+                                                                  , Encode.list identity
+                                                                        [ Encode.object [ ( "type", Encode.string "string" ) ] ]
+                                                                  )
+                                                                , ( "items", Encode.bool False )
+                                                                ]
+                                                          )
+                                                        ]
+                                                  )
+                                                ]
+                                          )
+                                        ]
+                                  )
+                                , ( "required", Encode.list Encode.string [ "$cli" ] )
+                                ]
+                                |> Encode.encode 0
+                            )
             , test "rest args is array of strings" <|
                 \() ->
                     Program.config
@@ -79,16 +163,35 @@ all =
                             (OptionsParser.build identity
                                 |> OptionsParser.withRestArgs (Option.restArgs "files")
                             )
-                        |> expectJsonSchema
-                            { properties =
-                                [ ( "files"
-                                  , [ ( "type", Encode.string "array" )
-                                    , ( "items", Encode.object [ ( "type", Encode.string "string" ) ] )
-                                    ]
+                        |> Program.toJsonSchema
+                        |> Encode.encode 0
+                        |> Expect.equal
+                            (Encode.object
+                                [ ( "type", Encode.string "object" )
+                                , ( "properties"
+                                  , Encode.object
+                                        [ ( "$cli"
+                                          , Encode.object
+                                                [ ( "type", Encode.string "object" )
+                                                , ( "properties"
+                                                  , Encode.object
+                                                        [ ( "positional"
+                                                          , Encode.object
+                                                                [ ( "type", Encode.string "array" )
+                                                                , ( "description", Encode.string "Positional arguments, passed in order (e.g., mytool <source> <dest>)" )
+                                                                , ( "items", Encode.object [ ( "type", Encode.string "string" ) ] )
+                                                                ]
+                                                          )
+                                                        ]
+                                                  )
+                                                ]
+                                          )
+                                        ]
                                   )
+                                , ( "required", Encode.list Encode.string [ "$cli" ] )
                                 ]
-                            , required = []
-                            }
+                                |> Encode.encode 0
+                            )
             , test "keyword arg list is array of strings" <|
                 \() ->
                     Program.config
@@ -96,16 +199,44 @@ all =
                             (OptionsParser.build identity
                                 |> OptionsParser.with (Option.keywordArgList "header")
                             )
-                        |> expectJsonSchema
-                            { properties =
-                                [ ( "header"
-                                  , [ ( "type", Encode.string "array" )
-                                    , ( "items", Encode.object [ ( "type", Encode.string "string" ) ] )
-                                    ]
+                        |> Program.toJsonSchema
+                        |> Encode.encode 0
+                        |> Expect.equal
+                            (Encode.object
+                                [ ( "type", Encode.string "object" )
+                                , ( "properties"
+                                  , Encode.object
+                                        [ ( "$cli"
+                                          , Encode.object
+                                                [ ( "type", Encode.string "object" )
+                                                , ( "properties"
+                                                  , Encode.object
+                                                        [ ( "keywordLists"
+                                                          , Encode.object
+                                                                [ ( "type", Encode.string "object" )
+                                                                , ( "description", Encode.string "Keyword arguments that can be repeated (e.g., --header X --header Y)" )
+                                                                , ( "properties"
+                                                                  , Encode.object
+                                                                        [ ( "header"
+                                                                          , Encode.object
+                                                                                [ ( "type", Encode.string "array" )
+                                                                                , ( "items", Encode.object [ ( "type", Encode.string "string" ) ] )
+                                                                                ]
+                                                                          )
+                                                                        ]
+                                                                  )
+                                                                ]
+                                                          )
+                                                        ]
+                                                  )
+                                                ]
+                                          )
+                                        ]
                                   )
+                                , ( "required", Encode.list Encode.string [ "$cli" ] )
                                 ]
-                            , required = []
-                            }
+                                |> Encode.encode 0
+                            )
             , test "description is included" <|
                 \() ->
                     Program.config
@@ -144,11 +275,11 @@ all =
                         |> Encode.encode 0
                         |> Expect.equal
                             (Encode.object
-                                [ ( "$cli", Encode.string "elm-cli-options-parser" )
-                                , ( "type", Encode.string "object" )
+                                [ ( "type", Encode.string "object" )
                                 , ( "properties"
                                   , Encode.object
-                                        [ ( "format"
+                                        [ ( "$cli", Encode.object [ ( "type", Encode.string "object" ) ] )
+                                        , ( "format"
                                           , Encode.object
                                                 [ ( "anyOf"
                                                   , Encode.list identity
@@ -161,7 +292,7 @@ all =
                                           )
                                         ]
                                   )
-                                , ( "required", Encode.list Encode.string [ "format" ] )
+                                , ( "required", Encode.list Encode.string [ "$cli", "format" ] )
                                 ]
                                 |> Encode.encode 0
                             )
@@ -174,23 +305,59 @@ all =
                                 |> OptionsParser.with (Option.optionalKeywordArg "greeting")
                                 |> OptionsParser.with (Option.flag "verbose")
                             )
-                        |> expectJsonSchema
-                            { properties =
-                                [ ( "name", [ ( "type", Encode.string "string" ) ] )
-                                , ( "greeting", [ ( "type", Encode.string "string" ) ] )
-                                , ( "verbose", [ ( "type", Encode.string "boolean" ) ] )
+                        |> Program.toJsonSchema
+                        |> Encode.encode 0
+                        |> Expect.equal
+                            (Encode.object
+                                [ ( "type", Encode.string "object" )
+                                , ( "properties"
+                                  , Encode.object
+                                        [ ( "$cli"
+                                          , Encode.object
+                                                [ ( "type", Encode.string "object" )
+                                                , ( "properties"
+                                                  , Encode.object
+                                                        [ ( "flags"
+                                                          , Encode.object
+                                                                [ ( "type", Encode.string "array" )
+                                                                , ( "description", Encode.string "Boolean flags, passed as --flag (e.g., --verbose)" )
+                                                                , ( "items"
+                                                                  , Encode.object
+                                                                        [ ( "enum", Encode.list Encode.string [ "verbose" ] ) ]
+                                                                  )
+                                                                ]
+                                                          )
+                                                        ]
+                                                  )
+                                                ]
+                                          )
+                                        , ( "name", Encode.object [ ( "type", Encode.string "string" ) ] )
+                                        , ( "greeting", Encode.object [ ( "type", Encode.string "string" ) ] )
+                                        ]
+                                  )
+                                , ( "required", Encode.list Encode.string [ "$cli", "name" ] )
                                 ]
-                            , required = [ "name" ]
-                            }
+                                |> Encode.encode 0
+                            )
             , test "no options produces empty object schema" <|
                 \() ->
                     Program.config
                         |> Program.add
                             (OptionsParser.build ())
-                        |> expectJsonSchema
-                            { properties = []
-                            , required = []
-                            }
+                        |> Program.toJsonSchema
+                        |> Encode.encode 0
+                        |> Expect.equal
+                            (Encode.object
+                                [ ( "type", Encode.string "object" )
+                                , ( "properties"
+                                  , Encode.object
+                                        [ ( "$cli", Encode.object [ ( "type", Encode.string "object" ) ] )
+                                        ]
+                                  )
+                                , ( "required", Encode.list Encode.string [ "$cli" ] )
+                                ]
+                                |> Encode.encode 0
+                            )
             ]
         , describe "subcommands"
             [ test "single subcommand includes subcommand property" <|
@@ -204,15 +371,32 @@ all =
                         |> Encode.encode 0
                         |> Expect.equal
                             (Encode.object
-                                [ ( "$cli", Encode.string "elm-cli-options-parser" )
-                                , ( "type", Encode.string "object" )
+                                [ ( "type", Encode.string "object" )
                                 , ( "properties"
                                   , Encode.object
-                                        [ ( "subcommand", Encode.object [ ( "type", Encode.string "string" ), ( "const", Encode.string "init" ) ] )
-                                        , ( "bare", Encode.object [ ( "type", Encode.string "boolean" ) ] )
+                                        [ ( "$cli"
+                                          , Encode.object
+                                                [ ( "type", Encode.string "object" )
+                                                , ( "properties"
+                                                  , Encode.object
+                                                        [ ( "flags"
+                                                          , Encode.object
+                                                                [ ( "type", Encode.string "array" )
+                                                                , ( "description", Encode.string "Boolean flags, passed as --flag (e.g., --verbose)" )
+                                                                , ( "items"
+                                                                  , Encode.object
+                                                                        [ ( "enum", Encode.list Encode.string [ "bare" ] ) ]
+                                                                  )
+                                                                ]
+                                                          )
+                                                        ]
+                                                  )
+                                                ]
+                                          )
+                                        , ( "subcommand", Encode.object [ ( "type", Encode.string "string" ), ( "const", Encode.string "init" ) ] )
                                         ]
                                   )
-                                , ( "required", Encode.list Encode.string [ "subcommand" ] )
+                                , ( "required", Encode.list Encode.string [ "$cli", "subcommand" ] )
                                 ]
                                 |> Encode.encode 0
                             )
@@ -232,26 +416,47 @@ all =
                         |> Encode.encode 0
                         |> Expect.equal
                             (Encode.object
-                                [ ( "$cli", Encode.string "elm-cli-options-parser" )
-                                , ( "anyOf"
+                                [ ( "anyOf"
                                   , Encode.list identity
                                         [ Encode.object
                                             [ ( "type", Encode.string "object" )
                                             , ( "properties"
                                               , Encode.object
-                                                    [ ( "subcommand", Encode.object [ ( "type", Encode.string "string" ), ( "const", Encode.string "init" ) ] ) ]
+                                                    [ ( "$cli", Encode.object [ ( "type", Encode.string "object" ) ] )
+                                                    , ( "subcommand", Encode.object [ ( "type", Encode.string "string" ), ( "const", Encode.string "init" ) ] )
+                                                    ]
                                               )
-                                            , ( "required", Encode.list Encode.string [ "subcommand" ] )
+                                            , ( "required", Encode.list Encode.string [ "$cli", "subcommand" ] )
                                             ]
                                         , Encode.object
                                             [ ( "type", Encode.string "object" )
                                             , ( "properties"
                                               , Encode.object
-                                                    [ ( "subcommand", Encode.object [ ( "type", Encode.string "string" ), ( "const", Encode.string "clone" ) ] )
-                                                    , ( "repository", Encode.object [ ( "type", Encode.string "string" ) ] )
+                                                    [ ( "$cli"
+                                                      , Encode.object
+                                                            [ ( "type", Encode.string "object" )
+                                                            , ( "properties"
+                                                              , Encode.object
+                                                                    [ ( "positional"
+                                                                      , Encode.object
+                                                                            [ ( "type", Encode.string "array" )
+                                                                            , ( "description", Encode.string "Positional arguments, passed in order (e.g., mytool <source> <dest>)" )
+                                                                            , ( "prefixItems"
+                                                                              , Encode.list identity
+                                                                                    [ Encode.object [ ( "type", Encode.string "string" ) ] ]
+                                                                              )
+                                                                            , ( "items", Encode.bool False )
+                                                                            , ( "minItems", Encode.int 1 )
+                                                                            ]
+                                                                      )
+                                                                    ]
+                                                              )
+                                                            ]
+                                                      )
+                                                    , ( "subcommand", Encode.object [ ( "type", Encode.string "string" ), ( "const", Encode.string "clone" ) ] )
                                                     ]
                                               )
-                                            , ( "required", Encode.list Encode.string [ "subcommand", "repository" ] )
+                                            , ( "required", Encode.list Encode.string [ "$cli", "subcommand" ] )
                                             ]
                                         ]
                                   )
@@ -270,7 +475,7 @@ all =
                             )
                         |> (\cfg ->
                                 Program.run cfg
-                                    [ "node", "test", "{\"$cli\":\"elm-cli-options-parser\",\"name\":\"World\",\"greeting\":\"Hi\"}" ]
+                                    [ "node", "test", "{\"$cli\":{},\"name\":\"World\",\"greeting\":\"Hi\"}" ]
                                     "1.0.0"
                                     Program.WithoutColor
                            )
@@ -286,7 +491,7 @@ all =
                             )
                         |> (\cfg ->
                                 Program.run cfg
-                                    [ "node", "test", "{\"$cli\":\"elm-cli-options-parser\",\"name\":\"World\",\"verbose\":true}" ]
+                                    [ "node", "test", "{\"$cli\":{\"flags\":[\"verbose\"]},\"name\":\"World\"}" ]
                                     "1.0.0"
                                     Program.WithoutColor
                            )
@@ -301,7 +506,7 @@ all =
                             )
                         |> (\cfg ->
                                 Program.run cfg
-                                    [ "node", "test", "{\"$cli\":\"elm-cli-options-parser\",\"subcommand\":\"greet\",\"name\":\"World\"}" ]
+                                    [ "node", "test", "{\"$cli\":{},\"subcommand\":\"greet\",\"name\":\"World\"}" ]
                                     "1.0.0"
                                     Program.WithoutColor
                            )
@@ -319,7 +524,7 @@ all =
                                     )
                     in
                     Program.run cfg
-                        [ "node", "test", "{\"$cli\":\"elm-cli-options-parser\",\"greeting\":\"Hi\"}" ]
+                        [ "node", "test", "{\"$cli\":{},\"greeting\":\"Hi\"}" ]
                         "1.0.0"
                         Program.WithoutColor
                         |> Expect.equal
@@ -337,7 +542,7 @@ all =
                             )
                         |> (\cfg ->
                                 Program.run cfg
-                                    [ "node", "test", "{\"$cli\":\"elm-cli-options-parser\",\"name\":123}" ]
+                                    [ "node", "test", "{\"$cli\":{},\"name\":123}" ]
                                     "1.0.0"
                                     Program.WithoutColor
                            )
@@ -376,6 +581,9 @@ Expecting a STRING"""
 
 
 {-| Helper to build expected JSON Schema and compare.
+Used for tests where only keyword args are present (no flags, positional args,
+or keyword arg lists). Adds `$cli` as a `{"type": "object"}` property and
+always includes `$cli` in `required`.
 -}
 expectJsonSchema :
     { properties : List ( String, List ( String, Encode.Value ) )
@@ -389,21 +597,16 @@ expectJsonSchema { properties, required } config =
         |> Encode.encode 0
         |> Expect.equal
             (Encode.object
-                ([ ( "$cli", Encode.string "elm-cli-options-parser" )
-                 , ( "type", Encode.string "object" )
-                 , ( "properties"
-                   , Encode.object
-                        (properties
-                            |> List.map (\( name, fields ) -> ( name, Encode.object fields ))
+                [ ( "type", Encode.string "object" )
+                , ( "properties"
+                  , Encode.object
+                        (( "$cli", Encode.object [ ( "type", Encode.string "object" ) ] )
+                            :: (properties
+                                    |> List.map (\( name, fields ) -> ( name, Encode.object fields ))
+                               )
                         )
-                   )
-                 ]
-                    ++ (if List.isEmpty required then
-                            []
-
-                        else
-                            [ ( "required", Encode.list Encode.string required ) ]
-                       )
-                )
+                  )
+                , ( "required", Encode.list Encode.string ("$cli" :: required) )
+                ]
                 |> Encode.encode 0
             )

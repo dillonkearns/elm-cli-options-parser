@@ -54,13 +54,14 @@ all =
                     schemaFor (Option.requiredKeywordArg "name" Option.string)
                         |> Expect.equal
                             (Encode.object
-                                [ ( "$cli", Encode.string "elm-cli-options-parser" )
-                                , ( "type", Encode.string "object" )
+                                [ ( "type", Encode.string "object" )
                                 , ( "properties"
                                   , Encode.object
-                                        [ ( "name", Encode.object [ ( "type", Encode.string "string" ) ] ) ]
+                                        [ ( "$cli", Encode.object [ ( "type", Encode.string "object" ) ] )
+                                        , ( "name", Encode.object [ ( "type", Encode.string "string" ) ] )
+                                        ]
                                   )
-                                , ( "required", Encode.list Encode.string [ "name" ] )
+                                , ( "required", Encode.list Encode.string [ "$cli", "name" ] )
                                 ]
                                 |> Encode.encode 0
                             )
@@ -106,13 +107,14 @@ all =
                     schemaFor (Option.requiredKeywordArg "count" Option.int)
                         |> Expect.equal
                             (Encode.object
-                                [ ( "$cli", Encode.string "elm-cli-options-parser" )
-                                , ( "type", Encode.string "object" )
+                                [ ( "type", Encode.string "object" )
                                 , ( "properties"
                                   , Encode.object
-                                        [ ( "count", Encode.object [ ( "type", Encode.string "integer" ) ] ) ]
+                                        [ ( "$cli", Encode.object [ ( "type", Encode.string "object" ) ] )
+                                        , ( "count", Encode.object [ ( "type", Encode.string "integer" ) ] )
+                                        ]
                                   )
-                                , ( "required", Encode.list Encode.string [ "count" ] )
+                                , ( "required", Encode.list Encode.string [ "$cli", "count" ] )
                                 ]
                                 |> Encode.encode 0
                             )
@@ -261,6 +263,235 @@ all =
                            )
                         |> Expect.equal (Program.CustomMatch [ "a.txt", "b.txt" ])
             ]
+        , describe "JSON input with $cli object"
+            [ test "keyword list via $cli.keywordLists" <|
+                \() ->
+                    let
+                        jsonArg =
+                            Encode.object
+                                [ ( "$cli"
+                                  , Encode.object
+                                        [ ( "keywordLists"
+                                          , Encode.object
+                                                [ ( "header", Encode.list Encode.string [ "X-A: 1", "X-B: 2" ] ) ]
+                                          )
+                                        ]
+                                  )
+                                ]
+                                |> Encode.encode 0
+                    in
+                    Program.config
+                        |> Program.add
+                            (OptionsParser.build identity
+                                |> OptionsParser.with (Option.keywordArgList "header" Option.string)
+                            )
+                        |> (\cfg ->
+                                Program.run cfg
+                                    [ "node", "test", jsonArg ]
+                                    "1.0.0"
+                                    Program.WithoutColor
+                           )
+                        |> Expect.equal (Program.CustomMatch [ "X-A: 1", "X-B: 2" ])
+            , test "keyword list absent in $cli.keywordLists defaults to empty" <|
+                \() ->
+                    let
+                        jsonArg =
+                            Encode.object
+                                [ ( "$cli", Encode.object [] ) ]
+                                |> Encode.encode 0
+                    in
+                    Program.config
+                        |> Program.add
+                            (OptionsParser.build identity
+                                |> OptionsParser.with (Option.keywordArgList "header" Option.string)
+                            )
+                        |> (\cfg ->
+                                Program.run cfg
+                                    [ "node", "test", jsonArg ]
+                                    "1.0.0"
+                                    Program.WithoutColor
+                           )
+                        |> Expect.equal (Program.CustomMatch [])
+            , test "positional arg via $cli.positional" <|
+                \() ->
+                    let
+                        jsonArg =
+                            Encode.object
+                                [ ( "$cli"
+                                  , Encode.object
+                                        [ ( "positional", Encode.list Encode.string [ "hello.txt" ] ) ]
+                                  )
+                                ]
+                                |> Encode.encode 0
+                    in
+                    Program.config
+                        |> Program.add
+                            (OptionsParser.build identity
+                                |> OptionsParser.with (Option.requiredPositionalArg "file" Option.string)
+                            )
+                        |> (\cfg ->
+                                Program.run cfg
+                                    [ "node", "test", jsonArg ]
+                                    "1.0.0"
+                                    Program.WithoutColor
+                           )
+                        |> Expect.equal (Program.CustomMatch "hello.txt")
+            , test "multiple positional args via $cli.positional" <|
+                \() ->
+                    let
+                        jsonArg =
+                            Encode.object
+                                [ ( "$cli"
+                                  , Encode.object
+                                        [ ( "positional", Encode.list Encode.string [ "src.txt", "dest.txt" ] ) ]
+                                  )
+                                ]
+                                |> Encode.encode 0
+                    in
+                    Program.config
+                        |> Program.add
+                            (OptionsParser.build Tuple.pair
+                                |> OptionsParser.with (Option.requiredPositionalArg "source" Option.string)
+                                |> OptionsParser.with (Option.requiredPositionalArg "dest" Option.string)
+                            )
+                        |> (\cfg ->
+                                Program.run cfg
+                                    [ "node", "test", jsonArg ]
+                                    "1.0.0"
+                                    Program.WithoutColor
+                           )
+                        |> Expect.equal (Program.CustomMatch ( "src.txt", "dest.txt" ))
+            , test "rest args via $cli.positional tail" <|
+                \() ->
+                    let
+                        jsonArg =
+                            Encode.object
+                                [ ( "$cli"
+                                  , Encode.object
+                                        [ ( "positional", Encode.list Encode.string [ "a.txt", "b.txt", "c.txt" ] ) ]
+                                  )
+                                ]
+                                |> Encode.encode 0
+                    in
+                    Program.config
+                        |> Program.add
+                            (OptionsParser.build Tuple.pair
+                                |> OptionsParser.with (Option.requiredPositionalArg "source" Option.string)
+                                |> OptionsParser.withRestArgs (Option.restArgs "files")
+                            )
+                        |> (\cfg ->
+                                Program.run cfg
+                                    [ "node", "test", jsonArg ]
+                                    "1.0.0"
+                                    Program.WithoutColor
+                           )
+                        |> Expect.equal (Program.CustomMatch ( "a.txt", [ "b.txt", "c.txt" ] ))
+            , test "rest args only (no fixed positional) via $cli.positional" <|
+                \() ->
+                    let
+                        jsonArg =
+                            Encode.object
+                                [ ( "$cli"
+                                  , Encode.object
+                                        [ ( "positional", Encode.list Encode.string [ "x.txt", "y.txt" ] ) ]
+                                  )
+                                ]
+                                |> Encode.encode 0
+                    in
+                    Program.config
+                        |> Program.add
+                            (OptionsParser.build identity
+                                |> OptionsParser.withRestArgs (Option.restArgs "files")
+                            )
+                        |> (\cfg ->
+                                Program.run cfg
+                                    [ "node", "test", jsonArg ]
+                                    "1.0.0"
+                                    Program.WithoutColor
+                           )
+                        |> Expect.equal (Program.CustomMatch [ "x.txt", "y.txt" ])
+            , test "flag via $cli.flags" <|
+                \() ->
+                    let
+                        jsonArg =
+                            Encode.object
+                                [ ( "$cli"
+                                  , Encode.object
+                                        [ ( "flags", Encode.list Encode.string [ "verbose" ] ) ]
+                                  )
+                                ]
+                                |> Encode.encode 0
+                    in
+                    Program.config
+                        |> Program.add
+                            (OptionsParser.build identity
+                                |> OptionsParser.with (Option.flag "verbose")
+                            )
+                        |> (\cfg ->
+                                Program.run cfg
+                                    [ "node", "test", jsonArg ]
+                                    "1.0.0"
+                                    Program.WithoutColor
+                           )
+                        |> Expect.equal (Program.CustomMatch True)
+            , test "flag absent from $cli.flags defaults to False" <|
+                \() ->
+                    let
+                        jsonArg =
+                            Encode.object
+                                [ ( "$cli", Encode.object [] ) ]
+                                |> Encode.encode 0
+                    in
+                    Program.config
+                        |> Program.add
+                            (OptionsParser.build identity
+                                |> OptionsParser.with (Option.flag "verbose")
+                            )
+                        |> (\cfg ->
+                                Program.run cfg
+                                    [ "node", "test", jsonArg ]
+                                    "1.0.0"
+                                    Program.WithoutColor
+                           )
+                        |> Expect.equal (Program.CustomMatch False)
+            , test "mixed: positional + keyword + flag + keyword list" <|
+                \() ->
+                    let
+                        jsonArg =
+                            Encode.object
+                                [ ( "$cli"
+                                  , Encode.object
+                                        [ ( "positional", Encode.list Encode.string [ "input.txt" ] )
+                                        , ( "flags", Encode.list Encode.string [ "verbose" ] )
+                                        , ( "keywordLists"
+                                          , Encode.object
+                                                [ ( "header", Encode.list Encode.string [ "X-A: 1" ] ) ]
+                                          )
+                                        ]
+                                  )
+                                , ( "limit", Encode.string "10" )
+                                ]
+                                |> Encode.encode 0
+                    in
+                    Program.config
+                        |> Program.add
+                            (OptionsParser.build (\file limit verbose headers -> ( ( file, limit ), ( verbose, headers ) ))
+                                |> OptionsParser.with (Option.requiredPositionalArg "file" Option.string)
+                                |> OptionsParser.with (Option.requiredKeywordArg "limit" Option.string)
+                                |> OptionsParser.with (Option.flag "verbose")
+                                |> OptionsParser.with (Option.keywordArgList "header" Option.string)
+                            )
+                        |> (\cfg ->
+                                Program.run cfg
+                                    [ "node", "test", jsonArg ]
+                                    "1.0.0"
+                                    Program.WithoutColor
+                           )
+                        |> Expect.equal
+                            (Program.CustomMatch
+                                ( ( "input.txt", "10" ), ( True, [ "X-A: 1" ] ) )
+                            )
+            ]
         , describe "modifiers"
             [ test "oneOf works" <|
                 \() ->
@@ -281,11 +512,11 @@ all =
                         )
                         |> Expect.equal
                             (Encode.object
-                                [ ( "$cli", Encode.string "elm-cli-options-parser" )
-                                , ( "type", Encode.string "object" )
+                                [ ( "type", Encode.string "object" )
                                 , ( "properties"
                                   , Encode.object
-                                        [ ( "count"
+                                        [ ( "$cli", Encode.object [ ( "type", Encode.string "object" ) ] )
+                                        , ( "count"
                                           , Encode.object
                                                 [ ( "type", Encode.string "integer" )
                                                 , ( "description", Encode.string "Number of items" )
@@ -293,7 +524,7 @@ all =
                                           )
                                         ]
                                   )
-                                , ( "required", Encode.list Encode.string [ "count" ] )
+                                , ( "required", Encode.list Encode.string [ "$cli", "count" ] )
                                 ]
                                 |> Encode.encode 0
                             )
@@ -339,7 +570,7 @@ runJsonWith : Option.Option from to { c | position : Cli.Option.BeginningOption 
 runJsonWith option fields =
     let
         jsonArg =
-            Encode.object (( "$cli", Encode.string "elm-cli-options-parser" ) :: fields)
+            Encode.object (( "$cli", Encode.object [] ) :: fields)
                 |> Encode.encode 0
     in
     Program.config
