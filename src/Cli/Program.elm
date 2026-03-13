@@ -676,8 +676,8 @@ parserToJsonSchemaFromTsTypes parser =
                 |> List.filterMap
                     (\( spec, ( optionName, _ ) ) ->
                         case spec of
-                            UsageSpec.FlagOrKeywordArg (UsageSpec.Flag _) _ _ maybeDescription ->
-                                Just ( optionName, maybeDescription )
+                            UsageSpec.FlagOrKeywordArg (UsageSpec.Flag _) _ occurences maybeDescription ->
+                                Just ( optionName, maybeDescription, occurences )
 
                             _ ->
                                 Nothing
@@ -859,7 +859,7 @@ positionalSchemaProperty positionalArgs maybeRestArgs =
 
 {-| Build the `$cli.flags` schema property.
 -}
-flagsSchemaProperty : List ( String, Maybe String ) -> List ( String, Encode.Value )
+flagsSchemaProperty : List ( String, Maybe String, Occurences ) -> List ( String, Encode.Value )
 flagsSchemaProperty flags =
     if List.isEmpty flags then
         []
@@ -867,14 +867,14 @@ flagsSchemaProperty flags =
     else
         let
             anyHasDescription =
-                flags |> List.any (\( _, desc ) -> desc /= Nothing)
+                flags |> List.any (\( _, desc, _ ) -> desc /= Nothing)
 
             itemsSchema =
                 if anyHasDescription then
                     Encode.object
                         [ ( "anyOf"
                           , Encode.list
-                                (\( flagName, maybeDesc ) ->
+                                (\( flagName, maybeDesc, _ ) ->
                                     case maybeDesc of
                                         Just desc ->
                                             Encode.object
@@ -892,14 +892,46 @@ flagsSchemaProperty flags =
 
                 else
                     Encode.object
-                        [ ( "enum", Encode.list Encode.string (List.map Tuple.first flags) ) ]
+                        [ ( "enum", Encode.list Encode.string (List.map (\( name, _, _ ) -> name) flags) ) ]
+
+            requiredFlags =
+                flags
+                    |> List.filterMap
+                        (\( flagName, _, occurences ) ->
+                            if occurences == Required then
+                                Just flagName
+
+                            else
+                                Nothing
+                        )
+
+            containsConstraints =
+                case requiredFlags of
+                    [] ->
+                        []
+
+                    [ singleFlag ] ->
+                        [ ( "contains", Encode.object [ ( "const", Encode.string singleFlag ) ] ) ]
+
+                    multipleFlags ->
+                        [ ( "allOf"
+                          , Encode.list
+                                (\flagName ->
+                                    Encode.object
+                                        [ ( "contains", Encode.object [ ( "const", Encode.string flagName ) ] ) ]
+                                )
+                                multipleFlags
+                          )
+                        ]
         in
         [ ( "flags"
           , Encode.object
-                [ ( "type", Encode.string "array" )
-                , ( "description", Encode.string "Boolean flags, passed as --flag (e.g., --verbose)" )
-                , ( "items", itemsSchema )
-                ]
+                ([ ( "type", Encode.string "array" )
+                 , ( "description", Encode.string "Boolean flags, passed as --flag (e.g., --verbose)" )
+                 , ( "items", itemsSchema )
+                 ]
+                    ++ containsConstraints
+                )
           )
         ]
 

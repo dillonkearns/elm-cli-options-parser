@@ -339,6 +339,216 @@ all =
                                 ]
                                 |> Encode.encode 0
                             )
+            , test "expectFlag produces contains constraint in schema" <|
+                \() ->
+                    Program.config
+                        |> Program.add
+                            (OptionsParser.build ()
+                                |> OptionsParser.expectFlag "init"
+                            )
+                        |> Program.toJsonSchema
+                        |> Encode.encode 0
+                        |> Expect.equal
+                            (Encode.object
+                                [ ( "type", Encode.string "object" )
+                                , ( "properties"
+                                  , Encode.object
+                                        [ ( "$cli"
+                                          , Encode.object
+                                                [ ( "type", Encode.string "object" )
+                                                , ( "properties"
+                                                  , Encode.object
+                                                        [ ( "flags"
+                                                          , Encode.object
+                                                                [ ( "type", Encode.string "array" )
+                                                                , ( "description", Encode.string "Boolean flags, passed as --flag (e.g., --verbose)" )
+                                                                , ( "items"
+                                                                  , Encode.object
+                                                                        [ ( "enum", Encode.list Encode.string [ "init" ] ) ]
+                                                                  )
+                                                                , ( "contains", Encode.object [ ( "const", Encode.string "init" ) ] )
+                                                                ]
+                                                          )
+                                                        ]
+                                                  )
+                                                ]
+                                          )
+                                        ]
+                                  )
+                                , ( "required", Encode.list Encode.string [ "$cli" ] )
+                                ]
+                                |> Encode.encode 0
+                            )
+            , test "multiple expectFlags produce allOf with contains" <|
+                \() ->
+                    Program.config
+                        |> Program.add
+                            (OptionsParser.build ()
+                                |> OptionsParser.expectFlag "init"
+                                |> OptionsParser.expectFlag "force"
+                            )
+                        |> Program.toJsonSchema
+                        |> Encode.encode 0
+                        |> Expect.equal
+                            (Encode.object
+                                [ ( "type", Encode.string "object" )
+                                , ( "properties"
+                                  , Encode.object
+                                        [ ( "$cli"
+                                          , Encode.object
+                                                [ ( "type", Encode.string "object" )
+                                                , ( "properties"
+                                                  , Encode.object
+                                                        [ ( "flags"
+                                                          , Encode.object
+                                                                [ ( "type", Encode.string "array" )
+                                                                , ( "description", Encode.string "Boolean flags, passed as --flag (e.g., --verbose)" )
+                                                                , ( "items"
+                                                                  , Encode.object
+                                                                        [ ( "enum", Encode.list Encode.string [ "init", "force" ] ) ]
+                                                                  )
+                                                                , ( "allOf"
+                                                                  , Encode.list identity
+                                                                        [ Encode.object [ ( "contains", Encode.object [ ( "const", Encode.string "init" ) ] ) ]
+                                                                        , Encode.object [ ( "contains", Encode.object [ ( "const", Encode.string "force" ) ] ) ]
+                                                                        ]
+                                                                  )
+                                                                ]
+                                                          )
+                                                        ]
+                                                  )
+                                                ]
+                                          )
+                                        ]
+                                  )
+                                , ( "required", Encode.list Encode.string [ "$cli" ] )
+                                ]
+                                |> Encode.encode 0
+                            )
+            , test "mixed flag and expectFlag — only expectFlag gets contains" <|
+                \() ->
+                    Program.config
+                        |> Program.add
+                            (OptionsParser.build identity
+                                |> OptionsParser.with (Option.flag "verbose")
+                                |> OptionsParser.expectFlag "init"
+                            )
+                        |> Program.toJsonSchema
+                        |> Encode.encode 0
+                        |> Expect.equal
+                            (Encode.object
+                                [ ( "type", Encode.string "object" )
+                                , ( "properties"
+                                  , Encode.object
+                                        [ ( "$cli"
+                                          , Encode.object
+                                                [ ( "type", Encode.string "object" )
+                                                , ( "properties"
+                                                  , Encode.object
+                                                        [ ( "flags"
+                                                          , Encode.object
+                                                                [ ( "type", Encode.string "array" )
+                                                                , ( "description", Encode.string "Boolean flags, passed as --flag (e.g., --verbose)" )
+                                                                , ( "items"
+                                                                  , Encode.object
+                                                                        [ ( "enum", Encode.list Encode.string [ "verbose", "init" ] ) ]
+                                                                  )
+                                                                , ( "contains", Encode.object [ ( "const", Encode.string "init" ) ] )
+                                                                ]
+                                                          )
+                                                        ]
+                                                  )
+                                                ]
+                                          )
+                                        ]
+                                  )
+                                , ( "required", Encode.list Encode.string [ "$cli" ] )
+                                ]
+                                |> Encode.encode 0
+                            )
+            , test "discriminated union with expectFlag produces anyOf with contains" <|
+                \() ->
+                    Program.config
+                        |> Program.add
+                            (OptionsParser.build identity
+                                |> OptionsParser.expectFlag "init"
+                                |> OptionsParser.with (Option.requiredKeywordArg "name")
+                                |> OptionsParser.map (\_ -> ())
+                            )
+                        |> Program.add
+                            (OptionsParser.build identity
+                                |> OptionsParser.expectFlag "build"
+                                |> OptionsParser.with (Option.flag "verbose")
+                                |> OptionsParser.map (\_ -> ())
+                            )
+                        |> Program.toJsonSchema
+                        |> Encode.encode 0
+                        |> Expect.equal
+                            (Encode.object
+                                [ ( "anyOf"
+                                  , Encode.list identity
+                                        [ Encode.object
+                                            [ ( "type", Encode.string "object" )
+                                            , ( "properties"
+                                              , Encode.object
+                                                    [ ( "$cli"
+                                                      , Encode.object
+                                                            [ ( "type", Encode.string "object" )
+                                                            , ( "properties"
+                                                              , Encode.object
+                                                                    [ ( "flags"
+                                                                      , Encode.object
+                                                                            [ ( "type", Encode.string "array" )
+                                                                            , ( "description", Encode.string "Boolean flags, passed as --flag (e.g., --verbose)" )
+                                                                            , ( "items"
+                                                                              , Encode.object
+                                                                                    [ ( "enum", Encode.list Encode.string [ "init" ] ) ]
+                                                                              )
+                                                                            , ( "contains", Encode.object [ ( "const", Encode.string "init" ) ] )
+                                                                            ]
+                                                                      )
+                                                                    ]
+                                                              )
+                                                            ]
+                                                      )
+                                                    , ( "name", Encode.object [ ( "type", Encode.string "string" ) ] )
+                                                    ]
+                                              )
+                                            , ( "required", Encode.list Encode.string [ "$cli", "name" ] )
+                                            ]
+                                        , Encode.object
+                                            [ ( "type", Encode.string "object" )
+                                            , ( "properties"
+                                              , Encode.object
+                                                    [ ( "$cli"
+                                                      , Encode.object
+                                                            [ ( "type", Encode.string "object" )
+                                                            , ( "properties"
+                                                              , Encode.object
+                                                                    [ ( "flags"
+                                                                      , Encode.object
+                                                                            [ ( "type", Encode.string "array" )
+                                                                            , ( "description", Encode.string "Boolean flags, passed as --flag (e.g., --verbose)" )
+                                                                            , ( "items"
+                                                                              , Encode.object
+                                                                                    [ ( "enum", Encode.list Encode.string [ "build", "verbose" ] ) ]
+                                                                              )
+                                                                            , ( "contains", Encode.object [ ( "const", Encode.string "build" ) ] )
+                                                                            ]
+                                                                      )
+                                                                    ]
+                                                              )
+                                                            ]
+                                                      )
+                                                    ]
+                                              )
+                                            , ( "required", Encode.list Encode.string [ "$cli" ] )
+                                            ]
+                                        ]
+                                  )
+                                ]
+                                |> Encode.encode 0
+                            )
             , test "no options produces empty object schema" <|
                 \() ->
                     Program.config
@@ -557,6 +767,87 @@ Problem with the value at json.name:
 
 Expecting a STRING"""
                             )
+            , test "JSON input mode expectFlag selects init branch" <|
+                \() ->
+                    let
+                        cfg =
+                            Program.config
+                                |> Program.add
+                                    (OptionsParser.build (\name -> "init:" ++ name)
+                                        |> OptionsParser.expectFlag "init"
+                                        |> OptionsParser.with (Option.requiredKeywordArg "name")
+                                    )
+                                |> Program.add
+                                    (OptionsParser.build
+                                        (\verbose ->
+                                            "build:"
+                                                ++ (if verbose then
+                                                        "verbose"
+
+                                                    else
+                                                        "quiet"
+                                                   )
+                                        )
+                                        |> OptionsParser.expectFlag "build"
+                                        |> OptionsParser.with (Option.flag "verbose")
+                                    )
+                    in
+                    Program.run cfg
+                        [ "node", "test", "{\"$cli\":{\"flags\":[\"init\"]},\"name\":\"my-project\"}" ]
+                        "1.0.0"
+                        Program.WithoutColor
+                        |> Expect.equal (Program.CustomMatch "init:my-project")
+            , test "JSON input mode expectFlag selects build branch" <|
+                \() ->
+                    let
+                        cfg =
+                            Program.config
+                                |> Program.add
+                                    (OptionsParser.build (\name -> "init:" ++ name)
+                                        |> OptionsParser.expectFlag "init"
+                                        |> OptionsParser.with (Option.requiredKeywordArg "name")
+                                    )
+                                |> Program.add
+                                    (OptionsParser.build
+                                        (\verbose ->
+                                            "build:"
+                                                ++ (if verbose then
+                                                        "verbose"
+
+                                                    else
+                                                        "quiet"
+                                                   )
+                                        )
+                                        |> OptionsParser.expectFlag "build"
+                                        |> OptionsParser.with (Option.flag "verbose")
+                                    )
+                    in
+                    Program.run cfg
+                        [ "node", "test", "{\"$cli\":{\"flags\":[\"build\",\"verbose\"]}}" ]
+                        "1.0.0"
+                        Program.WithoutColor
+                        |> Expect.equal (Program.CustomMatch "build:verbose")
+            , test "JSON input mode expectFlag rejects when flag missing" <|
+                \() ->
+                    Program.config
+                        |> Program.add
+                            (OptionsParser.build ()
+                                |> OptionsParser.expectFlag "init"
+                            )
+                        |> (\cfg ->
+                                Program.run cfg
+                                    [ "node", "test", "{\"$cli\":{}}" ]
+                                    "1.0.0"
+                                    Program.WithoutColor
+                           )
+                        |> (\result ->
+                                case result of
+                                    Program.SystemMessage Program.Failure _ ->
+                                        Expect.pass
+
+                                    _ ->
+                                        Expect.fail ("Expected failure but got: " ++ Debug.toString result)
+                           )
             , test "malformed JSON falls back to regular CLI parsing" <|
                 \() ->
                     -- Malformed JSON is NOT treated as JSON input mode,
