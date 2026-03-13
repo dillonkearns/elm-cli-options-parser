@@ -290,7 +290,8 @@ all =
                                         [ ( "$cli", Encode.object [ ( "type", Encode.string "object" ) ] )
                                         , ( "format"
                                           , Encode.object
-                                                [ ( "anyOf"
+                                                [ ( "type", Encode.string "string" )
+                                                , ( "anyOf"
                                                   , Encode.list identity
                                                         [ Encode.object [ ( "const", Encode.string "json" ) ]
                                                         , Encode.object [ ( "const", Encode.string "junit" ) ]

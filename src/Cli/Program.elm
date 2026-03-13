@@ -962,13 +962,27 @@ tsTypeToProperty spec ( optionName, tsType ) =
         strippedSchema =
             stripSchemaKey (TsJson.Type.toJsonSchema tsType)
 
+        -- anyOf+const from stringUnion lacks "type":"string" — add it
+        withType =
+            case Json.Decode.decodeValue (Json.Decode.field "anyOf" Json.Decode.value) strippedSchema of
+                Ok _ ->
+                    case Json.Decode.decodeValue (Json.Decode.field "type" Json.Decode.value) strippedSchema of
+                        Ok _ ->
+                            strippedSchema
+
+                        Err _ ->
+                            prependJsonField ( "type", Encode.string "string" ) strippedSchema
+
+                Err _ ->
+                    strippedSchema
+
         schemaWithDescription =
             case usageSpecDescription spec of
                 Just desc ->
-                    appendJsonFields [ ( "description", Encode.string desc ) ] strippedSchema
+                    appendJsonFields [ ( "description", Encode.string desc ) ] withType
 
                 Nothing ->
-                    strippedSchema
+                    withType
     in
     ( optionName, schemaWithDescription )
 
@@ -984,6 +998,18 @@ usageSpecDescription spec =
 
         UsageSpec.RestArgs _ maybeDescription ->
             maybeDescription
+
+
+{-| Prepend a key-value pair to the beginning of a JSON object value.
+-}
+prependJsonField : ( String, Encode.Value ) -> Encode.Value -> Encode.Value
+prependJsonField field jsonValue =
+    case Json.Decode.decodeValue (Json.Decode.keyValuePairs Json.Decode.value) jsonValue of
+        Ok existingFields ->
+            Encode.object (field :: existingFields)
+
+        Err _ ->
+            Encode.object [ field ]
 
 
 {-| Append additional key-value pairs to the end of a JSON object value.

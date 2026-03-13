@@ -147,6 +147,7 @@ all =
           "description": "The task title"
         },
         "priority": {
+          "type": "string",
           "anyOf": [
             {
               "const": "low"
@@ -192,6 +193,7 @@ all =
           "const": "list"
         },
         "format": {
+          "type": "string",
           "anyOf": [
             {
               "const": "json"
