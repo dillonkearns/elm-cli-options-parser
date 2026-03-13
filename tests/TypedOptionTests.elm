@@ -1,6 +1,6 @@
 module TypedOptionTests exposing (all)
 
-import Cli.Option as UntypedOption
+import Cli.Option
 import Cli.Option.Typed as Option
 import Cli.OptionsParser as OptionsParser
 import Cli.Program as Program
@@ -13,280 +13,374 @@ import TsJson.Decode as TsDecode
 all : Test
 all =
     describe "Cli.Option.Typed"
-        [ test "requiredKeywordArg with string decoder parses CLI arg" <|
-            \() ->
-                Program.config
-                    |> Program.add
-                        (OptionsParser.build identity
-                            |> OptionsParser.with
-                                (Option.requiredKeywordArg "name" TsDecode.string)
+        [ describe "Option.string"
+            [ test "parses bare CLI arg" <|
+                \() ->
+                    runWith (Option.requiredKeywordArg "name" Option.string)
+                        [ "--name", "hello" ]
+                        |> Expect.equal (Program.CustomMatch "hello")
+            , test "preserves numeric-looking input as string" <|
+                \() ->
+                    runWith (Option.requiredKeywordArg "name" Option.string)
+                        [ "--name", "42" ]
+                        |> Expect.equal (Program.CustomMatch "42")
+            , test "preserves 'true' as string" <|
+                \() ->
+                    runWith (Option.requiredKeywordArg "name" Option.string)
+                        [ "--name", "true" ]
+                        |> Expect.equal (Program.CustomMatch "true")
+            , test "preserves 'null' as string" <|
+                \() ->
+                    runWith (Option.requiredKeywordArg "name" Option.string)
+                        [ "--name", "null" ]
+                        |> Expect.equal (Program.CustomMatch "null")
+            , test "preserves quotes in input" <|
+                \() ->
+                    runWith (Option.requiredKeywordArg "name" Option.string)
+                        [ "--name", "\"quoted\"" ]
+                        |> Expect.equal (Program.CustomMatch "\"quoted\"")
+            , test "preserves spaces and special chars" <|
+                \() ->
+                    runWith (Option.requiredKeywordArg "msg" Option.string)
+                        [ "--msg", "hello world!" ]
+                        |> Expect.equal (Program.CustomMatch "hello world!")
+            , test "works in JSON mode" <|
+                \() ->
+                    runJsonWith (Option.requiredKeywordArg "name" Option.string)
+                        [ ( "name", Encode.string "hello" ) ]
+                        |> Expect.equal (Program.CustomMatch "hello")
+            , test "produces string schema" <|
+                \() ->
+                    schemaFor (Option.requiredKeywordArg "name" Option.string)
+                        |> Expect.equal
+                            (Encode.object
+                                [ ( "$cli", Encode.string "elm-cli-options-parser" )
+                                , ( "type", Encode.string "object" )
+                                , ( "properties"
+                                  , Encode.object
+                                        [ ( "name", Encode.object [ ( "type", Encode.string "string" ) ] ) ]
+                                  )
+                                , ( "required", Encode.list Encode.string [ "name" ] )
+                                ]
+                                |> Encode.encode 0
+                            )
+            ]
+        , describe "Option.int"
+            [ test "parses numeric CLI arg" <|
+                \() ->
+                    runWith (Option.requiredKeywordArg "count" Option.int)
+                        [ "--count", "42" ]
+                        |> Expect.equal (Program.CustomMatch 42)
+            , test "parses negative int" <|
+                \() ->
+                    runWith (Option.requiredKeywordArg "count" Option.int)
+                        [ "--count", "-7" ]
+                        |> Expect.equal (Program.CustomMatch -7)
+            , test "rejects float" <|
+                \() ->
+                    runWith (Option.requiredKeywordArg "count" Option.int)
+                        [ "--count", "3.14" ]
+                        |> expectFailure
+            , test "rejects bare text with clear error" <|
+                \() ->
+                    runWith (Option.requiredKeywordArg "count" Option.int)
+                        [ "--count", "abc" ]
+                        |> expectFailure
+            , test "rejects 'true'" <|
+                \() ->
+                    runWith (Option.requiredKeywordArg "count" Option.int)
+                        [ "--count", "true" ]
+                        |> expectFailure
+            , test "works in JSON mode" <|
+                \() ->
+                    runJsonWith (Option.requiredKeywordArg "count" Option.int)
+                        [ ( "count", Encode.int 42 ) ]
+                        |> Expect.equal (Program.CustomMatch 42)
+            , test "JSON mode rejects string" <|
+                \() ->
+                    runJsonWith (Option.requiredKeywordArg "count" Option.int)
+                        [ ( "count", Encode.string "abc" ) ]
+                        |> expectFailure
+            , test "produces integer schema" <|
+                \() ->
+                    schemaFor (Option.requiredKeywordArg "count" Option.int)
+                        |> Expect.equal
+                            (Encode.object
+                                [ ( "$cli", Encode.string "elm-cli-options-parser" )
+                                , ( "type", Encode.string "object" )
+                                , ( "properties"
+                                  , Encode.object
+                                        [ ( "count", Encode.object [ ( "type", Encode.string "integer" ) ] ) ]
+                                  )
+                                , ( "required", Encode.list Encode.string [ "count" ] )
+                                ]
+                                |> Encode.encode 0
+                            )
+            ]
+        , describe "Option.float"
+            [ test "parses float CLI arg" <|
+                \() ->
+                    runWith (Option.requiredKeywordArg "rate" Option.float)
+                        [ "--rate", "3.14" ]
+                        |> Expect.equal (Program.CustomMatch 3.14)
+            , test "parses integer as float" <|
+                \() ->
+                    runWith (Option.requiredKeywordArg "rate" Option.float)
+                        [ "--rate", "42" ]
+                        |> Expect.equal (Program.CustomMatch 42.0)
+            , test "rejects bare text" <|
+                \() ->
+                    runWith (Option.requiredKeywordArg "rate" Option.float)
+                        [ "--rate", "abc" ]
+                        |> expectFailure
+            ]
+        , describe "Option.bool"
+            [ test "parses 'true'" <|
+                \() ->
+                    runWith (Option.requiredKeywordArg "dry" Option.bool)
+                        [ "--dry", "true" ]
+                        |> Expect.equal (Program.CustomMatch True)
+            , test "parses 'false'" <|
+                \() ->
+                    runWith (Option.requiredKeywordArg "dry" Option.bool)
+                        [ "--dry", "false" ]
+                        |> Expect.equal (Program.CustomMatch False)
+            , test "rejects bare text" <|
+                \() ->
+                    runWith (Option.requiredKeywordArg "dry" Option.bool)
+                        [ "--dry", "abc" ]
+                        |> expectFailure
+            ]
+        , describe "fromDecoder"
+            [ test "custom decoder works in JSON mode" <|
+                \() ->
+                    let
+                        pointDecoder =
+                            TsDecode.succeed (\x y -> ( x, y ))
+                                |> TsDecode.andMap (TsDecode.field "x" TsDecode.int)
+                                |> TsDecode.andMap (TsDecode.field "y" TsDecode.int)
+                    in
+                    runJsonWith (Option.requiredKeywordArg "point" (Option.fromDecoder pointDecoder))
+                        [ ( "point", Encode.object [ ( "x", Encode.int 1 ), ( "y", Encode.int 2 ) ] ) ]
+                        |> Expect.equal (Program.CustomMatch ( 1, 2 ))
+            , test "custom decoder in CLI mode expects strict JSON" <|
+                \() ->
+                    let
+                        pointDecoder =
+                            TsDecode.succeed (\x y -> ( x, y ))
+                                |> TsDecode.andMap (TsDecode.field "x" TsDecode.int)
+                                |> TsDecode.andMap (TsDecode.field "y" TsDecode.int)
+                    in
+                    runWith (Option.requiredKeywordArg "point" (Option.fromDecoder pointDecoder))
+                        [ "--point", "{\"x\":1,\"y\":2}" ]
+                        |> Expect.equal (Program.CustomMatch ( 1, 2 ))
+            , test "fromDecoder TsDecode.string in CLI mode requires JSON-quoted string" <|
+                \() ->
+                    -- bare text is NOT valid JSON — this should fail
+                    runWith (Option.requiredKeywordArg "name" (Option.fromDecoder TsDecode.string))
+                        [ "--name", "hello" ]
+                        |> expectFailure
+            , test "fromDecoder TsDecode.string in CLI mode accepts JSON-quoted string" <|
+                \() ->
+                    -- JSON string: "hello" (with quotes on CLI)
+                    runWith (Option.requiredKeywordArg "name" (Option.fromDecoder TsDecode.string))
+                        [ "--name", "\"hello\"" ]
+                        |> Expect.equal (Program.CustomMatch "hello")
+            ]
+        , describe "optionalKeywordArg"
+            [ test "returns Just when present" <|
+                \() ->
+                    runWith (Option.optionalKeywordArg "greeting" Option.string)
+                        [ "--greeting", "hi" ]
+                        |> Expect.equal (Program.CustomMatch (Just "hi"))
+            , test "returns Nothing when absent" <|
+                \() ->
+                    runWith (Option.optionalKeywordArg "greeting" Option.string)
+                        [{- absent -}]
+                        |> Expect.equal (Program.CustomMatch Nothing)
+            , test "optional int present" <|
+                \() ->
+                    runWith (Option.optionalKeywordArg "count" Option.int)
+                        [ "--count", "42" ]
+                        |> Expect.equal (Program.CustomMatch (Just 42))
+            , test "optional int invalid gives error" <|
+                \() ->
+                    runWith (Option.optionalKeywordArg "count" Option.int)
+                        [ "--count", "abc" ]
+                        |> expectFailure
+            ]
+        , describe "keywordArgList"
+            [ test "collects repeated args" <|
+                \() ->
+                    runWith (Option.keywordArgList "header" Option.string)
+                        [ "--header", "X-A: 1", "--header", "X-B: 2" ]
+                        |> Expect.equal (Program.CustomMatch [ "X-A: 1", "X-B: 2" ])
+            ]
+        , describe "requiredPositionalArg"
+            [ test "string positional" <|
+                \() ->
+                    runWith (Option.requiredPositionalArg "file" Option.string)
+                        [ "hello.txt" ]
+                        |> Expect.equal (Program.CustomMatch "hello.txt")
+            , test "int positional" <|
+                \() ->
+                    runWith (Option.requiredPositionalArg "port" Option.int)
+                        [ "8080" ]
+                        |> Expect.equal (Program.CustomMatch 8080)
+            ]
+        , describe "optionalPositionalArg"
+            [ test "returns Just when present" <|
+                \() ->
+                    runOptionalPositionalWith (Option.optionalPositionalArg "revision" Option.string)
+                        [ "abc123" ]
+                        |> Expect.equal (Program.CustomMatch (Just "abc123"))
+            , test "returns Nothing when absent" <|
+                \() ->
+                    runOptionalPositionalWith (Option.optionalPositionalArg "revision" Option.string)
+                        []
+                        |> Expect.equal (Program.CustomMatch Nothing)
+            ]
+        , describe "flag and restArgs (no decoder)"
+            [ test "flag works" <|
+                \() ->
+                    runWith (Option.flag "verbose")
+                        [ "--verbose" ]
+                        |> Expect.equal (Program.CustomMatch True)
+            , test "restArgs collects remaining args" <|
+                \() ->
+                    Program.config
+                        |> Program.add
+                            (OptionsParser.build identity
+                                |> OptionsParser.withRestArgs (Option.restArgs "files")
+                            )
+                        |> (\cfg ->
+                                Program.run cfg
+                                    [ "node", "test", "a.txt", "b.txt" ]
+                                    "1.0.0"
+                                    Program.WithoutColor
+                           )
+                        |> Expect.equal (Program.CustomMatch [ "a.txt", "b.txt" ])
+            ]
+        , describe "modifiers"
+            [ test "oneOf works" <|
+                \() ->
+                    runWith
+                        (Option.requiredKeywordArg "format" Option.string
+                            |> Option.oneOf
+                                [ ( "json", "JSON" )
+                                , ( "csv", "CSV" )
+                                ]
                         )
-                    |> (\cfg ->
-                            Program.run cfg
-                                [ "node", "test", "--name", "hello" ]
-                                "1.0.0"
-                                Program.WithoutColor
-                       )
-                    |> Expect.equal (Program.CustomMatch "hello")
-        , test "requiredKeywordArg with int decoder parses CLI arg" <|
-            \() ->
-                Program.config
-                    |> Program.add
-                        (OptionsParser.build identity
-                            |> OptionsParser.with
-                                (Option.requiredKeywordArg "count" TsDecode.int)
+                        [ "--format", "json" ]
+                        |> Expect.equal (Program.CustomMatch "JSON")
+            , test "withDescription adds to schema" <|
+                \() ->
+                    schemaFor
+                        (Option.requiredKeywordArg "count" Option.int
+                            |> Option.withDescription "Number of items"
                         )
-                    |> (\cfg ->
-                            Program.run cfg
-                                [ "node", "test", "--count", "42" ]
-                                "1.0.0"
-                                Program.WithoutColor
-                       )
-                    |> Expect.equal (Program.CustomMatch 42)
-        , test "requiredKeywordArg with int decoder works in JSON mode" <|
-            \() ->
-                Program.config
-                    |> Program.add
-                        (OptionsParser.build identity
-                            |> OptionsParser.with
-                                (Option.requiredKeywordArg "count" TsDecode.int)
-                        )
-                    |> (\cfg ->
-                            Program.run cfg
-                                [ "node", "test", "{\"$cli\":\"elm-cli-options-parser\",\"count\":42}" ]
-                                "1.0.0"
-                                Program.WithoutColor
-                       )
-                    |> Expect.equal (Program.CustomMatch 42)
-        , test "requiredKeywordArg produces correct JSON schema" <|
-            \() ->
-                Program.config
-                    |> Program.add
-                        (OptionsParser.build identity
-                            |> OptionsParser.with
-                                (Option.requiredKeywordArg "count" TsDecode.int)
-                        )
-                    |> Program.toJsonSchema
-                    |> Encode.encode 0
-                    |> Expect.equal
-                        (Encode.object
-                            [ ( "$cli", Encode.string "elm-cli-options-parser" )
-                            , ( "type", Encode.string "object" )
-                            , ( "properties"
-                              , Encode.object
-                                    [ ( "count", Encode.object [ ( "type", Encode.string "integer" ) ] ) ]
-                              )
-                            , ( "required", Encode.list Encode.string [ "count" ] )
-                            ]
-                            |> Encode.encode 0
-                        )
-        , test "requiredKeywordArg int gives clear CLI error for non-numeric" <|
-            \() ->
-                Program.config
-                    |> Program.add
-                        (OptionsParser.build identity
-                            |> OptionsParser.with
-                                (Option.requiredKeywordArg "count" TsDecode.int)
-                        )
-                    |> (\cfg ->
-                            Program.run cfg
-                                [ "node", "test", "--count", "abc" ]
-                                "1.0.0"
-                                Program.WithoutColor
-                       )
-                    |> expectFailureContaining "Expecting an INT"
-        , test "optionalKeywordArg with string returns Just when present" <|
-            \() ->
-                Program.config
-                    |> Program.add
-                        (OptionsParser.build identity
-                            |> OptionsParser.with
-                                (Option.optionalKeywordArg "greeting" TsDecode.string)
-                        )
-                    |> (\cfg ->
-                            Program.run cfg
-                                [ "node", "test", "--greeting", "hi" ]
-                                "1.0.0"
-                                Program.WithoutColor
-                       )
-                    |> Expect.equal (Program.CustomMatch (Just "hi"))
-        , test "optionalKeywordArg returns Nothing when absent" <|
-            \() ->
-                Program.config
-                    |> Program.add
-                        (OptionsParser.build identity
-                            |> OptionsParser.with
-                                (Option.optionalKeywordArg "greeting" TsDecode.string)
-                        )
-                    |> (\cfg ->
-                            Program.run cfg
-                                [ "node", "test" ]
-                                "1.0.0"
-                                Program.WithoutColor
-                       )
-                    |> Expect.equal (Program.CustomMatch Nothing)
-        , test "re-exported oneOf works without separate import" <|
-            \() ->
-                Program.config
-                    |> Program.add
-                        (OptionsParser.build identity
-                            |> OptionsParser.with
-                                (Option.requiredKeywordArg "format" TsDecode.string
-                                    |> Option.oneOf
-                                        [ ( "json", "JSON" )
-                                        , ( "csv", "CSV" )
+                        |> Expect.equal
+                            (Encode.object
+                                [ ( "$cli", Encode.string "elm-cli-options-parser" )
+                                , ( "type", Encode.string "object" )
+                                , ( "properties"
+                                  , Encode.object
+                                        [ ( "count"
+                                          , Encode.object
+                                                [ ( "type", Encode.string "integer" )
+                                                , ( "description", Encode.string "Number of items" )
+                                                ]
+                                          )
                                         ]
-                                )
-                        )
-                    |> (\cfg ->
-                            Program.run cfg
-                                [ "node", "test", "--format", "json" ]
-                                "1.0.0"
-                                Program.WithoutColor
-                       )
-                    |> Expect.equal (Program.CustomMatch "JSON")
-        , test "flag works" <|
-            \() ->
-                Program.config
-                    |> Program.add
-                        (OptionsParser.build identity
-                            |> OptionsParser.with (Option.flag "verbose")
-                        )
-                    |> (\cfg ->
-                            Program.run cfg
-                                [ "node", "test", "--verbose" ]
-                                "1.0.0"
-                                Program.WithoutColor
-                       )
-                    |> Expect.equal (Program.CustomMatch True)
-        , test "re-exported withDescription works without separate import" <|
-            \() ->
-                Program.config
-                    |> Program.add
-                        (OptionsParser.build identity
-                            |> OptionsParser.with
-                                (Option.requiredKeywordArg "count" TsDecode.int
-                                    |> Option.withDescription "Number of items"
-                                )
-                        )
-                    |> Program.toJsonSchema
-                    |> Encode.encode 0
-                    |> Expect.equal
-                        (Encode.object
-                            [ ( "$cli", Encode.string "elm-cli-options-parser" )
-                            , ( "type", Encode.string "object" )
-                            , ( "properties"
-                              , Encode.object
-                                    [ ( "count"
-                                      , Encode.object
-                                            [ ( "type", Encode.string "integer" )
-                                            , ( "description", Encode.string "Number of items" )
-                                            ]
-                                      )
-                                    ]
-                              )
-                            , ( "required", Encode.list Encode.string [ "count" ] )
-                            ]
-                            |> Encode.encode 0
-                        )
-        , test "requiredPositionalArg with string decoder" <|
-            \() ->
-                Program.config
-                    |> Program.add
-                        (OptionsParser.build identity
-                            |> OptionsParser.with
-                                (Option.requiredPositionalArg "file" TsDecode.string)
-                        )
-                    |> (\cfg ->
-                            Program.run cfg
-                                [ "node", "test", "hello.txt" ]
-                                "1.0.0"
-                                Program.WithoutColor
-                       )
-                    |> Expect.equal (Program.CustomMatch "hello.txt")
-        , test "requiredPositionalArg with int decoder" <|
-            \() ->
-                Program.config
-                    |> Program.add
-                        (OptionsParser.build identity
-                            |> OptionsParser.with
-                                (Option.requiredPositionalArg "port" TsDecode.int)
-                        )
-                    |> (\cfg ->
-                            Program.run cfg
-                                [ "node", "test", "8080" ]
-                                "1.0.0"
-                                Program.WithoutColor
-                       )
-                    |> Expect.equal (Program.CustomMatch 8080)
-        , test "optionalPositionalArg returns Just when present" <|
-            \() ->
-                Program.config
-                    |> Program.add
-                        (OptionsParser.build identity
-                            |> OptionsParser.withOptionalPositionalArg
-                                (Option.optionalPositionalArg "revision" TsDecode.string)
-                        )
-                    |> (\cfg ->
-                            Program.run cfg
-                                [ "node", "test", "abc123" ]
-                                "1.0.0"
-                                Program.WithoutColor
-                       )
-                    |> Expect.equal (Program.CustomMatch (Just "abc123"))
-        , test "optionalPositionalArg returns Nothing when absent" <|
-            \() ->
-                Program.config
-                    |> Program.add
-                        (OptionsParser.build identity
-                            |> OptionsParser.withOptionalPositionalArg
-                                (Option.optionalPositionalArg "revision" TsDecode.string)
-                        )
-                    |> (\cfg ->
-                            Program.run cfg
-                                [ "node", "test" ]
-                                "1.0.0"
-                                Program.WithoutColor
-                       )
-                    |> Expect.equal (Program.CustomMatch Nothing)
-        , test "restArgs collects remaining positional args" <|
-            \() ->
-                Program.config
-                    |> Program.add
-                        (OptionsParser.build identity
-                            |> OptionsParser.withRestArgs
-                                (Option.restArgs "files")
-                        )
-                    |> (\cfg ->
-                            Program.run cfg
-                                [ "node", "test", "a.txt", "b.txt" ]
-                                "1.0.0"
-                                Program.WithoutColor
-                       )
-                    |> Expect.equal (Program.CustomMatch [ "a.txt", "b.txt" ])
-        , test "keywordArgList collects repeated keyword args" <|
-            \() ->
-                Program.config
-                    |> Program.add
-                        (OptionsParser.build identity
-                            |> OptionsParser.with
-                                (Option.keywordArgList "header" TsDecode.string)
-                        )
-                    |> (\cfg ->
-                            Program.run cfg
-                                [ "node", "test", "--header", "X-A: 1", "--header", "X-B: 2" ]
-                                "1.0.0"
-                                Program.WithoutColor
-                       )
-                    |> Expect.equal (Program.CustomMatch [ "X-A: 1", "X-B: 2" ])
+                                  )
+                                , ( "required", Encode.list Encode.string [ "count" ] )
+                                ]
+                                |> Encode.encode 0
+                            )
+            ]
         ]
+
+
+
+-- Test helpers
+
+
+runWith : Option.Option from to { c | position : Cli.Option.BeginningOption } -> List String -> Program.RunResult to
+runWith option args =
+    Program.config
+        |> Program.add
+            (OptionsParser.build identity
+                |> OptionsParser.with option
+            )
+        |> (\cfg ->
+                Program.run cfg
+                    ([ "node", "test" ] ++ args)
+                    "1.0.0"
+                    Program.WithoutColor
+           )
+
+
+runOptionalPositionalWith : Option.Option from to { c | position : Cli.Option.OptionalPositionalArgOption } -> List String -> Program.RunResult to
+runOptionalPositionalWith option args =
+    Program.config
+        |> Program.add
+            (OptionsParser.build identity
+                |> OptionsParser.withOptionalPositionalArg option
+            )
+        |> (\cfg ->
+                Program.run cfg
+                    ([ "node", "test" ] ++ args)
+                    "1.0.0"
+                    Program.WithoutColor
+           )
+
+
+runJsonWith : Option.Option from to { c | position : Cli.Option.BeginningOption } -> List ( String, Encode.Value ) -> Program.RunResult to
+runJsonWith option fields =
+    let
+        jsonArg =
+            Encode.object (( "$cli", Encode.string "elm-cli-options-parser" ) :: fields)
+                |> Encode.encode 0
+    in
+    Program.config
+        |> Program.add
+            (OptionsParser.build identity
+                |> OptionsParser.with option
+            )
+        |> (\cfg ->
+                Program.run cfg
+                    [ "node", "test", jsonArg ]
+                    "1.0.0"
+                    Program.WithoutColor
+           )
+
+
+schemaFor : Option.Option from to { c | position : Cli.Option.BeginningOption } -> String
+schemaFor option =
+    Program.config
+        |> Program.add
+            (OptionsParser.build identity
+                |> OptionsParser.with option
+            )
+        |> Program.toJsonSchema
+        |> Encode.encode 0
+
+
+expectFailure : Program.RunResult msg -> Expect.Expectation
+expectFailure result =
+    case result of
+        Program.SystemMessage Program.Failure _ ->
+            Expect.pass
+
+        other ->
+            Expect.fail ("Expected SystemMessage Failure but got: " ++ Debug.toString other)
 
 
 expectFailureContaining : String -> Program.RunResult msg -> Expect.Expectation
 expectFailureContaining substring result =
     case result of
         Program.SystemMessage Program.Failure message ->
-            if String.contains substring message then
+            if String.contains substring (String.toUpper message) then
                 Expect.pass
 
             else

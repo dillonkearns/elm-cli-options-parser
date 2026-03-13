@@ -1,5 +1,6 @@
 module Cli.Option.Typed exposing
-    ( Option
+    ( Option, CliDecoder
+    , string, int, float, bool, fromDecoder
     , requiredKeywordArg, optionalKeywordArg, keywordArgList
     , requiredPositionalArg, optionalPositionalArg
     , flag, restArgs
@@ -7,17 +8,20 @@ module Cli.Option.Typed exposing
     , withDescription, withDisplayName
     )
 
-{-| Typed option constructors that take a `TsDecode.Decoder` for first-class
-JSON schema support. Each constructor produces both a CLI parser and a JSON
-schema from the same decoder.
+{-| Typed option constructors for first-class JSON schema support.
 
-Use this module instead of `Cli.Option` when you want typed JSON schemas
-(e.g., `"type": "integer"` instead of `"type": "string"` with manual validation).
+Each constructor produces both a CLI parser and a JSON schema from a `CliDecoder`.
+Use `string`, `int`, `float`, `bool` for primitives, or `fromDecoder` for custom types.
 
 
 ## Types
 
-@docs Option
+@docs Option, CliDecoder
+
+
+## Decoders
+
+@docs string, int, float, bool, fromDecoder
 
 
 ## Keyword Arguments
@@ -49,7 +53,6 @@ import Cli.Option exposing (BeginningOption, OptionalPositionalArgOption, RestAr
 import Cli.Option.Internal as Internal exposing (Option(..))
 import Cli.UsageSpec as UsageSpec
 import Json.Decode
-import Json.Encode
 import List.Extra
 import Occurences exposing (Occurences(..))
 import Tokenizer
@@ -62,20 +65,123 @@ type alias Option from to builderState =
     Internal.Option from to builderState
 
 
+{-| A decoder that knows how to parse values from both CLI args and JSON input.
+
+Use `string`, `int`, `float`, `bool` for primitives, or `fromDecoder` for
+custom types (objects, arrays, etc.) where the CLI input is a JSON string.
+
+-}
+type CliDecoder value
+    = CliDecoder
+        { cliParser : String -> String -> Result Cli.Decode.ProcessingError value
+        , jsonDecoder : Json.Decode.Decoder value
+        , tsDecoder : TsDecode.Decoder value
+        }
+
+
+
+-- Decoders
+
+
+{-| A string value. In CLI mode, the raw string is passed through as-is.
+In JSON mode, a JSON string field is decoded.
+
+    Option.requiredKeywordArg "name" Option.string
+    -- CLI: --name hello → "hello"
+    -- JSON: {"name": "hello"} → "hello"
+
+-}
+string : CliDecoder String
+string =
+    CliDecoder
+        { cliParser = \_ s -> Ok s
+        , jsonDecoder = Json.Decode.string
+        , tsDecoder = TsDecode.string
+        }
+
+
+{-| An integer value. In CLI mode, the string is parsed as a JSON integer.
+In JSON mode, a JSON integer field is decoded.
+
+    Option.requiredKeywordArg "count" Option.int
+    -- CLI: --count 42 → 42
+    -- JSON: {"count": 42} → 42
+
+-}
+int : CliDecoder Int
+int =
+    fromDecoder TsDecode.int
+
+
+{-| A float value. In CLI mode, the string is parsed as a JSON number.
+In JSON mode, a JSON number field is decoded.
+
+    Option.requiredKeywordArg "rate" Option.float
+    -- CLI: --rate 3.14 → 3.14
+    -- JSON: {"rate": 3.14} → 3.14
+
+-}
+float : CliDecoder Float
+float =
+    fromDecoder TsDecode.float
+
+
+{-| A boolean value. In CLI mode, the string is parsed as a JSON boolean.
+In JSON mode, a JSON boolean field is decoded.
+
+Note: for flags (present/absent), use `flag` instead.
+
+    Option.requiredKeywordArg "dry-run" Option.bool
+    -- CLI: --dry-run true → True
+    -- JSON: {"dry-run": true} → True
+
+-}
+bool : CliDecoder Bool
+bool =
+    fromDecoder TsDecode.bool
+
+
+{-| Create a `CliDecoder` from a `TsDecode.Decoder`. In CLI mode, the string
+value is parsed as strict JSON. This means the CLI user must pass valid JSON.
+
+For strings, this means the CLI value must be quoted: `--name '"hello"'`.
+If you want bare string values, use `string` instead.
+
+    import TsJson.Decode as TsDecode
+
+    pointDecoder =
+        TsDecode.succeed (\x y -> { x = x, y = y })
+            |> TsDecode.andMap (TsDecode.field "x" TsDecode.int)
+            |> TsDecode.andMap (TsDecode.field "y" TsDecode.int)
+
+    Option.requiredKeywordArg "point" (Option.fromDecoder pointDecoder)
+    -- CLI: --point '{"x":1,"y":2}'
+    -- JSON: {"point": {"x": 1, "y": 2}}
+
+-}
+fromDecoder : TsDecode.Decoder value -> CliDecoder value
+fromDecoder tsDecoder =
+    CliDecoder
+        { cliParser = decodeCliJson (TsDecode.decoder tsDecoder)
+        , jsonDecoder = TsDecode.decoder tsDecoder
+        , tsDecoder = tsDecoder
+        }
+
+
+
+-- Constructors
+
+
 {-| A required keyword argument with a typed decoder.
 
-    Option.requiredKeywordArg "count" TsDecode.int
+    Option.requiredKeywordArg "count" Option.int
     -- CLI: --count 42 → 42
     -- JSON: {"count": 42} → 42
     -- Schema: {"type": "integer"}
 
 -}
-requiredKeywordArg : String -> TsDecode.Decoder value -> Option String value { position : BeginningOption, canAddMissingMessage : () }
-requiredKeywordArg optionName tsDecoder =
-    let
-        elmJsonDecoder =
-            TsDecode.decoder tsDecoder
-    in
+requiredKeywordArg : String -> CliDecoder value -> Option String value { position : BeginningOption, canAddMissingMessage : () }
+requiredKeywordArg optionName (CliDecoder decoder) =
     Option
         { dataGrabber =
             \{ options } ->
@@ -100,29 +206,25 @@ requiredKeywordArg optionName tsDecoder =
         , decoder =
             Cli.Decode.decoder
                 |> Cli.Decode.mapProcessingError
-                    (decodeCliString optionName elmJsonDecoder)
+                    (decoder.cliParser optionName)
         , meta = { missingMessage = Nothing }
-        , tsType = TsDecode.tsType tsDecoder
+        , tsType = TsDecode.tsType decoder.tsDecoder
         , jsonGrabber =
             jsonFieldGrabber optionName
-                elmJsonDecoder
+                decoder.jsonDecoder
                 (Cli.Decode.MissingRequiredKeywordArg { name = optionName, customMessage = Nothing })
         }
 
 
 {-| An optional keyword argument with a typed decoder.
 
-    Option.optionalKeywordArg "greeting" TsDecode.string
+    Option.optionalKeywordArg "greeting" Option.string
     -- CLI: --greeting hi → Just "hi", omitted → Nothing
     -- JSON: {"greeting": "hi"} → Just "hi", absent → Nothing
 
 -}
-optionalKeywordArg : String -> TsDecode.Decoder value -> Option (Maybe String) (Maybe value) { position : BeginningOption }
-optionalKeywordArg optionName tsDecoder =
-    let
-        elmJsonDecoder =
-            TsDecode.decoder tsDecoder
-    in
+optionalKeywordArg : String -> CliDecoder value -> Option (Maybe String) (Maybe value) { position : BeginningOption }
+optionalKeywordArg optionName (CliDecoder decoder) =
     Option
         { dataGrabber =
             \{ options } ->
@@ -148,17 +250,17 @@ optionalKeywordArg optionName tsDecoder =
                     (\maybeString ->
                         case maybeString of
                             Just stringValue ->
-                                decodeCliString optionName elmJsonDecoder stringValue
+                                decoder.cliParser optionName stringValue
                                     |> Result.map Just
 
                             Nothing ->
                                 Ok Nothing
                     )
         , meta = { missingMessage = Nothing }
-        , tsType = TsDecode.tsType tsDecoder
+        , tsType = TsDecode.tsType decoder.tsDecoder
         , jsonGrabber =
             \blob ->
-                case Json.Decode.decodeValue (Json.Decode.field optionName elmJsonDecoder) blob of
+                case Json.Decode.decodeValue (Json.Decode.field optionName decoder.jsonDecoder) blob of
                     Ok value ->
                         Ok ( [], Just value )
 
@@ -179,16 +281,12 @@ optionalKeywordArg optionName tsDecoder =
 
 {-| A repeated keyword argument with a typed decoder for each value.
 
-    Option.keywordArgList "header" TsDecode.string
+    Option.keywordArgList "header" Option.string
     -- CLI: --header "X-A: 1" --header "X-B: 2" → ["X-A: 1", "X-B: 2"]
 
 -}
-keywordArgList : String -> TsDecode.Decoder value -> Option (List String) (List value) { position : BeginningOption }
-keywordArgList flagName tsDecoder =
-    let
-        elmJsonDecoder =
-            TsDecode.decoder tsDecoder
-    in
+keywordArgList : String -> CliDecoder value -> Option (List String) (List value) { position : BeginningOption }
+keywordArgList flagName (CliDecoder decoder) =
     Option
         { dataGrabber =
             \{ options } ->
@@ -219,7 +317,7 @@ keywordArgList flagName tsDecoder =
                                             Err e
 
                                         Ok values ->
-                                            case decodeCliString flagName elmJsonDecoder s of
+                                            case decoder.cliParser flagName s of
                                                 Ok v ->
                                                     Ok (v :: values)
 
@@ -229,10 +327,10 @@ keywordArgList flagName tsDecoder =
                                 (Ok [])
                     )
         , meta = { missingMessage = Nothing }
-        , tsType = TsDecode.tsType (TsDecode.list tsDecoder)
+        , tsType = TsDecode.tsType (TsDecode.list decoder.tsDecoder)
         , jsonGrabber =
             \blob ->
-                case Json.Decode.decodeValue (Json.Decode.field flagName (Json.Decode.list elmJsonDecoder)) blob of
+                case Json.Decode.decodeValue (Json.Decode.field flagName (Json.Decode.list decoder.jsonDecoder)) blob of
                     Ok value ->
                         Ok ( [], value )
 
@@ -243,17 +341,13 @@ keywordArgList flagName tsDecoder =
 
 {-| A required positional argument with a typed decoder.
 
-    Option.requiredPositionalArg "port" TsDecode.int
+    Option.requiredPositionalArg "port" Option.int
     -- CLI: mytool 8080 → 8080
     -- JSON: {"port": 8080} → 8080
 
 -}
-requiredPositionalArg : String -> TsDecode.Decoder value -> Option String value { position : BeginningOption, canAddMissingMessage : () }
-requiredPositionalArg operandDescription tsDecoder =
-    let
-        elmJsonDecoder =
-            TsDecode.decoder tsDecoder
-    in
+requiredPositionalArg : String -> CliDecoder value -> Option String value { position : BeginningOption, canAddMissingMessage : () }
+requiredPositionalArg operandDescription (CliDecoder decoder) =
     Option
         { dataGrabber =
             \{ operands, operandsSoFar } ->
@@ -277,12 +371,12 @@ requiredPositionalArg operandDescription tsDecoder =
         , decoder =
             Cli.Decode.decoder
                 |> Cli.Decode.mapProcessingError
-                    (decodeCliString operandDescription elmJsonDecoder)
+                    (decoder.cliParser operandDescription)
         , meta = { missingMessage = Nothing }
-        , tsType = TsDecode.tsType tsDecoder
+        , tsType = TsDecode.tsType decoder.tsDecoder
         , jsonGrabber =
             jsonFieldGrabber operandDescription
-                elmJsonDecoder
+                decoder.jsonDecoder
                 (Cli.Decode.MissingRequiredPositionalArg
                     { name = operandDescription, operandsSoFar = 0, customMessage = Nothing }
                 )
@@ -292,15 +386,11 @@ requiredPositionalArg operandDescription tsDecoder =
 {-| An optional positional argument with a typed decoder.
 Must be used with `OptionsParser.withOptionalPositionalArg`.
 
-    Option.optionalPositionalArg "revision" TsDecode.string
+    Option.optionalPositionalArg "revision" Option.string
 
 -}
-optionalPositionalArg : String -> TsDecode.Decoder value -> Option (Maybe String) (Maybe value) { position : OptionalPositionalArgOption }
-optionalPositionalArg operandDescription tsDecoder =
-    let
-        elmJsonDecoder =
-            TsDecode.decoder tsDecoder
-    in
+optionalPositionalArg : String -> CliDecoder value -> Option (Maybe String) (Maybe value) { position : OptionalPositionalArgOption }
+optionalPositionalArg operandDescription (CliDecoder decoder) =
     Option
         { dataGrabber =
             \flagsAndOperands ->
@@ -320,17 +410,17 @@ optionalPositionalArg operandDescription tsDecoder =
                     (\maybeString ->
                         case maybeString of
                             Just stringValue ->
-                                decodeCliString operandDescription elmJsonDecoder stringValue
+                                decoder.cliParser operandDescription stringValue
                                     |> Result.map Just
 
                             Nothing ->
                                 Ok Nothing
                     )
         , meta = { missingMessage = Nothing }
-        , tsType = TsDecode.tsType tsDecoder
+        , tsType = TsDecode.tsType decoder.tsDecoder
         , jsonGrabber =
             \blob ->
-                case Json.Decode.decodeValue (Json.Decode.field operandDescription elmJsonDecoder) blob of
+                case Json.Decode.decodeValue (Json.Decode.field operandDescription decoder.jsonDecoder) blob of
                     Ok value ->
                         Ok ( [], Just value )
 
@@ -413,6 +503,10 @@ restArgs restArgsDescription =
         }
 
 
+
+-- Re-exported modifiers
+
+
 {-| See `Cli.Option.oneOf`.
 -}
 oneOf : List ( String, value ) -> Option from String builderState -> Option from value builderState
@@ -459,24 +553,21 @@ withDisplayName =
 -- Internal helpers
 
 
-decodeCliString : String -> Json.Decode.Decoder a -> String -> Result Cli.Decode.ProcessingError a
-decodeCliString optionName elmJsonDecoder stringValue =
+{-| Parse a CLI string as strict JSON. No fallback — the string must be valid JSON.
+-}
+decodeCliJson : Json.Decode.Decoder a -> String -> String -> Result Cli.Decode.ProcessingError a
+decodeCliJson elmJsonDecoder optionName stringValue =
     case Json.Decode.decodeString elmJsonDecoder stringValue of
         Ok value ->
             Ok value
 
-        Err _ ->
-            case Json.Decode.decodeValue elmJsonDecoder (Json.Encode.string stringValue) of
-                Ok value ->
-                    Ok value
-
-                Err wrappedErr ->
-                    Err
-                        (Cli.Decode.UnrecoverableValidationError
-                            { name = optionName
-                            , invalidReason = Json.Decode.errorToString wrappedErr
-                            }
-                        )
+        Err err ->
+            Err
+                (Cli.Decode.UnrecoverableValidationError
+                    { name = optionName
+                    , invalidReason = Json.Decode.errorToString err
+                    }
+                )
 
 
 jsonFieldGrabber : String -> Json.Decode.Decoder a -> Cli.Decode.MatchErrorDetail -> Internal.JsonGrabber a
