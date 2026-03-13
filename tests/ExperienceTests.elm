@@ -132,11 +132,12 @@ all =
                         |> Expect.equal """{
   "anyOf": [
     {
-      "description": "test add --title <TITLE> --priority <low|medium|high>",
+      "description": "Usage: test add --title <TITLE> --priority <low|medium|high>\\n\\nOptions:\\n  --title <TITLE>                The task title\\n  --priority <low|medium|high>   Task priority level",
       "type": "object",
       "properties": {
         "$cli": {
           "type": "object",
+          "description": "CLI input: contains keywordValues, flags, positional args, and subcommand as applicable.",
           "properties": {
             "subcommand": {
               "type": "string",
@@ -152,16 +153,10 @@ all =
                 },
                 "priority": {
                   "type": "string",
-                  "anyOf": [
-                    {
-                      "const": "low"
-                    },
-                    {
-                      "const": "medium"
-                    },
-                    {
-                      "const": "high"
-                    }
+                  "enum": [
+                    "low",
+                    "medium",
+                    "high"
                   ],
                   "description": "Task priority level"
                 }
@@ -183,11 +178,12 @@ all =
       ]
     },
     {
-      "description": "test list [--format <json|table|csv>] --limit <LIMIT> [--verbose]",
+      "description": "Usage: test list [--format <json|table|csv>] --limit <LIMIT> [--verbose]\\n\\nOptions:\\n  --format <json|table|csv>   Output format\\n  --limit <LIMIT>             Maximum number of tasks to show\\n  --verbose                   Show full task details",
       "type": "object",
       "properties": {
         "$cli": {
           "type": "object",
+          "description": "CLI input: contains keywordValues, flags, positional args, and subcommand as applicable.",
           "properties": {
             "subcommand": {
               "type": "string",
@@ -199,16 +195,10 @@ all =
               "properties": {
                 "format": {
                   "type": "string",
-                  "anyOf": [
-                    {
-                      "const": "json"
-                    },
-                    {
-                      "const": "table"
-                    },
-                    {
-                      "const": "csv"
-                    }
+                  "enum": [
+                    "json",
+                    "table",
+                    "csv"
                   ],
                   "description": "Output format"
                 },
@@ -243,11 +233,12 @@ all =
       ]
     },
     {
-      "description": "test complete <task-id>",
+      "description": "Usage: test complete <task-id>\\n\\nOptions:\\n  <task-id>   The ID of the task to mark complete",
       "type": "object",
       "properties": {
         "$cli": {
           "type": "object",
+          "description": "CLI input: contains keywordValues, flags, positional args, and subcommand as applicable.",
           "properties": {
             "subcommand": {
               "type": "string",

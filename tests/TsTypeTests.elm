@@ -184,12 +184,9 @@ all =
                         |> Expect.equal
                             (Encode.object
                                 [ ( "$schema", Encode.string "http://json-schema.org/draft-07/schema#" )
-                                , ( "anyOf"
-                                  , Encode.list identity
-                                        [ Encode.object [ ( "const", Encode.string "json" ) ]
-                                        , Encode.object [ ( "const", Encode.string "junit" ) ]
-                                        , Encode.object [ ( "const", Encode.string "console" ) ]
-                                        ]
+                                , ( "type", Encode.string "string" )
+                                , ( "enum"
+                                  , Encode.list Encode.string [ "json", "junit", "console" ]
                                   )
                                 ]
                                 |> Encode.encode 0
@@ -218,13 +215,14 @@ all =
                         |> Encode.encode 0
                         |> Expect.equal
                             (Encode.object
-                                [ ( "description", Encode.string "test --format <json|junit|console>" )
+                                [ ( "description", Encode.string "Usage: test --format <json|junit|console>" )
                                 , ( "type", Encode.string "object" )
                                 , ( "properties"
                                   , Encode.object
                                         [ ( "$cli"
                                           , Encode.object
                                                 [ ( "type", Encode.string "object" )
+                                                , ( "description", Encode.string "CLI input: contains keywordValues, flags, positional args, and subcommand as applicable." )
                                                 , ( "properties"
                                                   , Encode.object
                                                         [ ( "keywordValues"
@@ -236,12 +234,8 @@ all =
                                                                         [ ( "format"
                                                                           , Encode.object
                                                                                 [ ( "type", Encode.string "string" )
-                                                                                , ( "anyOf"
-                                                                                  , Encode.list identity
-                                                                                        [ Encode.object [ ( "const", Encode.string "json" ) ]
-                                                                                        , Encode.object [ ( "const", Encode.string "junit" ) ]
-                                                                                        , Encode.object [ ( "const", Encode.string "console" ) ]
-                                                                                        ]
+                                                                                , ( "enum"
+                                                                                  , Encode.list Encode.string [ "json", "junit", "console" ]
                                                                                   )
                                                                                 ]
                                                                           )

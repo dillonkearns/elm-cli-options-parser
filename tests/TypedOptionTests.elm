@@ -54,13 +54,14 @@ all =
                     schemaFor (Option.requiredKeywordArg "name" Option.string)
                         |> Expect.equal
                             (Encode.object
-                                [ ( "description", Encode.string "test --name <NAME>" )
+                                [ ( "description", Encode.string "Usage: test --name <NAME>" )
                                 , ( "type", Encode.string "object" )
                                 , ( "properties"
                                   , Encode.object
                                         [ ( "$cli"
                                           , Encode.object
                                                 [ ( "type", Encode.string "object" )
+                                                , ( "description", Encode.string "CLI input: contains keywordValues, flags, positional args, and subcommand as applicable." )
                                                 , ( "properties"
                                                   , Encode.object
                                                         [ ( "keywordValues"
@@ -127,13 +128,14 @@ all =
                     schemaFor (Option.requiredKeywordArg "count" Option.int)
                         |> Expect.equal
                             (Encode.object
-                                [ ( "description", Encode.string "test --count <COUNT>" )
+                                [ ( "description", Encode.string "Usage: test --count <COUNT>" )
                                 , ( "type", Encode.string "object" )
                                 , ( "properties"
                                   , Encode.object
                                         [ ( "$cli"
                                           , Encode.object
                                                 [ ( "type", Encode.string "object" )
+                                                , ( "description", Encode.string "CLI input: contains keywordValues, flags, positional args, and subcommand as applicable." )
                                                 , ( "properties"
                                                   , Encode.object
                                                         [ ( "keywordValues"
@@ -555,13 +557,14 @@ all =
                         )
                         |> Expect.equal
                             (Encode.object
-                                [ ( "description", Encode.string "test --count <COUNT>" )
+                                [ ( "description", Encode.string "Usage: test --count <COUNT>\n\nOptions:\n  --count <COUNT>   Number of items" )
                                 , ( "type", Encode.string "object" )
                                 , ( "properties"
                                   , Encode.object
                                         [ ( "$cli"
                                           , Encode.object
                                                 [ ( "type", Encode.string "object" )
+                                                , ( "description", Encode.string "CLI input: contains keywordValues, flags, positional args, and subcommand as applicable." )
                                                 , ( "properties"
                                                   , Encode.object
                                                         [ ( "keywordValues"
