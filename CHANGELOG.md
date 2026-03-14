@@ -9,6 +9,31 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+
+- **`Cli.Option.Typed` module** — new option constructors that take a `CliDecoder`
+  for typed CLI parsing and JSON schema generation. Includes `string`, `int`,
+  `float`, `bool`, and `fromDecoder` for custom types.
+- **`Program.toJsonSchema`** — generates a [JSON Schema](https://json-schema.org/)
+  from your CLI configuration, suitable for
+  [MCP tool](https://modelcontextprotocol.io/specification/draft/server/tools)
+  `inputSchema` definitions and
+  [elm-pages script](https://elm-pages.com/docs/elm-pages-scripts) introspection.
+- **JSON input mode** — parsers accept structured JSON in addition to traditional
+  CLI arguments, enabling LLM agents to invoke tools programmatically. The `$cli`
+  object serves as the sentinel, containing positional arguments and subcommand.
+- `x-cli-kind` annotations in JSON schema output (`"keyword"`, `"flag"`,
+  `"keyword-list"`) describing how each option maps to CLI invocation.
+- Schema `description` field includes usage synopsis and invocation instructions.
+- `Option.withDisplayName` for custom metavar display (e.g., `--output-dir <PATH>`).
+- `TypedGreet` example demonstrating the typed options API.
+
+### Changed
+
+- New dependency on `dillonkearns/elm-ts-json` (>= 2.1.2).
+- Improved help text formatting: uppercase metavar names, 80-character line
+  wrapping, description indentation.
+
 ## [4.0.0]
 
 See the [V4 Upgrade Guide](V4-UPGRADE-GUIDE.md) for migration instructions.
