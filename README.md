@@ -1,7 +1,11 @@
 # Elm CLI Options Parser
 
 `elm-cli-options-parser` allows you to build command-line options parsers in Elm.
-It uses a syntax similar to `Json.Decode.Pipeline`.
+It uses a syntax similar to `Json.Decode.Pipeline`, with automatic help text
+generation, validation, and [JSON Schema](https://json-schema.org/) output
+for [MCP tool](https://modelcontextprotocol.io/specification/draft/server/tools)
+definitions and [elm-pages script](https://elm-pages.com/docs/elm-pages-scripts)
+introspection.
 
 You can
 play around with `elm-cli-options-parser` in a [live terminal simulation in Ellie here](https://ellie-app.com/8b8QWfcxx4Ca1)!
@@ -94,6 +98,68 @@ git log [--author <author>] [--max-count <max-count>] [--stat] [<revision range>
 ```
 
 Note: the `--help` option is a built-in command, so no need to write a `OptionsParser` for that.
+
+## Typed Options & JSON Schema
+
+The [`Cli.Option.Typed`](https://package.elm-lang.org/packages/dillonkearns/elm-cli-options-parser/latest/Cli-Option-Typed)
+module lets you specify the type of each option (string, int, float, etc.) via a
+`CliDecoder`. This gives you:
+
+- **JSON Schema generation** via `Program.toJsonSchema` — for MCP tool definitions,
+  elm-pages script introspection, or any tooling that needs a machine-readable
+  description of your CLI's inputs
+- **Typed JSON input** — the same parser handles both traditional CLI args and
+  structured JSON, so LLM agents can invoke your tool programmatically
+- **CLI validation** — typed decoders like `int` and `float` automatically reject
+  malformed input
+
+```elm
+import Cli.Option.Typed as Option
+import Cli.OptionsParser as OptionsParser exposing (with)
+import Cli.Program as Program
+
+type alias Options =
+    { name : String
+    , count : Int
+    , verbose : Bool
+    }
+
+programConfig : Program.Config Options
+programConfig =
+    Program.config
+        |> Program.add
+            (OptionsParser.build Options
+                |> with (Option.requiredKeywordArg "name" Option.string)
+                |> with (Option.requiredKeywordArg "count" Option.int)
+                |> with (Option.flag "verbose")
+            )
+```
+
+This parser works with traditional CLI args:
+
+```console
+$ mytool --name hello --count 3 --verbose
+```
+
+And also accepts JSON input (for tool-calling agents):
+
+```json
+{ "name": "hello", "count": 3, "verbose": true, "$cli": {} }
+```
+
+`Program.toJsonSchema "mytool" programConfig` generates a JSON Schema with
+proper types (`"type": "string"`, `"type": "integer"`, etc.) and `x-cli-kind`
+annotations that describe how each option maps to CLI flags.
+
+### When to use `Cli.Option` vs `Cli.Option.Typed`
+
+Use **`Cli.Option.Typed`** when you want JSON schema generation or JSON input support.
+
+Use **`Cli.Option`** (the original API shown in the example above) when you only need
+traditional CLI argument parsing. It's simpler — no decoder argument needed — and
+treats all values as strings, which you then transform with `validateMap`, `map`, etc.
+
+Both modules produce the same `Option` type and work with the same `OptionsParser.with` pipeline.
 
 ## Color Support
 
