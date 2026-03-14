@@ -1,6 +1,5 @@
 module Cli.Option.Typed exposing
     ( Option, CliDecoder
-    , BeginningOption, OptionalPositionalArgOption, RestArgsOption
     , string, int, float, bool, fromDecoder
     , requiredPositionalArg
     , requiredKeywordArg, optionalKeywordArg, keywordArgList
@@ -9,6 +8,7 @@ module Cli.Option.Typed exposing
     , oneOf
     , validate, validateIfPresent, validateMap, validateMapIfPresent
     , map, mapFlag, withDefault
+    , BeginningOption, OptionalPositionalArgOption, RestArgsOption
     , withDescription, withDisplayName, withMissingMessage
     )
 
@@ -37,7 +37,7 @@ All CLIs built with `elm-cli-options-parser` can be invoked either with traditio
 with a single JSON string CLI argument, allowing for easier consumption by
 LLM agents and programmatic invocation of your CLI. That, along with
 the precise type information in the JSON Schema describing your CLI options, makes `Cli.Option.Typed`
-a good choice for CLIs when they make be invoked programmatically or by LLM agents.
+a good choice for CLIs when they may be invoked programmatically or by LLM agents.
 
 You can use [`Cli.Option`](Cli-Option) for a slightly simpler API that
 treats all values as strings if automated tool access isn't a priority for your CLI.
@@ -73,9 +73,20 @@ folder for end-to-end examples (including `TypedGreet.elm` which uses this modul
         Program.config
             |> Program.add
                 (OptionsParser.build Options
-                    |> with (Option.requiredKeywordArg "name" Option.string)
-                    |> with (Option.requiredKeywordArg "count" Option.int)
-                    |> with (Option.flag "verbose")
+                    |> with
+                        (Option.requiredKeywordArg
+                            "name"
+                            Option.string
+                        )
+                    |> with
+                        (Option.requiredKeywordArg
+                            "count"
+                            Option.int
+                        )
+                    |> with
+                        (Option.flag
+                            "verbose"
+                        )
                 )
 
 This parser handles both CLI and JSON input:
@@ -90,7 +101,6 @@ proper types (`"type": "string"`, `"type": "integer"`, etc.).
 ## Types
 
 @docs Option, CliDecoder
-@docs BeginningOption, OptionalPositionalArgOption, RestArgsOption
 
 
 ## Decoders
@@ -148,6 +158,11 @@ in conjunction with the following functions.
 ## Mapping and Defaults
 
 @docs map, mapFlag, withDefault
+
+
+## Builder Position Types
+
+@docs BeginningOption, OptionalPositionalArgOption, RestArgsOption
 
 
 ## Metadata
