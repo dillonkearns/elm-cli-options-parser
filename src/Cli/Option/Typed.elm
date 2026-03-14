@@ -2,42 +2,60 @@ module Cli.Option.Typed exposing
     ( Option, CliDecoder
     , BeginningOption, OptionalPositionalArgOption, RestArgsOption
     , string, int, float, bool, fromDecoder
+    , requiredPositionalArg
     , requiredKeywordArg, optionalKeywordArg, keywordArgList
-    , requiredPositionalArg, optionalPositionalArg
-    , flag, restArgs
+    , flag
+    , optionalPositionalArg, restArgs
     , oneOf
     , validate, validateIfPresent, validateMap, validateMapIfPresent
     , map, mapFlag, withDefault
     , withDescription, withDisplayName, withMissingMessage
     )
 
-{-| Typed option constructors with first-class JSON schema support.
+{-| Build command-line options as string values, with validation and transformation.
 
-This module is an alternative to [`Cli.Option`](Cli-Option) for building option parsers.
-The key difference: each constructor takes a [`CliDecoder`](#CliDecoder) that specifies the
-type of the option's value (string, int, float, etc.). This lets the library:
+This is an alternative to [`Cli.Option`](Cli-Option) that is designed to
+generate a JSON schema with more precise type information. `Cli.Option`
+still gives you types, but [`Cli.Option.Typed.fromDecoder`](#fromDecoder) lets you pass in an
+[`elm-ts-json` `Decoder`](https://package.elm-lang.org/packages/dillonkearns/elm-ts-json/latest/TsJson-Decode)
+with arbitrary and fully typed JSON values, and the primitive `Option`s
+like [`int`](#int) carry more precise type information instead of just `String`
+in the JSON Schema output.
 
-1.  **Generate JSON schemas** — via [`Program.toJsonSchema`](Cli-Program#toJsonSchema),
+The vast majority of users will use `elm-cli-options-parser` through `elm-pages`
+when they build [`elm-pages` scripts](https://elm-pages.com/docs/elm-pages-scripts).
+When you use [`Script.withSchema`](https://package.elm-lang.org/packages/dillonkearns/elm-pages/latest/Pages-Script#withCliOptions),
+you define an [`elm-ts-json` `Encoder`](https://package.elm-lang.org/packages/dillonkearns/elm-ts-json/latest/TsJson-Encode)
+and `elm-pages introspect` will automatically show all of the type information for your
+CLI options and the output JSON as part of the introspection output.
+
+information via [`Program.toJsonSchema`](Cli-Program#toJsonSchema).
+. Each constructor takes a
+[`CliDecoder`](#CliDecoder) that specifies the type of the option's value
+(string, int, float, etc.). This gives you:
+
+1.  **JSON Schema generation** — via [`Program.toJsonSchema`](Cli-Program#toJsonSchema),
     producing [JSON Schema](https://json-schema.org/) definitions suitable for
-    [MCP tool](https://modelcontextprotocol.io/specification/draft/server/tools) `inputSchema`.
-2.  **Parse JSON input** — the same parser that handles CLI args can also accept structured
+    [MCP tool](https://modelcontextprotocol.io/specification/draft/server/tools) `inputSchema`
+    and [elm-pages script](https://elm-pages.com/docs/elm-pages-scripts) introspection.
+2.  **JSON input mode** — the same parser that handles CLI args can also accept structured
     JSON, enabling LLM agents to invoke your CLI tool programmatically.
-3.  **Validate CLI values** — typed decoders like `int` and `float` automatically validate
+3.  **CLI validation** — typed decoders like `int` and `float` automatically validate
     that CLI string arguments are well-formed numbers.
 
-
-## When to use this vs `Cli.Option`
-
-Use **`Cli.Option.Typed`** when you want JSON schema generation — for example, when
-building [elm-pages scripts](https://elm-pages.com/docs/elm-pages-scripts) that can be
-introspected as tools, or any CLI that needs to be invocable via structured JSON.
-
-Use **[`Cli.Option`](Cli-Option)** when you only need traditional CLI argument parsing.
-It's simpler (no decoder argument needed) and treats all values as strings, which you
-then transform with `validateMap`, `map`, etc.
+If you don't need JSON schema generation or JSON input, you can use
+[`Cli.Option`](Cli-Option) instead — it's simpler (no decoder argument needed) and
+treats all values as strings.
 
 Both modules produce the same `Option` type and work with the same
-[`OptionsParser.with`](Cli-OptionsParser#with) pipeline.
+[`OptionsParser.with`](Cli-OptionsParser#with) pipeline, so they can be mixed freely.
+
+Here is the terminology used for building up Command-Line parsers with this library.
+
+![Terminology Legend](https://raw.githubusercontent.com/dillonkearns/elm-cli-options-parser/master/terminology.png)
+
+See the [`examples`](https://github.com/dillonkearns/elm-cli-options-parser/tree/master/examples/src)
+folder for end-to-end examples (including `TypedGreet.elm` which uses this module).
 
 
 ## Example
@@ -82,19 +100,28 @@ proper types (`"type": "string"`, `"type": "integer"`, etc.).
 @docs string, int, float, bool, fromDecoder
 
 
+## Positional Arguments
+
+@docs requiredPositionalArg
+
+
 ## Keyword Arguments
 
 @docs requiredKeywordArg, optionalKeywordArg, keywordArgList
 
 
-## Positional Arguments
+## Flags
 
-@docs requiredPositionalArg, optionalPositionalArg
+@docs flag
 
 
-## Flags and Rest Args
+## Ending Options
 
-@docs flag, restArgs
+These must be added with their corresponding `OptionsParser.with...` function,
+not the regular `OptionsParser.with`. See the [`Cli.OptionsParser.BuilderState`](Cli-OptionsParser-BuilderState)
+docs for why.
+
+@docs optionalPositionalArg, restArgs
 
 
 ## Mutually Exclusive Values
@@ -103,6 +130,19 @@ proper types (`"type": "string"`, `"type": "integer"`, etc.).
 
 
 ## Validation
+
+Validations allow you to guarantee that if you receive the data in Elm, it
+meets a set of preconditions. If it doesn't, the user will see an error message
+describing the validation error, which option it came from, and the value the
+option had.
+
+Note that failing a validation will not cause the next `OptionsParser` in
+your `Cli.Program.Config` to be run. Instead,
+if the OptionsParser is a match except for validation errors, you will get an
+error message regardless.
+
+See [`Cli.Validate`](Cli-Validate) for some validation helpers that can be used
+in conjunction with the following functions.
 
 @docs validate, validateIfPresent, validateMap, validateMapIfPresent
 
