@@ -1,6 +1,6 @@
 module Cli.Option.Typed exposing
     ( Option, CliDecoder
-    , string, int, float, bool, customDecoder
+    , string, int, float, customDecoder
     , requiredPositionalArg
     , requiredKeywordArg, optionalKeywordArg, keywordArgList
     , flag
@@ -105,7 +105,7 @@ proper types (`"type": "string"`, `"type": "integer"`, etc.).
 
 ## Decoders
 
-@docs string, int, float, bool, customDecoder
+@docs string, int, float, customDecoder
 
 
 ## Positional Arguments
@@ -212,7 +212,7 @@ type alias RestArgsOption =
 
 {-| A decoder that knows how to parse values from both CLI args and JSON input.
 
-Use `string`, `int`, `float`, `bool` for primitives, or `customDecoder` for
+Use `string`, `int`, `float` for primitives, or `customDecoder` for
 custom types (objects, arrays, etc.) where the CLI input is a JSON string.
 
 -}
@@ -271,33 +271,22 @@ float =
     customDecoder TsDecode.float
 
 
-{-| A boolean value. In CLI mode, the string is parsed as a JSON boolean.
-In JSON mode, a JSON boolean field is decoded.
-
-Note: for flags (present/absent), use `flag` instead.
-
-    Option.requiredKeywordArg "dry-run" Option.bool
-    -- CLI: --dry-run true → True
-    -- JSON: {"dry-run": true} → True
-
--}
-bool : CliDecoder Bool
-bool =
-    customDecoder TsDecode.bool
-
-
-{-| Create a `CliDecoder` from a `TsDecode.Decoder`. In CLI mode, the string
-value is parsed as strict JSON. This means the CLI user must pass valid JSON.
+{-| Create a `CliDecoder` from a [`TsDecode.Decoder`](https://package.elm-lang.org/packages/dillonkearns/elm-ts-json/latest/TsJson-Decode).
+In CLI mode, the string value is parsed as a JSON value. This means the CLI user must pass valid JSON.
 
 For strings, this means the CLI value must be quoted: `--name '"hello"'`.
-If you want bare string values, use `string` instead.
+If you want bare string values, use [`string`](#string) instead.
+
+`customDecoder` is especially useful for decoding complex structured values like JSON objects or arrays.
 
     import TsJson.Decode as TsDecode
 
     pointDecoder =
         TsDecode.succeed (\x y -> { x = x, y = y })
-            |> TsDecode.andMap (TsDecode.field "x" TsDecode.int)
-            |> TsDecode.andMap (TsDecode.field "y" TsDecode.int)
+            |> TsDecode.andMap (TsDecode.field "x"
+            TsDecode.int)
+            |> TsDecode.andMap (TsDecode.field "y"
+            TsDecode.int)
 
     Option.requiredKeywordArg "point" (Option.customDecoder pointDecoder)
     -- CLI: --point '{"x":1,"y":2}'

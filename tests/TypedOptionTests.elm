@@ -148,23 +148,6 @@ all =
                         [ "--rate", "abc" ]
                         |> expectFailure
             ]
-        , describe "Option.bool"
-            [ test "parses 'true'" <|
-                \() ->
-                    runWith (Option.requiredKeywordArg "dry" Option.bool)
-                        [ "--dry", "true" ]
-                        |> Expect.equal (Program.CustomMatch True)
-            , test "parses 'false'" <|
-                \() ->
-                    runWith (Option.requiredKeywordArg "dry" Option.bool)
-                        [ "--dry", "false" ]
-                        |> Expect.equal (Program.CustomMatch False)
-            , test "rejects bare text" <|
-                \() ->
-                    runWith (Option.requiredKeywordArg "dry" Option.bool)
-                        [ "--dry", "abc" ]
-                        |> expectFailure
-            ]
         , describe "customDecoder"
             [ test "custom decoder works in JSON mode" <|
                 \() ->
