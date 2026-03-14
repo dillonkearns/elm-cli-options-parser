@@ -430,27 +430,15 @@ addCustomMessageToMatchError message detail =
             other
 
 
-{-| Transform an `Option`. For example, you may want to map an option from the
-raw `String` that comes from the command line into a `Regex`, as in this code snippet.
+{-| Transform an option's value. Use this for infallible transformations.
+For transformations that can fail, use [`validateMap`](#validateMap) instead
+so the user gets a helpful error message.
 
-    import Cli.Option as Option
-    import Cli.OptionsParser as OptionsParser
-    import Cli.Program as Program
-    import Regex exposing (Regex)
+    Option.requiredKeywordArg "name"
+        |> Option.map String.toUpper
 
-    type alias CliOptions =
-        { pattern : Regex }
-
-    programConfig : Program.Config CliOptions
-    programConfig =
-        Program.config
-            |> Program.add
-                (OptionsParser.build buildCliOptions
-                    |> OptionsParser.with
-                        (Option.requiredPositionalArg "pattern"
-                            |> Option.map Regex.regex
-                        )
-                )
+    Option.requiredKeywordArg "output"
+        |> Option.map (\path -> path ++ "/index.html")
 
 -}
 map : (toRaw -> toMapped) -> Option from toRaw builderState -> Option from toMapped builderState

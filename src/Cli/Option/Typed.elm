@@ -1,11 +1,14 @@
 module Cli.Option.Typed exposing
     ( Option, CliDecoder
+    , BeginningOption, OptionalPositionalArgOption, RestArgsOption
     , string, int, float, bool, fromDecoder
     , requiredKeywordArg, optionalKeywordArg, keywordArgList
     , requiredPositionalArg, optionalPositionalArg
     , flag, restArgs
-    , oneOf, validateMap, validateMapIfPresent, withDefault
-    , withDescription, withDisplayName
+    , oneOf
+    , validate, validateIfPresent, validateMap, validateMapIfPresent
+    , map, mapFlag, withDefault
+    , withDescription, withDisplayName, withMissingMessage
     )
 
 {-| Typed option constructors with first-class JSON schema support.
@@ -62,7 +65,7 @@ Both modules produce the same `Option` type and work with the same
 This parser handles both CLI and JSON input:
 
   - **CLI**: `mytool --name hello --count 3 --verbose`
-  - **JSON**: `{ "$cli": { "keywordValues": { "name": "hello", "count": 3 }, "flags": { "verbose": true } } }`
+  - **JSON**: `{ "name": "hello", "count": 3, "verbose": true, "$cli": {} }`
 
 And `Program.toJsonSchema "mytool" programConfig` generates a JSON Schema with
 proper types (`"type": "string"`, `"type": "integer"`, etc.).
@@ -71,6 +74,7 @@ proper types (`"type": "string"`, `"type": "integer"`, etc.).
 ## Types
 
 @docs Option, CliDecoder
+@docs BeginningOption, OptionalPositionalArgOption, RestArgsOption
 
 
 ## Decoders
@@ -93,15 +97,24 @@ proper types (`"type": "string"`, `"type": "integer"`, etc.).
 @docs flag, restArgs
 
 
-## Modifiers
+## Mutually Exclusive Values
 
-These work the same as their [`Cli.Option`](Cli-Option) counterparts. Additional
-modifiers like [`map`](Cli-Option#map), [`validate`](Cli-Option#validate),
-[`mapFlag`](Cli-Option#mapFlag), and [`withMissingMessage`](Cli-Option#withMissingMessage)
-can be used by importing them from `Cli.Option`.
+@docs oneOf
 
-@docs oneOf, validateMap, validateMapIfPresent, withDefault
-@docs withDescription, withDisplayName
+
+## Validation
+
+@docs validate, validateIfPresent, validateMap, validateMapIfPresent
+
+
+## Mapping and Defaults
+
+@docs map, mapFlag, withDefault
+
+
+## Metadata
+
+@docs withDescription, withDisplayName, withMissingMessage
 
 -}
 
@@ -109,15 +122,39 @@ import Cli.Decode
 import Cli.Option exposing (BeginningOption, OptionalPositionalArgOption, RestArgsOption)
 import Cli.Option.Internal as Internal exposing (Option(..))
 import Cli.UsageSpec as UsageSpec
+import Cli.Validate
 import Json.Decode
 import Occurences exposing (Occurences(..))
 import TsJson.Decode as TsDecode
 
 
-{-| Re-exported from `Cli.Option` for convenience. See `Cli.Option.Option`.
+{-| The type for an option in the pipeline. Use with
+[`OptionsParser.with`](Cli-OptionsParser#with).
 -}
 type alias Option from to builderState =
     Internal.Option from to builderState
+
+
+{-| Phantom type marker for options that can be used with
+[`OptionsParser.with`](Cli-OptionsParser#with). Most option constructors
+produce this type.
+-}
+type alias BeginningOption =
+    Cli.Option.BeginningOption
+
+
+{-| Phantom type marker for optional positional args. Must be used with
+[`OptionsParser.withOptionalPositionalArg`](Cli-OptionsParser#withOptionalPositionalArg).
+-}
+type alias OptionalPositionalArgOption =
+    Cli.Option.OptionalPositionalArgOption
+
+
+{-| Phantom type marker for rest args. Must be used with
+[`OptionsParser.withRestArgs`](Cli-OptionsParser#withRestArgs).
+-}
+type alias RestArgsOption =
+    Cli.Option.RestArgsOption
 
 
 {-| A decoder that knows how to parse values from both CLI args and JSON input.
@@ -499,6 +536,66 @@ withDescription =
 withDisplayName : String -> Option from to builderState -> Option from to builderState
 withDisplayName =
     Cli.Option.withDisplayName
+
+
+{-| Add a custom error message for when a required option is missing.
+
+    Option.requiredKeywordArg "repository" Option.string
+        |> Option.withMissingMessage "You must specify a repository to clone."
+
+-}
+withMissingMessage : String -> Option from to { c | canAddMissingMessage : () } -> Option from to { c | canAddMissingMessage : () }
+withMissingMessage =
+    Cli.Option.withMissingMessage
+
+
+{-| Transform an option's value. Use this for infallible transformations.
+For transformations that can fail, use [`validateMap`](#validateMap) instead
+so the user gets a helpful error message.
+
+    Option.requiredKeywordArg "name" Option.string
+        |> Option.map String.toUpper
+
+-}
+map : (toRaw -> toMapped) -> Option from toRaw builderState -> Option from toMapped builderState
+map =
+    Cli.Option.map
+
+
+{-| Transform a flag's `Bool` into a custom type.
+
+    type Verbosity
+        = Quiet
+        | Verbose
+
+    Option.flag "verbose"
+        |> Option.mapFlag { present = Verbose, absent = Quiet }
+
+-}
+mapFlag : { present : union, absent : union } -> Option from Bool builderState -> Option from union builderState
+mapFlag =
+    Cli.Option.mapFlag
+
+
+{-| Run a validation on the parsed value. If validation fails, the user sees
+the error message.
+
+    Option.requiredKeywordArg "name" Option.string
+        |> Option.validate
+            (Cli.Validate.regex "^[A-Z][A-Za-z]*")
+
+-}
+validate : (to -> Cli.Validate.ValidationResult) -> Option from to builderState -> Option from to builderState
+validate =
+    Cli.Option.validate
+
+
+{-| Like [`validate`](#validate), but only runs when the value is `Just`.
+Does nothing for `Nothing`.
+-}
+validateIfPresent : (to -> Cli.Validate.ValidationResult) -> Option from (Maybe to) builderState -> Option from (Maybe to) builderState
+validateIfPresent =
+    Cli.Option.validateIfPresent
 
 
 
