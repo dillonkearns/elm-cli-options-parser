@@ -760,6 +760,18 @@ Transforms:
 normalizeCliJson : List UsageSpec -> Json.Decode.Value -> Json.Decode.Value
 normalizeCliJson usageSpecs blob =
     let
+        -- Get all top-level fields except $cli
+        topLevelFields =
+            case Json.Decode.decodeValue (Json.Decode.keyValuePairs Json.Decode.value) blob of
+                Ok pairs ->
+                    pairs |> List.filter (\( k, _ ) -> k /= "$cli")
+
+                Err _ ->
+                    []
+
+        topLevelFieldNames =
+            List.map Tuple.first topLevelFields
+
         maybeCli =
             Json.Decode.decodeValue (Json.Decode.field "$cli" Json.Decode.value) blob
 
@@ -770,20 +782,6 @@ normalizeCliJson usageSpecs blob =
                     case Json.Decode.decodeValue (Json.Decode.field "subcommand" Json.Decode.string) cliValue of
                         Ok subName ->
                             [ ( "subcommand", Encode.string subName ) ]
-
-                        Err _ ->
-                            []
-
-                Err _ ->
-                    []
-
-        -- Build keyword value fields from $cli.keywordValues
-        keywordValueFields =
-            case maybeCli of
-                Ok cliValue ->
-                    case Json.Decode.decodeValue (Json.Decode.field "keywordValues" (Json.Decode.keyValuePairs Json.Decode.value)) cliValue of
-                        Ok pairs ->
-                            pairs
 
                         Err _ ->
                             []
@@ -841,56 +839,21 @@ normalizeCliJson usageSpecs blob =
                 Err _ ->
                     []
 
-        -- Build flag fields from $cli.flags (object with boolean values)
-        flagFields =
-            case maybeCli of
-                Ok cliValue ->
-                    let
-                        allFlagNames =
-                            usageSpecs
-                                |> List.filterMap
-                                    (\spec ->
-                                        case spec of
-                                            UsageSpec.FlagOrKeywordArg (UsageSpec.Flag flagName) _ _ _ ->
-                                                Just flagName
+        -- Default missing flags to False (jsonGrabber expects flag fields to exist)
+        flagDefaults =
+            usageSpecs
+                |> List.filterMap
+                    (\spec ->
+                        case spec of
+                            UsageSpec.FlagOrKeywordArg (UsageSpec.Flag flagName) _ _ _ ->
+                                if not (List.member flagName topLevelFieldNames) then
+                                    Just ( flagName, Encode.bool False )
 
-                                            _ ->
-                                                Nothing
-                                    )
-                    in
-                    case Json.Decode.decodeValue (Json.Decode.field "flags" (Json.Decode.keyValuePairs Json.Decode.bool)) cliValue of
-                        Ok flagPairs ->
-                            allFlagNames
-                                |> List.map
-                                    (\flagName ->
-                                        ( flagName
-                                        , Encode.bool
-                                            (flagPairs
-                                                |> List.any (\( k, v ) -> k == flagName && v)
-                                            )
-                                        )
-                                    )
+                                else
+                                    Nothing
 
-                        Err _ ->
-                            -- No flags in $cli — set all flags to false
-                            allFlagNames
-                                |> List.map (\flagName -> ( flagName, Encode.bool False ))
-
-                Err _ ->
-                    []
-
-        -- Build keyword list fields from $cli.keywordLists
-        keywordListFields =
-            case maybeCli of
-                Ok cliValue ->
-                    case Json.Decode.decodeValue (Json.Decode.field "keywordLists" (Json.Decode.keyValuePairs Json.Decode.value)) cliValue of
-                        Ok pairs ->
-                            pairs
-
-                        Err _ ->
-                            []
-
-                Err _ ->
-                    []
+                            _ ->
+                                Nothing
+                    )
     in
-    Encode.object (subcommandField ++ keywordValueFields ++ positionalFields ++ flagFields ++ keywordListFields)
+    Encode.object (topLevelFields ++ subcommandField ++ positionalFields ++ flagDefaults)

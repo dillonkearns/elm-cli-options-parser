@@ -616,16 +616,20 @@ Suitable for use as an [MCP tool](https://modelcontextprotocol.io/specification/
     import Cli.Option as Option
     import Cli.OptionsParser as OptionsParser
     import Cli.Program as Program
-    import Json.Encode
 
-    Program.config
-        |> Program.add
-            (OptionsParser.build identity
-                |> OptionsParser.with (Option.requiredKeywordArg "name")
-            )
-        |> Program.toJsonSchema "my-script"
-        |> Json.Encode.encode 0
-    --> """{"description":"my-script --name <NAME>","type":"object","properties":{"$cli":{"type":"object","properties":{"keywordValues":{"type":"object","description":"Keyword arguments with values (e.g., --name <value>)","properties":{"name":{"type":"string"}},"required":["name"]}},"required":["keywordValues"]}},"required":["$cli"]}"""
+    programConfig =
+        Program.config
+            |> Program.add
+                (OptionsParser.build identity
+                    |> OptionsParser.with (Option.requiredKeywordArg "name")
+                )
+
+    schema =
+        Program.toJsonSchema "my-script" programConfig
+
+The resulting schema has `name` as a top-level property with
+`"x-cli-kind": "keyword"`, and a required `$cli` object as the sentinel
+for JSON input mode.
 
 -}
 toJsonSchema : String -> Config msg -> Encode.Value
@@ -658,8 +662,16 @@ parserToJsonSchemaFromTsTypes programName parser =
             OptionsParser.synopsis False programName parser
                 |> String.trim
 
+        -- Top-level properties: keyword args, keyword lists, flags (with x-cli-kind)
+        topLevelProperties =
+            specsWithTypes |> List.filterMap toFlatProperty
+
+        -- Required top-level property names
+        requiredTopLevel =
+            specsWithTypes |> List.filterMap toRequiredTopLevelName
+
         -- Subcommand → $cli.subcommand
-        subCommandProperty =
+        subCommandProp =
             case OptionsParser.getSubCommand parser of
                 Just subName ->
                     [ ( "subcommand"
@@ -672,65 +684,6 @@ parserToJsonSchemaFromTsTypes programName parser =
 
                 Nothing ->
                     []
-
-        -- Keyword args (non-ZeroOrMore) → $cli.keywordValues
-        keywordArgProperties =
-            specsWithTypes
-                |> List.filterMap
-                    (\( spec, ( optionName, tsType ) ) ->
-                        case spec of
-                            UsageSpec.FlagOrKeywordArg (UsageSpec.KeywordArg _ _) _ occurences _ ->
-                                if occurences /= ZeroOrMore then
-                                    Just (tsTypeToProperty spec ( optionName, tsType ))
-
-                                else
-                                    Nothing
-
-                            _ ->
-                                Nothing
-                    )
-
-        requiredKeywordArgs =
-            specsWithTypes
-                |> List.filterMap
-                    (\( spec, _ ) ->
-                        case spec of
-                            UsageSpec.FlagOrKeywordArg (UsageSpec.KeywordArg kwName _) _ Required _ ->
-                                Just kwName
-
-                            _ ->
-                                Nothing
-                    )
-
-        -- Flags → $cli.flags
-        flagSpecs =
-            specsWithTypes
-                |> List.filterMap
-                    (\( spec, ( optionName, _ ) ) ->
-                        case spec of
-                            UsageSpec.FlagOrKeywordArg (UsageSpec.Flag _) _ occurences maybeDescription ->
-                                Just ( optionName, maybeDescription, occurences )
-
-                            _ ->
-                                Nothing
-                    )
-
-        hasRequiredFlags =
-            flagSpecs
-                |> List.any (\( _, _, occ ) -> occ == Required)
-
-        -- Keyword arg lists → $cli.keywordLists
-        keywordListProperties =
-            specsWithTypes
-                |> List.filterMap
-                    (\( spec, ( optionName, tsType ) ) ->
-                        case spec of
-                            UsageSpec.FlagOrKeywordArg (UsageSpec.KeywordArg _ _) _ ZeroOrMore _ ->
-                                Just (tsTypeToProperty spec ( optionName, tsType ))
-
-                            _ ->
-                                Nothing
-                    )
 
         -- Positional args → $cli.positional
         positionalSpecs =
@@ -759,70 +712,24 @@ parserToJsonSchemaFromTsTypes programName parser =
                     )
                 |> List.head
 
-        -- Build $cli.keywordValues schema
-        keywordValuesProperty =
-            if List.isEmpty keywordArgProperties then
-                []
+        hasPositionalArgs =
+            not (List.isEmpty positionalSpecs) || restArgSpec /= Nothing
 
-            else
-                [ ( "keywordValues"
-                  , Encode.object
-                        ([ ( "type", Encode.string "object" )
-                         , ( "description", Encode.string "Keyword arguments with values (e.g., --name <value>)" )
-                         , ( "properties", Encode.object keywordArgProperties )
-                         ]
-                            ++ (if List.isEmpty requiredKeywordArgs then
-                                    []
-
-                                else
-                                    [ ( "required", Encode.list Encode.string requiredKeywordArgs ) ]
-                               )
-                        )
-                  )
-                ]
-
-        -- Build all $cli sub-properties
+        -- Build $cli schema (only subcommand + positional)
         cliSubProperties =
-            subCommandProperty
-                ++ keywordValuesProperty
-                ++ positionalSchemaProperty positionalSpecs restArgSpec
-                ++ flagsSchemaProperty flagSpecs
-                ++ keywordListsSchemaProperty keywordListProperties
+            subCommandProp ++ positionalSchemaProperty positionalSpecs restArgSpec
 
-        -- $cli.required: subcommand, keywordValues (if has required kw args), flags (if has expectFlag)
         cliRequired =
-            (case OptionsParser.getSubCommand parser of
+            case OptionsParser.getSubCommand parser of
                 Just _ ->
                     [ "subcommand" ]
 
                 Nothing ->
                     []
-            )
-                ++ (if not (List.isEmpty requiredKeywordArgs) then
-                        [ "keywordValues" ]
-
-                    else
-                        []
-                   )
-                ++ (if hasRequiredFlags then
-                        [ "flags" ]
-
-                    else
-                        []
-                   )
-
-        cliDescription =
-            if List.isEmpty cliSubProperties then
-                "Required CLI input object. Include as empty object {} when no arguments are needed."
-
-            else
-                "CLI input: contains keywordValues, flags, positional args, and subcommand as applicable."
 
         cliSchema =
             Encode.object
-                ([ ( "type", Encode.string "object" )
-                 , ( "description", Encode.string cliDescription )
-                 ]
+                ([ ( "type", Encode.string "object" ) ]
                     ++ (if List.isEmpty cliSubProperties then
                             []
 
@@ -836,12 +743,23 @@ parserToJsonSchemaFromTsTypes programName parser =
                             [ ( "required", Encode.list Encode.string cliRequired ) ]
                        )
                 )
+
+        -- Build description with invocation instructions
+        description =
+            buildSchemaDescription usageSynopsis hasPositionalArgs
+
+        -- Assemble full schema
+        allProperties =
+            topLevelProperties ++ [ ( "$cli", cliSchema ) ]
+
+        allRequired =
+            requiredTopLevel ++ [ "$cli" ]
     in
     Encode.object
-        [ ( "description", Encode.string usageSynopsis )
+        [ ( "description", Encode.string description )
         , ( "type", Encode.string "object" )
-        , ( "properties", Encode.object [ ( "$cli", cliSchema ) ] )
-        , ( "required", Encode.list Encode.string [ "$cli" ] )
+        , ( "properties", Encode.object allProperties )
+        , ( "required", Encode.list Encode.string allRequired )
         ]
 
 
@@ -930,78 +848,77 @@ positionalSchemaProperty positionalArgs maybeRestArgs =
         [ ( "positional", Encode.object schemaFields ) ]
 
 
-{-| Build the `$cli.flags` schema property.
-Flags are an object with boolean properties. Required flags (expectFlag) go in `required`.
+{-| Convert a spec+type pair to a top-level property with `x-cli-kind`, if it's a named option.
+Returns Nothing for positional args and rest args (those go in $cli).
 -}
-flagsSchemaProperty : List ( String, Maybe String, Occurences ) -> List ( String, Encode.Value )
-flagsSchemaProperty flags =
-    if List.isEmpty flags then
-        []
+toFlatProperty : ( UsageSpec, ( String, TsJson.Type.Type ) ) -> Maybe ( String, Encode.Value )
+toFlatProperty ( spec, ( optionName, tsType ) ) =
+    let
+        maybeCliKind =
+            case spec of
+                UsageSpec.FlagOrKeywordArg (UsageSpec.KeywordArg _ _) _ ZeroOrMore _ ->
+                    Just "keyword-list"
 
-    else
-        let
-            flagProperties =
-                flags
-                    |> List.map
-                        (\( flagName, maybeDesc, _ ) ->
-                            ( flagName
-                            , Encode.object
-                                ([ ( "type", Encode.string "boolean" ) ]
-                                    ++ (case maybeDesc of
-                                            Just desc ->
-                                                [ ( "description", Encode.string desc ) ]
+                UsageSpec.FlagOrKeywordArg (UsageSpec.KeywordArg _ _) _ _ _ ->
+                    Just "keyword"
 
-                                            Nothing ->
-                                                []
-                                       )
-                                )
-                            )
-                        )
+                UsageSpec.FlagOrKeywordArg (UsageSpec.Flag _) _ _ _ ->
+                    Just "flag"
 
-            requiredFlags =
-                flags
-                    |> List.filterMap
-                        (\( flagName, _, occurences ) ->
-                            if occurences == Required then
-                                Just flagName
+                _ ->
+                    Nothing
+    in
+    case maybeCliKind of
+        Just kind ->
+            let
+                strippedSchema =
+                    stripSchemaKey (TsJson.Type.toJsonSchema tsType)
 
-                            else
-                                Nothing
-                        )
-        in
-        [ ( "flags"
-          , Encode.object
-                ([ ( "type", Encode.string "object" )
-                 , ( "description", Encode.string "Boolean flags, passed as --flag (e.g., --verbose)" )
-                 , ( "properties", Encode.object flagProperties )
-                 ]
-                    ++ (if List.isEmpty requiredFlags then
-                            []
+                extraFields =
+                    [ ( "x-cli-kind", Encode.string kind ) ]
+                        ++ (case usageSpecDescription spec of
+                                Just desc ->
+                                    [ ( "description", Encode.string desc ) ]
 
-                        else
-                            [ ( "required", Encode.list Encode.string requiredFlags ) ]
-                       )
-                )
-          )
-        ]
+                                Nothing ->
+                                    []
+                           )
+            in
+            Just ( optionName, appendJsonFields extraFields strippedSchema )
+
+        Nothing ->
+            Nothing
 
 
-{-| Build the `$cli.keywordLists` schema property.
+{-| Get the name of a required top-level option (keyword arg or expectFlag).
 -}
-keywordListsSchemaProperty : List ( String, Encode.Value ) -> List ( String, Encode.Value )
-keywordListsSchemaProperty keywordListProps =
-    if List.isEmpty keywordListProps then
-        []
+toRequiredTopLevelName : ( UsageSpec, ( String, a ) ) -> Maybe String
+toRequiredTopLevelName ( spec, ( optionName, _ ) ) =
+    case spec of
+        UsageSpec.FlagOrKeywordArg _ _ Required _ ->
+            Just optionName
 
-    else
-        [ ( "keywordLists"
-          , Encode.object
-                [ ( "type", Encode.string "object" )
-                , ( "description", Encode.string "Keyword arguments that can be repeated (e.g., --header X --header Y)" )
-                , ( "properties", Encode.object keywordListProps )
-                ]
-          )
-        ]
+        _ ->
+            Nothing
+
+
+{-| Build the full schema description with usage synopsis and invocation instructions.
+-}
+buildSchemaDescription : String -> Bool -> String
+buildSchemaDescription usageSynopsis hasPositionalArgs =
+    let
+        positionalNote =
+            if hasPositionalArgs then
+                "Positional arguments are passed in order via the `$cli.positional` array."
+
+            else
+                "Positional arguments are passed in order via the `$cli.positional` array (for this CLI it will always be empty)."
+    in
+    usageSynopsis
+        ++ "\n\nTo invoke this command, build a JSON object matching this schema and pass it as a single argument. Alternatively, use traditional CLI flags as shown in the usage line above."
+        ++ "\n\nEach property has an `x-cli-kind` indicating its CLI invocation form:\n- \"keyword\": --name <value>\n- \"flag\": --name (present or absent, no value)\n- \"keyword-list\": --name <value> (repeatable)"
+        ++ "\n\n"
+        ++ positionalNote
 
 
 {-| Strip the `$schema` key from a TsJson-generated JSON schema value.
@@ -1016,23 +933,6 @@ stripSchemaKey baseSchema =
 
         Err _ ->
             baseSchema
-
-
-tsTypeToProperty : UsageSpec -> ( String, TsJson.Type.Type ) -> ( String, Encode.Value )
-tsTypeToProperty spec ( optionName, tsType ) =
-    let
-        strippedSchema =
-            stripSchemaKey (TsJson.Type.toJsonSchema tsType)
-
-        schemaWithDescription =
-            case usageSpecDescription spec of
-                Just desc ->
-                    appendJsonFields [ ( "description", Encode.string desc ) ] strippedSchema
-
-                Nothing ->
-                    strippedSchema
-    in
-    ( optionName, schemaWithDescription )
 
 
 usageSpecDescription : UsageSpec -> Maybe String

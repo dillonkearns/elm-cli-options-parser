@@ -210,48 +210,35 @@ all =
                                             )
                                     )
                     in
+                    let
+                        desc =
+                            "test --format <json|junit|console>"
+                                ++ "\n\nTo invoke this command, build a JSON object matching this schema and pass it as a single argument. Alternatively, use traditional CLI flags as shown in the usage line above."
+                                ++ "\n\nEach property has an `x-cli-kind` indicating its CLI invocation form:\n- \"keyword\": --name <value>\n- \"flag\": --name (present or absent, no value)\n- \"keyword-list\": --name <value> (repeatable)"
+                                ++ "\n\nPositional arguments are passed in order via the `$cli.positional` array (for this CLI it will always be empty)."
+                    in
                     cfg
                         |> Program.toJsonSchema "test"
                         |> Encode.encode 0
                         |> Expect.equal
                             (Encode.object
-                                [ ( "description", Encode.string "test --format <json|junit|console>" )
+                                [ ( "description", Encode.string desc )
                                 , ( "type", Encode.string "object" )
                                 , ( "properties"
                                   , Encode.object
-                                        [ ( "$cli"
+                                        [ ( "format"
                                           , Encode.object
-                                                [ ( "type", Encode.string "object" )
-                                                , ( "description", Encode.string "CLI input: contains keywordValues, flags, positional args, and subcommand as applicable." )
-                                                , ( "properties"
-                                                  , Encode.object
-                                                        [ ( "keywordValues"
-                                                          , Encode.object
-                                                                [ ( "type", Encode.string "object" )
-                                                                , ( "description", Encode.string "Keyword arguments with values (e.g., --name <value>)" )
-                                                                , ( "properties"
-                                                                  , Encode.object
-                                                                        [ ( "format"
-                                                                          , Encode.object
-                                                                                [ ( "type", Encode.string "string" )
-                                                                                , ( "enum"
-                                                                                  , Encode.list Encode.string [ "json", "junit", "console" ]
-                                                                                  )
-                                                                                ]
-                                                                          )
-                                                                        ]
-                                                                  )
-                                                                , ( "required", Encode.list Encode.string [ "format" ] )
-                                                                ]
-                                                          )
-                                                        ]
+                                                [ ( "type", Encode.string "string" )
+                                                , ( "enum"
+                                                  , Encode.list Encode.string [ "json", "junit", "console" ]
                                                   )
-                                                , ( "required", Encode.list Encode.string [ "keywordValues" ] )
+                                                , ( "x-cli-kind", Encode.string "keyword" )
                                                 ]
                                           )
+                                        , ( "$cli", Encode.object [ ( "type", Encode.string "object" ) ] )
                                         ]
                                   )
-                                , ( "required", Encode.list Encode.string [ "$cli" ] )
+                                , ( "required", Encode.list Encode.string [ "format", "$cli" ] )
                                 ]
                                 |> Encode.encode 0
                             )

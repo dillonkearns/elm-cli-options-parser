@@ -132,113 +132,91 @@ all =
                         |> Expect.equal """{
   "anyOf": [
     {
-      "description": "test add --title <TITLE> --priority <low|medium|high>",
+      "description": "test add --title <TITLE> --priority <low|medium|high>\\n\\nTo invoke this command, build a JSON object matching this schema and pass it as a single argument. Alternatively, use traditional CLI flags as shown in the usage line above.\\n\\nEach property has an `x-cli-kind` indicating its CLI invocation form:\\n- \\"keyword\\": --name <value>\\n- \\"flag\\": --name (present or absent, no value)\\n- \\"keyword-list\\": --name <value> (repeatable)\\n\\nPositional arguments are passed in order via the `$cli.positional` array (for this CLI it will always be empty).",
       "type": "object",
       "properties": {
+        "title": {
+          "type": "string",
+          "x-cli-kind": "keyword",
+          "description": "The task title"
+        },
+        "priority": {
+          "type": "string",
+          "enum": [
+            "low",
+            "medium",
+            "high"
+          ],
+          "x-cli-kind": "keyword",
+          "description": "Task priority level"
+        },
         "$cli": {
           "type": "object",
-          "description": "CLI input: contains keywordValues, flags, positional args, and subcommand as applicable.",
           "properties": {
             "subcommand": {
               "type": "string",
               "const": "add"
-            },
-            "keywordValues": {
-              "type": "object",
-              "description": "Keyword arguments with values (e.g., --name <value>)",
-              "properties": {
-                "title": {
-                  "type": "string",
-                  "description": "The task title"
-                },
-                "priority": {
-                  "type": "string",
-                  "enum": [
-                    "low",
-                    "medium",
-                    "high"
-                  ],
-                  "description": "Task priority level"
-                }
-              },
-              "required": [
-                "title",
-                "priority"
-              ]
             }
           },
           "required": [
-            "subcommand",
-            "keywordValues"
+            "subcommand"
           ]
         }
       },
       "required": [
+        "title",
+        "priority",
         "$cli"
       ]
     },
     {
-      "description": "test list [--format <json|table|csv>] --limit <LIMIT> [--verbose]",
+      "description": "test list [--format <json|table|csv>] --limit <LIMIT> [--verbose]\\n\\nTo invoke this command, build a JSON object matching this schema and pass it as a single argument. Alternatively, use traditional CLI flags as shown in the usage line above.\\n\\nEach property has an `x-cli-kind` indicating its CLI invocation form:\\n- \\"keyword\\": --name <value>\\n- \\"flag\\": --name (present or absent, no value)\\n- \\"keyword-list\\": --name <value> (repeatable)\\n\\nPositional arguments are passed in order via the `$cli.positional` array (for this CLI it will always be empty).",
       "type": "object",
       "properties": {
+        "format": {
+          "type": "string",
+          "enum": [
+            "json",
+            "table",
+            "csv"
+          ],
+          "x-cli-kind": "keyword",
+          "description": "Output format"
+        },
+        "limit": {
+          "type": "string",
+          "x-cli-kind": "keyword",
+          "description": "Maximum number of tasks to show"
+        },
+        "verbose": {
+          "type": "boolean",
+          "x-cli-kind": "flag",
+          "description": "Show full task details"
+        },
         "$cli": {
           "type": "object",
-          "description": "CLI input: contains keywordValues, flags, positional args, and subcommand as applicable.",
           "properties": {
             "subcommand": {
               "type": "string",
               "const": "list"
-            },
-            "keywordValues": {
-              "type": "object",
-              "description": "Keyword arguments with values (e.g., --name <value>)",
-              "properties": {
-                "format": {
-                  "type": "string",
-                  "enum": [
-                    "json",
-                    "table",
-                    "csv"
-                  ],
-                  "description": "Output format"
-                },
-                "limit": {
-                  "type": "string",
-                  "description": "Maximum number of tasks to show"
-                }
-              },
-              "required": [
-                "limit"
-              ]
-            },
-            "flags": {
-              "type": "object",
-              "description": "Boolean flags, passed as --flag (e.g., --verbose)",
-              "properties": {
-                "verbose": {
-                  "type": "boolean",
-                  "description": "Show full task details"
-                }
-              }
             }
           },
           "required": [
-            "subcommand",
-            "keywordValues"
+            "subcommand"
           ]
         }
       },
       "required": [
+        "limit",
         "$cli"
       ]
     },
     {
-      "description": "test complete <task-id>",
+      "description": "test complete <task-id>\\n\\nTo invoke this command, build a JSON object matching this schema and pass it as a single argument. Alternatively, use traditional CLI flags as shown in the usage line above.\\n\\nEach property has an `x-cli-kind` indicating its CLI invocation form:\\n- \\"keyword\\": --name <value>\\n- \\"flag\\": --name (present or absent, no value)\\n- \\"keyword-list\\": --name <value> (repeatable)\\n\\nPositional arguments are passed in order via the `$cli.positional` array.",
       "type": "object",
       "properties": {
         "$cli": {
           "type": "object",
-          "description": "CLI input: contains keywordValues, flags, positional args, and subcommand as applicable.",
           "properties": {
             "subcommand": {
               "type": "string",
@@ -339,14 +317,14 @@ Options:
             [ test "add task via JSON" <|
                 \() ->
                     Program.run taskConfig
-                        [ "node", "mytool", "{\"$cli\":{\"subcommand\":\"add\",\"keywordValues\":{\"title\":\"Buy milk\",\"priority\":\"high\"}}}" ]
+                        [ "node", "mytool", "{\"title\":\"Buy milk\",\"priority\":\"high\",\"$cli\":{\"subcommand\":\"add\"}}" ]
                         "1.0.0"
                         Program.WithoutColor
                         |> Expect.equal (Program.CustomMatch (Add { title = "Buy milk", priority = High }))
             , test "list tasks via JSON" <|
                 \() ->
                     Program.run taskConfig
-                        [ "node", "mytool", "{\"$cli\":{\"subcommand\":\"list\",\"flags\":{\"verbose\":true},\"keywordValues\":{\"format\":\"json\",\"limit\":\"10\"}}}" ]
+                        [ "node", "mytool", "{\"format\":\"json\",\"limit\":\"10\",\"verbose\":true,\"$cli\":{\"subcommand\":\"list\"}}" ]
                         "1.0.0"
                         Program.WithoutColor
                         |> Expect.equal (Program.CustomMatch (ListTasks { format = Json, limit = 10, verbose = True }))
@@ -444,7 +422,7 @@ Run with --help for usage information."""
             [ test "missing required field in JSON" <|
                 \() ->
                     Program.run taskConfig
-                        [ "node", "mytool", "{\"$cli\":{\"subcommand\":\"add\",\"keywordValues\":{\"priority\":\"high\"}}}" ]
+                        [ "node", "mytool", "{\"priority\":\"high\",\"$cli\":{\"subcommand\":\"add\"}}" ]
                         "1.0.0"
                         Program.WithoutColor
                         |> Expect.equal
@@ -454,7 +432,7 @@ Run with --help for usage information."""
             , test "invalid oneOf value in JSON" <|
                 \() ->
                     Program.run taskConfig
-                        [ "node", "mytool", "{\"$cli\":{\"subcommand\":\"add\",\"keywordValues\":{\"title\":\"Buy milk\",\"priority\":\"urgent\"}}}" ]
+                        [ "node", "mytool", "{\"title\":\"Buy milk\",\"priority\":\"urgent\",\"$cli\":{\"subcommand\":\"add\"}}" ]
                         "1.0.0"
                         Program.WithoutColor
                         |> Expect.equal
@@ -469,7 +447,7 @@ Must be one of [low, medium, high]"""
                     -- With direct JSON decoding, JSON number 10 for a string field is a type error
                     -- The schema says "type": "string", so LLMs should send "10" not 10
                     Program.run taskConfig
-                        [ "node", "mytool", "{\"$cli\":{\"subcommand\":\"list\",\"keywordValues\":{\"format\":\"json\",\"limit\":10}}}" ]
+                        [ "node", "mytool", "{\"format\":\"json\",\"limit\":10,\"$cli\":{\"subcommand\":\"list\"}}" ]
                         "1.0.0"
                         Program.WithoutColor
                         |> Expect.equal
@@ -498,7 +476,7 @@ Expecting a STRING"""
                     -- The schema says "type": "string" for limit. LLMs should send "10" not 10.
                     -- No more silent number-to-string coercion.
                     Program.run taskConfig
-                        [ "node", "mytool", "{\"$cli\":{\"subcommand\":\"list\",\"keywordValues\":{\"format\":\"table\",\"limit\":10}}}" ]
+                        [ "node", "mytool", "{\"format\":\"table\",\"limit\":10,\"$cli\":{\"subcommand\":\"list\"}}" ]
                         "1.0.0"
                         Program.WithoutColor
                         |> Expect.equal

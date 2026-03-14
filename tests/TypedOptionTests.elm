@@ -54,35 +54,20 @@ all =
                     schemaFor (Option.requiredKeywordArg "name" Option.string)
                         |> Expect.equal
                             (Encode.object
-                                [ ( "description", Encode.string "test --name <NAME>" )
+                                [ ( "description", Encode.string (schemaDescription "test --name <NAME>") )
                                 , ( "type", Encode.string "object" )
                                 , ( "properties"
                                   , Encode.object
-                                        [ ( "$cli"
+                                        [ ( "name"
                                           , Encode.object
-                                                [ ( "type", Encode.string "object" )
-                                                , ( "description", Encode.string "CLI input: contains keywordValues, flags, positional args, and subcommand as applicable." )
-                                                , ( "properties"
-                                                  , Encode.object
-                                                        [ ( "keywordValues"
-                                                          , Encode.object
-                                                                [ ( "type", Encode.string "object" )
-                                                                , ( "description", Encode.string "Keyword arguments with values (e.g., --name <value>)" )
-                                                                , ( "properties"
-                                                                  , Encode.object
-                                                                        [ ( "name", Encode.object [ ( "type", Encode.string "string" ) ] ) ]
-                                                                  )
-                                                                , ( "required", Encode.list Encode.string [ "name" ] )
-                                                                ]
-                                                          )
-                                                        ]
-                                                  )
-                                                , ( "required", Encode.list Encode.string [ "keywordValues" ] )
+                                                [ ( "type", Encode.string "string" )
+                                                , ( "x-cli-kind", Encode.string "keyword" )
                                                 ]
                                           )
+                                        , ( "$cli", Encode.object [ ( "type", Encode.string "object" ) ] )
                                         ]
                                   )
-                                , ( "required", Encode.list Encode.string [ "$cli" ] )
+                                , ( "required", Encode.list Encode.string [ "name", "$cli" ] )
                                 ]
                                 |> Encode.encode 0
                             )
@@ -128,35 +113,20 @@ all =
                     schemaFor (Option.requiredKeywordArg "count" Option.int)
                         |> Expect.equal
                             (Encode.object
-                                [ ( "description", Encode.string "test --count <COUNT>" )
+                                [ ( "description", Encode.string (schemaDescription "test --count <COUNT>") )
                                 , ( "type", Encode.string "object" )
                                 , ( "properties"
                                   , Encode.object
-                                        [ ( "$cli"
+                                        [ ( "count"
                                           , Encode.object
-                                                [ ( "type", Encode.string "object" )
-                                                , ( "description", Encode.string "CLI input: contains keywordValues, flags, positional args, and subcommand as applicable." )
-                                                , ( "properties"
-                                                  , Encode.object
-                                                        [ ( "keywordValues"
-                                                          , Encode.object
-                                                                [ ( "type", Encode.string "object" )
-                                                                , ( "description", Encode.string "Keyword arguments with values (e.g., --name <value>)" )
-                                                                , ( "properties"
-                                                                  , Encode.object
-                                                                        [ ( "count", Encode.object [ ( "type", Encode.string "integer" ) ] ) ]
-                                                                  )
-                                                                , ( "required", Encode.list Encode.string [ "count" ] )
-                                                                ]
-                                                          )
-                                                        ]
-                                                  )
-                                                , ( "required", Encode.list Encode.string [ "keywordValues" ] )
+                                                [ ( "type", Encode.string "integer" )
+                                                , ( "x-cli-kind", Encode.string "keyword" )
                                                 ]
                                           )
+                                        , ( "$cli", Encode.object [ ( "type", Encode.string "object" ) ] )
                                         ]
                                   )
-                                , ( "required", Encode.list Encode.string [ "$cli" ] )
+                                , ( "required", Encode.list Encode.string [ "count", "$cli" ] )
                                 ]
                                 |> Encode.encode 0
                             )
@@ -306,19 +276,13 @@ all =
                         |> Expect.equal (Program.CustomMatch [ "a.txt", "b.txt" ])
             ]
         , describe "JSON input with $cli object"
-            [ test "keyword list via $cli.keywordLists" <|
+            [ test "keyword list at top level" <|
                 \() ->
                     let
                         jsonArg =
                             Encode.object
-                                [ ( "$cli"
-                                  , Encode.object
-                                        [ ( "keywordLists"
-                                          , Encode.object
-                                                [ ( "header", Encode.list Encode.string [ "X-A: 1", "X-B: 2" ] ) ]
-                                          )
-                                        ]
-                                  )
+                                [ ( "header", Encode.list Encode.string [ "X-A: 1", "X-B: 2" ] )
+                                , ( "$cli", Encode.object [] )
                                 ]
                                 |> Encode.encode 0
                     in
@@ -334,7 +298,7 @@ all =
                                     Program.WithoutColor
                            )
                         |> Expect.equal (Program.CustomMatch [ "X-A: 1", "X-B: 2" ])
-            , test "keyword list absent in $cli.keywordLists defaults to empty" <|
+            , test "keyword list absent defaults to empty" <|
                 \() ->
                     let
                         jsonArg =
@@ -452,15 +416,13 @@ all =
                                     Program.WithoutColor
                            )
                         |> Expect.equal (Program.CustomMatch [ "x.txt", "y.txt" ])
-            , test "flag via $cli.flags" <|
+            , test "flag at top level" <|
                 \() ->
                     let
                         jsonArg =
                             Encode.object
-                                [ ( "$cli"
-                                  , Encode.object
-                                        [ ( "flags", Encode.object [ ( "verbose", Encode.bool True ) ] ) ]
-                                  )
+                                [ ( "verbose", Encode.bool True )
+                                , ( "$cli", Encode.object [] )
                                 ]
                                 |> Encode.encode 0
                     in
@@ -476,7 +438,7 @@ all =
                                     Program.WithoutColor
                            )
                         |> Expect.equal (Program.CustomMatch True)
-            , test "flag absent from $cli.flags defaults to False" <|
+            , test "flag absent defaults to False" <|
                 \() ->
                     let
                         jsonArg =
@@ -501,19 +463,12 @@ all =
                     let
                         jsonArg =
                             Encode.object
-                                [ ( "$cli"
+                                [ ( "limit", Encode.string "10" )
+                                , ( "verbose", Encode.bool True )
+                                , ( "header", Encode.list Encode.string [ "X-A: 1" ] )
+                                , ( "$cli"
                                   , Encode.object
-                                        [ ( "positional", Encode.list Encode.string [ "input.txt" ] )
-                                        , ( "flags", Encode.object [ ( "verbose", Encode.bool True ) ] )
-                                        , ( "keywordLists"
-                                          , Encode.object
-                                                [ ( "header", Encode.list Encode.string [ "X-A: 1" ] ) ]
-                                          )
-                                        , ( "keywordValues"
-                                          , Encode.object
-                                                [ ( "limit", Encode.string "10" ) ]
-                                          )
-                                        ]
+                                        [ ( "positional", Encode.list Encode.string [ "input.txt" ] ) ]
                                   )
                                 ]
                                 |> Encode.encode 0
@@ -557,41 +512,21 @@ all =
                         )
                         |> Expect.equal
                             (Encode.object
-                                [ ( "description", Encode.string "test --count <COUNT>" )
+                                [ ( "description", Encode.string (schemaDescription "test --count <COUNT>") )
                                 , ( "type", Encode.string "object" )
                                 , ( "properties"
                                   , Encode.object
-                                        [ ( "$cli"
+                                        [ ( "count"
                                           , Encode.object
-                                                [ ( "type", Encode.string "object" )
-                                                , ( "description", Encode.string "CLI input: contains keywordValues, flags, positional args, and subcommand as applicable." )
-                                                , ( "properties"
-                                                  , Encode.object
-                                                        [ ( "keywordValues"
-                                                          , Encode.object
-                                                                [ ( "type", Encode.string "object" )
-                                                                , ( "description", Encode.string "Keyword arguments with values (e.g., --name <value>)" )
-                                                                , ( "properties"
-                                                                  , Encode.object
-                                                                        [ ( "count"
-                                                                          , Encode.object
-                                                                                [ ( "type", Encode.string "integer" )
-                                                                                , ( "description", Encode.string "Number of items" )
-                                                                                ]
-                                                                          )
-                                                                        ]
-                                                                  )
-                                                                , ( "required", Encode.list Encode.string [ "count" ] )
-                                                                ]
-                                                          )
-                                                        ]
-                                                  )
-                                                , ( "required", Encode.list Encode.string [ "keywordValues" ] )
+                                                [ ( "type", Encode.string "integer" )
+                                                , ( "x-cli-kind", Encode.string "keyword" )
+                                                , ( "description", Encode.string "Number of items" )
                                                 ]
                                           )
+                                        , ( "$cli", Encode.object [ ( "type", Encode.string "object" ) ] )
                                         ]
                                   )
-                                , ( "required", Encode.list Encode.string [ "$cli" ] )
+                                , ( "required", Encode.list Encode.string [ "count", "$cli" ] )
                                 ]
                                 |> Encode.encode 0
                             )
@@ -638,11 +573,7 @@ runJsonWith option fields =
     let
         jsonArg =
             Encode.object
-                [ ( "$cli"
-                  , Encode.object
-                        [ ( "keywordValues", Encode.object fields ) ]
-                  )
-                ]
+                (fields ++ [ ( "$cli", Encode.object [] ) ])
                 |> Encode.encode 0
     in
     Program.config
@@ -667,6 +598,14 @@ schemaFor option =
             )
         |> Program.toJsonSchema "test"
         |> Encode.encode 0
+
+
+schemaDescription : String -> String
+schemaDescription usageSynopsis =
+    usageSynopsis
+        ++ "\n\nTo invoke this command, build a JSON object matching this schema and pass it as a single argument. Alternatively, use traditional CLI flags as shown in the usage line above."
+        ++ "\n\nEach property has an `x-cli-kind` indicating its CLI invocation form:\n- \"keyword\": --name <value>\n- \"flag\": --name (present or absent, no value)\n- \"keyword-list\": --name <value> (repeatable)"
+        ++ "\n\nPositional arguments are passed in order via the `$cli.positional` array (for this CLI it will always be empty)."
 
 
 expectFailure : Program.RunResult msg -> Expect.Expectation

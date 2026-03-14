@@ -49,30 +49,17 @@ all =
                         |> Encode.encode 0
                         |> Expect.equal
                             (Encode.object
-                                [ ( "description", Encode.string "test [--verbose]" )
+                                [ ( "description", Encode.string (fullDescription "test [--verbose]" False) )
                                 , ( "type", Encode.string "object" )
                                 , ( "properties"
                                   , Encode.object
-                                        [ ( "$cli"
+                                        [ ( "verbose"
                                           , Encode.object
-                                                [ ( "type", Encode.string "object" )
-                                                , ( "description", Encode.string "CLI input: contains keywordValues, flags, positional args, and subcommand as applicable." )
-                                                , ( "properties"
-                                                  , Encode.object
-                                                        [ ( "flags"
-                                                          , Encode.object
-                                                                [ ( "type", Encode.string "object" )
-                                                                , ( "description", Encode.string "Boolean flags, passed as --flag (e.g., --verbose)" )
-                                                                , ( "properties"
-                                                                  , Encode.object
-                                                                        [ ( "verbose", Encode.object [ ( "type", Encode.string "boolean" ) ] ) ]
-                                                                  )
-                                                                ]
-                                                          )
-                                                        ]
-                                                  )
+                                                [ ( "type", Encode.string "boolean" )
+                                                , ( "x-cli-kind", Encode.string "flag" )
                                                 ]
                                           )
+                                        , ( "$cli", Encode.object [ ( "type", Encode.string "object" ) ] )
                                         ]
                                   )
                                 , ( "required", Encode.list Encode.string [ "$cli" ] )
@@ -90,14 +77,13 @@ all =
                         |> Encode.encode 0
                         |> Expect.equal
                             (Encode.object
-                                [ ( "description", Encode.string "test <file>" )
+                                [ ( "description", Encode.string (fullDescription "test <file>" True) )
                                 , ( "type", Encode.string "object" )
                                 , ( "properties"
                                   , Encode.object
                                         [ ( "$cli"
                                           , Encode.object
                                                 [ ( "type", Encode.string "object" )
-                                                , ( "description", Encode.string "CLI input: contains keywordValues, flags, positional args, and subcommand as applicable." )
                                                 , ( "properties"
                                                   , Encode.object
                                                         [ ( "positional"
@@ -133,14 +119,13 @@ all =
                         |> Encode.encode 0
                         |> Expect.equal
                             (Encode.object
-                                [ ( "description", Encode.string "test [<revision>]" )
+                                [ ( "description", Encode.string (fullDescription "test [<revision>]" True) )
                                 , ( "type", Encode.string "object" )
                                 , ( "properties"
                                   , Encode.object
                                         [ ( "$cli"
                                           , Encode.object
                                                 [ ( "type", Encode.string "object" )
-                                                , ( "description", Encode.string "CLI input: contains keywordValues, flags, positional args, and subcommand as applicable." )
                                                 , ( "properties"
                                                   , Encode.object
                                                         [ ( "positional"
@@ -175,14 +160,13 @@ all =
                         |> Encode.encode 0
                         |> Expect.equal
                             (Encode.object
-                                [ ( "description", Encode.string "test <files>..." )
+                                [ ( "description", Encode.string (fullDescription "test <files>..." True) )
                                 , ( "type", Encode.string "object" )
                                 , ( "properties"
                                   , Encode.object
                                         [ ( "$cli"
                                           , Encode.object
                                                 [ ( "type", Encode.string "object" )
-                                                , ( "description", Encode.string "CLI input: contains keywordValues, flags, positional args, and subcommand as applicable." )
                                                 , ( "properties"
                                                   , Encode.object
                                                         [ ( "positional"
@@ -213,36 +197,18 @@ all =
                         |> Encode.encode 0
                         |> Expect.equal
                             (Encode.object
-                                [ ( "description", Encode.string "test [--header <HEADER>]..." )
+                                [ ( "description", Encode.string (fullDescription "test [--header <HEADER>]..." False) )
                                 , ( "type", Encode.string "object" )
                                 , ( "properties"
                                   , Encode.object
-                                        [ ( "$cli"
+                                        [ ( "header"
                                           , Encode.object
-                                                [ ( "type", Encode.string "object" )
-                                                , ( "description", Encode.string "CLI input: contains keywordValues, flags, positional args, and subcommand as applicable." )
-                                                , ( "properties"
-                                                  , Encode.object
-                                                        [ ( "keywordLists"
-                                                          , Encode.object
-                                                                [ ( "type", Encode.string "object" )
-                                                                , ( "description", Encode.string "Keyword arguments that can be repeated (e.g., --header X --header Y)" )
-                                                                , ( "properties"
-                                                                  , Encode.object
-                                                                        [ ( "header"
-                                                                          , Encode.object
-                                                                                [ ( "type", Encode.string "array" )
-                                                                                , ( "items", Encode.object [ ( "type", Encode.string "string" ) ] )
-                                                                                ]
-                                                                          )
-                                                                        ]
-                                                                  )
-                                                                ]
-                                                          )
-                                                        ]
-                                                  )
+                                                [ ( "type", Encode.string "array" )
+                                                , ( "items", Encode.object [ ( "type", Encode.string "string" ) ] )
+                                                , ( "x-cli-kind", Encode.string "keyword-list" )
                                                 ]
                                           )
+                                        , ( "$cli", Encode.object [ ( "type", Encode.string "object" ) ] )
                                         ]
                                   )
                                 , ( "required", Encode.list Encode.string [ "$cli" ] )
@@ -288,43 +254,21 @@ all =
                         |> Encode.encode 0
                         |> Expect.equal
                             (Encode.object
-                                [ ( "description", Encode.string "test --format <json|junit|console>" )
+                                [ ( "description", Encode.string (fullDescription "test --format <json|junit|console>" False) )
                                 , ( "type", Encode.string "object" )
                                 , ( "properties"
                                   , Encode.object
-                                        [ ( "$cli"
+                                        [ ( "format"
                                           , Encode.object
-                                                [ ( "type", Encode.string "object" )
-                                                , ( "description", Encode.string "CLI input: contains keywordValues, flags, positional args, and subcommand as applicable." )
-                                                , ( "properties"
-                                                  , Encode.object
-                                                        [ ( "keywordValues"
-                                                          , Encode.object
-                                                                [ ( "type", Encode.string "object" )
-                                                                , ( "description", Encode.string "Keyword arguments with values (e.g., --name <value>)" )
-                                                                , ( "properties"
-                                                                  , Encode.object
-                                                                        [ ( "format"
-                                                                          , Encode.object
-                                                                                [ ( "type", Encode.string "string" )
-                                                                                , ( "enum"
-                                                                                  , Encode.list Encode.string [ "json", "junit", "console" ]
-                                                                                  )
-                                                                                ]
-                                                                          )
-                                                                        ]
-                                                                  )
-                                                                , ( "required", Encode.list Encode.string [ "format" ] )
-                                                                ]
-                                                          )
-                                                        ]
-                                                  )
-                                                , ( "required", Encode.list Encode.string [ "keywordValues" ] )
+                                                [ ( "type", Encode.string "string" )
+                                                , ( "enum", Encode.list Encode.string [ "json", "junit", "console" ] )
+                                                , ( "x-cli-kind", Encode.string "keyword" )
                                                 ]
                                           )
+                                        , ( "$cli", Encode.object [ ( "type", Encode.string "object" ) ] )
                                         ]
                                   )
-                                , ( "required", Encode.list Encode.string [ "$cli" ] )
+                                , ( "required", Encode.list Encode.string [ "format", "$cli" ] )
                                 ]
                                 |> Encode.encode 0
                             )
@@ -341,47 +285,32 @@ all =
                         |> Encode.encode 0
                         |> Expect.equal
                             (Encode.object
-                                [ ( "description", Encode.string "test --name <NAME> [--greeting <GREETING>] [--verbose]" )
+                                [ ( "description", Encode.string (fullDescription "test --name <NAME> [--greeting <GREETING>] [--verbose]" False) )
                                 , ( "type", Encode.string "object" )
                                 , ( "properties"
                                   , Encode.object
-                                        [ ( "$cli"
+                                        [ ( "name"
                                           , Encode.object
-                                                [ ( "type", Encode.string "object" )
-                                                , ( "description", Encode.string "CLI input: contains keywordValues, flags, positional args, and subcommand as applicable." )
-                                                , ( "properties"
-                                                  , Encode.object
-                                                        [ ( "keywordValues"
-                                                          , Encode.object
-                                                                [ ( "type", Encode.string "object" )
-                                                                , ( "description", Encode.string "Keyword arguments with values (e.g., --name <value>)" )
-                                                                , ( "properties"
-                                                                  , Encode.object
-                                                                        [ ( "name", Encode.object [ ( "type", Encode.string "string" ) ] )
-                                                                        , ( "greeting", Encode.object [ ( "type", Encode.string "string" ) ] )
-                                                                        ]
-                                                                  )
-                                                                , ( "required", Encode.list Encode.string [ "name" ] )
-                                                                ]
-                                                          )
-                                                        , ( "flags"
-                                                          , Encode.object
-                                                                [ ( "type", Encode.string "object" )
-                                                                , ( "description", Encode.string "Boolean flags, passed as --flag (e.g., --verbose)" )
-                                                                , ( "properties"
-                                                                  , Encode.object
-                                                                        [ ( "verbose", Encode.object [ ( "type", Encode.string "boolean" ) ] ) ]
-                                                                  )
-                                                                ]
-                                                          )
-                                                        ]
-                                                  )
-                                                , ( "required", Encode.list Encode.string [ "keywordValues" ] )
+                                                [ ( "type", Encode.string "string" )
+                                                , ( "x-cli-kind", Encode.string "keyword" )
                                                 ]
                                           )
+                                        , ( "greeting"
+                                          , Encode.object
+                                                [ ( "type", Encode.string "string" )
+                                                , ( "x-cli-kind", Encode.string "keyword" )
+                                                ]
+                                          )
+                                        , ( "verbose"
+                                          , Encode.object
+                                                [ ( "type", Encode.string "boolean" )
+                                                , ( "x-cli-kind", Encode.string "flag" )
+                                                ]
+                                          )
+                                        , ( "$cli", Encode.object [ ( "type", Encode.string "object" ) ] )
                                         ]
                                   )
-                                , ( "required", Encode.list Encode.string [ "$cli" ] )
+                                , ( "required", Encode.list Encode.string [ "name", "$cli" ] )
                                 ]
                                 |> Encode.encode 0
                             )
@@ -396,35 +325,20 @@ all =
                         |> Encode.encode 0
                         |> Expect.equal
                             (Encode.object
-                                [ ( "description", Encode.string "test --init" )
+                                [ ( "description", Encode.string (fullDescription "test --init" False) )
                                 , ( "type", Encode.string "object" )
                                 , ( "properties"
                                   , Encode.object
-                                        [ ( "$cli"
+                                        [ ( "init"
                                           , Encode.object
-                                                [ ( "type", Encode.string "object" )
-                                                , ( "description", Encode.string "CLI input: contains keywordValues, flags, positional args, and subcommand as applicable." )
-                                                , ( "properties"
-                                                  , Encode.object
-                                                        [ ( "flags"
-                                                          , Encode.object
-                                                                [ ( "type", Encode.string "object" )
-                                                                , ( "description", Encode.string "Boolean flags, passed as --flag (e.g., --verbose)" )
-                                                                , ( "properties"
-                                                                  , Encode.object
-                                                                        [ ( "init", Encode.object [ ( "type", Encode.string "boolean" ) ] ) ]
-                                                                  )
-                                                                , ( "required", Encode.list Encode.string [ "init" ] )
-                                                                ]
-                                                          )
-                                                        ]
-                                                  )
-                                                , ( "required", Encode.list Encode.string [ "flags" ] )
+                                                [ ( "type", Encode.string "boolean" )
+                                                , ( "x-cli-kind", Encode.string "flag" )
                                                 ]
                                           )
+                                        , ( "$cli", Encode.object [ ( "type", Encode.string "object" ) ] )
                                         ]
                                   )
-                                , ( "required", Encode.list Encode.string [ "$cli" ] )
+                                , ( "required", Encode.list Encode.string [ "init", "$cli" ] )
                                 ]
                                 |> Encode.encode 0
                             )
@@ -440,37 +354,26 @@ all =
                         |> Encode.encode 0
                         |> Expect.equal
                             (Encode.object
-                                [ ( "description", Encode.string "test --init --force" )
+                                [ ( "description", Encode.string (fullDescription "test --init --force" False) )
                                 , ( "type", Encode.string "object" )
                                 , ( "properties"
                                   , Encode.object
-                                        [ ( "$cli"
+                                        [ ( "init"
                                           , Encode.object
-                                                [ ( "type", Encode.string "object" )
-                                                , ( "description", Encode.string "CLI input: contains keywordValues, flags, positional args, and subcommand as applicable." )
-                                                , ( "properties"
-                                                  , Encode.object
-                                                        [ ( "flags"
-                                                          , Encode.object
-                                                                [ ( "type", Encode.string "object" )
-                                                                , ( "description", Encode.string "Boolean flags, passed as --flag (e.g., --verbose)" )
-                                                                , ( "properties"
-                                                                  , Encode.object
-                                                                        [ ( "init", Encode.object [ ( "type", Encode.string "boolean" ) ] )
-                                                                        , ( "force", Encode.object [ ( "type", Encode.string "boolean" ) ] )
-                                                                        ]
-                                                                  )
-                                                                , ( "required", Encode.list Encode.string [ "init", "force" ] )
-                                                                ]
-                                                          )
-                                                        ]
-                                                  )
-                                                , ( "required", Encode.list Encode.string [ "flags" ] )
+                                                [ ( "type", Encode.string "boolean" )
+                                                , ( "x-cli-kind", Encode.string "flag" )
                                                 ]
                                           )
+                                        , ( "force"
+                                          , Encode.object
+                                                [ ( "type", Encode.string "boolean" )
+                                                , ( "x-cli-kind", Encode.string "flag" )
+                                                ]
+                                          )
+                                        , ( "$cli", Encode.object [ ( "type", Encode.string "object" ) ] )
                                         ]
                                   )
-                                , ( "required", Encode.list Encode.string [ "$cli" ] )
+                                , ( "required", Encode.list Encode.string [ "init", "force", "$cli" ] )
                                 ]
                                 |> Encode.encode 0
                             )
@@ -486,37 +389,26 @@ all =
                         |> Encode.encode 0
                         |> Expect.equal
                             (Encode.object
-                                [ ( "description", Encode.string "test [--verbose] --init" )
+                                [ ( "description", Encode.string (fullDescription "test [--verbose] --init" False) )
                                 , ( "type", Encode.string "object" )
                                 , ( "properties"
                                   , Encode.object
-                                        [ ( "$cli"
+                                        [ ( "verbose"
                                           , Encode.object
-                                                [ ( "type", Encode.string "object" )
-                                                , ( "description", Encode.string "CLI input: contains keywordValues, flags, positional args, and subcommand as applicable." )
-                                                , ( "properties"
-                                                  , Encode.object
-                                                        [ ( "flags"
-                                                          , Encode.object
-                                                                [ ( "type", Encode.string "object" )
-                                                                , ( "description", Encode.string "Boolean flags, passed as --flag (e.g., --verbose)" )
-                                                                , ( "properties"
-                                                                  , Encode.object
-                                                                        [ ( "verbose", Encode.object [ ( "type", Encode.string "boolean" ) ] )
-                                                                        , ( "init", Encode.object [ ( "type", Encode.string "boolean" ) ] )
-                                                                        ]
-                                                                  )
-                                                                , ( "required", Encode.list Encode.string [ "init" ] )
-                                                                ]
-                                                          )
-                                                        ]
-                                                  )
-                                                , ( "required", Encode.list Encode.string [ "flags" ] )
+                                                [ ( "type", Encode.string "boolean" )
+                                                , ( "x-cli-kind", Encode.string "flag" )
                                                 ]
                                           )
+                                        , ( "init"
+                                          , Encode.object
+                                                [ ( "type", Encode.string "boolean" )
+                                                , ( "x-cli-kind", Encode.string "flag" )
+                                                ]
+                                          )
+                                        , ( "$cli", Encode.object [ ( "type", Encode.string "object" ) ] )
                                         ]
                                   )
-                                , ( "required", Encode.list Encode.string [ "$cli" ] )
+                                , ( "required", Encode.list Encode.string [ "init", "$cli" ] )
                                 ]
                                 |> Encode.encode 0
                             )
@@ -542,79 +434,48 @@ all =
                                 [ ( "anyOf"
                                   , Encode.list identity
                                         [ Encode.object
-                                            [ ( "description", Encode.string "test --init --name <NAME>" )
+                                            [ ( "description", Encode.string (fullDescription "test --init --name <NAME>" False) )
                                             , ( "type", Encode.string "object" )
                                             , ( "properties"
                                               , Encode.object
-                                                    [ ( "$cli"
+                                                    [ ( "init"
                                                       , Encode.object
-                                                            [ ( "type", Encode.string "object" )
-                                                            , ( "description", Encode.string "CLI input: contains keywordValues, flags, positional args, and subcommand as applicable." )
-                                                            , ( "properties"
-                                                              , Encode.object
-                                                                    [ ( "keywordValues"
-                                                                      , Encode.object
-                                                                            [ ( "type", Encode.string "object" )
-                                                                            , ( "description", Encode.string "Keyword arguments with values (e.g., --name <value>)" )
-                                                                            , ( "properties"
-                                                                              , Encode.object
-                                                                                    [ ( "name", Encode.object [ ( "type", Encode.string "string" ) ] ) ]
-                                                                              )
-                                                                            , ( "required", Encode.list Encode.string [ "name" ] )
-                                                                            ]
-                                                                      )
-                                                                    , ( "flags"
-                                                                      , Encode.object
-                                                                            [ ( "type", Encode.string "object" )
-                                                                            , ( "description", Encode.string "Boolean flags, passed as --flag (e.g., --verbose)" )
-                                                                            , ( "properties"
-                                                                              , Encode.object
-                                                                                    [ ( "init", Encode.object [ ( "type", Encode.string "boolean" ) ] ) ]
-                                                                              )
-                                                                            , ( "required", Encode.list Encode.string [ "init" ] )
-                                                                            ]
-                                                                      )
-                                                                    ]
-                                                              )
-                                                            , ( "required", Encode.list Encode.string [ "keywordValues", "flags" ] )
+                                                            [ ( "type", Encode.string "boolean" )
+                                                            , ( "x-cli-kind", Encode.string "flag" )
                                                             ]
                                                       )
+                                                    , ( "name"
+                                                      , Encode.object
+                                                            [ ( "type", Encode.string "string" )
+                                                            , ( "x-cli-kind", Encode.string "keyword" )
+                                                            ]
+                                                      )
+                                                    , ( "$cli", Encode.object [ ( "type", Encode.string "object" ) ] )
                                                     ]
                                               )
-                                            , ( "required", Encode.list Encode.string [ "$cli" ] )
+                                            , ( "required", Encode.list Encode.string [ "init", "name", "$cli" ] )
                                             ]
                                         , Encode.object
-                                            [ ( "description", Encode.string "test --build [--verbose]" )
+                                            [ ( "description", Encode.string (fullDescription "test --build [--verbose]" False) )
                                             , ( "type", Encode.string "object" )
                                             , ( "properties"
                                               , Encode.object
-                                                    [ ( "$cli"
+                                                    [ ( "build"
                                                       , Encode.object
-                                                            [ ( "type", Encode.string "object" )
-                                                            , ( "description", Encode.string "CLI input: contains keywordValues, flags, positional args, and subcommand as applicable." )
-                                                            , ( "properties"
-                                                              , Encode.object
-                                                                    [ ( "flags"
-                                                                      , Encode.object
-                                                                            [ ( "type", Encode.string "object" )
-                                                                            , ( "description", Encode.string "Boolean flags, passed as --flag (e.g., --verbose)" )
-                                                                            , ( "properties"
-                                                                              , Encode.object
-                                                                                    [ ( "build", Encode.object [ ( "type", Encode.string "boolean" ) ] )
-                                                                                    , ( "verbose", Encode.object [ ( "type", Encode.string "boolean" ) ] )
-                                                                                    ]
-                                                                              )
-                                                                            , ( "required", Encode.list Encode.string [ "build" ] )
-                                                                            ]
-                                                                      )
-                                                                    ]
-                                                              )
-                                                            , ( "required", Encode.list Encode.string [ "flags" ] )
+                                                            [ ( "type", Encode.string "boolean" )
+                                                            , ( "x-cli-kind", Encode.string "flag" )
                                                             ]
                                                       )
+                                                    , ( "verbose"
+                                                      , Encode.object
+                                                            [ ( "type", Encode.string "boolean" )
+                                                            , ( "x-cli-kind", Encode.string "flag" )
+                                                            ]
+                                                      )
+                                                    , ( "$cli", Encode.object [ ( "type", Encode.string "object" ) ] )
                                                     ]
                                               )
-                                            , ( "required", Encode.list Encode.string [ "$cli" ] )
+                                            , ( "required", Encode.list Encode.string [ "build", "$cli" ] )
                                             ]
                                         ]
                                   )
@@ -630,11 +491,11 @@ all =
                         |> Encode.encode 0
                         |> Expect.equal
                             (Encode.object
-                                [ ( "description", Encode.string "test" )
+                                [ ( "description", Encode.string (fullDescription "test" False) )
                                 , ( "type", Encode.string "object" )
                                 , ( "properties"
                                   , Encode.object
-                                        [ ( "$cli", Encode.object [ ( "type", Encode.string "object" ), ( "description", Encode.string "Required CLI input object. Include as empty object {} when no arguments are needed." ) ] )
+                                        [ ( "$cli", Encode.object [ ( "type", Encode.string "object" ) ] )
                                         ]
                                   )
                                 , ( "required", Encode.list Encode.string [ "$cli" ] )
@@ -654,27 +515,22 @@ all =
                         |> Encode.encode 0
                         |> Expect.equal
                             (Encode.object
-                                [ ( "description", Encode.string "test init [--bare]" )
+                                [ ( "description", Encode.string (fullDescription "test init [--bare]" False) )
                                 , ( "type", Encode.string "object" )
                                 , ( "properties"
                                   , Encode.object
-                                        [ ( "$cli"
+                                        [ ( "bare"
+                                          , Encode.object
+                                                [ ( "type", Encode.string "boolean" )
+                                                , ( "x-cli-kind", Encode.string "flag" )
+                                                ]
+                                          )
+                                        , ( "$cli"
                                           , Encode.object
                                                 [ ( "type", Encode.string "object" )
-                                                , ( "description", Encode.string "CLI input: contains keywordValues, flags, positional args, and subcommand as applicable." )
                                                 , ( "properties"
                                                   , Encode.object
                                                         [ ( "subcommand", Encode.object [ ( "type", Encode.string "string" ), ( "const", Encode.string "init" ) ] )
-                                                        , ( "flags"
-                                                          , Encode.object
-                                                                [ ( "type", Encode.string "object" )
-                                                                , ( "description", Encode.string "Boolean flags, passed as --flag (e.g., --verbose)" )
-                                                                , ( "properties"
-                                                                  , Encode.object
-                                                                        [ ( "bare", Encode.object [ ( "type", Encode.string "boolean" ) ] ) ]
-                                                                  )
-                                                                ]
-                                                          )
                                                         ]
                                                   )
                                                 , ( "required", Encode.list Encode.string [ "subcommand" ] )
@@ -705,14 +561,13 @@ all =
                                 [ ( "anyOf"
                                   , Encode.list identity
                                         [ Encode.object
-                                            [ ( "description", Encode.string "test init" )
+                                            [ ( "description", Encode.string (fullDescription "test init" False) )
                                             , ( "type", Encode.string "object" )
                                             , ( "properties"
                                               , Encode.object
                                                     [ ( "$cli"
                                                       , Encode.object
                                                             [ ( "type", Encode.string "object" )
-                                                            , ( "description", Encode.string "CLI input: contains keywordValues, flags, positional args, and subcommand as applicable." )
                                                             , ( "properties"
                                                               , Encode.object
                                                                     [ ( "subcommand", Encode.object [ ( "type", Encode.string "string" ), ( "const", Encode.string "init" ) ] )
@@ -726,14 +581,13 @@ all =
                                             , ( "required", Encode.list Encode.string [ "$cli" ] )
                                             ]
                                         , Encode.object
-                                            [ ( "description", Encode.string "test clone <repository>" )
+                                            [ ( "description", Encode.string (fullDescription "test clone <repository>" True) )
                                             , ( "type", Encode.string "object" )
                                             , ( "properties"
                                               , Encode.object
                                                     [ ( "$cli"
                                                       , Encode.object
                                                             [ ( "type", Encode.string "object" )
-                                                            , ( "description", Encode.string "CLI input: contains keywordValues, flags, positional args, and subcommand as applicable." )
                                                             , ( "properties"
                                                               , Encode.object
                                                                     [ ( "subcommand", Encode.object [ ( "type", Encode.string "string" ), ( "const", Encode.string "clone" ) ] )
@@ -775,7 +629,7 @@ all =
                             )
                         |> (\cfg ->
                                 Program.run cfg
-                                    [ "node", "test", "{\"$cli\":{\"keywordValues\":{\"name\":\"World\",\"greeting\":\"Hi\"}}}" ]
+                                    [ "node", "test", "{\"name\":\"World\",\"greeting\":\"Hi\",\"$cli\":{}}" ]
                                     "1.0.0"
                                     Program.WithoutColor
                            )
@@ -791,7 +645,7 @@ all =
                             )
                         |> (\cfg ->
                                 Program.run cfg
-                                    [ "node", "test", "{\"$cli\":{\"flags\":{\"verbose\":true},\"keywordValues\":{\"name\":\"World\"}}}" ]
+                                    [ "node", "test", "{\"name\":\"World\",\"verbose\":true,\"$cli\":{}}" ]
                                     "1.0.0"
                                     Program.WithoutColor
                            )
@@ -806,7 +660,7 @@ all =
                             )
                         |> (\cfg ->
                                 Program.run cfg
-                                    [ "node", "test", "{\"$cli\":{\"subcommand\":\"greet\",\"keywordValues\":{\"name\":\"World\"}}}" ]
+                                    [ "node", "test", "{\"name\":\"World\",\"$cli\":{\"subcommand\":\"greet\"}}" ]
                                     "1.0.0"
                                     Program.WithoutColor
                            )
@@ -824,7 +678,7 @@ all =
                                     )
                     in
                     Program.run cfg
-                        [ "node", "test", "{\"$cli\":{\"keywordValues\":{\"greeting\":\"Hi\"}}}" ]
+                        [ "node", "test", "{\"greeting\":\"Hi\",\"$cli\":{}}" ]
                         "1.0.0"
                         Program.WithoutColor
                         |> Expect.equal
@@ -842,7 +696,7 @@ all =
                             )
                         |> (\cfg ->
                                 Program.run cfg
-                                    [ "node", "test", "{\"$cli\":{\"keywordValues\":{\"name\":123}}}" ]
+                                    [ "node", "test", "{\"name\":123,\"$cli\":{}}" ]
                                     "1.0.0"
                                     Program.WithoutColor
                            )
@@ -883,7 +737,7 @@ Expecting a STRING"""
                                     )
                     in
                     Program.run cfg
-                        [ "node", "test", "{\"$cli\":{\"flags\":{\"init\":true},\"keywordValues\":{\"name\":\"my-project\"}}}" ]
+                        [ "node", "test", "{\"init\":true,\"name\":\"my-project\",\"$cli\":{}}" ]
                         "1.0.0"
                         Program.WithoutColor
                         |> Expect.equal (Program.CustomMatch "init:my-project")
@@ -913,7 +767,7 @@ Expecting a STRING"""
                                     )
                     in
                     Program.run cfg
-                        [ "node", "test", "{\"$cli\":{\"flags\":{\"build\":true,\"verbose\":true}}}" ]
+                        [ "node", "test", "{\"build\":true,\"verbose\":true,\"$cli\":{}}" ]
                         "1.0.0"
                         Program.WithoutColor
                         |> Expect.equal (Program.CustomMatch "build:verbose")
@@ -961,9 +815,30 @@ Expecting a STRING"""
         ]
 
 
+{-| Build the full description with invocation instructions, matching the source code's
+`buildSchemaDescription` function.
+-}
+fullDescription : String -> Bool -> String
+fullDescription synopsis hasPositionalArgs =
+    let
+        positionalNote =
+            if hasPositionalArgs then
+                "Positional arguments are passed in order via the `$cli.positional` array."
+
+            else
+                "Positional arguments are passed in order via the `$cli.positional` array (for this CLI it will always be empty)."
+    in
+    synopsis
+        ++ "\n\nTo invoke this command, build a JSON object matching this schema and pass it as a single argument. Alternatively, use traditional CLI flags as shown in the usage line above."
+        ++ "\n\nEach property has an `x-cli-kind` indicating its CLI invocation form:\n- \"keyword\": --name <value>\n- \"flag\": --name (present or absent, no value)\n- \"keyword-list\": --name <value> (repeatable)"
+        ++ "\n\n"
+        ++ positionalNote
+
+
 {-| Helper to build expected JSON Schema and compare.
 Used for tests where only keyword args are present (no flags, positional args,
-or keyword arg lists). Nests keyword args under `$cli.keywordValues`.
+or keyword arg lists). Places keyword args as flat top-level properties with
+`x-cli-kind: "keyword"` and a `$cli: {"type": "object"}`.
 -}
 expectJsonSchema :
     { description : String
@@ -974,77 +849,42 @@ expectJsonSchema :
     -> Expect.Expectation
 expectJsonSchema { description, properties, required } config =
     let
-        keywordValuesObj =
-            Encode.object
-                ([ ( "type", Encode.string "object" )
-                 , ( "description", Encode.string "Keyword arguments with values (e.g., --name <value>)" )
-                 , ( "properties"
-                   , Encode.object
-                        (properties
-                            |> List.map (\( name, fields ) -> ( name, Encode.object fields ))
+        topLevelProperties =
+            properties
+                |> List.map
+                    (\( name, fields ) ->
+                        let
+                            -- Separate base type fields from description
+                            baseFields =
+                                fields |> List.filter (\( k, _ ) -> k /= "description")
+
+                            descFields =
+                                fields |> List.filter (\( k, _ ) -> k == "description")
+                        in
+                        ( name
+                        , Encode.object
+                            (baseFields ++ [ ( "x-cli-kind", Encode.string "keyword" ) ] ++ descFields)
                         )
-                   )
-                 ]
-                    ++ (if List.isEmpty required then
-                            []
-
-                        else
-                            [ ( "required", Encode.list Encode.string required ) ]
-                       )
-                )
-
-        cliSubProperties =
-            if List.isEmpty properties then
-                []
-
-            else
-                [ ( "keywordValues", keywordValuesObj ) ]
-
-        cliRequired =
-            if List.isEmpty required then
-                []
-
-            else
-                [ "keywordValues" ]
-
-        cliDescription =
-            if List.isEmpty cliSubProperties then
-                "Required CLI input object. Include as empty object {} when no arguments are needed."
-
-            else
-                "CLI input: contains keywordValues, flags, positional args, and subcommand as applicable."
+                    )
 
         cliObj =
-            Encode.object
-                ([ ( "type", Encode.string "object" )
-                 , ( "description", Encode.string cliDescription )
-                 ]
-                    ++ (if List.isEmpty cliSubProperties then
-                            []
+            Encode.object [ ( "type", Encode.string "object" ) ]
 
-                        else
-                            [ ( "properties", Encode.object cliSubProperties ) ]
-                       )
-                    ++ (if List.isEmpty cliRequired then
-                            []
+        allProperties =
+            topLevelProperties ++ [ ( "$cli", cliObj ) ]
 
-                        else
-                            [ ( "required", Encode.list Encode.string cliRequired ) ]
-                       )
-                )
+        allRequired =
+            required ++ [ "$cli" ]
     in
     config
         |> Program.toJsonSchema "test"
         |> Encode.encode 0
         |> Expect.equal
             (Encode.object
-                [ ( "description", Encode.string description )
+                [ ( "description", Encode.string (fullDescription description False) )
                 , ( "type", Encode.string "object" )
-                , ( "properties"
-                  , Encode.object
-                        [ ( "$cli", cliObj ) ]
-                  )
-                , ( "required", Encode.list Encode.string [ "$cli" ] )
+                , ( "properties", Encode.object allProperties )
+                , ( "required", Encode.list Encode.string allRequired )
                 ]
                 |> Encode.encode 0
             )
