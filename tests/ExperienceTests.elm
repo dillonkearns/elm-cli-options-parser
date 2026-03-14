@@ -152,6 +152,7 @@ all =
         },
         "$cli": {
           "type": "object",
+          "additionalProperties": false,
           "properties": {
             "subcommand": {
               "type": "string",
@@ -167,7 +168,8 @@ all =
         "title",
         "priority",
         "$cli"
-      ]
+      ],
+      "additionalProperties": false
     },
     {
       "description": "test list [--format <json|table|csv>] --limit <LIMIT> [--verbose]\\n\\nTo invoke this command, build a JSON object matching this schema and pass it as a single argument. Alternatively, use traditional CLI flags as shown in the usage line above.\\n\\nEach property has an `x-cli-kind` indicating its CLI invocation form:\\n- \\"keyword\\": --name <value>\\n- \\"flag\\": --name (present or absent, no value)\\n- \\"keyword-list\\": --name <value> (repeatable)\\n\\nPositional arguments are passed in order via the `$cli.positional` array (for this CLI it will always be empty).",
@@ -195,6 +197,7 @@ all =
         },
         "$cli": {
           "type": "object",
+          "additionalProperties": false,
           "properties": {
             "subcommand": {
               "type": "string",
@@ -209,7 +212,8 @@ all =
       "required": [
         "limit",
         "$cli"
-      ]
+      ],
+      "additionalProperties": false
     },
     {
       "description": "test complete <task-id>\\n\\nTo invoke this command, build a JSON object matching this schema and pass it as a single argument. Alternatively, use traditional CLI flags as shown in the usage line above.\\n\\nEach property has an `x-cli-kind` indicating its CLI invocation form:\\n- \\"keyword\\": --name <value>\\n- \\"flag\\": --name (present or absent, no value)\\n- \\"keyword-list\\": --name <value> (repeatable)\\n\\nPositional arguments are passed in order via the `$cli.positional` array.",
@@ -217,6 +221,7 @@ all =
       "properties": {
         "$cli": {
           "type": "object",
+          "additionalProperties": false,
           "properties": {
             "subcommand": {
               "type": "string",
@@ -243,7 +248,8 @@ all =
       },
       "required": [
         "$cli"
-      ]
+      ],
+      "additionalProperties": false
     }
   ]
 }"""

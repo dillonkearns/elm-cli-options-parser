@@ -234,10 +234,16 @@ all =
                                                 , ( "x-cli-kind", Encode.string "keyword" )
                                                 ]
                                           )
-                                        , ( "$cli", Encode.object [ ( "type", Encode.string "object" ) ] )
+                                        , ( "$cli"
+                                          , Encode.object
+                                                [ ( "type", Encode.string "object" )
+                                                , ( "additionalProperties", Encode.bool False )
+                                                ]
+                                          )
                                         ]
                                   )
                                 , ( "required", Encode.list Encode.string [ "format", "$cli" ] )
+                                , ( "additionalProperties", Encode.bool False )
                                 ]
                                 |> Encode.encode 0
                             )

@@ -25,6 +25,40 @@ all =
                                 [ ( "name", [ ( "type", Encode.string "string" ) ] ) ]
                             , required = [ "name" ]
                             }
+            , test "schema forbids additional top-level and $cli properties" <|
+                \() ->
+                    Program.config
+                        |> Program.add
+                            (OptionsParser.build identity
+                                |> OptionsParser.with (Option.requiredKeywordArg "name")
+                            )
+                        |> Program.toJsonSchema "test"
+                        |> Encode.encode 0
+                        |> Expect.equal
+                            (Encode.object
+                                [ ( "description", Encode.string (fullDescription "test --name <NAME>" False) )
+                                , ( "type", Encode.string "object" )
+                                , ( "properties"
+                                  , Encode.object
+                                        [ ( "name"
+                                          , Encode.object
+                                                [ ( "type", Encode.string "string" )
+                                                , ( "x-cli-kind", Encode.string "keyword" )
+                                                ]
+                                          )
+                                        , ( "$cli"
+                                          , Encode.object
+                                                [ ( "type", Encode.string "object" )
+                                                , ( "additionalProperties", Encode.bool False )
+                                                ]
+                                          )
+                                        ]
+                                  )
+                                , ( "required", Encode.list Encode.string [ "name", "$cli" ] )
+                                , ( "additionalProperties", Encode.bool False )
+                                ]
+                                |> Encode.encode 0
+                            )
             , test "optional keyword arg is not required" <|
                 \() ->
                     Program.config
@@ -59,10 +93,16 @@ all =
                                                 , ( "x-cli-kind", Encode.string "flag" )
                                                 ]
                                           )
-                                        , ( "$cli", Encode.object [ ( "type", Encode.string "object" ) ] )
+                                        , ( "$cli"
+                                          , Encode.object
+                                                [ ( "type", Encode.string "object" )
+                                                , ( "additionalProperties", Encode.bool False )
+                                                ]
+                                          )
                                         ]
                                   )
                                 , ( "required", Encode.list Encode.string [ "$cli" ] )
+                                , ( "additionalProperties", Encode.bool False )
                                 ]
                                 |> Encode.encode 0
                             )
@@ -84,6 +124,7 @@ all =
                                         [ ( "$cli"
                                           , Encode.object
                                                 [ ( "type", Encode.string "object" )
+                                                , ( "additionalProperties", Encode.bool False )
                                                 , ( "properties"
                                                   , Encode.object
                                                         [ ( "positional"
@@ -106,6 +147,7 @@ all =
                                         ]
                                   )
                                 , ( "required", Encode.list Encode.string [ "$cli" ] )
+                                , ( "additionalProperties", Encode.bool False )
                                 ]
                                 |> Encode.encode 0
                             )
@@ -127,6 +169,7 @@ all =
                                         [ ( "$cli"
                                           , Encode.object
                                                 [ ( "type", Encode.string "object" )
+                                                , ( "additionalProperties", Encode.bool False )
                                                 , ( "properties"
                                                   , Encode.object
                                                         [ ( "positional"
@@ -147,6 +190,7 @@ all =
                                         ]
                                   )
                                 , ( "required", Encode.list Encode.string [ "$cli" ] )
+                                , ( "additionalProperties", Encode.bool False )
                                 ]
                                 |> Encode.encode 0
                             )
@@ -168,6 +212,7 @@ all =
                                         [ ( "$cli"
                                           , Encode.object
                                                 [ ( "type", Encode.string "object" )
+                                                , ( "additionalProperties", Encode.bool False )
                                                 , ( "properties"
                                                   , Encode.object
                                                         [ ( "positional"
@@ -184,6 +229,7 @@ all =
                                         ]
                                   )
                                 , ( "required", Encode.list Encode.string [ "$cli" ] )
+                                , ( "additionalProperties", Encode.bool False )
                                 ]
                                 |> Encode.encode 0
                             )
@@ -209,10 +255,16 @@ all =
                                                 , ( "x-cli-kind", Encode.string "keyword-list" )
                                                 ]
                                           )
-                                        , ( "$cli", Encode.object [ ( "type", Encode.string "object" ) ] )
+                                        , ( "$cli"
+                                          , Encode.object
+                                                [ ( "type", Encode.string "object" )
+                                                , ( "additionalProperties", Encode.bool False )
+                                                ]
+                                          )
                                         ]
                                   )
                                 , ( "required", Encode.list Encode.string [ "$cli" ] )
+                                , ( "additionalProperties", Encode.bool False )
                                 ]
                                 |> Encode.encode 0
                             )
@@ -266,10 +318,16 @@ all =
                                                 , ( "x-cli-kind", Encode.string "keyword" )
                                                 ]
                                           )
-                                        , ( "$cli", Encode.object [ ( "type", Encode.string "object" ) ] )
+                                        , ( "$cli"
+                                          , Encode.object
+                                                [ ( "type", Encode.string "object" )
+                                                , ( "additionalProperties", Encode.bool False )
+                                                ]
+                                          )
                                         ]
                                   )
                                 , ( "required", Encode.list Encode.string [ "format", "$cli" ] )
+                                , ( "additionalProperties", Encode.bool False )
                                 ]
                                 |> Encode.encode 0
                             )
@@ -308,10 +366,16 @@ all =
                                                 , ( "x-cli-kind", Encode.string "flag" )
                                                 ]
                                           )
-                                        , ( "$cli", Encode.object [ ( "type", Encode.string "object" ) ] )
+                                        , ( "$cli"
+                                          , Encode.object
+                                                [ ( "type", Encode.string "object" )
+                                                , ( "additionalProperties", Encode.bool False )
+                                                ]
+                                          )
                                         ]
                                   )
                                 , ( "required", Encode.list Encode.string [ "name", "$cli" ] )
+                                , ( "additionalProperties", Encode.bool False )
                                 ]
                                 |> Encode.encode 0
                             )
@@ -336,10 +400,16 @@ all =
                                                 , ( "x-cli-kind", Encode.string "flag" )
                                                 ]
                                           )
-                                        , ( "$cli", Encode.object [ ( "type", Encode.string "object" ) ] )
+                                        , ( "$cli"
+                                          , Encode.object
+                                                [ ( "type", Encode.string "object" )
+                                                , ( "additionalProperties", Encode.bool False )
+                                                ]
+                                          )
                                         ]
                                   )
                                 , ( "required", Encode.list Encode.string [ "init", "$cli" ] )
+                                , ( "additionalProperties", Encode.bool False )
                                 ]
                                 |> Encode.encode 0
                             )
@@ -371,10 +441,16 @@ all =
                                                 , ( "x-cli-kind", Encode.string "flag" )
                                                 ]
                                           )
-                                        , ( "$cli", Encode.object [ ( "type", Encode.string "object" ) ] )
+                                        , ( "$cli"
+                                          , Encode.object
+                                                [ ( "type", Encode.string "object" )
+                                                , ( "additionalProperties", Encode.bool False )
+                                                ]
+                                          )
                                         ]
                                   )
                                 , ( "required", Encode.list Encode.string [ "init", "force", "$cli" ] )
+                                , ( "additionalProperties", Encode.bool False )
                                 ]
                                 |> Encode.encode 0
                             )
@@ -406,10 +482,16 @@ all =
                                                 , ( "x-cli-kind", Encode.string "flag" )
                                                 ]
                                           )
-                                        , ( "$cli", Encode.object [ ( "type", Encode.string "object" ) ] )
+                                        , ( "$cli"
+                                          , Encode.object
+                                                [ ( "type", Encode.string "object" )
+                                                , ( "additionalProperties", Encode.bool False )
+                                                ]
+                                          )
                                         ]
                                   )
                                 , ( "required", Encode.list Encode.string [ "init", "$cli" ] )
+                                , ( "additionalProperties", Encode.bool False )
                                 ]
                                 |> Encode.encode 0
                             )
@@ -451,10 +533,16 @@ all =
                                                             , ( "x-cli-kind", Encode.string "keyword" )
                                                             ]
                                                       )
-                                                    , ( "$cli", Encode.object [ ( "type", Encode.string "object" ) ] )
+                                                    , ( "$cli"
+                                                      , Encode.object
+                                                            [ ( "type", Encode.string "object" )
+                                                            , ( "additionalProperties", Encode.bool False )
+                                                            ]
+                                                      )
                                                     ]
                                               )
                                             , ( "required", Encode.list Encode.string [ "init", "name", "$cli" ] )
+                                            , ( "additionalProperties", Encode.bool False )
                                             ]
                                         , Encode.object
                                             [ ( "description", Encode.string (fullDescription "test --build [--verbose]" False) )
@@ -473,10 +561,16 @@ all =
                                                             , ( "x-cli-kind", Encode.string "flag" )
                                                             ]
                                                       )
-                                                    , ( "$cli", Encode.object [ ( "type", Encode.string "object" ) ] )
+                                                    , ( "$cli"
+                                                      , Encode.object
+                                                            [ ( "type", Encode.string "object" )
+                                                            , ( "additionalProperties", Encode.bool False )
+                                                            ]
+                                                      )
                                                     ]
                                               )
                                             , ( "required", Encode.list Encode.string [ "build", "$cli" ] )
+                                            , ( "additionalProperties", Encode.bool False )
                                             ]
                                         ]
                                   )
@@ -496,10 +590,16 @@ all =
                                 , ( "type", Encode.string "object" )
                                 , ( "properties"
                                   , Encode.object
-                                        [ ( "$cli", Encode.object [ ( "type", Encode.string "object" ) ] )
+                                        [ ( "$cli"
+                                          , Encode.object
+                                                [ ( "type", Encode.string "object" )
+                                                , ( "additionalProperties", Encode.bool False )
+                                                ]
+                                          )
                                         ]
                                   )
                                 , ( "required", Encode.list Encode.string [ "$cli" ] )
+                                , ( "additionalProperties", Encode.bool False )
                                 ]
                                 |> Encode.encode 0
                             )
@@ -529,6 +629,7 @@ all =
                                         , ( "$cli"
                                           , Encode.object
                                                 [ ( "type", Encode.string "object" )
+                                                , ( "additionalProperties", Encode.bool False )
                                                 , ( "properties"
                                                   , Encode.object
                                                         [ ( "subcommand", Encode.object [ ( "type", Encode.string "string" ), ( "const", Encode.string "init" ) ] )
@@ -540,6 +641,7 @@ all =
                                         ]
                                   )
                                 , ( "required", Encode.list Encode.string [ "$cli" ] )
+                                , ( "additionalProperties", Encode.bool False )
                                 ]
                                 |> Encode.encode 0
                             )
@@ -569,6 +671,7 @@ all =
                                                     [ ( "$cli"
                                                       , Encode.object
                                                             [ ( "type", Encode.string "object" )
+                                                            , ( "additionalProperties", Encode.bool False )
                                                             , ( "properties"
                                                               , Encode.object
                                                                     [ ( "subcommand", Encode.object [ ( "type", Encode.string "string" ), ( "const", Encode.string "init" ) ] )
@@ -580,6 +683,7 @@ all =
                                                     ]
                                               )
                                             , ( "required", Encode.list Encode.string [ "$cli" ] )
+                                            , ( "additionalProperties", Encode.bool False )
                                             ]
                                         , Encode.object
                                             [ ( "description", Encode.string (fullDescription "test clone <repository>" True) )
@@ -589,6 +693,7 @@ all =
                                                     [ ( "$cli"
                                                       , Encode.object
                                                             [ ( "type", Encode.string "object" )
+                                                            , ( "additionalProperties", Encode.bool False )
                                                             , ( "properties"
                                                               , Encode.object
                                                                     [ ( "subcommand", Encode.object [ ( "type", Encode.string "string" ), ( "const", Encode.string "clone" ) ] )
@@ -612,6 +717,7 @@ all =
                                                     ]
                                               )
                                             , ( "required", Encode.list Encode.string [ "$cli" ] )
+                                            , ( "additionalProperties", Encode.bool False )
                                             ]
                                         ]
                                   )
@@ -869,7 +975,10 @@ expectJsonSchema { description, properties, required } config =
                     )
 
         cliObj =
-            Encode.object [ ( "type", Encode.string "object" ) ]
+            Encode.object
+                [ ( "type", Encode.string "object" )
+                , ( "additionalProperties", Encode.bool False )
+                ]
 
         allProperties =
             topLevelProperties ++ [ ( "$cli", cliObj ) ]
@@ -886,6 +995,7 @@ expectJsonSchema { description, properties, required } config =
                 , ( "type", Encode.string "object" )
                 , ( "properties", Encode.object allProperties )
                 , ( "required", Encode.list Encode.string allRequired )
+                , ( "additionalProperties", Encode.bool False )
                 ]
                 |> Encode.encode 0
             )

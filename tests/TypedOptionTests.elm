@@ -64,10 +64,16 @@ all =
                                                 , ( "x-cli-kind", Encode.string "keyword" )
                                                 ]
                                           )
-                                        , ( "$cli", Encode.object [ ( "type", Encode.string "object" ) ] )
+                                        , ( "$cli"
+                                          , Encode.object
+                                                [ ( "type", Encode.string "object" )
+                                                , ( "additionalProperties", Encode.bool False )
+                                                ]
+                                          )
                                         ]
                                   )
                                 , ( "required", Encode.list Encode.string [ "name", "$cli" ] )
+                                , ( "additionalProperties", Encode.bool False )
                                 ]
                                 |> Encode.encode 0
                             )
@@ -123,10 +129,16 @@ all =
                                                 , ( "x-cli-kind", Encode.string "keyword" )
                                                 ]
                                           )
-                                        , ( "$cli", Encode.object [ ( "type", Encode.string "object" ) ] )
+                                        , ( "$cli"
+                                          , Encode.object
+                                                [ ( "type", Encode.string "object" )
+                                                , ( "additionalProperties", Encode.bool False )
+                                                ]
+                                          )
                                         ]
                                   )
                                 , ( "required", Encode.list Encode.string [ "count", "$cli" ] )
+                                , ( "additionalProperties", Encode.bool False )
                                 ]
                                 |> Encode.encode 0
                             )
@@ -506,10 +518,16 @@ all =
                                                 , ( "description", Encode.string "Number of items" )
                                                 ]
                                           )
-                                        , ( "$cli", Encode.object [ ( "type", Encode.string "object" ) ] )
+                                        , ( "$cli"
+                                          , Encode.object
+                                                [ ( "type", Encode.string "object" )
+                                                , ( "additionalProperties", Encode.bool False )
+                                                ]
+                                          )
                                         ]
                                   )
                                 , ( "required", Encode.list Encode.string [ "count", "$cli" ] )
+                                , ( "additionalProperties", Encode.bool False )
                                 ]
                                 |> Encode.encode 0
                             )

@@ -741,8 +741,10 @@ parserToJsonSchemaFromTsTypes programName parser =
 
         cliSchema =
             Encode.object
-                (( "type", Encode.string "object" )
-                    :: (if List.isEmpty cliSubProperties then
+                ([ ( "type", Encode.string "object" )
+                 , ( "additionalProperties", Encode.bool False )
+                 ]
+                    ++ (if List.isEmpty cliSubProperties then
                             []
 
                         else
@@ -772,6 +774,7 @@ parserToJsonSchemaFromTsTypes programName parser =
         , ( "type", Encode.string "object" )
         , ( "properties", Encode.object allProperties )
         , ( "required", Encode.list Encode.string allRequired )
+        , ( "additionalProperties", Encode.bool False )
         ]
 
 
