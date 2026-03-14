@@ -679,7 +679,14 @@ validateMapIfPresent mapFn cliSpec =
         cliSpec
 
 
-{-| Provide a default value for the `Option`.
+{-| Provide a default value for an optional `Option`. Turns a `Maybe value`
+into a plain `value`.
+
+    Option.optionalKeywordArg "greeting"
+        |> Option.withDefault "Hello"
+
+If `--greeting` is omitted, the option's value will be `"Hello"` instead of `Nothing`.
+
 -}
 withDefault : to -> Option from (Maybe to) builderState -> Option from to builderState
 withDefault defaultValue option =
@@ -710,7 +717,16 @@ keywordArgList flagName =
         (Internal.jsonOptionalFieldGrabberWithDefault flagName (Json.Decode.list Json.Decode.string) [])
 
 
-{-| Note that this must be used with `OptionsParser.withOptionalPositionalArg`.
+{-| An optional positional argument.
+
+Must be used with [`OptionsParser.withOptionalPositionalArg`](Cli-OptionsParser#withOptionalPositionalArg)
+(not `OptionsParser.with`).
+
+Example: `<revision>` in `git log [<revision>]`
+Parses to: `Just "abc123"` (or `Nothing` if omitted)
+
+    Option.optionalPositionalArg "revision"
+
 -}
 optionalPositionalArg : String -> Option (Maybe String) (Maybe String) { position : OptionalPositionalArgOption }
 optionalPositionalArg operandDescription =
@@ -721,7 +737,16 @@ optionalPositionalArg operandDescription =
         (Internal.jsonOptionalFieldGrabber operandDescription Json.Decode.string)
 
 
-{-| Note that this must be used with `OptionsParser.withRestArgs`.
+{-| Collect all remaining positional arguments as a list.
+
+Must be used with [`OptionsParser.withRestArgs`](Cli-OptionsParser#withRestArgs)
+(not `OptionsParser.with`), and must be the last option in the pipeline.
+
+Example: `<files>...` in `elm-test [<files>...]`
+Parses to: `["tests/First.elm", "tests/Second.elm"]` (or `[]` if none provided)
+
+    Option.restArgs "files"
+
 -}
 restArgs : String -> Option (List String) (List String) { position : RestArgsOption }
 restArgs restArgsDescription =

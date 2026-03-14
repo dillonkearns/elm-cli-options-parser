@@ -418,42 +418,83 @@ restArgs restArgsDescription =
 -- Re-exported modifiers
 
 
-{-| See `Cli.Option.oneOf`.
+{-| Mutually exclusive option values. Restricts the option to a fixed set of
+string values, each mapped to an Elm value.
+
+    type ReportFormat
+        = Json
+        | Junit
+        | Console
+
+    Option.requiredKeywordArg "report" Option.string
+        |> Option.oneOf
+            [ ( "json", Json )
+            , ( "junit", Junit )
+            , ( "console", Console )
+            ]
+
+The JSON schema will include an `enum` constraint with the allowed values.
+
 -}
 oneOf : List ( String, value ) -> Option from String builderState -> Option from value builderState
 oneOf =
     Cli.Option.oneOf
 
 
-{-| See `Cli.Option.validateMap`.
+{-| Transform the option value, or fail with a validation error.
+
+If the function returns `Err`, the error message is shown to the user.
+
+    Option.requiredKeywordArg "count" Option.string
+        |> Option.validateMap String.toInt
+
 -}
 validateMap : (to -> Result String toMapped) -> Option from to builderState -> Option from toMapped builderState
 validateMap =
     Cli.Option.validateMap
 
 
-{-| See `Cli.Option.validateMapIfPresent`.
+{-| Like [`validateMap`](#validateMap), but only runs when the value is `Just`.
+Does nothing for `Nothing`.
+
+    Option.optionalKeywordArg "count" Option.string
+        |> Option.validateMapIfPresent String.toInt
+
 -}
 validateMapIfPresent : (to -> Result String toMapped) -> Option (Maybe from) (Maybe to) builderState -> Option (Maybe from) (Maybe toMapped) builderState
 validateMapIfPresent =
     Cli.Option.validateMapIfPresent
 
 
-{-| See `Cli.Option.withDefault`.
+{-| Provide a default value for an optional option. Turns a `Maybe value`
+into a plain `value`.
+
+    Option.optionalKeywordArg "greeting" Option.string
+        |> Option.withDefault "Hello"
+
 -}
 withDefault : to -> Option from (Maybe to) builderState -> Option from to builderState
 withDefault =
     Cli.Option.withDefault
 
 
-{-| See `Cli.Option.withDescription`.
+{-| Add a description shown in help text and JSON schema.
+
+    Option.requiredKeywordArg "name" Option.string
+        |> Option.withDescription "Your name for the greeting"
+
 -}
 withDescription : String -> Option from to builderState -> Option from to builderState
 withDescription =
     Cli.Option.withDescription
 
 
-{-| See `Cli.Option.withDisplayName`.
+{-| Set a custom display name (metavar) for the value placeholder in help text.
+
+    Option.requiredKeywordArg "output-dir" Option.string
+        |> Option.withDisplayName "PATH"
+    -- Shows as: --output-dir <PATH>
+
 -}
 withDisplayName : String -> Option from to builderState -> Option from to builderState
 withDisplayName =

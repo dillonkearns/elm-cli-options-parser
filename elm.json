@@ -1,7 +1,7 @@
 {
     "type": "package",
     "name": "dillonkearns/elm-cli-options-parser",
-    "summary": "Type-safe command line options parsing.",
+    "summary": "Type-safe command line options parsing with JSON schema generation.",
     "license": "BSD-3-Clause",
     "version": "4.0.0",
     "exposed-modules": [

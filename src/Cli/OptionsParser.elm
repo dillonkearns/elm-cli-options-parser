@@ -465,7 +465,7 @@ updateDecoder decoder jsonGrabber (OptionsParser optionsParserRecord) =
 
 
 {-| Start an `OptionsParser` pipeline with no sub-command (see
-[the OptionsParser terminilogy legend](https://github.com/dillonkearns/elm-cli-options-parser#options-parser-terminology)).
+[the OptionsParser terminology legend](https://github.com/dillonkearns/elm-cli-options-parser#options-parser-terminology)).
 -}
 build : cliOptions -> OptionsParser cliOptions BuilderState.AnyOptions
 build cliOptionsConstructor =
@@ -480,7 +480,7 @@ build cliOptionsConstructor =
 
 
 {-| Start an `OptionsParser` pipeline with a sub-command (see
-[the OptionsParser terminilogy legend](https://github.com/dillonkearns/elm-cli-options-parser#options-parser-terminology)).
+[the OptionsParser terminology legend](https://github.com/dillonkearns/elm-cli-options-parser#options-parser-terminology)).
 -}
 buildSubCommand : String -> cliOptions -> OptionsParser cliOptions BuilderState.AnyOptions
 buildSubCommand subCommandName cliOptionsConstructor =
