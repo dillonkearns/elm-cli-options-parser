@@ -130,6 +130,7 @@ all =
                         |> Program.toJsonSchema "test"
                         |> Encode.encode 2
                         |> Expect.equal """{
+  "$schema": "http://json-schema.org/draft-07/schema#",
   "anyOf": [
     {
       "description": "test add --title <TITLE> --priority <low|medium|high>\\n\\nTo invoke this command, build a JSON object matching this schema and pass it as a single argument. Alternatively, use traditional CLI flags as shown in the usage line above.\\n\\nEach property has an `x-cli-kind` indicating its CLI invocation form:\\n- \\"keyword\\": --name <value>\\n- \\"flag\\": --name (present or absent, no value)\\n- \\"keyword-list\\": --name <value> (repeatable)\\n\\nPositional arguments are passed in order via the `$cli.positional` array (for this CLI it will always be empty).",
@@ -230,13 +231,13 @@ all =
             "positional": {
               "type": "array",
               "description": "Positional arguments, passed in order (e.g., mytool <source> <dest>)",
-              "prefixItems": [
+              "items": [
                 {
                   "type": "string",
                   "description": "The ID of the task to mark complete"
                 }
               ],
-              "items": false,
+              "additionalItems": false,
               "minItems": 1
             }
           },

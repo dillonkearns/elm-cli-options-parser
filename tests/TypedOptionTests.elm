@@ -53,7 +53,7 @@ all =
                 \() ->
                     schemaFor (Option.requiredKeywordArg "name" Option.string)
                         |> Expect.equal
-                            (Encode.object
+                            (draft07Object
                                 [ ( "description", Encode.string (schemaDescription "test --name <NAME>") )
                                 , ( "type", Encode.string "object" )
                                 , ( "properties"
@@ -118,7 +118,7 @@ all =
                 \() ->
                     schemaFor (Option.requiredKeywordArg "count" Option.int)
                         |> Expect.equal
-                            (Encode.object
+                            (draft07Object
                                 [ ( "description", Encode.string (schemaDescription "test --count <COUNT>") )
                                 , ( "type", Encode.string "object" )
                                 , ( "properties"
@@ -506,7 +506,7 @@ all =
                             |> Option.withDescription "Number of items"
                         )
                         |> Expect.equal
-                            (Encode.object
+                            (draft07Object
                                 [ ( "description", Encode.string (schemaDescription "test --count <COUNT>") )
                                 , ( "type", Encode.string "object" )
                                 , ( "properties"
@@ -607,6 +607,14 @@ schemaDescription usageSynopsis =
         ++ "\n\nTo invoke this command, build a JSON object matching this schema and pass it as a single argument. Alternatively, use traditional CLI flags as shown in the usage line above."
         ++ "\n\nEach property has an `x-cli-kind` indicating its CLI invocation form:\n- \"keyword\": --name <value>\n- \"flag\": --name (present or absent, no value)\n- \"keyword-list\": --name <value> (repeatable)"
         ++ "\n\nPositional arguments are passed in order via the `$cli.positional` array (for this CLI it will always be empty)."
+
+
+draft07Object : List ( String, Encode.Value ) -> Encode.Value
+draft07Object fields =
+    Encode.object
+        (( "$schema", Encode.string "http://json-schema.org/draft-07/schema#" )
+            :: fields
+        )
 
 
 expectFailure : Program.RunResult msg -> Expect.Expectation

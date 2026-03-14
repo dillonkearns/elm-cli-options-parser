@@ -25,6 +25,40 @@ all =
                                 [ ( "name", [ ( "type", Encode.string "string" ) ] ) ]
                             , required = [ "name" ]
                             }
+            , test "top-level schema declares draft-07" <|
+                \() ->
+                    Program.config
+                        |> Program.add
+                            (OptionsParser.build identity
+                                |> OptionsParser.with (Option.requiredKeywordArg "name")
+                            )
+                        |> Program.toJsonSchema "test"
+                        |> Encode.encode 0
+                        |> Expect.equal
+                            (draft07Object
+                                [ ( "description", Encode.string (fullDescription "test --name <NAME>" False) )
+                                , ( "type", Encode.string "object" )
+                                , ( "properties"
+                                  , Encode.object
+                                        [ ( "name"
+                                          , Encode.object
+                                                [ ( "type", Encode.string "string" )
+                                                , ( "x-cli-kind", Encode.string "keyword" )
+                                                ]
+                                          )
+                                        , ( "$cli"
+                                          , Encode.object
+                                                [ ( "type", Encode.string "object" )
+                                                , ( "additionalProperties", Encode.bool False )
+                                                ]
+                                          )
+                                        ]
+                                  )
+                                , ( "required", Encode.list Encode.string [ "name", "$cli" ] )
+                                , ( "additionalProperties", Encode.bool False )
+                                ]
+                                |> Encode.encode 0
+                            )
             , test "schema forbids additional top-level and $cli properties" <|
                 \() ->
                     Program.config
@@ -35,7 +69,7 @@ all =
                         |> Program.toJsonSchema "test"
                         |> Encode.encode 0
                         |> Expect.equal
-                            (Encode.object
+                            (draft07Object
                                 [ ( "description", Encode.string (fullDescription "test --name <NAME>" False) )
                                 , ( "type", Encode.string "object" )
                                 , ( "properties"
@@ -82,7 +116,7 @@ all =
                         |> Program.toJsonSchema "test"
                         |> Encode.encode 0
                         |> Expect.equal
-                            (Encode.object
+                            (draft07Object
                                 [ ( "description", Encode.string (fullDescription "test [--verbose]" False) )
                                 , ( "type", Encode.string "object" )
                                 , ( "properties"
@@ -116,7 +150,7 @@ all =
                         |> Program.toJsonSchema "test"
                         |> Encode.encode 0
                         |> Expect.equal
-                            (Encode.object
+                            (draft07Object
                                 [ ( "description", Encode.string (fullDescription "test <file>" True) )
                                 , ( "type", Encode.string "object" )
                                 , ( "properties"
@@ -131,11 +165,59 @@ all =
                                                           , Encode.object
                                                                 [ ( "type", Encode.string "array" )
                                                                 , ( "description", Encode.string "Positional arguments, passed in order (e.g., mytool <source> <dest>)" )
-                                                                , ( "prefixItems"
+                                                                , ( "items"
                                                                   , Encode.list identity
                                                                         [ Encode.object [ ( "type", Encode.string "string" ), ( "description", Encode.string "file" ) ] ]
                                                                   )
-                                                                , ( "items", Encode.bool False )
+                                                                , ( "additionalItems", Encode.bool False )
+                                                                , ( "minItems", Encode.int 1 )
+                                                                ]
+                                                          )
+                                                        ]
+                                                  )
+                                                , ( "required", Encode.list Encode.string [ "positional" ] )
+                                                ]
+                                          )
+                                        ]
+                                  )
+                                , ( "required", Encode.list Encode.string [ "$cli" ] )
+                                , ( "additionalProperties", Encode.bool False )
+                                ]
+                                |> Encode.encode 0
+                            )
+            , test "fixed positional args with rest args use draft-07 tuple syntax" <|
+                \() ->
+                    Program.config
+                        |> Program.add
+                            (OptionsParser.build Tuple.pair
+                                |> OptionsParser.with (Option.requiredPositionalArg "source")
+                                |> OptionsParser.withRestArgs (Option.restArgs "targets")
+                            )
+                        |> Program.toJsonSchema "test"
+                        |> Encode.encode 0
+                        |> Expect.equal
+                            (draft07Object
+                                [ ( "description", Encode.string (fullDescription "test <source> <targets>..." True) )
+                                , ( "type", Encode.string "object" )
+                                , ( "properties"
+                                  , Encode.object
+                                        [ ( "$cli"
+                                          , Encode.object
+                                                [ ( "type", Encode.string "object" )
+                                                , ( "additionalProperties", Encode.bool False )
+                                                , ( "properties"
+                                                  , Encode.object
+                                                        [ ( "positional"
+                                                          , Encode.object
+                                                                [ ( "type", Encode.string "array" )
+                                                                , ( "description", Encode.string "Positional arguments, passed in order (e.g., mytool <source> <dest>)" )
+                                                                , ( "items"
+                                                                  , Encode.list identity
+                                                                        [ Encode.object [ ( "type", Encode.string "string" ), ( "description", Encode.string "source" ) ] ]
+                                                                  )
+                                                                , ( "additionalItems"
+                                                                  , Encode.object [ ( "type", Encode.string "string" ) ]
+                                                                  )
                                                                 , ( "minItems", Encode.int 1 )
                                                                 ]
                                                           )
@@ -161,7 +243,7 @@ all =
                         |> Program.toJsonSchema "test"
                         |> Encode.encode 0
                         |> Expect.equal
-                            (Encode.object
+                            (draft07Object
                                 [ ( "description", Encode.string (fullDescription "test [<revision>]" True) )
                                 , ( "type", Encode.string "object" )
                                 , ( "properties"
@@ -176,11 +258,11 @@ all =
                                                           , Encode.object
                                                                 [ ( "type", Encode.string "array" )
                                                                 , ( "description", Encode.string "Positional arguments, passed in order (e.g., mytool <source> <dest>)" )
-                                                                , ( "prefixItems"
+                                                                , ( "items"
                                                                   , Encode.list identity
                                                                         [ Encode.object [ ( "type", Encode.string "string" ), ( "description", Encode.string "revision" ) ] ]
                                                                   )
-                                                                , ( "items", Encode.bool False )
+                                                                , ( "additionalItems", Encode.bool False )
                                                                 ]
                                                           )
                                                         ]
@@ -204,7 +286,7 @@ all =
                         |> Program.toJsonSchema "test"
                         |> Encode.encode 0
                         |> Expect.equal
-                            (Encode.object
+                            (draft07Object
                                 [ ( "description", Encode.string (fullDescription "test <files>..." True) )
                                 , ( "type", Encode.string "object" )
                                 , ( "properties"
@@ -243,7 +325,7 @@ all =
                         |> Program.toJsonSchema "test"
                         |> Encode.encode 0
                         |> Expect.equal
-                            (Encode.object
+                            (draft07Object
                                 [ ( "description", Encode.string (fullDescription "test [--header <HEADER>]..." False) )
                                 , ( "type", Encode.string "object" )
                                 , ( "properties"
@@ -306,7 +388,7 @@ all =
                         |> Program.toJsonSchema "test"
                         |> Encode.encode 0
                         |> Expect.equal
-                            (Encode.object
+                            (draft07Object
                                 [ ( "description", Encode.string (fullDescription "test --format <json|junit|console>" False) )
                                 , ( "type", Encode.string "object" )
                                 , ( "properties"
@@ -343,7 +425,7 @@ all =
                         |> Program.toJsonSchema "test"
                         |> Encode.encode 0
                         |> Expect.equal
-                            (Encode.object
+                            (draft07Object
                                 [ ( "description", Encode.string (fullDescription "test --name <NAME> [--greeting <GREETING>] [--verbose]" False) )
                                 , ( "type", Encode.string "object" )
                                 , ( "properties"
@@ -389,7 +471,7 @@ all =
                         |> Program.toJsonSchema "test"
                         |> Encode.encode 0
                         |> Expect.equal
-                            (Encode.object
+                            (draft07Object
                                 [ ( "description", Encode.string (fullDescription "test --init" False) )
                                 , ( "type", Encode.string "object" )
                                 , ( "properties"
@@ -424,7 +506,7 @@ all =
                         |> Program.toJsonSchema "test"
                         |> Encode.encode 0
                         |> Expect.equal
-                            (Encode.object
+                            (draft07Object
                                 [ ( "description", Encode.string (fullDescription "test --init --force" False) )
                                 , ( "type", Encode.string "object" )
                                 , ( "properties"
@@ -465,7 +547,7 @@ all =
                         |> Program.toJsonSchema "test"
                         |> Encode.encode 0
                         |> Expect.equal
-                            (Encode.object
+                            (draft07Object
                                 [ ( "description", Encode.string (fullDescription "test [--verbose] --init" False) )
                                 , ( "type", Encode.string "object" )
                                 , ( "properties"
@@ -513,7 +595,7 @@ all =
                         |> Program.toJsonSchema "test"
                         |> Encode.encode 0
                         |> Expect.equal
-                            (Encode.object
+                            (draft07Object
                                 [ ( "anyOf"
                                   , Encode.list identity
                                         [ Encode.object
@@ -585,7 +667,7 @@ all =
                         |> Program.toJsonSchema "test"
                         |> Encode.encode 0
                         |> Expect.equal
-                            (Encode.object
+                            (draft07Object
                                 [ ( "description", Encode.string (fullDescription "test" False) )
                                 , ( "type", Encode.string "object" )
                                 , ( "properties"
@@ -615,7 +697,7 @@ all =
                         |> Program.toJsonSchema "test"
                         |> Encode.encode 0
                         |> Expect.equal
-                            (Encode.object
+                            (draft07Object
                                 [ ( "description", Encode.string (fullDescription "test init [--bare]" False) )
                                 , ( "type", Encode.string "object" )
                                 , ( "properties"
@@ -660,7 +742,7 @@ all =
                         |> Program.toJsonSchema "test"
                         |> Encode.encode 0
                         |> Expect.equal
-                            (Encode.object
+                            (draft07Object
                                 [ ( "anyOf"
                                   , Encode.list identity
                                         [ Encode.object
@@ -701,11 +783,11 @@ all =
                                                                       , Encode.object
                                                                             [ ( "type", Encode.string "array" )
                                                                             , ( "description", Encode.string "Positional arguments, passed in order (e.g., mytool <source> <dest>)" )
-                                                                            , ( "prefixItems"
+                                                                            , ( "items"
                                                                               , Encode.list identity
                                                                                     [ Encode.object [ ( "type", Encode.string "string" ), ( "description", Encode.string "repository" ) ] ]
                                                                               )
-                                                                            , ( "items", Encode.bool False )
+                                                                            , ( "additionalItems", Encode.bool False )
                                                                             , ( "minItems", Encode.int 1 )
                                                                             ]
                                                                       )
@@ -1136,7 +1218,7 @@ expectJsonSchema { description, properties, required } config =
         |> Program.toJsonSchema "test"
         |> Encode.encode 0
         |> Expect.equal
-            (Encode.object
+            (draft07Object
                 [ ( "description", Encode.string (fullDescription description False) )
                 , ( "type", Encode.string "object" )
                 , ( "properties", Encode.object allProperties )
@@ -1145,3 +1227,11 @@ expectJsonSchema { description, properties, required } config =
                 ]
                 |> Encode.encode 0
             )
+
+
+draft07Object : List ( String, Encode.Value ) -> Encode.Value
+draft07Object fields =
+    Encode.object
+        (( "$schema", Encode.string "http://json-schema.org/draft-07/schema#" )
+            :: fields
+        )

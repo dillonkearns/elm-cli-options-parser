@@ -221,7 +221,8 @@ all =
                         |> Encode.encode 0
                         |> Expect.equal
                             (Encode.object
-                                [ ( "description", Encode.string desc )
+                                [ ( "$schema", Encode.string "http://json-schema.org/draft-07/schema#" )
+                                , ( "description", Encode.string desc )
                                 , ( "type", Encode.string "object" )
                                 , ( "properties"
                                   , Encode.object

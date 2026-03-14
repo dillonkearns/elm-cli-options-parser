@@ -635,16 +635,20 @@ for JSON input mode.
 -}
 toJsonSchema : String -> Config msg -> Encode.Value
 toJsonSchema programName (Config { optionsParsers }) =
-    case optionsParsers of
-        [ singleParser ] ->
-            parserToJsonSchemaFromTsTypes programName singleParser
+    let
+        baseSchema =
+            case optionsParsers of
+                [ singleParser ] ->
+                    parserToJsonSchemaFromTsTypes programName singleParser
 
-        multipleParsers ->
-            Encode.object
-                [ ( "anyOf"
-                  , Encode.list (parserToJsonSchemaFromTsTypes programName) multipleParsers
-                  )
-                ]
+                multipleParsers ->
+                    Encode.object
+                        [ ( "anyOf"
+                          , Encode.list (parserToJsonSchemaFromTsTypes programName) multipleParsers
+                          )
+                        ]
+    in
+    withDraft07Schema baseSchema
 
 
 parserToJsonSchemaFromTsTypes : String -> OptionsParser msg BuilderState.NoMoreOptions -> Encode.Value
@@ -787,7 +791,7 @@ positionalSchemaProperty positionalArgs maybeRestArgs =
 
     else
         let
-            prefixItemsList =
+            fixedItemSchemas =
                 positionalArgs
                     |> List.map
                         (\( spec, tsType, _ ) ->
@@ -811,48 +815,54 @@ positionalSchemaProperty positionalArgs maybeRestArgs =
                     |> List.filter (\( _, _, occ ) -> occ == Required)
                     |> List.length
 
+            restItemSchema =
+                maybeRestArgs
+                    |> Maybe.andThen
+                        (\( spec, tsType ) ->
+                            let
+                                arraySchema =
+                                    stripSchemaKey (TsJson.Type.toJsonSchema tsType)
+                            in
+                            case Json.Decode.decodeValue (Json.Decode.field "items" Json.Decode.value) arraySchema of
+                                Ok itemSchema ->
+                                    case usageSpecDescription spec of
+                                        Just desc ->
+                                            Just (appendJsonFields [ ( "description", Encode.string desc ) ] itemSchema)
+
+                                        Nothing ->
+                                            Just itemSchema
+
+                                Err _ ->
+                                    Nothing
+                        )
+
             itemsField =
-                case maybeRestArgs of
-                    Just ( spec, tsType ) ->
-                        let
-                            arraySchema =
-                                stripSchemaKey (TsJson.Type.toJsonSchema tsType)
-                        in
-                        -- Extract items from the array type's schema
-                        case Json.Decode.decodeValue (Json.Decode.field "items" Json.Decode.value) arraySchema of
-                            Ok itemSchema ->
-                                let
-                                    withDesc =
-                                        case usageSpecDescription spec of
-                                            Just desc ->
-                                                appendJsonFields [ ( "description", Encode.string desc ) ] itemSchema
+                if List.isEmpty fixedItemSchemas then
+                    restItemSchema
+                        |> Maybe.map (\itemSchema -> [ ( "items", itemSchema ) ])
+                        |> Maybe.withDefault []
 
-                                            Nothing ->
-                                                itemSchema
-                                in
-                                [ ( "items", withDesc ) ]
+                else
+                    [ ( "items", Encode.list identity fixedItemSchemas ) ]
 
-                            Err _ ->
-                                []
+            additionalItemsField =
+                if List.isEmpty fixedItemSchemas then
+                    []
 
-                    Nothing ->
-                        if List.isEmpty positionalArgs then
-                            []
+                else
+                    case restItemSchema of
+                        Just itemSchema ->
+                            [ ( "additionalItems", itemSchema ) ]
 
-                        else
-                            [ ( "items", Encode.bool False ) ]
+                        Nothing ->
+                            [ ( "additionalItems", Encode.bool False ) ]
 
             schemaFields =
                 [ ( "type", Encode.string "array" )
                 , ( "description", Encode.string "Positional arguments, passed in order (e.g., mytool <source> <dest>)" )
                 ]
-                    ++ (if List.isEmpty prefixItemsList then
-                            []
-
-                        else
-                            [ ( "prefixItems", Encode.list identity prefixItemsList ) ]
-                       )
                     ++ itemsField
+                    ++ additionalItemsField
                     ++ (if requiredCount > 0 then
                             [ ( "minItems", Encode.int requiredCount ) ]
 
@@ -973,6 +983,20 @@ appendJsonFields extraFields jsonValue =
 
         Err _ ->
             Encode.object extraFields
+
+
+withDraft07Schema : Encode.Value -> Encode.Value
+withDraft07Schema schemaValue =
+    case Json.Decode.decodeValue (Json.Decode.keyValuePairs Json.Decode.value) schemaValue of
+        Ok fields ->
+            Encode.object
+                (( "$schema", Encode.string "http://json-schema.org/draft-07/schema#" )
+                    :: fields
+                )
+
+        Err _ ->
+            Encode.object
+                [ ( "$schema", Encode.string "http://json-schema.org/draft-07/schema#" ) ]
 
 
 {-| Generate help text for a specific subcommand.
