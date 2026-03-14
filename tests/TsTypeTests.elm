@@ -209,8 +209,7 @@ all =
                                                     ]
                                             )
                                     )
-                    in
-                    let
+
                         desc =
                             "test --format <json|junit|console>"
                                 ++ "\n\nTo invoke this command, build a JSON object matching this schema and pass it as a single argument. Alternatively, use traditional CLI flags as shown in the usage line above."
