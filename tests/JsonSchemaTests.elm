@@ -852,6 +852,78 @@ Expecting a STRING"""
                             (Program.SystemMessage Program.Failure
                                 "Unexpected field: \"$cli.mode\""
                             )
+            , test "JSON input mode rejects non-array $cli.positional" <|
+                \() ->
+                    Program.config
+                        |> Program.add
+                            (OptionsParser.build identity
+                                |> OptionsParser.with (Option.requiredPositionalArg "file")
+                            )
+                        |> (\cfg ->
+                                Program.run cfg
+                                    [ "node", "test", "{\"$cli\":{\"positional\":123}}" ]
+                                    "1.0.0"
+                                    Program.WithoutColor
+                           )
+                        |> Expect.equal
+                            (Program.SystemMessage Program.Failure
+                                """Validation errors:
+
+Invalid "$cli.positional" field.
+Problem with the value at json['$cli'].positional:
+
+    123
+
+Expecting a LIST"""
+                            )
+            , test "JSON input mode rejects non-string $cli.subcommand" <|
+                \() ->
+                    Program.config
+                        |> Program.add
+                            (OptionsParser.buildSubCommand "greet" identity
+                                |> OptionsParser.with (Option.requiredKeywordArg "name")
+                            )
+                        |> (\cfg ->
+                                Program.run cfg
+                                    [ "node", "test", "{\"name\":\"World\",\"$cli\":{\"subcommand\":123}}" ]
+                                    "1.0.0"
+                                    Program.WithoutColor
+                           )
+                        |> Expect.equal
+                            (Program.SystemMessage Program.Failure
+                                """Validation errors:
+
+Invalid "$cli.subcommand" field.
+Problem with the value at json['$cli'].subcommand:
+
+    123
+
+Expecting a STRING"""
+                            )
+            , test "JSON input mode rejects non-array $cli.positional for optional positional args" <|
+                \() ->
+                    Program.config
+                        |> Program.add
+                            (OptionsParser.build identity
+                                |> OptionsParser.withOptionalPositionalArg (Option.optionalPositionalArg "revision")
+                            )
+                        |> (\cfg ->
+                                Program.run cfg
+                                    [ "node", "test", "{\"$cli\":{\"positional\":123}}" ]
+                                    "1.0.0"
+                                    Program.WithoutColor
+                           )
+                        |> Expect.equal
+                            (Program.SystemMessage Program.Failure
+                                """Validation errors:
+
+Invalid "$cli.positional" field.
+Problem with the value at json['$cli'].positional:
+
+    123
+
+Expecting a LIST"""
+                            )
             , test "JSON input mode rejects extra positional values" <|
                 \() ->
                     Program.config

@@ -300,34 +300,66 @@ Normalizes the `$cli` object into flat fields before passing to jsonGrabber.
 -}
 tryMatchJson : Json.Decode.Value -> OptionsParser cliOptions builderState -> Cli.OptionsParser.MatchResult.MatchResult cliOptions
 tryMatchJson blob (OptionsParser { jsonGrabber, usageSpecs, subCommand }) =
-    case rawJsonShapeErrors subCommand usageSpecs blob of
+    let
+        normalizedBlob =
+            normalizeCliJson usageSpecs blob
+
+        baseMatchResult =
+            jsonGrabber normalizedBlob
+                |> jsonGrabberResultToMatchResult
+
+        structuralTypeValidationErrors =
+            subcommandJsonTypeValidationErrors subCommand blob
+                ++ positionalJsonTypeValidationErrors usageSpecs blob baseMatchResult
+    in
+    case structuralTypeValidationErrors of
+        firstValidationError :: otherValidationErrors ->
+            Cli.OptionsParser.MatchResult.Match (Err (firstValidationError :: otherValidationErrors))
+
         [] ->
             let
-                normalizedBlob =
-                    normalizeCliJson usageSpecs blob
+                unexpectedShapeErrors =
+                    rawJsonShapeErrors subCommand usageSpecs blob
+
+                positionalCountErrors =
+                    extraJsonPositionalErrors usageSpecs blob baseMatchResult
             in
-            case jsonGrabber normalizedBlob of
-                Err error ->
-                    case error of
-                        Cli.Decode.MatchError matchErrorDetail ->
-                            Cli.OptionsParser.MatchResult.NoMatch
-                                [ matchErrorDetailToNoMatchReason matchErrorDetail ]
+            case baseMatchResult of
+                Cli.OptionsParser.MatchResult.Match _ ->
+                    if List.isEmpty unexpectedShapeErrors && List.isEmpty positionalCountErrors then
+                        baseMatchResult
 
-                        Cli.Decode.UnrecoverableValidationError validationError ->
-                            Cli.OptionsParser.MatchResult.Match (Err [ validationError ])
+                    else
+                        Cli.OptionsParser.MatchResult.NoMatch (unexpectedShapeErrors ++ positionalCountErrors)
 
-                        Cli.Decode.UnexpectedOptions unexpectedOptions ->
-                            Cli.OptionsParser.MatchResult.NoMatch
-                                (List.map Cli.OptionsParser.MatchResult.UnexpectedOption unexpectedOptions)
+                Cli.OptionsParser.MatchResult.NoMatch reasons ->
+                    Cli.OptionsParser.MatchResult.NoMatch
+                        (unexpectedShapeErrors ++ positionalCountErrors ++ reasons)
 
-                Ok ( [], value ) ->
-                    Cli.OptionsParser.MatchResult.Match (Ok value)
 
-                Ok ( validationErrors, _ ) ->
-                    Cli.OptionsParser.MatchResult.Match (Err validationErrors)
+jsonGrabberResultToMatchResult :
+    Result Cli.Decode.ProcessingError ( List Cli.Decode.ValidationError, cliOptions )
+    -> Cli.OptionsParser.MatchResult.MatchResult cliOptions
+jsonGrabberResultToMatchResult jsonGrabberResult =
+    case jsonGrabberResult of
+        Err error ->
+            case error of
+                Cli.Decode.MatchError matchErrorDetail ->
+                    Cli.OptionsParser.MatchResult.NoMatch
+                        [ matchErrorDetailToNoMatchReason matchErrorDetail ]
 
-        shapeErrors ->
-            Cli.OptionsParser.MatchResult.NoMatch shapeErrors
+                Cli.Decode.UnrecoverableValidationError validationError ->
+                    Cli.OptionsParser.MatchResult.Match (Err [ validationError ])
+
+                Cli.Decode.UnexpectedOptions unexpectedOptions ->
+                    Cli.OptionsParser.MatchResult.NoMatch
+                        (List.map Cli.OptionsParser.MatchResult.UnexpectedOption unexpectedOptions)
+
+        Ok ( [], value ) ->
+            Cli.OptionsParser.MatchResult.Match (Ok value)
+
+        Ok ( validationErrors, _ ) ->
+            Cli.OptionsParser.MatchResult.Match (Err validationErrors)
 
 
 {-| Convert internal MatchErrorDetail to public NoMatchReason.
@@ -892,7 +924,7 @@ rawJsonShapeErrors subCommand usageSpecs blob =
                 Nothing ->
                     []
     in
-    unexpectedTopLevelFields ++ unexpectedCliFields ++ extraJsonPositionalErrors usageSpecs cliValue
+    unexpectedTopLevelFields ++ unexpectedCliFields
 
 
 allowedTopLevelFieldNames : List UsageSpec -> List String
@@ -948,27 +980,118 @@ hasJsonPositionalInput usageSpecs =
             )
 
 
-extraJsonPositionalErrors : List UsageSpec -> Maybe Json.Decode.Value -> List Cli.OptionsParser.MatchResult.NoMatchReason
-extraJsonPositionalErrors usageSpecs maybeCliValue =
-    if UsageSpec.hasRestArgs usageSpecs || not (hasJsonPositionalInput usageSpecs) then
+extraJsonPositionalErrors :
+    List UsageSpec
+    -> Json.Decode.Value
+    -> Cli.OptionsParser.MatchResult.MatchResult cliOptions
+    -> List Cli.OptionsParser.MatchResult.NoMatchReason
+extraJsonPositionalErrors usageSpecs blob baseMatchResult =
+    if
+        UsageSpec.hasRestArgs usageSpecs
+            || not (hasJsonPositionalInput usageSpecs)
+            || not (shouldValidateJsonPositionals baseMatchResult)
+    then
         []
 
     else
-        case maybeCliValue of
-            Just cliValue ->
-                case Json.Decode.decodeValue (Json.Decode.field "positional" (Json.Decode.list Json.Decode.value)) cliValue of
-                    Ok positionalValues ->
-                        if List.length positionalValues > List.length (List.filter UsageSpec.isOperand usageSpecs) then
-                            [ Cli.OptionsParser.MatchResult.ExtraOperand ]
+        case Json.Decode.decodeValue (Json.Decode.field "$cli" (Json.Decode.field "positional" (Json.Decode.list Json.Decode.value))) blob of
+            Ok positionalValues ->
+                if List.length positionalValues > List.length (List.filter UsageSpec.isOperand usageSpecs) then
+                    [ Cli.OptionsParser.MatchResult.ExtraOperand ]
 
-                        else
-                            []
+                else
+                    []
 
-                    Err _ ->
-                        []
-
-            Nothing ->
+            Err _ ->
                 []
+
+
+positionalJsonTypeValidationErrors :
+    List UsageSpec
+    -> Json.Decode.Value
+    -> Cli.OptionsParser.MatchResult.MatchResult cliOptions
+    -> List Cli.Decode.ValidationError
+positionalJsonTypeValidationErrors usageSpecs blob baseMatchResult =
+    if hasJsonPositionalInput usageSpecs && shouldValidateJsonPositionals baseMatchResult then
+        nestedJsonFieldTypeError
+            { name = "$cli.positional"
+            , decoder = Json.Decode.field "$cli" (Json.Decode.field "positional" (Json.Decode.list Json.Decode.value))
+            , presenceDecoder = Json.Decode.field "$cli" (Json.Decode.field "positional" Json.Decode.value)
+            , blob = blob
+            }
+            |> Maybe.map List.singleton
+            |> Maybe.withDefault []
+
+    else
+        []
+
+
+subcommandJsonTypeValidationErrors : Maybe String -> Json.Decode.Value -> List Cli.Decode.ValidationError
+subcommandJsonTypeValidationErrors subCommand blob =
+    case subCommand of
+        Just _ ->
+            nestedJsonFieldTypeError
+                { name = "$cli.subcommand"
+                , decoder = Json.Decode.field "$cli" (Json.Decode.field "subcommand" Json.Decode.string)
+                , presenceDecoder = Json.Decode.field "$cli" (Json.Decode.field "subcommand" Json.Decode.value)
+                , blob = blob
+                }
+                |> Maybe.map List.singleton
+                |> Maybe.withDefault []
+
+        Nothing ->
+            []
+
+
+shouldValidateJsonPositionals : Cli.OptionsParser.MatchResult.MatchResult cliOptions -> Bool
+shouldValidateJsonPositionals baseMatchResult =
+    case baseMatchResult of
+        Cli.OptionsParser.MatchResult.Match _ ->
+            True
+
+        Cli.OptionsParser.MatchResult.NoMatch reasons ->
+            not
+                (List.any
+                    (\reason ->
+                        case reason of
+                            Cli.OptionsParser.MatchResult.MissingExpectedFlag _ ->
+                                True
+
+                            Cli.OptionsParser.MatchResult.MissingSubCommand _ ->
+                                True
+
+                            Cli.OptionsParser.MatchResult.WrongSubCommand _ ->
+                                True
+
+                            _ ->
+                                False
+                    )
+                    reasons
+                )
+
+
+nestedJsonFieldTypeError :
+    { name : String
+    , decoder : Json.Decode.Decoder a
+    , presenceDecoder : Json.Decode.Decoder Json.Decode.Value
+    , blob : Json.Decode.Value
+    }
+    -> Maybe Cli.Decode.ValidationError
+nestedJsonFieldTypeError { name, decoder, presenceDecoder, blob } =
+    case Json.Decode.decodeValue decoder blob of
+        Ok _ ->
+            Nothing
+
+        Err decodeError ->
+            case Json.Decode.decodeValue presenceDecoder blob of
+                Ok _ ->
+                    Just
+                        { name = name
+                        , invalidReason = Json.Decode.errorToString decodeError
+                        }
+
+                Err _ ->
+                    Nothing
 
 
 jsonObjectFields : Json.Decode.Value -> List ( String, Json.Decode.Value )
