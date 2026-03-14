@@ -12,43 +12,41 @@ module Cli.Option.Typed exposing
     , withDescription, withDisplayName, withMissingMessage
     )
 
-{-| Build command-line options as string values, with validation and transformation.
+{-| Build a command-line options parser to validate and map a CLI command into a structured Elm type.
 
 This is an alternative to [`Cli.Option`](Cli-Option) that is designed to
-generate a JSON schema with more precise type information. `Cli.Option`
-still gives you types, but [`Cli.Option.Typed.fromDecoder`](#fromDecoder) lets you pass in an
+generate a JSON schema describing the valid ways to invoke the CLI command, but with more precise type information.
+`Cli.Option` still generates a JSON schema, but [`Cli.Option.Typed.fromDecoder`](#fromDecoder) lets you pass in an
 [`elm-ts-json` `Decoder`](https://package.elm-lang.org/packages/dillonkearns/elm-ts-json/latest/TsJson-Decode)
 with arbitrary and fully typed JSON values, and the primitive `Option`s
 like [`int`](#int) carry more precise type information instead of just `String`
 in the JSON Schema output.
 
-The vast majority of users will use `elm-cli-options-parser` through `elm-pages`
+The vast majority of users will use `elm-cli-options-parser` through [`elm-pages`](https://elm-pages.com/)
 when they build [`elm-pages` scripts](https://elm-pages.com/docs/elm-pages-scripts).
-When you use [`Script.withSchema`](https://package.elm-lang.org/packages/dillonkearns/elm-pages/latest/Pages-Script#withCliOptions),
-you define an [`elm-ts-json` `Encoder`](https://package.elm-lang.org/packages/dillonkearns/elm-ts-json/latest/TsJson-Encode)
+When you define an `elm-pages` script using [`Script.withSchema`](https://package.elm-lang.org/packages/dillonkearns/elm-pages/latest/Pages-Script#withCliOptions),
+you pass in an [`elm-ts-json` `Encoder`](https://package.elm-lang.org/packages/dillonkearns/elm-ts-json/latest/TsJson-Encode)
+and return a matching Elm type that the script will output as JSON,
 and `elm-pages introspect` will automatically show all of the type information for your
 CLI options and the output JSON as part of the introspection output.
 
-information via [`Program.toJsonSchema`](Cli-Program#toJsonSchema).
-. Each constructor takes a
-[`CliDecoder`](#CliDecoder) that specifies the type of the option's value
-(string, int, float, etc.). This gives you:
 
-1.  **JSON Schema generation** — via [`Program.toJsonSchema`](Cli-Program#toJsonSchema),
-    producing [JSON Schema](https://json-schema.org/) definitions suitable for
-    [MCP tool](https://modelcontextprotocol.io/specification/draft/server/tools) `inputSchema`
-    and [elm-pages script](https://elm-pages.com/docs/elm-pages-scripts) introspection.
-2.  **JSON input mode** — the same parser that handles CLI args can also accept structured
-    JSON, enabling LLM agents to invoke your CLI tool programmatically.
-3.  **CLI validation** — typed decoders like `int` and `float` automatically validate
-    that CLI string arguments are well-formed numbers.
+## When to Use `Cli.Option.Typed`
 
-If you don't need JSON schema generation or JSON input, you can use
-[`Cli.Option`](Cli-Option) instead — it's simpler (no decoder argument needed) and
-treats all values as strings.
+All CLIs built with `elm-cli-options-parser` can be invoked either with traditional CLI arguments, or
+with a single JSON string CLI argument, allowing for easier consumption by
+LLM agents and programmatic invocation of your CLI. That, along with
+the precise type information in the JSON Schema describing your CLI options, makes `Cli.Option.Typed`
+a good choice for CLIs when they make be invoked programmatically or by LLM agents.
+
+You can use [`Cli.Option`](Cli-Option) for a slightly simpler API that
+treats all values as strings if automated tool access isn't a priority for your CLI.
 
 Both modules produce the same `Option` type and work with the same
-[`OptionsParser.with`](Cli-OptionsParser#with) pipeline, so they can be mixed freely.
+[`OptionsParser.with`](Cli-OptionsParser#with) pipeline, so they can be interwoven freely.
+
+
+## Terminology
 
 Here is the terminology used for building up Command-Line parsers with this library.
 
