@@ -8,10 +8,64 @@ module Cli.Option.Typed exposing
     , withDescription, withDisplayName
     )
 
-{-| Typed option constructors for first-class JSON schema support.
+{-| Typed option constructors with first-class JSON schema support.
 
-Each constructor produces both a CLI parser and a JSON schema from a `CliDecoder`.
-Use `string`, `int`, `float`, `bool` for primitives, or `fromDecoder` for custom types.
+This module is an alternative to [`Cli.Option`](Cli-Option) for building option parsers.
+The key difference: each constructor takes a [`CliDecoder`](#CliDecoder) that specifies the
+type of the option's value (string, int, float, etc.). This lets the library:
+
+1.  **Generate JSON schemas** — via [`Program.toJsonSchema`](Cli-Program#toJsonSchema),
+    producing [JSON Schema](https://json-schema.org/) definitions suitable for
+    [MCP tool](https://modelcontextprotocol.io/specification/draft/server/tools) `inputSchema`.
+2.  **Parse JSON input** — the same parser that handles CLI args can also accept structured
+    JSON, enabling LLM agents to invoke your CLI tool programmatically.
+3.  **Validate CLI values** — typed decoders like `int` and `float` automatically validate
+    that CLI string arguments are well-formed numbers.
+
+
+## When to use this vs `Cli.Option`
+
+Use **`Cli.Option.Typed`** when you want JSON schema generation — for example, when
+building [elm-pages scripts](https://elm-pages.com/docs/elm-pages-scripts) that can be
+introspected as tools, or any CLI that needs to be invocable via structured JSON.
+
+Use **[`Cli.Option`](Cli-Option)** when you only need traditional CLI argument parsing.
+It's simpler (no decoder argument needed) and treats all values as strings, which you
+then transform with `validateMap`, `map`, etc.
+
+Both modules produce the same `Option` type and work with the same
+[`OptionsParser.with`](Cli-OptionsParser#with) pipeline.
+
+
+## Example
+
+    import Cli.Option.Typed as Option
+    import Cli.OptionsParser as OptionsParser exposing (with)
+    import Cli.Program as Program
+
+    type alias Options =
+        { name : String
+        , count : Int
+        , verbose : Bool
+        }
+
+    programConfig : Program.Config Options
+    programConfig =
+        Program.config
+            |> Program.add
+                (OptionsParser.build Options
+                    |> with (Option.requiredKeywordArg "name" Option.string)
+                    |> with (Option.requiredKeywordArg "count" Option.int)
+                    |> with (Option.flag "verbose")
+                )
+
+This parser handles both CLI and JSON input:
+
+  - **CLI**: `mytool --name hello --count 3 --verbose`
+  - **JSON**: `{ "$cli": { "keywordValues": { "name": "hello", "count": 3 }, "flags": { "verbose": true } } }`
+
+And `Program.toJsonSchema "mytool" programConfig` generates a JSON Schema with
+proper types (`"type": "string"`, `"type": "integer"`, etc.).
 
 
 ## Types
@@ -41,7 +95,10 @@ Use `string`, `int`, `float`, `bool` for primitives, or `fromDecoder` for custom
 
 ## Modifiers
 
-Re-exported from `Cli.Option` for convenience.
+These work the same as their [`Cli.Option`](Cli-Option) counterparts. Additional
+modifiers like [`map`](Cli-Option#map), [`validate`](Cli-Option#validate),
+[`mapFlag`](Cli-Option#mapFlag), and [`withMissingMessage`](Cli-Option#withMissingMessage)
+can be used by importing them from `Cli.Option`.
 
 @docs oneOf, validateMap, validateMapIfPresent, withDefault
 @docs withDescription, withDisplayName

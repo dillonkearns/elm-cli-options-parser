@@ -67,6 +67,15 @@ See the [`examples`](https://github.com/dillonkearns/elm-cli-options-parser/tree
 @docs StatelessProgram, StatefulProgram
 @docs FlagsIncludingArgv
 @docs mapConfig
+
+
+## Help Text and JSON Schema
+
+Generate help text for terminal display, or a [JSON Schema](https://json-schema.org/)
+for use as an [MCP tool](https://modelcontextprotocol.io/specification/draft/server/tools)
+`inputSchema` definition. JSON schemas are generated from the types provided by
+[`Cli.Option.Typed`](Cli-Option-Typed) constructors.
+
 @docs helpText
 @docs toJsonSchema
 
@@ -593,12 +602,16 @@ helpText programName (Config { optionsParsers }) =
 
 {-| Generate a JSON Schema describing the inputs of this CLI configuration.
 
-The schema follows the [JSON Schema](https://json-schema.org/) format used by the
-[Model Context Protocol (MCP)](https://modelcontextprotocol.io/specification/draft/server/tools)
-for tool `inputSchema` definitions.
+The schema follows the [JSON Schema](https://json-schema.org/) format. Named options
+(keyword args, flags, keyword lists) are top-level properties with an `x-cli-kind`
+annotation indicating their CLI invocation form. Positional arguments and subcommands
+go inside a `$cli` object.
 
-The `programName` argument is used to generate a usage synopsis in the schema's `description`
-field, giving LLMs a concise overview of how to invoke the command.
+The schema's `description` field includes a usage synopsis and instructions for
+how to invoke the command via JSON or traditional CLI flags.
+
+Suitable for use as an [MCP tool](https://modelcontextprotocol.io/specification/draft/server/tools)
+`inputSchema` definition.
 
     import Cli.Option as Option
     import Cli.OptionsParser as OptionsParser

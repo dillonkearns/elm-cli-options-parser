@@ -10,7 +10,15 @@ module Cli.Option exposing
     , Option, BeginningOption, OptionalPositionalArgOption, RestArgsOption
     )
 
-{-| Here is the terminology used for building up Command-Line parsers with this library.
+{-| Build command-line options as string values, with validation and transformation.
+
+This module treats all CLI input as strings. Use [`validateMap`](#validateMap) to parse
+strings into typed values, [`oneOf`](#oneOf) for enumerated values, and
+[`validate`](#validate) for custom validation.
+
+For typed options with JSON schema generation, see [`Cli.Option.Typed`](Cli-Option-Typed).
+
+Here is the terminology used for building up Command-Line parsers with this library.
 
 ![Terminology Legend](https://raw.githubusercontent.com/dillonkearns/elm-cli-options-parser/master/terminology.png)
 

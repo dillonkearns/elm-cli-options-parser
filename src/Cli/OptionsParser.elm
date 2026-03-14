@@ -744,16 +744,17 @@ withDescription docString (OptionsParser optionsParserRecord) =
         }
 
 
-{-| Normalize a JSON blob with `$cli` object structure into flat fields.
+{-| Normalize a JSON blob with flat properties and `$cli` structural data into flat fields.
+
+In the flat schema format, named options (keyword args, flags, keyword lists) are
+top-level properties. The `$cli` object contains only `subcommand` and `positional`.
 
 Transforms:
 
+  - All top-level fields except `$cli` → passed through as-is
   - `$cli.subcommand` → flat `subcommand` field
-  - `$cli.keywordValues.*` → flat fields for each keyword arg
   - `$cli.positional[N]` → flat field named by Nth operand's UsageSpec name
-  - `$cli.flags` object → flat boolean fields for each flag in usageSpecs
-  - `$cli.keywordLists.*` → flat array fields
-  - Strips the `$cli` key from the result
+  - Missing flags → defaulted to `False`
 
 -}
 normalizeCliJson : List UsageSpec -> Json.Decode.Value -> Json.Decode.Value
