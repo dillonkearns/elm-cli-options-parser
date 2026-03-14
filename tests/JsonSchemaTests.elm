@@ -100,6 +100,7 @@ all =
                                                           )
                                                         ]
                                                   )
+                                                , ( "required", Encode.list Encode.string [ "positional" ] )
                                                 ]
                                           )
                                         ]
@@ -605,7 +606,7 @@ all =
                                                                       )
                                                                     ]
                                                               )
-                                                            , ( "required", Encode.list Encode.string [ "subcommand" ] )
+                                                            , ( "required", Encode.list Encode.string [ "subcommand", "positional" ] )
                                                             ]
                                                       )
                                                     ]

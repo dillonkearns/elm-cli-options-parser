@@ -236,7 +236,8 @@ all =
             }
           },
           "required": [
-            "subcommand"
+            "subcommand",
+            "positional"
           ]
         }
       },

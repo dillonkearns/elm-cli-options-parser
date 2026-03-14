@@ -720,13 +720,24 @@ parserToJsonSchemaFromTsTypes programName parser =
         cliSubProperties =
             subCommandProp ++ positionalSchemaProperty positionalSpecs restArgSpec
 
+        hasRequiredPositionalArgs =
+            positionalSpecs
+                |> List.any (\( _, _, occurences ) -> occurences == Required)
+
         cliRequired =
-            case OptionsParser.getSubCommand parser of
+            (case OptionsParser.getSubCommand parser of
                 Just _ ->
                     [ "subcommand" ]
 
                 Nothing ->
                     []
+            )
+                ++ (if hasRequiredPositionalArgs then
+                        [ "positional" ]
+
+                    else
+                        []
+                   )
 
         cliSchema =
             Encode.object
