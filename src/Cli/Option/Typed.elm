@@ -149,6 +149,35 @@ your `Cli.Program.Config` to be run. Instead,
 if the OptionsParser is a match except for validation errors, you will get an
 error message regardless.
 
+Example:
+
+
+    capitalizedNameRegex : String
+    capitalizedNameRegex =
+        "[A-Z][A-Za-z]*"
+
+    validateParser : OptionsParser.OptionsParser ( String, Maybe Int ) BuilderState.NoMoreOptions
+    validateParser =
+        OptionsParser.build (\a b -> ( a, b ))
+            |> OptionsParser.with
+                (Option.requiredKeywordArg "name" Option.string
+                    |> Option.validate (Cli.Validate.regex capitalizedNameRegex)
+                )
+            |> OptionsParser.with
+                (Option.optionalKeywordArg "age" Option.int)
+
+    {-
+       $ ./validation --name Mozart --age 262
+       Mozart is 262 years old
+
+       $ ./validation --name mozart
+       Validation errors:
+
+       `name` failed a validation. Must be of form /[A-Z][A-Za-z]*/
+       Value was:
+       "mozart"
+    -}
+
 See [`Cli.Validate`](Cli-Validate) for some validation helpers that can be used
 in conjunction with the following functions.
 
@@ -308,7 +337,9 @@ customDecoder tsDecoder =
 -- Constructors
 
 
-{-| A required keyword argument with a typed decoder.
+{-| A keyword argument that must be provided.
+
+Example: `--name my-app` or `--name=my-app`
 
     Option.requiredKeywordArg "count" Option.int
     -- CLI: --count 42 → 42
@@ -334,7 +365,9 @@ requiredKeywordArg optionName (CliDecoder decoder) =
         }
 
 
-{-| An optional keyword argument with a typed decoder.
+{-| A keyword argument that may be omitted.
+
+Example: `--output main.js` or `--output=main.js`
 
     Option.optionalKeywordArg "greeting" Option.string
     -- CLI: --greeting hi → Just "hi", omitted → Nothing
@@ -364,7 +397,9 @@ optionalKeywordArg optionName (CliDecoder decoder) =
         }
 
 
-{-| A repeated keyword argument with a typed decoder for each value.
+{-| A keyword argument that can be provided multiple times.
+
+Example: `--header "Auth: token" --header "Accept: json"`
 
     Option.keywordArgList "header" Option.string
     -- CLI: --header "X-A: 1" --header "X-B: 2" → ["X-A: 1", "X-B: 2"]
@@ -402,7 +437,9 @@ keywordArgList flagName (CliDecoder decoder) =
         }
 
 
-{-| A required positional argument with a typed decoder.
+{-| A positional argument that must be provided.
+
+Example: `src/Main.elm` in `elm make src/Main.elm`
 
     Option.requiredPositionalArg "port" Option.int
     -- CLI: mytool 8080 → 8080
@@ -429,8 +466,13 @@ requiredPositionalArg operandDescription (CliDecoder decoder) =
         }
 
 
-{-| An optional positional argument with a typed decoder.
-Must be used with `OptionsParser.withOptionalPositionalArg`.
+{-| An optional positional argument.
+
+Must be used with [`OptionsParser.withOptionalPositionalArg`](Cli-OptionsParser#withOptionalPositionalArg)
+(not `OptionsParser.with`).
+
+Example: `<revision>` in `git log [<revision>]`
+Parses to: `Just "abc123"` (or `Nothing` if omitted)
 
     Option.optionalPositionalArg "revision" Option.string
 
@@ -458,7 +500,9 @@ optionalPositionalArg operandDescription (CliDecoder decoder) =
         }
 
 
-{-| A boolean flag. Always `Bool` — no decoder needed.
+{-| A flag with no argument. Always `Bool` — no decoder needed.
+
+Example: `--debug` in `elm make --debug`
 
     Option.flag "verbose"
     -- CLI: --verbose → True, omitted → False
@@ -477,7 +521,13 @@ flag flagName =
         }
 
 
-{-| Collect all remaining positional arguments. Must be used with `OptionsParser.withRestArgs`.
+{-| Collect all remaining positional arguments as a list.
+
+Must be used with [`OptionsParser.withRestArgs`](Cli-OptionsParser#withRestArgs)
+(not `OptionsParser.with`), and must be the last option in the pipeline.
+
+Example: `<files>...` in `elm-test [<files>...]`
+Parses to: `["tests/First.elm", "tests/Second.elm"]` (or `[]` if none provided)
 
     Option.restArgs "files"
     -- CLI: mytool a.txt b.txt → ["a.txt", "b.txt"]
@@ -515,6 +565,24 @@ string values, each mapped to an Elm value.
                 , ( "junit", Junit )
                 , ( "console", Console )
                 ]
+
+The help text will show the allowed values:
+
+```shell
+$ ./elm-test --help
+elm-test [--report <json|junit|console>] <TESTFILES>...
+```
+
+And if you run it with an unrecognized value, you get a validation error:
+
+```shell
+$ ./elm-test --report xml
+Validation errors:
+
+`report` failed a validation. Must be one of [json, junit, console]
+Value was:
+"xml"
+```
 
 The JSON schema will include an `enum` constraint with the allowed values.
 
@@ -572,7 +640,11 @@ withDescription =
     Cli.Option.withDescription
 
 
-{-| Set a custom display name (metavar) for the value placeholder in help text.
+{-| Set a custom display name (metavar) for a keyword argument's value placeholder
+in help text and usage synopsis.
+
+By default, the keyword arg name is uppercased (e.g., `--output-dir <OUTPUT_DIR>`).
+Use this to provide a more descriptive placeholder.
 
     Option.requiredKeywordArg "output-dir" Option.string
         |> Option.withDisplayName "PATH"
@@ -585,6 +657,8 @@ withDisplayName =
 
 
 {-| Add a custom error message for when a required option is missing.
+
+This only works on required options (`requiredPositionalArg`, `requiredKeywordArg`).
 
     Option.requiredKeywordArg "repository" Option.string
         |> Option.withMissingMessage "You must specify a repository to clone."
@@ -601,6 +675,9 @@ so the user gets a helpful error message.
 
     Option.requiredKeywordArg "name" Option.string
         |> Option.map String.toUpper
+
+    Option.requiredKeywordArg "output" Option.string
+        |> Option.map (\path -> path ++ "/index.html")
 
 -}
 map : (toRaw -> toMapped) -> Option from toRaw builderState -> Option from toMapped builderState
