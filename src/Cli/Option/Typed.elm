@@ -281,14 +281,16 @@ If you want bare string values, use [`string`](#string) instead.
 
     import TsJson.Decode as TsDecode
 
+    pointDecoder : TsDecode.Decoder { x : Int, y : Int }
     pointDecoder =
         TsDecode.succeed (\x y -> { x = x, y = y })
-            |> TsDecode.andMap (TsDecode.field "x"
-            TsDecode.int)
-            |> TsDecode.andMap (TsDecode.field "y"
-            TsDecode.int)
+            |> TsDecode.andMap (TsDecode.field "x" TsDecode.int)
+            |> TsDecode.andMap (TsDecode.field "y" TsDecode.int)
 
-    Option.requiredKeywordArg "point" (Option.customDecoder pointDecoder)
+    pointOption : Option String { x : Int, y : Int } { position : BeginningOption, canAddMissingMessage : () }
+    pointOption =
+        Option.requiredKeywordArg "point" (Option.customDecoder pointDecoder)
+
     -- CLI: --point '{"x":1,"y":2}'
     -- JSON: {"point": {"x": 1, "y": 2}}
 
@@ -505,12 +507,14 @@ string values, each mapped to an Elm value.
         | Junit
         | Console
 
-    Option.requiredKeywordArg "report" Option.string
-        |> Option.oneOf
-            [ ( "json", Json )
-            , ( "junit", Junit )
-            , ( "console", Console )
-            ]
+    reportOption : Option String ReportFormat { position : BeginningOption, canAddMissingMessage : () }
+    reportOption =
+        Option.requiredKeywordArg "report" Option.string
+            |> Option.oneOf
+                [ ( "json", Json )
+                , ( "junit", Junit )
+                , ( "console", Console )
+                ]
 
 The JSON schema will include an `enum` constraint with the allowed values.
 
@@ -610,8 +614,10 @@ map =
         = Quiet
         | Verbose
 
-    Option.flag "verbose"
-        |> Option.mapFlag { present = Verbose, absent = Quiet }
+    verbosityOption : Option Bool Verbosity { position : BeginningOption }
+    verbosityOption =
+        Option.flag "verbose"
+            |> Option.mapFlag { present = Verbose, absent = Quiet }
 
 -}
 mapFlag : { present : union, absent : union } -> Option from Bool builderState -> Option from union builderState
