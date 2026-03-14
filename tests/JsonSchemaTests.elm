@@ -818,6 +818,80 @@ Problem with the value at json.name:
 
 Expecting a STRING"""
                             )
+            , test "JSON input mode rejects unexpected top-level field" <|
+                \() ->
+                    Program.config
+                        |> Program.add
+                            (OptionsParser.build identity
+                                |> OptionsParser.with (Option.requiredKeywordArg "name")
+                            )
+                        |> (\cfg ->
+                                Program.run cfg
+                                    [ "node", "test", "{\"name\":\"World\",\"nickname\":\"W\",\"$cli\":{}}" ]
+                                    "1.0.0"
+                                    Program.WithoutColor
+                           )
+                        |> Expect.equal
+                            (Program.SystemMessage Program.Failure
+                                "Unexpected field: \"nickname\""
+                            )
+            , test "JSON input mode rejects unexpected $cli field" <|
+                \() ->
+                    Program.config
+                        |> Program.add
+                            (OptionsParser.build identity
+                                |> OptionsParser.with (Option.requiredKeywordArg "name")
+                            )
+                        |> (\cfg ->
+                                Program.run cfg
+                                    [ "node", "test", "{\"name\":\"World\",\"$cli\":{\"mode\":\"json\"}}" ]
+                                    "1.0.0"
+                                    Program.WithoutColor
+                           )
+                        |> Expect.equal
+                            (Program.SystemMessage Program.Failure
+                                "Unexpected field: \"$cli.mode\""
+                            )
+            , test "JSON input mode rejects extra positional values" <|
+                \() ->
+                    Program.config
+                        |> Program.add
+                            (OptionsParser.build identity
+                                |> OptionsParser.with (Option.requiredPositionalArg "file")
+                            )
+                        |> (\cfg ->
+                                Program.run cfg
+                                    [ "node", "test", "{\"$cli\":{\"positional\":[\"a.txt\",\"b.txt\"]}}" ]
+                                    "1.0.0"
+                                    Program.WithoutColor
+                           )
+                        |> Expect.equal
+                            (Program.SystemMessage Program.Failure
+                                "Too many positional arguments in \"$cli.positional\"."
+                            )
+            , test "JSON input mode only reports fields as unexpected when no parser accepts them" <|
+                \() ->
+                    let
+                        cfg =
+                            Program.config
+                                |> Program.add
+                                    (OptionsParser.build (\name -> "init:" ++ name)
+                                        |> OptionsParser.expectFlag "init"
+                                        |> OptionsParser.with (Option.requiredKeywordArg "name")
+                                    )
+                                |> Program.add
+                                    (OptionsParser.build "build"
+                                        |> OptionsParser.expectFlag "build"
+                                    )
+                    in
+                    Program.run cfg
+                        [ "node", "test", "{\"init\":true,\"$cli\":{}}" ]
+                        "1.0.0"
+                        Program.WithoutColor
+                        |> Expect.equal
+                            (Program.SystemMessage Program.Failure
+                                "Missing required field: \"name\""
+                            )
             , test "JSON input mode expectFlag selects init branch" <|
                 \() ->
                     let

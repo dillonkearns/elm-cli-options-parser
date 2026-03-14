@@ -1221,24 +1221,49 @@ formatFallbackMessage colorMode programName optionsParsers =
 formatJsonNoMatchReasons : List NoMatchReason -> String
 formatJsonNoMatchReasons reasons =
     let
-        missingFieldReasons =
+        unexpectedFieldReasons =
             reasons
                 |> List.filterMap
                     (\reason ->
                         case reason of
-                            MissingRequiredKeywordArg { name } ->
-                                Just ("Missing required field: \"" ++ name ++ "\"")
-
-                            MissingRequiredPositionalArg { name } ->
-                                Just ("Missing required field: \"" ++ name ++ "\"")
+                            UnexpectedOption name ->
+                                Just ("Unexpected field: \"" ++ name ++ "\"")
 
                             _ ->
                                 Nothing
                     )
     in
-    case missingFieldReasons of
+    case unexpectedFieldReasons of
         first :: _ ->
             first
 
         [] ->
-            "No matching command found for JSON input."
+            if List.member ExtraOperand reasons then
+                "Too many positional arguments in \"$cli.positional\"."
+
+            else
+                let
+                    missingFieldReasons =
+                        reasons
+                            |> List.filterMap
+                                (\reason ->
+                                    case reason of
+                                        MissingRequiredKeywordArg { name } ->
+                                            Just ("Missing required field: \"" ++ name ++ "\"")
+
+                                        MissingRequiredPositionalArg { name } ->
+                                            Just ("Missing required field: \"" ++ name ++ "\"")
+
+                                        MissingExpectedFlag { name } ->
+                                            Just ("Missing required field: \"" ++ name ++ "\"")
+
+                                        _ ->
+                                            Nothing
+                                )
+                in
+                case missingFieldReasons of
+                    first :: _ ->
+                        first
+
+                    [] ->
+                        "No matching command found for JSON input."

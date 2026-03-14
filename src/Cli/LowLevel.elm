@@ -89,65 +89,7 @@ try optionsParsers argv =
         -- 2. All other reasons (deduplicated)
         aggregatedReasons : List MatchResult.NoMatchReason
         aggregatedReasons =
-            let
-                -- Extract UnexpectedOption strings and find the common ones (truly unknown)
-                commonUnexpectedOptions : Set String
-                commonUnexpectedOptions =
-                    matchResults
-                        |> List.map
-                            (\matchResult ->
-                                case matchResult of
-                                    MatchResult.NoMatch reasons ->
-                                        reasons
-                                            |> List.filterMap
-                                                (\reason ->
-                                                    case reason of
-                                                        UnexpectedOption name ->
-                                                            Just name
-
-                                                        _ ->
-                                                            Nothing
-                                                )
-                                            |> Set.fromList
-
-                                    _ ->
-                                        Set.empty
-                            )
-                        |> intersection
-
-                -- Collect all NoMatchReasons from all parsers
-                allNoMatchReasons : List MatchResult.NoMatchReason
-                allNoMatchReasons =
-                    matchResults
-                        |> List.concatMap
-                            (\matchResult ->
-                                case matchResult of
-                                    MatchResult.NoMatch reasons ->
-                                        reasons
-
-                                    _ ->
-                                        []
-                            )
-
-                unexpectedOptionReasons =
-                    commonUnexpectedOptions
-                        |> Set.toList
-                        |> List.map UnexpectedOption
-
-                otherReasons =
-                    allNoMatchReasons
-                        |> List.filter
-                            (\reason ->
-                                case reason of
-                                    UnexpectedOption _ ->
-                                        False
-
-                                    _ ->
-                                        True
-                            )
-                        |> uniqueReasons
-            in
-            unexpectedOptionReasons ++ otherReasons
+            aggregateNoMatchReasons matchResults
     in
     matchResults
         |> List.map MatchResult.matchResultToMaybe
@@ -227,6 +169,67 @@ reasonToKey reason =
             "ExtraOperand"
 
 
+aggregateNoMatchReasons : List (MatchResult.MatchResult a) -> List MatchResult.NoMatchReason
+aggregateNoMatchReasons matchResults =
+    let
+        commonUnexpectedOptions : Set String
+        commonUnexpectedOptions =
+            matchResults
+                |> List.map
+                    (\matchResult ->
+                        case matchResult of
+                            MatchResult.NoMatch reasons ->
+                                reasons
+                                    |> List.filterMap
+                                        (\reason ->
+                                            case reason of
+                                                UnexpectedOption name ->
+                                                    Just name
+
+                                                _ ->
+                                                    Nothing
+                                        )
+                                    |> Set.fromList
+
+                            _ ->
+                                Set.empty
+                    )
+                |> intersection
+
+        allNoMatchReasons : List MatchResult.NoMatchReason
+        allNoMatchReasons =
+            matchResults
+                |> List.concatMap
+                    (\matchResult ->
+                        case matchResult of
+                            MatchResult.NoMatch reasons ->
+                                reasons
+
+                            _ ->
+                                []
+                    )
+
+        unexpectedOptionReasons =
+            commonUnexpectedOptions
+                |> Set.toList
+                |> List.map UnexpectedOption
+
+        otherReasons =
+            allNoMatchReasons
+                |> List.filter
+                    (\reason ->
+                        case reason of
+                            UnexpectedOption _ ->
+                                False
+
+                            _ ->
+                                True
+                    )
+                |> uniqueReasons
+    in
+    unexpectedOptionReasons ++ otherReasons
+
+
 helpParser : OptionsParser (MatchResult msg) BuilderState.AnyOptions
 helpParser =
     OptionsParser.build ShowHelp
@@ -293,16 +296,5 @@ tryJson optionsParsers blob =
                                 ValidationErrors validationErrors
 
                     Nothing ->
-                        NoMatch
-                            (matchResults
-                                |> List.concatMap
-                                    (\matchResult ->
-                                        case matchResult of
-                                            MatchResult.NoMatch reasons ->
-                                                reasons
-
-                                            _ ->
-                                                []
-                                    )
-                            )
+                        NoMatch (aggregateNoMatchReasons matchResults)
            )
