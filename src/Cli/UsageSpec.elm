@@ -510,11 +510,8 @@ wrapParts maxWidth indent prefix parts =
             let
                 firstLine =
                     prefix ++ " " ++ first
-
-                result =
-                    wrapPartsHelper maxWidth indent rest firstLine []
             in
-            result
+            wrapPartsHelper maxWidth indent rest firstLine []
 
 
 wrapPartsHelper : Int -> String -> List String -> String -> List String -> String

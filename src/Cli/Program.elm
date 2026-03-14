@@ -432,20 +432,6 @@ just like `process.argv` in Node.js.
 run : Config msg -> List String -> String -> ColorMode -> RunResult msg
 run (Config { optionsParsers }) argv versionMessage colorMode =
     let
-        programName =
-            case argv of
-                _ :: programPath :: _ ->
-                    programPath
-                        |> String.split "/"
-                        |> List.Extra.last
-                        |> Maybe.withDefault errorMessage
-
-                _ ->
-                    errorMessage
-
-        errorMessage =
-            "TODO - show error message explaining that user needs to pass unmodified `process.argv` from node here."
-
         -- Check for JSON input mode: a single arg that's JSON with $cli as an object
         maybeJsonBlob =
             case argv |> List.drop 2 of
@@ -467,6 +453,21 @@ run (Config { optionsParsers }) argv versionMessage colorMode =
             runJsonMode optionsParsers blob
 
         Nothing ->
+            let
+                errorMessage =
+                    "TODO - show error message explaining that user needs to pass unmodified `process.argv` from node here."
+
+                programName =
+                    case argv of
+                        _ :: programPath :: _ ->
+                            programPath
+                                |> String.split "/"
+                                |> List.Extra.last
+                                |> Maybe.withDefault errorMessage
+
+                        _ ->
+                            errorMessage
+            in
             -- CLI mode: parse argv as before
             runCliMode optionsParsers argv programName versionMessage colorMode
 
@@ -729,8 +730,8 @@ parserToJsonSchemaFromTsTypes programName parser =
 
         cliSchema =
             Encode.object
-                ([ ( "type", Encode.string "object" ) ]
-                    ++ (if List.isEmpty cliSubProperties then
+                (( "type", Encode.string "object" )
+                    :: (if List.isEmpty cliSubProperties then
                             []
 
                         else
@@ -875,8 +876,8 @@ toFlatProperty ( spec, ( optionName, tsType ) ) =
                     stripSchemaKey (TsJson.Type.toJsonSchema tsType)
 
                 extraFields =
-                    [ ( "x-cli-kind", Encode.string kind ) ]
-                        ++ (case usageSpecDescription spec of
+                    ( "x-cli-kind", Encode.string kind )
+                        :: (case usageSpecDescription spec of
                                 Just desc ->
                                     [ ( "description", Encode.string desc ) ]
 
