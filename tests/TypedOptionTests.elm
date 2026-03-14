@@ -165,7 +165,7 @@ all =
                         [ "--dry", "abc" ]
                         |> expectFailure
             ]
-        , describe "fromDecoder"
+        , describe "customDecoder"
             [ test "custom decoder works in JSON mode" <|
                 \() ->
                     let
@@ -174,7 +174,7 @@ all =
                                 |> TsDecode.andMap (TsDecode.field "x" TsDecode.int)
                                 |> TsDecode.andMap (TsDecode.field "y" TsDecode.int)
                     in
-                    runJsonWith (Option.requiredKeywordArg "point" (Option.fromDecoder pointDecoder))
+                    runJsonWith (Option.requiredKeywordArg "point" (Option.customDecoder pointDecoder))
                         [ ( "point", Encode.object [ ( "x", Encode.int 1 ), ( "y", Encode.int 2 ) ] ) ]
                         |> Expect.equal (Program.CustomMatch ( 1, 2 ))
             , test "custom decoder in CLI mode expects strict JSON" <|
@@ -185,19 +185,19 @@ all =
                                 |> TsDecode.andMap (TsDecode.field "x" TsDecode.int)
                                 |> TsDecode.andMap (TsDecode.field "y" TsDecode.int)
                     in
-                    runWith (Option.requiredKeywordArg "point" (Option.fromDecoder pointDecoder))
+                    runWith (Option.requiredKeywordArg "point" (Option.customDecoder pointDecoder))
                         [ "--point", "{\"x\":1,\"y\":2}" ]
                         |> Expect.equal (Program.CustomMatch ( 1, 2 ))
-            , test "fromDecoder TsDecode.string in CLI mode requires JSON-quoted string" <|
+            , test "customDecoder TsDecode.string in CLI mode requires JSON-quoted string" <|
                 \() ->
                     -- bare text is NOT valid JSON — this should fail
-                    runWith (Option.requiredKeywordArg "name" (Option.fromDecoder TsDecode.string))
+                    runWith (Option.requiredKeywordArg "name" (Option.customDecoder TsDecode.string))
                         [ "--name", "hello" ]
                         |> expectFailure
-            , test "fromDecoder TsDecode.string in CLI mode accepts JSON-quoted string" <|
+            , test "customDecoder TsDecode.string in CLI mode accepts JSON-quoted string" <|
                 \() ->
                     -- JSON string: "hello" (with quotes on CLI)
-                    runWith (Option.requiredKeywordArg "name" (Option.fromDecoder TsDecode.string))
+                    runWith (Option.requiredKeywordArg "name" (Option.customDecoder TsDecode.string))
                         [ "--name", "\"hello\"" ]
                         |> Expect.equal (Program.CustomMatch "hello")
             ]

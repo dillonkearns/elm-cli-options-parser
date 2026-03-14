@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - **`Cli.Option.Typed` module** — new option constructors that take a `CliDecoder`
   for typed CLI parsing and JSON schema generation. Includes `string`, `int`,
-  `float`, `bool`, and `fromDecoder` for custom types.
+  `float`, `bool`, and `customDecoder` for custom types.
 - **`Program.toJsonSchema`** — generates a [JSON Schema](https://json-schema.org/)
   from your CLI configuration, suitable for
   [MCP tool](https://modelcontextprotocol.io/specification/draft/server/tools)

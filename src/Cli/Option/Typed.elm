@@ -1,6 +1,6 @@
 module Cli.Option.Typed exposing
     ( Option, CliDecoder
-    , string, int, float, bool, fromDecoder
+    , string, int, float, bool, customDecoder
     , requiredPositionalArg
     , requiredKeywordArg, optionalKeywordArg, keywordArgList
     , flag
@@ -16,7 +16,7 @@ module Cli.Option.Typed exposing
 
 This is an alternative to [`Cli.Option`](Cli-Option) that is designed to
 generate a JSON schema describing the valid ways to invoke the CLI command, but with more precise type information.
-`Cli.Option` still generates a JSON schema, but [`Cli.Option.Typed.fromDecoder`](#fromDecoder) lets you pass in an
+`Cli.Option` still generates a JSON schema, but [`Cli.Option.Typed.customDecoder`](#customDecoder) lets you pass in an
 [`elm-ts-json` `Decoder`](https://package.elm-lang.org/packages/dillonkearns/elm-ts-json/latest/TsJson-Decode)
 with arbitrary and fully typed JSON values, and the primitive `Option`s
 like [`int`](#int) carry more precise type information instead of just `String`
@@ -105,7 +105,7 @@ proper types (`"type": "string"`, `"type": "integer"`, etc.).
 
 ## Decoders
 
-@docs string, int, float, bool, fromDecoder
+@docs string, int, float, bool, customDecoder
 
 
 ## Positional Arguments
@@ -212,7 +212,7 @@ type alias RestArgsOption =
 
 {-| A decoder that knows how to parse values from both CLI args and JSON input.
 
-Use `string`, `int`, `float`, `bool` for primitives, or `fromDecoder` for
+Use `string`, `int`, `float`, `bool` for primitives, or `customDecoder` for
 custom types (objects, arrays, etc.) where the CLI input is a JSON string.
 
 -}
@@ -255,7 +255,7 @@ In JSON mode, a JSON integer field is decoded.
 -}
 int : CliDecoder Int
 int =
-    fromDecoder TsDecode.int
+    customDecoder TsDecode.int
 
 
 {-| A float value. In CLI mode, the string is parsed as a JSON number.
@@ -268,7 +268,7 @@ In JSON mode, a JSON number field is decoded.
 -}
 float : CliDecoder Float
 float =
-    fromDecoder TsDecode.float
+    customDecoder TsDecode.float
 
 
 {-| A boolean value. In CLI mode, the string is parsed as a JSON boolean.
@@ -283,7 +283,7 @@ Note: for flags (present/absent), use `flag` instead.
 -}
 bool : CliDecoder Bool
 bool =
-    fromDecoder TsDecode.bool
+    customDecoder TsDecode.bool
 
 
 {-| Create a `CliDecoder` from a `TsDecode.Decoder`. In CLI mode, the string
@@ -299,13 +299,13 @@ If you want bare string values, use `string` instead.
             |> TsDecode.andMap (TsDecode.field "x" TsDecode.int)
             |> TsDecode.andMap (TsDecode.field "y" TsDecode.int)
 
-    Option.requiredKeywordArg "point" (Option.fromDecoder pointDecoder)
+    Option.requiredKeywordArg "point" (Option.customDecoder pointDecoder)
     -- CLI: --point '{"x":1,"y":2}'
     -- JSON: {"point": {"x": 1, "y": 2}}
 
 -}
-fromDecoder : TsDecode.Decoder value -> CliDecoder value
-fromDecoder tsDecoder =
+customDecoder : TsDecode.Decoder value -> CliDecoder value
+customDecoder tsDecoder =
     CliDecoder
         { cliParser = decodeCliJson (TsDecode.decoder tsDecoder)
         , jsonDecoder = TsDecode.decoder tsDecoder
