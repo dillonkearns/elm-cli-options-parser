@@ -7,7 +7,7 @@ will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [5.0.0]
 
 ### Added
 
@@ -26,10 +26,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   `"keyword-list"`) describing how each option maps to CLI invocation.
 - Schema `description` field includes usage synopsis and invocation instructions.
 - `Option.withDisplayName` for custom metavar display (e.g., `--output-dir <PATH>`).
+- **`Program.helpText`** — get the help text string for a CLI configuration,
+  useful for testing and documentation generation.
 - `TypedGreet` example demonstrating the typed options API.
 
 ### Changed
 
+- **Breaking (semver only)**: `OptionsParser` is now a type alias to an internal
+  type. This should not require any code changes — the constructor was never
+  exposed.
 - New dependency on `dillonkearns/elm-ts-json` (>= 2.1.2).
 - Improved help text formatting: uppercase metavar names, 80-character line
   wrapping, description indentation.
