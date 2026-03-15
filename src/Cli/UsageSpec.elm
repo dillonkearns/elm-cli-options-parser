@@ -1,6 +1,7 @@
 module Cli.UsageSpec exposing
-    ( MutuallyExclusiveValues
-    , UsageSpec
+    ( FlagOrKeywordArg(..)
+    , MutuallyExclusiveValues(..)
+    , UsageSpec(..)
     , changeUsageSpec
     , detailedHelp
     , flag
@@ -509,18 +510,15 @@ wrapParts maxWidth indent prefix parts =
             let
                 firstLine =
                     prefix ++ " " ++ first
-
-                result =
-                    wrapPartsHelper maxWidth indent rest firstLine []
             in
-            result
+            wrapPartsHelper maxWidth indent rest firstLine []
 
 
 wrapPartsHelper : Int -> String -> List String -> String -> List String -> String
 wrapPartsHelper maxWidth indent parts currentLine accLines =
     case parts of
         [] ->
-            (List.reverse (currentLine :: accLines))
+            List.reverse (currentLine :: accLines)
                 |> String.join "\n"
 
         part :: rest ->

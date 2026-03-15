@@ -1,6 +1,7 @@
 # Distribution
 build/
 documentation.json
+docs.json
 */elm.js
 **/*.elm.js
 *graphqelm-metadata.json

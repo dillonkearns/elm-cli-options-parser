@@ -10,7 +10,15 @@ module Cli.Option exposing
     , Option, BeginningOption, OptionalPositionalArgOption, RestArgsOption
     )
 
-{-| Here is the terminology used for building up Command-Line parsers with this library.
+{-| Build command-line options as string values, with validation and transformation.
+
+This module treats all CLI input as strings. Use [`validateMap`](#validateMap) to parse
+strings into typed values, [`oneOf`](#oneOf) for enumerated values, and
+[`validate`](#validate) for custom validation.
+
+For typed options with JSON schema generation, see [`Cli.Option.Typed`](Cli-Option-Typed).
+
+Here is the terminology used for building up Command-Line parsers with this library.
 
 ![Terminology Legend](https://raw.githubusercontent.com/dillonkearns/elm-cli-options-parser/master/terminology.png)
 
@@ -115,9 +123,11 @@ import Cli.Decode
 import Cli.Option.Internal as Internal exposing (Option(..))
 import Cli.UsageSpec as UsageSpec exposing (UsageSpec)
 import Cli.Validate as Validate
+import Json.Decode
 import List.Extra
 import Occurences exposing (Occurences(..))
-import Tokenizer
+import TsJson.Decode as TsDecode
+import TsJson.Type
 
 
 {-| The type returned by the builder functions below. Use with `OptionsParser.with`.
@@ -159,6 +169,9 @@ in the [`examples`](https://github.com/dillonkearns/elm-cli-options-parser/tree/
 validate : (to -> Validate.ValidationResult) -> Option from to builderState -> Option from to builderState
 validate validateFunction (Option option) =
     let
+        optionName =
+            UsageSpec.name option.usageSpec
+
         mappedDecoder : Cli.Decode.Decoder from to
         mappedDecoder =
             option.decoder
@@ -170,14 +183,29 @@ validate validateFunction (Option option) =
 
                             Validate.Invalid invalidReason ->
                                 Just
-                                    { name = UsageSpec.name option.usageSpec
+                                    { name = optionName
                                     , invalidReason = invalidReason
                                     }
                     )
+
+        mappedJsonGrabber : Internal.JsonGrabber to
+        mappedJsonGrabber =
+            \blob ->
+                option.jsonGrabber blob
+                    |> Result.map
+                        (\( errors, value ) ->
+                            case validateFunction value of
+                                Validate.Valid ->
+                                    ( errors, value )
+
+                                Validate.Invalid invalidReason ->
+                                    ( errors ++ [ { name = optionName, invalidReason = invalidReason } ], value )
+                        )
     in
     Option
         { option
             | decoder = mappedDecoder
+            , jsonGrabber = mappedJsonGrabber
         }
 
 
@@ -209,25 +237,15 @@ Parses to: `"src/Main.elm"`
 requiredPositionalArg : String -> Option String String { position : BeginningOption, canAddMissingMessage : () }
 requiredPositionalArg operandDescription =
     buildRequiredOption
-        (\{ operands, operandsSoFar } ->
-            case
-                operands
-                    |> List.Extra.getAt operandsSoFar
-            of
-                Just operandValue ->
-                    Ok operandValue
-
-                Nothing ->
-                    Cli.Decode.MatchError
-                        (Cli.Decode.MissingRequiredPositionalArg
-                            { name = operandDescription
-                            , operandsSoFar = operandsSoFar
-                            , customMessage = Nothing
-                            }
-                        )
-                        |> Err
-        )
+        (Internal.requiredPositionalArgGrabber operandDescription)
         (UsageSpec.operand operandDescription)
+        (TsDecode.tsType TsDecode.string)
+        (Internal.jsonFieldGrabber operandDescription
+            Json.Decode.string
+            (Cli.Decode.MissingRequiredPositionalArg
+                { name = operandDescription, operandsSoFar = 0, customMessage = Nothing }
+            )
+        )
 
 
 {-| A keyword argument that may be omitted.
@@ -241,24 +259,10 @@ Parses to: `Just "main.js"` (or `Nothing` if omitted)
 optionalKeywordArg : String -> Option (Maybe String) (Maybe String) { position : BeginningOption }
 optionalKeywordArg optionName =
     buildOptionalOption
-        (\{ options } ->
-            case
-                options
-                    |> List.Extra.find
-                        (\(Tokenizer.ParsedOption thisOptionName _) -> thisOptionName == optionName)
-            of
-                Nothing ->
-                    Ok Nothing
-
-                Just (Tokenizer.ParsedOption _ (Tokenizer.KeywordArg optionArg)) ->
-                    Ok (Just optionArg)
-
-                _ ->
-                    Cli.Decode.MatchError
-                        (Cli.Decode.KeywordArgMissingValue { name = optionName })
-                        |> Err
-        )
+        (Internal.optionalKeywordArgGrabber optionName)
         (UsageSpec.keywordArg optionName Optional)
+        (TsDecode.tsType TsDecode.string)
+        (Internal.jsonOptionalFieldGrabber optionName Json.Decode.string)
 
 
 {-| A keyword argument that must be provided.
@@ -272,26 +276,13 @@ Parses to: `"my-app"`
 requiredKeywordArg : String -> Option String String { position : BeginningOption, canAddMissingMessage : () }
 requiredKeywordArg optionName =
     buildRequiredOption
-        (\{ options } ->
-            case
-                options
-                    |> List.Extra.find
-                        (\(Tokenizer.ParsedOption thisOptionName _) -> thisOptionName == optionName)
-            of
-                Nothing ->
-                    Cli.Decode.MatchError
-                        (Cli.Decode.MissingRequiredKeywordArg { name = optionName, customMessage = Nothing })
-                        |> Err
-
-                Just (Tokenizer.ParsedOption _ (Tokenizer.KeywordArg optionArg)) ->
-                    Ok optionArg
-
-                _ ->
-                    Cli.Decode.MatchError
-                        (Cli.Decode.KeywordArgMissingValue { name = optionName })
-                        |> Err
-        )
+        (Internal.requiredKeywordArgGrabber optionName)
         (UsageSpec.keywordArg optionName Required)
+        (TsDecode.tsType TsDecode.string)
+        (Internal.jsonFieldGrabber optionName
+            Json.Decode.string
+            (Cli.Decode.MissingRequiredKeywordArg { name = optionName, customMessage = Nothing })
+        )
 
 
 {-| A flag with no argument.
@@ -305,61 +296,52 @@ Parses to: `True` (or `False` if omitted)
 flag : String -> Option Bool Bool { position : BeginningOption }
 flag flagName =
     buildOptionalOption
-        (\{ options } ->
-            if
-                options
-                    |> List.member (Tokenizer.ParsedOption flagName Tokenizer.Flag)
-            then
-                Ok True
-
-            else
-                Ok False
-        )
+        (Internal.flagGrabber flagName)
         (UsageSpec.flag flagName Optional)
+        (TsDecode.tsType TsDecode.bool)
+        (Internal.jsonFlagGrabber flagName)
 
 
 {-| Build an option for required arguments (has canAddMissingMessage capability).
 -}
-buildRequiredOption : Internal.DataGrabber a -> UsageSpec -> Option a a { position : BeginningOption, canAddMissingMessage : () }
-buildRequiredOption dataGrabber usageSpec =
+buildRequiredOption : Internal.DataGrabber a -> UsageSpec -> TsJson.Type.Type -> Internal.JsonGrabber a -> Option a a { position : BeginningOption, canAddMissingMessage : () }
+buildRequiredOption dataGrabber usageSpec tsType jsonGrabber =
     Option
         { dataGrabber = dataGrabber
         , usageSpec = usageSpec
         , decoder = Cli.Decode.decoder
-        , meta = emptyMeta
+        , meta = Internal.emptyMeta
+        , tsType = tsType
+        , jsonGrabber = jsonGrabber
         }
 
 
 {-| Build an option for optional arguments (no canAddMissingMessage capability).
 -}
-buildOptionalOption : Internal.DataGrabber a -> UsageSpec -> Option a a { position : BeginningOption }
-buildOptionalOption dataGrabber usageSpec =
+buildOptionalOption : Internal.DataGrabber a -> UsageSpec -> TsJson.Type.Type -> Internal.JsonGrabber a -> Option a a { position : BeginningOption }
+buildOptionalOption dataGrabber usageSpec tsType jsonGrabber =
     Option
         { dataGrabber = dataGrabber
         , usageSpec = usageSpec
         , decoder = Cli.Decode.decoder
-        , meta = emptyMeta
+        , meta = Internal.emptyMeta
+        , tsType = tsType
+        , jsonGrabber = jsonGrabber
         }
 
 
 {-| Build an ending option (like restArgs, optionalPositionalArg).
 -}
-buildEndingOption : Internal.DataGrabber a -> UsageSpec -> Option a a { position : position }
-buildEndingOption dataGrabber usageSpec =
+buildEndingOption : Internal.DataGrabber a -> UsageSpec -> TsJson.Type.Type -> Internal.JsonGrabber a -> Option a a { position : position }
+buildEndingOption dataGrabber usageSpec tsType jsonGrabber =
     Option
         { dataGrabber = dataGrabber
         , usageSpec = usageSpec
         , decoder = Cli.Decode.decoder
-        , meta = emptyMeta
+        , meta = Internal.emptyMeta
+        , tsType = tsType
+        , jsonGrabber = jsonGrabber
         }
-
-
-{-| Default empty metadata.
--}
-emptyMeta : Internal.OptionMeta
-emptyMeta =
-    { missingMessage = Nothing
-    }
 
 
 {-| Add a description to an option. This will be shown in help text.
@@ -411,6 +393,10 @@ withMissingMessage message (Option option) =
                 \context ->
                     option.dataGrabber context
                         |> Result.mapError (addCustomMessageToError message)
+            , jsonGrabber =
+                \blob ->
+                    option.jsonGrabber blob
+                        |> Result.mapError (addCustomMessageToError message)
             , meta =
                 { missingMessage = Just message
                 }
@@ -444,41 +430,34 @@ addCustomMessageToMatchError message detail =
             other
 
 
-{-| Transform an `Option`. For example, you may want to map an option from the
-raw `String` that comes from the command line into a `Regex`, as in this code snippet.
+{-| Transform an option's value. Use this for infallible transformations.
+For transformations that can fail, use [`validateMap`](#validateMap) instead
+so the user gets a helpful error message.
 
-    import Cli.Option as Option
-    import Cli.OptionsParser as OptionsParser
-    import Cli.Program as Program
-    import Regex exposing (Regex)
+    Option.requiredKeywordArg "name"
+        |> Option.map String.toUpper
 
-    type alias CliOptions =
-        { pattern : Regex }
-
-    programConfig : Program.Config CliOptions
-    programConfig =
-        Program.config
-            |> Program.add
-                (OptionsParser.build buildCliOptions
-                    |> OptionsParser.with
-                        (Option.requiredPositionalArg "pattern"
-                            |> Option.map Regex.regex
-                        )
-                )
+    Option.requiredKeywordArg "output"
+        |> Option.map (\path -> path ++ "/index.html")
 
 -}
 map : (toRaw -> toMapped) -> Option from toRaw builderState -> Option from toMapped builderState
 map mapFn option =
-    updateDecoder (\decoder -> Cli.Decode.map mapFn decoder) option
+    updateDecoder
+        (\decoder -> Cli.Decode.map mapFn decoder)
+        (\grabber -> \blob -> grabber blob |> Result.map (Tuple.mapSecond mapFn))
+        option
 
 
-updateDecoder : (Cli.Decode.Decoder from to -> Cli.Decode.Decoder from toNew) -> Option from to builderState -> Option from toNew builderState
-updateDecoder mappedDecoder (Option { dataGrabber, usageSpec, decoder, meta }) =
+updateDecoder : (Cli.Decode.Decoder from to -> Cli.Decode.Decoder from toNew) -> (Internal.JsonGrabber to -> Internal.JsonGrabber toNew) -> Option from to builderState -> Option from toNew builderState
+updateDecoder mappedDecoder jsonGrabberMapper (Option { dataGrabber, usageSpec, decoder, meta, tsType, jsonGrabber }) =
     Option
         { dataGrabber = dataGrabber
         , usageSpec = usageSpec
         , decoder = mappedDecoder decoder
         , meta = meta
+        , tsType = tsType
+        , jsonGrabber = jsonGrabberMapper jsonGrabber
         }
 
 
@@ -608,6 +587,7 @@ oneOf list (Option option) =
                             |> List.map (\( name, _ ) -> name)
                         )
                         option.usageSpec
+                , tsType = TsDecode.tsType (TsDecode.stringUnion list)
             }
         )
 
@@ -623,6 +603,10 @@ in the [`examples`](https://github.com/dillonkearns/elm-cli-options-parser/tree/
 -}
 validateMap : (to -> Result String toMapped) -> Option from to builderState -> Option from toMapped builderState
 validateMap mapFn ((Option optionRecord) as option) =
+    let
+        optionName =
+            UsageSpec.name optionRecord.usageSpec
+    in
     updateDecoder
         (\decoder ->
             Cli.Decode.mapProcessingError
@@ -633,12 +617,30 @@ validateMap mapFn ((Option optionRecord) as option) =
 
                         Err invalidReason ->
                             Cli.Decode.UnrecoverableValidationError
-                                { name = UsageSpec.name optionRecord.usageSpec
+                                { name = optionName
                                 , invalidReason = invalidReason
                                 }
                                 |> Err
                 )
                 decoder
+        )
+        (\grabber ->
+            \blob ->
+                grabber blob
+                    |> Result.andThen
+                        (\( errors, value ) ->
+                            case mapFn value of
+                                Ok mappedValue ->
+                                    Ok ( errors, mappedValue )
+
+                                Err invalidReason ->
+                                    Err
+                                        (Cli.Decode.UnrecoverableValidationError
+                                            { name = optionName
+                                            , invalidReason = invalidReason
+                                            }
+                                        )
+                        )
         )
         option
 
@@ -665,7 +667,14 @@ validateMapIfPresent mapFn cliSpec =
         cliSpec
 
 
-{-| Provide a default value for the `Option`.
+{-| Provide a default value for an optional `Option`. Turns a `Maybe value`
+into a plain `value`.
+
+    Option.optionalKeywordArg "greeting"
+        |> Option.withDefault "Hello"
+
+If `--greeting` is omitted, the option's value will be `"Hello"` instead of `Nothing`.
+
 -}
 withDefault : to -> Option from (Maybe to) builderState -> Option from to builderState
 withDefault defaultValue option =
@@ -675,6 +684,7 @@ withDefault defaultValue option =
                 (Maybe.withDefault defaultValue)
                 decoder
         )
+        (\grabber -> \blob -> grabber blob |> Result.map (Tuple.mapSecond (Maybe.withDefault defaultValue)))
         option
 
 
@@ -689,56 +699,47 @@ Parses to: `["Auth: token", "Accept: json"]`
 keywordArgList : String -> Option (List String) (List String) { position : BeginningOption }
 keywordArgList flagName =
     buildOptionalOption
-        (\{ options } ->
-            options
-                |> List.filterMap
-                    (\(Tokenizer.ParsedOption optionName optionKind) ->
-                        case ( optionName == flagName, optionKind ) of
-                            ( False, _ ) ->
-                                Nothing
-
-                            ( True, Tokenizer.KeywordArg optionValue ) ->
-                                Just optionValue
-
-                            ( True, _ ) ->
-                                -- TODO this should probably be an error
-                                Nothing
-                    )
-                |> Ok
-        )
+        (Internal.keywordArgListGrabber flagName)
         (UsageSpec.keywordArg flagName ZeroOrMore)
+        (TsDecode.tsType (TsDecode.list TsDecode.string))
+        (Internal.jsonOptionalFieldGrabberWithDefault flagName (Json.Decode.list Json.Decode.string) [])
 
 
-{-| Note that this must be used with `OptionsParser.withOptionalPositionalArg`.
+{-| An optional positional argument.
+
+Must be used with [`OptionsParser.withOptionalPositionalArg`](Cli-OptionsParser#withOptionalPositionalArg)
+(not `OptionsParser.with`).
+
+Example: `<revision>` in `git log [<revision>]`
+Parses to: `Just "abc123"` (or `Nothing` if omitted)
+
+    Option.optionalPositionalArg "revision"
+
 -}
 optionalPositionalArg : String -> Option (Maybe String) (Maybe String) { position : OptionalPositionalArgOption }
 optionalPositionalArg operandDescription =
     buildEndingOption
-        (\flagsAndOperands ->
-            let
-                operandsSoFar : Int
-                operandsSoFar =
-                    UsageSpec.operandCount flagsAndOperands.usageSpecs
-                        - 1
-
-                maybeArg : Maybe String
-                maybeArg =
-                    flagsAndOperands.operands
-                        |> List.Extra.getAt operandsSoFar
-            in
-            Ok maybeArg
-        )
+        Internal.optionalPositionalArgGrabber
         (UsageSpec.optionalPositionalArg operandDescription)
+        (TsDecode.tsType TsDecode.string)
+        (Internal.jsonOptionalFieldGrabber operandDescription Json.Decode.string)
 
 
-{-| Note that this must be used with `OptionsParser.withRestArgs`.
+{-| Collect all remaining positional arguments as a list.
+
+Must be used with [`OptionsParser.withRestArgs`](Cli-OptionsParser#withRestArgs)
+(not `OptionsParser.with`), and must be the last option in the pipeline.
+
+Example: `<files>...` in `elm-test [<files>...]`
+Parses to: `["tests/First.elm", "tests/Second.elm"]` (or `[]` if none provided)
+
+    Option.restArgs "files"
+
 -}
 restArgs : String -> Option (List String) (List String) { position : RestArgsOption }
 restArgs restArgsDescription =
     buildEndingOption
-        (\{ operands, usageSpecs } ->
-            operands
-                |> List.drop (UsageSpec.operandCount usageSpecs)
-                |> Ok
-        )
+        Internal.restArgsGrabber
         (UsageSpec.restArgs restArgsDescription)
+        (TsDecode.tsType (TsDecode.list TsDecode.string))
+        (Internal.jsonOptionalFieldGrabberWithDefault restArgsDescription (Json.Decode.list Json.Decode.string) [])

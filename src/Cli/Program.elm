@@ -4,6 +4,8 @@ module Cli.Program exposing
     , StatelessProgram, StatefulProgram
     , FlagsIncludingArgv
     , mapConfig
+    , helpText
+    , toJsonSchema
     , run, RunResult(..), ExitStatus(..), ColorMode(..)
     )
 
@@ -67,6 +69,17 @@ See the [`examples`](https://github.com/dillonkearns/elm-cli-options-parser/tree
 @docs mapConfig
 
 
+## Help Text and JSON Schema
+
+Generate help text for terminal display, or a [JSON Schema](https://json-schema.org/)
+for use as an [MCP tool](https://modelcontextprotocol.io/specification/draft/server/tools)
+`inputSchema` definition. JSON schemas are generated from the types provided by
+[`Cli.Option.Typed`](Cli-Option-Typed) constructors.
+
+@docs helpText
+@docs toJsonSchema
+
+
 ## Low-Level / Testing
 
 @docs run, RunResult, ExitStatus, ColorMode
@@ -79,7 +92,13 @@ import Cli.OptionsParser as OptionsParser exposing (OptionsParser)
 import Cli.OptionsParser.BuilderState as BuilderState
 import Cli.OptionsParser.MatchResult exposing (NoMatchReason(..))
 import Cli.Style
+import Cli.UsageSpec as UsageSpec exposing (UsageSpec)
+import Internal.OptionsParser as OPInternal
+import Json.Decode
+import Json.Encode as Encode
 import List.Extra
+import Occurences exposing (Occurences(..))
+import TsJson.Type
 import TypoSuggestion
 
 
@@ -414,20 +433,51 @@ just like `process.argv` in Node.js.
 run : Config msg -> List String -> String -> ColorMode -> RunResult msg
 run (Config { optionsParsers }) argv versionMessage colorMode =
     let
-        programName =
-            case argv of
-                _ :: programPath :: _ ->
-                    programPath
-                        |> String.split "/"
-                        |> List.Extra.last
-                        |> Maybe.withDefault errorMessage
+        -- Check for JSON input mode: a single arg that's JSON with $cli as an object
+        maybeJsonBlob =
+            case argv |> List.drop 2 of
+                [ singleArg ] ->
+                    case Json.Decode.decodeString (Json.Decode.field "$cli" (Json.Decode.keyValuePairs Json.Decode.value)) singleArg of
+                        Ok _ ->
+                            Json.Decode.decodeString Json.Decode.value singleArg
+                                |> Result.toMaybe
+
+                        Err _ ->
+                            Nothing
 
                 _ ->
-                    errorMessage
+                    Nothing
+    in
+    case maybeJsonBlob of
+        Just blob ->
+            -- Direct JSON mode: decode using jsonGrabbers, no lossy argv translation
+            runJsonMode optionsParsers blob
 
-        errorMessage =
-            "TODO - show error message explaining that user needs to pass unmodified `process.argv` from node here."
+        Nothing ->
+            let
+                errorMessage =
+                    "TODO - show error message explaining that user needs to pass unmodified `process.argv` from node here."
 
+                programName =
+                    case argv of
+                        _ :: programPath :: _ ->
+                            programPath
+                                |> String.split "/"
+                                |> List.Extra.last
+                                |> Maybe.withDefault errorMessage
+
+                        _ ->
+                            errorMessage
+            in
+            -- CLI mode: parse argv as before
+            runCliMode optionsParsers argv programName versionMessage colorMode
+
+
+{-| Run in CLI mode — parse argv using tokenizer and data grabbers.
+-}
+runCliMode : List (OptionsParser msg BuilderState.NoMoreOptions) -> List String -> String -> String -> ColorMode -> RunResult msg
+runCliMode optionsParsers argv programName versionMessage colorMode =
+    let
         matchResult =
             Cli.LowLevel.try optionsParsers argv
     in
@@ -484,6 +534,40 @@ run (Config { optionsParsers }) argv versionMessage colorMode =
                 |> SystemMessage Success
 
 
+{-| Run in JSON mode — decode directly from JSON blob using jsonGrabbers.
+No lossy argv translation. Error messages use JSON terminology (field names, not --flags).
+-}
+runJsonMode : List (OptionsParser msg BuilderState.NoMoreOptions) -> Json.Decode.Value -> RunResult msg
+runJsonMode optionsParsers blob =
+    case Cli.LowLevel.tryJson optionsParsers blob of
+        Cli.LowLevel.Match msg ->
+            CustomMatch msg
+
+        Cli.LowLevel.ValidationErrors validationErrors ->
+            ("Validation errors:\n\n"
+                ++ (validationErrors
+                        |> List.map
+                            (\{ name, invalidReason } ->
+                                "Invalid \""
+                                    ++ name
+                                    ++ "\" field."
+                                    ++ "\n"
+                                    ++ invalidReason
+                            )
+                        |> String.join "\n"
+                   )
+            )
+                |> SystemMessage Failure
+
+        Cli.LowLevel.NoMatch reasons ->
+            formatJsonNoMatchReasons reasons
+                |> SystemMessage Failure
+
+        _ ->
+            -- ShowHelp, ShowVersion, ShowSubcommandHelp shouldn't happen in JSON mode
+            SystemMessage Failure "Unexpected error in JSON mode."
+
+
 {-| Transform the return type for all of the registered `OptionsParser`'s in the `Config`.
 -}
 mapConfig : (a -> b) -> Config a -> Config b
@@ -493,6 +577,427 @@ mapConfig mapFn (Config configValue) =
             configValue.optionsParsers
                 |> List.map (OptionsParser.map mapFn)
         }
+
+
+{-| Generate plain-text help for a `Config`, suitable for including in machine-readable introspection output.
+
+Uses no ANSI color codes. The `programName` argument is used as the prefix in the usage synopsis.
+
+    import Cli.Option as Option
+    import Cli.OptionsParser as OptionsParser
+    import Cli.Program as Program
+
+    Program.config
+        |> Program.add
+            (OptionsParser.build identity
+                |> OptionsParser.with (Option.requiredKeywordArg "name")
+                |> OptionsParser.with (Option.flag "verbose")
+            )
+        |> Program.helpText "my-script"
+    --> "my-script --name <NAME> [--verbose]"
+
+-}
+helpText : String -> Config msg -> String
+helpText programName (Config { optionsParsers }) =
+    Cli.LowLevel.helpText Cli.ColorMode.WithoutColor programName optionsParsers
+
+
+{-| Generate a JSON Schema describing the inputs of this CLI configuration.
+
+The schema follows the [JSON Schema](https://json-schema.org/) format. Named options
+(keyword args, flags, keyword lists) are top-level properties with an `x-cli-kind`
+annotation indicating their CLI invocation form. Positional arguments and subcommands
+go inside a `$cli` object.
+
+The schema's `description` field includes a usage synopsis and instructions for
+how to invoke the command via JSON or traditional CLI flags.
+
+Suitable for use as an [MCP tool](https://modelcontextprotocol.io/specification/draft/server/tools)
+`inputSchema` definition.
+
+    import Cli.Option as Option
+    import Cli.OptionsParser as OptionsParser
+    import Cli.Program as Program
+
+    programConfig =
+        Program.config
+            |> Program.add
+                (OptionsParser.build identity
+                    |> OptionsParser.with (Option.requiredKeywordArg "name")
+                )
+
+    schema =
+        Program.toJsonSchema "my-script" programConfig
+
+The resulting schema has `name` as a top-level property with
+`"x-cli-kind": "keyword"`, and a required `$cli` object as the sentinel
+for JSON input mode.
+
+-}
+toJsonSchema : String -> Config msg -> Encode.Value
+toJsonSchema programName (Config { optionsParsers }) =
+    let
+        baseSchema =
+            case optionsParsers of
+                [ singleParser ] ->
+                    parserToJsonSchemaFromTsTypes programName singleParser
+
+                multipleParsers ->
+                    Encode.object
+                        [ ( "anyOf"
+                          , Encode.list (parserToJsonSchemaFromTsTypes programName) multipleParsers
+                          )
+                        ]
+    in
+    withDraft07Schema baseSchema
+
+
+parserToJsonSchemaFromTsTypes : String -> OptionsParser msg BuilderState.NoMoreOptions -> Encode.Value
+parserToJsonSchemaFromTsTypes programName parser =
+    let
+        specs =
+            OptionsParser.getUsageSpecs parser
+
+        tsTypes =
+            OPInternal.getTsTypes parser
+
+        specsWithTypes =
+            List.map2 Tuple.pair specs tsTypes
+
+        usageSynopsis =
+            OptionsParser.synopsis False programName parser
+                |> String.trim
+
+        -- Top-level properties: keyword args, keyword lists, flags (with x-cli-kind)
+        topLevelProperties =
+            specsWithTypes |> List.filterMap toFlatProperty
+
+        -- Required top-level property names
+        requiredTopLevel =
+            specsWithTypes |> List.filterMap toRequiredTopLevelName
+
+        -- Subcommand → $cli.subcommand
+        subCommandProp =
+            case OptionsParser.getSubCommand parser of
+                Just subName ->
+                    [ ( "subcommand"
+                      , Encode.object
+                            [ ( "type", Encode.string "string" )
+                            , ( "const", Encode.string subName )
+                            ]
+                      )
+                    ]
+
+                Nothing ->
+                    []
+
+        -- Positional args → $cli.positional
+        positionalSpecs =
+            specsWithTypes
+                |> List.filterMap
+                    (\( spec, ( _, tsType ) ) ->
+                        case spec of
+                            UsageSpec.Operand _ _ occurences _ ->
+                                Just ( spec, tsType, occurences )
+
+                            _ ->
+                                Nothing
+                    )
+
+        -- Rest args → $cli.positional.items
+        restArgSpec =
+            specsWithTypes
+                |> List.filterMap
+                    (\( spec, ( _, tsType ) ) ->
+                        case spec of
+                            UsageSpec.RestArgs _ _ ->
+                                Just ( spec, tsType )
+
+                            _ ->
+                                Nothing
+                    )
+                |> List.head
+
+        hasPositionalArgs =
+            not (List.isEmpty positionalSpecs) || restArgSpec /= Nothing
+
+        -- Build $cli schema (only subcommand + positional)
+        cliSubProperties =
+            subCommandProp ++ positionalSchemaProperty positionalSpecs restArgSpec
+
+        hasRequiredPositionalArgs =
+            positionalSpecs
+                |> List.any (\( _, _, occurences ) -> occurences == Required)
+
+        cliRequired =
+            (case OptionsParser.getSubCommand parser of
+                Just _ ->
+                    [ "subcommand" ]
+
+                Nothing ->
+                    []
+            )
+                ++ (if hasRequiredPositionalArgs then
+                        [ "positional" ]
+
+                    else
+                        []
+                   )
+
+        cliSchema =
+            Encode.object
+                ([ ( "type", Encode.string "object" )
+                 , ( "additionalProperties", Encode.bool False )
+                 ]
+                    ++ (if List.isEmpty cliSubProperties then
+                            []
+
+                        else
+                            [ ( "properties", Encode.object cliSubProperties ) ]
+                       )
+                    ++ (if List.isEmpty cliRequired then
+                            []
+
+                        else
+                            [ ( "required", Encode.list Encode.string cliRequired ) ]
+                       )
+                )
+
+        -- Build description with invocation instructions
+        description =
+            buildSchemaDescription usageSynopsis hasPositionalArgs
+
+        -- Assemble full schema
+        allProperties =
+            topLevelProperties ++ [ ( "$cli", cliSchema ) ]
+
+        allRequired =
+            requiredTopLevel ++ [ "$cli" ]
+    in
+    Encode.object
+        [ ( "description", Encode.string description )
+        , ( "type", Encode.string "object" )
+        , ( "properties", Encode.object allProperties )
+        , ( "required", Encode.list Encode.string allRequired )
+        , ( "additionalProperties", Encode.bool False )
+        ]
+
+
+{-| Build the `$cli.positional` schema property.
+-}
+positionalSchemaProperty : List ( UsageSpec, TsJson.Type.Type, Occurences ) -> Maybe ( UsageSpec, TsJson.Type.Type ) -> List ( String, Encode.Value )
+positionalSchemaProperty positionalArgs maybeRestArgs =
+    if List.isEmpty positionalArgs && maybeRestArgs == Nothing then
+        []
+
+    else
+        let
+            fixedItemSchemas =
+                positionalArgs
+                    |> List.map
+                        (\( spec, tsType, _ ) ->
+                            let
+                                baseSchema =
+                                    stripSchemaKey (TsJson.Type.toJsonSchema tsType)
+
+                                desc =
+                                    case usageSpecDescription spec of
+                                        Just d ->
+                                            d
+
+                                        Nothing ->
+                                            UsageSpec.name spec
+                            in
+                            appendJsonFields [ ( "description", Encode.string desc ) ] baseSchema
+                        )
+
+            requiredCount =
+                positionalArgs
+                    |> List.filter (\( _, _, occ ) -> occ == Required)
+                    |> List.length
+
+            restItemSchema =
+                maybeRestArgs
+                    |> Maybe.andThen
+                        (\( spec, tsType ) ->
+                            let
+                                arraySchema =
+                                    stripSchemaKey (TsJson.Type.toJsonSchema tsType)
+                            in
+                            case Json.Decode.decodeValue (Json.Decode.field "items" Json.Decode.value) arraySchema of
+                                Ok itemSchema ->
+                                    case usageSpecDescription spec of
+                                        Just desc ->
+                                            Just (appendJsonFields [ ( "description", Encode.string desc ) ] itemSchema)
+
+                                        Nothing ->
+                                            Just itemSchema
+
+                                Err _ ->
+                                    Nothing
+                        )
+
+            itemsField =
+                if List.isEmpty fixedItemSchemas then
+                    restItemSchema
+                        |> Maybe.map (\itemSchema -> [ ( "items", itemSchema ) ])
+                        |> Maybe.withDefault []
+
+                else
+                    [ ( "items", Encode.list identity fixedItemSchemas ) ]
+
+            additionalItemsField =
+                if List.isEmpty fixedItemSchemas then
+                    []
+
+                else
+                    case restItemSchema of
+                        Just itemSchema ->
+                            [ ( "additionalItems", itemSchema ) ]
+
+                        Nothing ->
+                            [ ( "additionalItems", Encode.bool False ) ]
+
+            schemaFields =
+                [ ( "type", Encode.string "array" )
+                , ( "description", Encode.string "Positional arguments, passed in order (e.g., mytool <source> <dest>)" )
+                ]
+                    ++ itemsField
+                    ++ additionalItemsField
+                    ++ (if requiredCount > 0 then
+                            [ ( "minItems", Encode.int requiredCount ) ]
+
+                        else
+                            []
+                       )
+        in
+        [ ( "positional", Encode.object schemaFields ) ]
+
+
+{-| Convert a spec+type pair to a top-level property with `x-cli-kind`, if it's a named option.
+Returns Nothing for positional args and rest args (those go in $cli).
+-}
+toFlatProperty : ( UsageSpec, ( String, TsJson.Type.Type ) ) -> Maybe ( String, Encode.Value )
+toFlatProperty ( spec, ( optionName, tsType ) ) =
+    let
+        maybeCliKind =
+            case spec of
+                UsageSpec.FlagOrKeywordArg (UsageSpec.KeywordArg _ _) _ ZeroOrMore _ ->
+                    Just "keyword-list"
+
+                UsageSpec.FlagOrKeywordArg (UsageSpec.KeywordArg _ _) _ _ _ ->
+                    Just "keyword"
+
+                UsageSpec.FlagOrKeywordArg (UsageSpec.Flag _) _ _ _ ->
+                    Just "flag"
+
+                _ ->
+                    Nothing
+    in
+    case maybeCliKind of
+        Just kind ->
+            let
+                strippedSchema =
+                    stripSchemaKey (TsJson.Type.toJsonSchema tsType)
+
+                extraFields =
+                    ( "x-cli-kind", Encode.string kind )
+                        :: (case usageSpecDescription spec of
+                                Just desc ->
+                                    [ ( "description", Encode.string desc ) ]
+
+                                Nothing ->
+                                    []
+                           )
+            in
+            Just ( optionName, appendJsonFields extraFields strippedSchema )
+
+        Nothing ->
+            Nothing
+
+
+{-| Get the name of a required top-level option (keyword arg or expectFlag).
+-}
+toRequiredTopLevelName : ( UsageSpec, ( String, a ) ) -> Maybe String
+toRequiredTopLevelName ( spec, ( optionName, _ ) ) =
+    case spec of
+        UsageSpec.FlagOrKeywordArg _ _ Required _ ->
+            Just optionName
+
+        _ ->
+            Nothing
+
+
+{-| Build the full schema description with usage synopsis and invocation instructions.
+-}
+buildSchemaDescription : String -> Bool -> String
+buildSchemaDescription usageSynopsis hasPositionalArgs =
+    let
+        positionalNote =
+            if hasPositionalArgs then
+                "Positional arguments are passed in order via the `$cli.positional` array."
+
+            else
+                "Positional arguments are passed in order via the `$cli.positional` array (for this CLI it will always be empty)."
+    in
+    usageSynopsis
+        ++ "\n\nTo invoke this command, build a JSON object matching this schema and pass it as a single argument. Alternatively, use traditional CLI flags as shown in the usage line above."
+        ++ "\n\nEach property has an `x-cli-kind` indicating its CLI invocation form:\n- \"keyword\": --name <value>\n- \"flag\": --name (present or absent, no value)\n- \"keyword-list\": --name <value> (repeatable)"
+        ++ "\n\n"
+        ++ positionalNote
+
+
+{-| Strip the `$schema` key from a TsJson-generated JSON schema value.
+-}
+stripSchemaKey : Encode.Value -> Encode.Value
+stripSchemaKey baseSchema =
+    case Json.Decode.decodeValue (Json.Decode.keyValuePairs Json.Decode.value) baseSchema of
+        Ok pairs ->
+            pairs
+                |> List.filter (\( k, _ ) -> k /= "$schema")
+                |> Encode.object
+
+        Err _ ->
+            baseSchema
+
+
+usageSpecDescription : UsageSpec -> Maybe String
+usageSpecDescription spec =
+    case spec of
+        UsageSpec.FlagOrKeywordArg _ _ _ maybeDescription ->
+            maybeDescription
+
+        UsageSpec.Operand _ _ _ maybeDescription ->
+            maybeDescription
+
+        UsageSpec.RestArgs _ maybeDescription ->
+            maybeDescription
+
+
+{-| Append additional key-value pairs to the end of a JSON object value.
+-}
+appendJsonFields : List ( String, Encode.Value ) -> Encode.Value -> Encode.Value
+appendJsonFields extraFields jsonValue =
+    case Json.Decode.decodeValue (Json.Decode.keyValuePairs Json.Decode.value) jsonValue of
+        Ok existingFields ->
+            Encode.object (existingFields ++ extraFields)
+
+        Err _ ->
+            Encode.object extraFields
+
+
+withDraft07Schema : Encode.Value -> Encode.Value
+withDraft07Schema schemaValue =
+    case Json.Decode.decodeValue (Json.Decode.keyValuePairs Json.Decode.value) schemaValue of
+        Ok fields ->
+            Encode.object
+                (( "$schema", Encode.string "http://json-schema.org/draft-07/schema#" )
+                    :: fields
+                )
+
+        Err _ ->
+            Encode.object
+                [ ( "$schema", Encode.string "http://json-schema.org/draft-07/schema#" ) ]
 
 
 {-| Generate help text for a specific subcommand.
@@ -734,3 +1239,56 @@ formatFallbackMessage colorMode programName optionsParsers =
         ++ applyBold colorMode "Usage:"
         ++ "\n\n"
         ++ Cli.LowLevel.helpText (toInternalColorMode colorMode) programName optionsParsers
+
+
+{-| Format NoMatchReasons for JSON mode — no CLI terminology (no --, no usage lines).
+-}
+formatJsonNoMatchReasons : List NoMatchReason -> String
+formatJsonNoMatchReasons reasons =
+    let
+        unexpectedFieldReasons =
+            reasons
+                |> List.filterMap
+                    (\reason ->
+                        case reason of
+                            UnexpectedOption name ->
+                                Just ("Unexpected field: \"" ++ name ++ "\"")
+
+                            _ ->
+                                Nothing
+                    )
+    in
+    case unexpectedFieldReasons of
+        first :: _ ->
+            first
+
+        [] ->
+            if List.member ExtraOperand reasons then
+                "Too many positional arguments in \"$cli.positional\"."
+
+            else
+                let
+                    missingFieldReasons =
+                        reasons
+                            |> List.filterMap
+                                (\reason ->
+                                    case reason of
+                                        MissingRequiredKeywordArg { name } ->
+                                            Just ("Missing required field: \"" ++ name ++ "\"")
+
+                                        MissingRequiredPositionalArg { name } ->
+                                            Just ("Missing required field: \"" ++ name ++ "\"")
+
+                                        MissingExpectedFlag { name } ->
+                                            Just ("Missing required field: \"" ++ name ++ "\"")
+
+                                        _ ->
+                                            Nothing
+                                )
+                in
+                case missingFieldReasons of
+                    first :: _ ->
+                        first
+
+                    [] ->
+                        "No matching command found for JSON input."

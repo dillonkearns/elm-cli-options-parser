@@ -145,14 +145,17 @@ import Cli.Option.Internal as Internal
 import Cli.OptionsParser.BuilderState as BuilderState
 import Cli.OptionsParser.MatchResult
 import Cli.UsageSpec as UsageSpec exposing (UsageSpec)
+import Internal.OptionsParser as OPInternal
+import Json.Decode
 import Occurences exposing (Occurences(..))
 import Tokenizer exposing (ParsedOption)
+import TsJson.Decode as TsDecode
 
 
 {-| Low-level function, for internal use.
 -}
 getUsageSpecs : OptionsParser decodesTo builderState -> List UsageSpec
-getUsageSpecs (OptionsParser { usageSpecs }) =
+getUsageSpecs (OPInternal.OptionsParser { usageSpecs }) =
     usageSpecs
 
 
@@ -169,7 +172,7 @@ synopsis useColor programName optionsParser =
                 Cli.ColorMode.WithoutColor
     in
     optionsParser
-        |> (\(OptionsParser record) -> record)
+        |> (\(OPInternal.OptionsParser record) -> record)
         |> UsageSpec.synopsis colorMode programName
 
 
@@ -187,21 +190,21 @@ detailedHelp useColor programName optionsParser =
                 Cli.ColorMode.WithoutColor
     in
     optionsParser
-        |> (\(OptionsParser record) -> record)
+        |> (\(OPInternal.OptionsParser record) -> record)
         |> UsageSpec.detailedHelp colorMode programName
 
 
 {-| Low-level function, for internal use.
 -}
 getSubCommand : OptionsParser cliOptions builderState -> Maybe String
-getSubCommand (OptionsParser { subCommand }) =
+getSubCommand (OPInternal.OptionsParser { subCommand }) =
     subCommand
 
 
 {-| Low-level function, for internal use.
 -}
 tryMatch : List String -> OptionsParser cliOptions builderState -> Cli.OptionsParser.MatchResult.MatchResult cliOptions
-tryMatch argv ((OptionsParser { usageSpecs, subCommand }) as optionsParser) =
+tryMatch argv ((OPInternal.OptionsParser { usageSpecs, subCommand }) as optionsParser) =
     let
         flagsAndOperands =
             Tokenizer.flagsAndOperands usageSpecs argv
@@ -281,8 +284,6 @@ tryMatch argv ((OptionsParser { usageSpecs, subCommand }) as optionsParser) =
                 (matchErrorDetailToNoMatchReason subCommandError :: unexpectedOptionReasons)
 
 
-{-| Convert internal MatchErrorDetail to public NoMatchReason.
--}
 matchErrorDetailToNoMatchReason : Cli.Decode.MatchErrorDetail -> Cli.OptionsParser.MatchResult.NoMatchReason
 matchErrorDetailToNoMatchReason detail =
     case detail of
@@ -296,7 +297,6 @@ matchErrorDetailToNoMatchReason detail =
             Cli.OptionsParser.MatchResult.MissingRequiredKeywordArg { name = name, customMessage = customMessage }
 
         Cli.Decode.KeywordArgMissingValue { name } ->
-            -- Treat "keyword arg provided without value" same as "missing required keyword arg"
             Cli.OptionsParser.MatchResult.MissingRequiredKeywordArg { name = name, customMessage = Nothing }
 
         Cli.Decode.ExtraOperand ->
@@ -313,8 +313,8 @@ matchErrorDetailToNoMatchReason detail =
 
 
 expectedPositionalArgCountOrFail : OptionsParser cliOptions builderState -> OptionsParser cliOptions builderState
-expectedPositionalArgCountOrFail (OptionsParser ({ decoder, usageSpecs } as optionsParser)) =
-    OptionsParser
+expectedPositionalArgCountOrFail (OPInternal.OptionsParser ({ decoder, usageSpecs } as optionsParser)) =
+    OPInternal.OptionsParser
         { optionsParser
             | decoder =
                 \({ operands } as stuff) ->
@@ -330,6 +330,9 @@ expectedPositionalArgCountOrFail (OptionsParser ({ decoder, usageSpecs } as opti
 
                     else
                         decoder stuff
+
+            -- jsonGrabber unchanged — JSON mode checks extra positional args
+            -- in rawJsonShapeErrors before normalization
         }
 
 
@@ -341,13 +344,13 @@ getDecoder :
         , usageSpecs : List UsageSpec
         }
     -> Result Cli.Decode.ProcessingError ( List Cli.Decode.ValidationError, cliOptions )
-getDecoder (OptionsParser { decoder }) =
+getDecoder (OPInternal.OptionsParser { decoder }) =
     decoder
 
 
 failIfUnexpectedOptions : OptionsParser cliOptions builderState -> OptionsParser cliOptions builderState
-failIfUnexpectedOptions ((OptionsParser ({ decoder } as optionsParser)) as fullOptionsParser) =
-    OptionsParser
+failIfUnexpectedOptions ((OPInternal.OptionsParser ({ decoder } as optionsParser)) as fullOptionsParser) =
+    OPInternal.OptionsParser
         { optionsParser
             | decoder =
                 \flagsAndOperands ->
@@ -364,7 +367,7 @@ failIfUnexpectedOptions ((OptionsParser ({ decoder } as optionsParser)) as fullO
 
 
 unexpectedOptions_ : OptionsParser cliOptions builderState -> List ParsedOption -> List String
-unexpectedOptions_ (OptionsParser { usageSpecs }) options =
+unexpectedOptions_ (OPInternal.OptionsParser { usageSpecs }) options =
     List.filterMap
         (\(Tokenizer.ParsedOption optionName _) ->
             if UsageSpec.optionExists usageSpecs optionName == Nothing then
@@ -381,62 +384,79 @@ A `Cli.Program.Config` can be built up using one or more `OptionsParser`s. It wi
 try each parser in order until one succeeds. If none succeed, it will print
 an error message with information for the user of the Command-Line Interface.
 -}
-type OptionsParser cliOptions builderState
-    = OptionsParser (OptionsParserRecord cliOptions)
+type alias OptionsParser cliOptions builderState =
+    OPInternal.OptionsParser cliOptions builderState
 
 
 {-| Low-level function, for internal use.
 -}
 end : OptionsParser cliOptions builderState -> OptionsParser cliOptions BuilderState.NoMoreOptions
-end (OptionsParser record) =
-    OptionsParser record
+end (OPInternal.OptionsParser record) =
+    OPInternal.OptionsParser record
 
 
-type alias OptionsParserRecord cliOptions =
-    { decoder : Decoder cliOptions
-    , usageSpecs : List UsageSpec
-    , description : Maybe String
-    , subCommand : Maybe String
-    }
-
-
-type alias Decoder cliOptions =
-    { usageSpecs : List UsageSpec, options : List ParsedOption, operands : List String } -> Result Cli.Decode.ProcessingError ( List Cli.Decode.ValidationError, cliOptions )
-
-
-updateDecoder : Decoder mappedCliOptions -> OptionsParser cliOptions fromBuilderState -> OptionsParser mappedCliOptions toBuilderState
-updateDecoder decoder (OptionsParser optionsParserRecord) =
-    OptionsParser
+updateDecoder : OPInternal.Decoder mappedCliOptions -> Internal.JsonGrabber mappedCliOptions -> OptionsParser cliOptions fromBuilderState -> OptionsParser mappedCliOptions toBuilderState
+updateDecoder decoder jsonGrabber (OPInternal.OptionsParser optionsParserRecord) =
+    OPInternal.OptionsParser
         { decoder = decoder
         , usageSpecs = optionsParserRecord.usageSpecs
         , description = optionsParserRecord.description
         , subCommand = optionsParserRecord.subCommand
+        , tsTypes = optionsParserRecord.tsTypes
+        , jsonGrabber = jsonGrabber
         }
 
 
 {-| Start an `OptionsParser` pipeline with no sub-command (see
-[the OptionsParser terminilogy legend](https://github.com/dillonkearns/elm-cli-options-parser#options-parser-terminology)).
+[the OptionsParser terminology legend](https://github.com/dillonkearns/elm-cli-options-parser#options-parser-terminology)).
 -}
 build : cliOptions -> OptionsParser cliOptions BuilderState.AnyOptions
 build cliOptionsConstructor =
-    OptionsParser
+    OPInternal.OptionsParser
         { usageSpecs = []
         , description = Nothing
         , decoder = \_ -> Ok ( [], cliOptionsConstructor )
         , subCommand = Nothing
+        , tsTypes = []
+        , jsonGrabber = \_ -> Ok ( [], cliOptionsConstructor )
         }
 
 
 {-| Start an `OptionsParser` pipeline with a sub-command (see
-[the OptionsParser terminilogy legend](https://github.com/dillonkearns/elm-cli-options-parser#options-parser-terminology)).
+[the OptionsParser terminology legend](https://github.com/dillonkearns/elm-cli-options-parser#options-parser-terminology)).
 -}
 buildSubCommand : String -> cliOptions -> OptionsParser cliOptions BuilderState.AnyOptions
 buildSubCommand subCommandName cliOptionsConstructor =
-    OptionsParser
+    OPInternal.OptionsParser
         { usageSpecs = []
         , description = Nothing
         , decoder = \_ -> Ok ( [], cliOptionsConstructor )
         , subCommand = Just subCommandName
+        , tsTypes = []
+        , jsonGrabber =
+            \blob ->
+                case Json.Decode.decodeValue (Json.Decode.field "subcommand" Json.Decode.string) blob of
+                    Ok subName ->
+                        if subName == subCommandName then
+                            Ok ( [], cliOptionsConstructor )
+
+                        else
+                            Err
+                                (Cli.Decode.MatchError
+                                    (Cli.Decode.WrongSubCommand
+                                        { expectedSubCommand = subCommandName
+                                        , actualSubCommand = subName
+                                        }
+                                    )
+                                )
+
+                    Err _ ->
+                        Err
+                            (Cli.Decode.MatchError
+                                (Cli.Decode.MissingSubCommand
+                                    { expectedSubCommand = subCommandName }
+                                )
+                            )
         }
 
 
@@ -465,8 +485,11 @@ any input from the user, it just passes the supplied value through in the chain.
 
 -}
 hardcoded : value -> OptionsParser (value -> cliOptions) BuilderState.AnyOptions -> OptionsParser cliOptions BuilderState.AnyOptions
-hardcoded hardcodedValue ((OptionsParser { decoder }) as optionsParser) =
-    updateDecoder (\stuff -> resultMap (\fn -> fn hardcodedValue) (decoder stuff)) optionsParser
+hardcoded hardcodedValue ((OPInternal.OptionsParser { decoder, jsonGrabber }) as optionsParser) =
+    updateDecoder
+        (\stuff -> resultMap (\fn -> fn hardcodedValue) (decoder stuff))
+        (\blob -> jsonGrabber blob |> Result.map (Tuple.mapSecond (\fn -> fn hardcodedValue)))
+        optionsParser
 
 
 {-| Map the CLI options returned in the `OptionsParser` using the supplied map function.
@@ -515,8 +538,11 @@ map :
     (cliOptions -> mappedCliOptions)
     -> OptionsParser cliOptions builderState
     -> OptionsParser mappedCliOptions builderState
-map mapFunction ((OptionsParser { decoder }) as optionsParser) =
-    updateDecoder (decoder >> Result.map (Tuple.mapSecond mapFunction)) optionsParser
+map mapFunction ((OPInternal.OptionsParser { decoder, jsonGrabber }) as optionsParser) =
+    updateDecoder
+        (decoder >> Result.map (Tuple.mapSecond mapFunction))
+        (\blob -> jsonGrabber blob |> Result.map (Tuple.mapSecond mapFunction))
+        optionsParser
 
 
 {-| Internal helper to map over the value inside a Result with validation errors.
@@ -534,10 +560,11 @@ resultMap mapFunction result =
 best to use a subcommand in these cases.
 -}
 expectFlag : String -> OptionsParser cliOptions BuilderState.AnyOptions -> OptionsParser cliOptions BuilderState.AnyOptions
-expectFlag flagName (OptionsParser ({ usageSpecs, decoder } as optionsParser)) =
-    OptionsParser
+expectFlag flagName (OPInternal.OptionsParser ({ usageSpecs, decoder, tsTypes, jsonGrabber } as optionsParser)) =
+    OPInternal.OptionsParser
         { optionsParser
             | usageSpecs = usageSpecs ++ [ UsageSpec.flag flagName Required ]
+            , tsTypes = tsTypes ++ [ ( flagName, TsDecode.tsType TsDecode.bool ) ]
             , decoder =
                 \({ options } as stuff) ->
                     if
@@ -549,6 +576,15 @@ expectFlag flagName (OptionsParser ({ usageSpecs, decoder } as optionsParser)) =
                     else
                         Cli.Decode.MatchError (Cli.Decode.MissingExpectedFlag { name = flagName })
                             |> Err
+            , jsonGrabber =
+                \blob ->
+                    case Json.Decode.decodeValue (Json.Decode.field flagName Json.Decode.bool) blob of
+                        Ok True ->
+                            jsonGrabber blob
+
+                        _ ->
+                            Cli.Decode.MatchError (Cli.Decode.MissingExpectedFlag { name = flagName })
+                                |> Err
         }
 
 
@@ -561,7 +597,7 @@ with =
 
 
 withCommon : Cli.Option.Option from to optionConstraint -> OptionsParser (to -> cliOptions) startOptionsParserBuilderState -> OptionsParser cliOptions endOptionsParserBuilderState
-withCommon (Internal.Option innerOption) ((OptionsParser { decoder, usageSpecs }) as fullOptionsParser) =
+withCommon (Internal.Option innerOption) ((OPInternal.OptionsParser { decoder, usageSpecs, tsTypes, jsonGrabber }) as fullOptionsParser) =
     updateDecoder
         (\optionsAndOperands ->
             { options = optionsAndOperands.options
@@ -584,11 +620,25 @@ withCommon (Internal.Option innerOption) ((OptionsParser { decoder, usageSpecs }
                                 value
                     )
         )
+        (\blob ->
+            case jsonGrabber blob of
+                Ok ( fnErrors, fn ) ->
+                    case innerOption.jsonGrabber blob of
+                        Ok ( argErrors, argValue ) ->
+                            Ok ( fnErrors ++ argErrors, fn argValue )
+
+                        Err err ->
+                            Err err
+
+                Err err ->
+                    Err err
+        )
         fullOptionsParser
-        |> (\(OptionsParser record) ->
-                OptionsParser
+        |> (\(OPInternal.OptionsParser record) ->
+                OPInternal.OptionsParser
                     { record
                         | usageSpecs = usageSpecs ++ [ innerOption.usageSpec ]
+                        , tsTypes = tsTypes ++ [ ( UsageSpec.name innerOption.usageSpec, innerOption.tsType ) ]
                     }
            )
 
@@ -630,8 +680,8 @@ appears below the usage line.
 
 -}
 withDescription : String -> OptionsParser cliOptions anything -> OptionsParser cliOptions anything
-withDescription docString (OptionsParser optionsParserRecord) =
-    OptionsParser
+withDescription docString (OPInternal.OptionsParser optionsParserRecord) =
+    OPInternal.OptionsParser
         { optionsParserRecord
             | description = Just docString
         }

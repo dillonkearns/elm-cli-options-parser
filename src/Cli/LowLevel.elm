@@ -1,10 +1,12 @@
-module Cli.LowLevel exposing (MatchResult(..), detailedHelpText, helpText, try)
+module Cli.LowLevel exposing (MatchResult(..), detailedHelpText, helpText, try, tryJson)
 
 import Cli.ColorMode exposing (ColorMode, useColor)
 import Cli.Decode
 import Cli.OptionsParser as OptionsParser exposing (OptionsParser)
 import Cli.OptionsParser.BuilderState as BuilderState
 import Cli.OptionsParser.MatchResult as MatchResult exposing (NoMatchReason(..))
+import Internal.OptionsParser as OPInternal
+import Json.Decode
 import List.Extra
 import Set exposing (Set)
 
@@ -88,65 +90,7 @@ try optionsParsers argv =
         -- 2. All other reasons (deduplicated)
         aggregatedReasons : List MatchResult.NoMatchReason
         aggregatedReasons =
-            let
-                -- Extract UnexpectedOption strings and find the common ones (truly unknown)
-                commonUnexpectedOptions : Set String
-                commonUnexpectedOptions =
-                    matchResults
-                        |> List.map
-                            (\matchResult ->
-                                case matchResult of
-                                    MatchResult.NoMatch reasons ->
-                                        reasons
-                                            |> List.filterMap
-                                                (\reason ->
-                                                    case reason of
-                                                        UnexpectedOption name ->
-                                                            Just name
-
-                                                        _ ->
-                                                            Nothing
-                                                )
-                                            |> Set.fromList
-
-                                    _ ->
-                                        Set.empty
-                            )
-                        |> intersection
-
-                -- Collect all NoMatchReasons from all parsers
-                allNoMatchReasons : List MatchResult.NoMatchReason
-                allNoMatchReasons =
-                    matchResults
-                        |> List.concatMap
-                            (\matchResult ->
-                                case matchResult of
-                                    MatchResult.NoMatch reasons ->
-                                        reasons
-
-                                    _ ->
-                                        []
-                            )
-
-                unexpectedOptionReasons =
-                    commonUnexpectedOptions
-                        |> Set.toList
-                        |> List.map UnexpectedOption
-
-                otherReasons =
-                    allNoMatchReasons
-                        |> List.filter
-                            (\reason ->
-                                case reason of
-                                    UnexpectedOption _ ->
-                                        False
-
-                                    _ ->
-                                        True
-                            )
-                        |> uniqueReasons
-            in
-            unexpectedOptionReasons ++ otherReasons
+            aggregateNoMatchReasons matchResults
     in
     matchResults
         |> List.map MatchResult.matchResultToMaybe
@@ -226,6 +170,67 @@ reasonToKey reason =
             "ExtraOperand"
 
 
+aggregateNoMatchReasons : List (MatchResult.MatchResult a) -> List MatchResult.NoMatchReason
+aggregateNoMatchReasons matchResults =
+    let
+        commonUnexpectedOptions : Set String
+        commonUnexpectedOptions =
+            matchResults
+                |> List.map
+                    (\matchResult ->
+                        case matchResult of
+                            MatchResult.NoMatch reasons ->
+                                reasons
+                                    |> List.filterMap
+                                        (\reason ->
+                                            case reason of
+                                                UnexpectedOption name ->
+                                                    Just name
+
+                                                _ ->
+                                                    Nothing
+                                        )
+                                    |> Set.fromList
+
+                            _ ->
+                                Set.empty
+                    )
+                |> intersection
+
+        allNoMatchReasons : List MatchResult.NoMatchReason
+        allNoMatchReasons =
+            matchResults
+                |> List.concatMap
+                    (\matchResult ->
+                        case matchResult of
+                            MatchResult.NoMatch reasons ->
+                                reasons
+
+                            _ ->
+                                []
+                    )
+
+        unexpectedOptionReasons =
+            commonUnexpectedOptions
+                |> Set.toList
+                |> List.map UnexpectedOption
+
+        otherReasons =
+            allNoMatchReasons
+                |> List.filter
+                    (\reason ->
+                        case reason of
+                            UnexpectedOption _ ->
+                                False
+
+                            _ ->
+                                True
+                    )
+                |> uniqueReasons
+    in
+    unexpectedOptionReasons ++ otherReasons
+
+
 helpParser : OptionsParser (MatchResult msg) BuilderState.AnyOptions
 helpParser =
     OptionsParser.build ShowHelp
@@ -266,3 +271,31 @@ detailedHelpText colorMode programName optionsParsers =
     optionsParsers
         |> List.map (OptionsParser.detailedHelp (useColor colorMode) programName)
         |> String.join "\n\n"
+
+
+{-| Try to match a JSON blob against a list of OptionsParsers using direct JSON decoding.
+No lossy argv translation — each parser's jsonGrabber decodes directly from the JSON value.
+-}
+tryJson : List (OptionsParser.OptionsParser msg builderState) -> Json.Decode.Value -> MatchResult msg
+tryJson optionsParsers blob =
+    let
+        matchResults =
+            optionsParsers
+                |> List.map (OPInternal.tryMatchJson blob)
+    in
+    matchResults
+        |> List.map MatchResult.matchResultToMaybe
+        |> oneOf
+        |> (\maybeResult ->
+                case maybeResult of
+                    Just result ->
+                        case result of
+                            Ok msg ->
+                                Match msg
+
+                            Err validationErrors ->
+                                ValidationErrors validationErrors
+
+                    Nothing ->
+                        NoMatch (aggregateNoMatchReasons matchResults)
+           )
