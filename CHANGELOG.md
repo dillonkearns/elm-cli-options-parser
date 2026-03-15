@@ -7,6 +7,15 @@ will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [5.0.1]
+
+### Changed
+
+- Reduced redundancy in JSON schema output for multi-subcommand CLIs. Invocation
+  boilerplate (instructions and `x-cli-kind` legend) now appears once on the
+  `anyOf` wrapper instead of being repeated in every variant's `description`.
+  Each variant's description now contains only its usage synopsis.
+
 ## [5.0.0]
 
 ### Added

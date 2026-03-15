@@ -101,7 +101,7 @@ Note: the `--help` option is a built-in command, so no need to write a `OptionsP
 
 ## Typed Options & JSON Schema
 
-The [`Cli.Option.Typed`](https://package.elm-lang.org/packages/dillonkearns/elm-cli-options-parser/5.0.0/Cli-Option-Typed/)
+The [`Cli.Option.Typed`](https://package.elm-lang.org/packages/dillonkearns/elm-cli-options-parser/5.0.1/Cli-Option-Typed/)
 module lets you specify the type of each option (string, int, float, etc.) via a
 `CliDecoder`. This gives you:
 
