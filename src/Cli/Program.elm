@@ -648,20 +648,28 @@ toJsonSchema programName (Config { optionsParsers }) =
         baseSchema =
             case optionsParsers of
                 [ singleParser ] ->
-                    parserToJsonSchemaFromTsTypes programName singleParser
+                    parserToJsonSchemaFromTsTypes True programName singleParser
 
                 multipleParsers ->
+                    let
+                        -- Check if any variant has positional args
+                        anyHasPositionalArgs : Bool
+                        anyHasPositionalArgs =
+                            multipleParsers
+                                |> List.any parserHasPositionalArgs
+                    in
                     Encode.object
-                        [ ( "anyOf"
-                          , Encode.list (parserToJsonSchemaFromTsTypes programName) multipleParsers
+                        [ ( "description", Encode.string (invocationBoilerplate anyHasPositionalArgs) )
+                        , ( "anyOf"
+                          , Encode.list (parserToJsonSchemaFromTsTypes False programName) multipleParsers
                           )
                         ]
     in
     withDraft07Schema baseSchema
 
 
-parserToJsonSchemaFromTsTypes : String -> OptionsParser msg BuilderState.NoMoreOptions -> Encode.Value
-parserToJsonSchemaFromTsTypes programName parser =
+parserToJsonSchemaFromTsTypes : Bool -> String -> OptionsParser msg BuilderState.NoMoreOptions -> Encode.Value
+parserToJsonSchemaFromTsTypes includeBoilerplate programName parser =
     let
         specs : List UsageSpec
         specs =
@@ -785,10 +793,14 @@ parserToJsonSchemaFromTsTypes programName parser =
                        )
                 )
 
-        -- Build description with invocation instructions
+        -- Build description — include boilerplate for single parser, synopsis-only for anyOf variants
         description : String
         description =
-            buildSchemaDescription usageSynopsis hasPositionalArgs
+            if includeBoilerplate then
+                buildSchemaDescription usageSynopsis hasPositionalArgs
+
+            else
+                usageSynopsis
 
         -- Assemble full schema
         allProperties : List ( String, Encode.Value )
@@ -965,10 +977,40 @@ toRequiredTopLevelName ( spec, ( optionName, _ ) ) =
             Nothing
 
 
+{-| Check if a parser has any positional args or rest args.
+-}
+parserHasPositionalArgs : OptionsParser msg BuilderState.NoMoreOptions -> Bool
+parserHasPositionalArgs parser =
+    let
+        specs =
+            OptionsParser.getUsageSpecs parser
+    in
+    specs
+        |> List.any
+            (\spec ->
+                case spec of
+                    UsageSpec.Operand _ _ _ _ ->
+                        True
+
+                    UsageSpec.RestArgs _ _ ->
+                        True
+
+                    _ ->
+                        False
+            )
+
+
 {-| Build the full schema description with usage synopsis and invocation instructions.
 -}
 buildSchemaDescription : String -> Bool -> String
 buildSchemaDescription usageSynopsis hasPositionalArgs =
+    usageSynopsis ++ "\n\n" ++ invocationBoilerplate hasPositionalArgs
+
+
+{-| The shared invocation instructions, used once at the top level.
+-}
+invocationBoilerplate : Bool -> String
+invocationBoilerplate hasPositionalArgs =
     let
         positionalNote : String
         positionalNote =
@@ -978,8 +1020,7 @@ buildSchemaDescription usageSynopsis hasPositionalArgs =
             else
                 "Positional arguments are passed in order via the `$cli.positional` array (for this CLI it will always be empty)."
     in
-    usageSynopsis
-        ++ "\n\nTo invoke this command, build a JSON object matching this schema and pass it as a single argument. Alternatively, use traditional CLI flags as shown in the usage line above."
+    "To invoke this command, build a JSON object matching this schema and pass it as a single argument. Alternatively, use traditional CLI flags as shown in the usage line above."
         ++ "\n\nEach property has an `x-cli-kind` indicating its CLI invocation form:\n- \"keyword\": --name <value>\n- \"flag\": --name (present or absent, no value)\n- \"keyword-list\": --name <value> (repeatable)"
         ++ "\n\n"
         ++ positionalNote

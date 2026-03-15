@@ -596,10 +596,11 @@ all =
                         |> Encode.encode 0
                         |> Expect.equal
                             (draft07Object
-                                [ ( "anyOf"
+                                [ ( "description", Encode.string (invocationBoilerplate False) )
+                                , ( "anyOf"
                                   , Encode.list identity
                                         [ Encode.object
-                                            [ ( "description", Encode.string (fullDescription "test --init --name <NAME>" False) )
+                                            [ ( "description", Encode.string "test --init --name <NAME>" )
                                             , ( "type", Encode.string "object" )
                                             , ( "properties"
                                               , Encode.object
@@ -627,7 +628,7 @@ all =
                                             , ( "additionalProperties", Encode.bool False )
                                             ]
                                         , Encode.object
-                                            [ ( "description", Encode.string (fullDescription "test --build [--verbose]" False) )
+                                            [ ( "description", Encode.string "test --build [--verbose]" )
                                             , ( "type", Encode.string "object" )
                                             , ( "properties"
                                               , Encode.object
@@ -743,10 +744,11 @@ all =
                         |> Encode.encode 0
                         |> Expect.equal
                             (draft07Object
-                                [ ( "anyOf"
+                                [ ( "description", Encode.string (invocationBoilerplate True) )
+                                , ( "anyOf"
                                   , Encode.list identity
                                         [ Encode.object
-                                            [ ( "description", Encode.string (fullDescription "test init" False) )
+                                            [ ( "description", Encode.string "test init" )
                                             , ( "type", Encode.string "object" )
                                             , ( "properties"
                                               , Encode.object
@@ -768,7 +770,7 @@ all =
                                             , ( "additionalProperties", Encode.bool False )
                                             ]
                                         , Encode.object
-                                            [ ( "description", Encode.string (fullDescription "test clone <repository>" True) )
+                                            [ ( "description", Encode.string "test clone <repository>" )
                                             , ( "type", Encode.string "object" )
                                             , ( "properties"
                                               , Encode.object
@@ -1155,6 +1157,14 @@ Expecting a LIST"""
 -}
 fullDescription : String -> Bool -> String
 fullDescription synopsis hasPositionalArgs =
+    synopsis ++ "\n\n" ++ invocationBoilerplate hasPositionalArgs
+
+
+{-| The boilerplate instructions that appear on a schema description (or on the
+anyOf wrapper for multi-parser configs).
+-}
+invocationBoilerplate : Bool -> String
+invocationBoilerplate hasPositionalArgs =
     let
         positionalNote =
             if hasPositionalArgs then
@@ -1163,8 +1173,7 @@ fullDescription synopsis hasPositionalArgs =
             else
                 "Positional arguments are passed in order via the `$cli.positional` array (for this CLI it will always be empty)."
     in
-    synopsis
-        ++ "\n\nTo invoke this command, build a JSON object matching this schema and pass it as a single argument. Alternatively, use traditional CLI flags as shown in the usage line above."
+    "To invoke this command, build a JSON object matching this schema and pass it as a single argument. Alternatively, use traditional CLI flags as shown in the usage line above."
         ++ "\n\nEach property has an `x-cli-kind` indicating its CLI invocation form:\n- \"keyword\": --name <value>\n- \"flag\": --name (present or absent, no value)\n- \"keyword-list\": --name <value> (repeatable)"
         ++ "\n\n"
         ++ positionalNote

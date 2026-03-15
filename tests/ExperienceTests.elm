@@ -131,9 +131,10 @@ all =
                         |> Encode.encode 2
                         |> Expect.equal """{
   "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "To invoke this command, build a JSON object matching this schema and pass it as a single argument. Alternatively, use traditional CLI flags as shown in the usage line above.\\n\\nEach property has an `x-cli-kind` indicating its CLI invocation form:\\n- \\"keyword\\": --name <value>\\n- \\"flag\\": --name (present or absent, no value)\\n- \\"keyword-list\\": --name <value> (repeatable)\\n\\nPositional arguments are passed in order via the `$cli.positional` array.",
   "anyOf": [
     {
-      "description": "test add --title <TITLE> --priority <low|medium|high>\\n\\nTo invoke this command, build a JSON object matching this schema and pass it as a single argument. Alternatively, use traditional CLI flags as shown in the usage line above.\\n\\nEach property has an `x-cli-kind` indicating its CLI invocation form:\\n- \\"keyword\\": --name <value>\\n- \\"flag\\": --name (present or absent, no value)\\n- \\"keyword-list\\": --name <value> (repeatable)\\n\\nPositional arguments are passed in order via the `$cli.positional` array (for this CLI it will always be empty).",
+      "description": "test add --title <TITLE> --priority <low|medium|high>",
       "type": "object",
       "properties": {
         "title": {
@@ -173,7 +174,7 @@ all =
       "additionalProperties": false
     },
     {
-      "description": "test list [--format <json|table|csv>] --limit <LIMIT> [--verbose]\\n\\nTo invoke this command, build a JSON object matching this schema and pass it as a single argument. Alternatively, use traditional CLI flags as shown in the usage line above.\\n\\nEach property has an `x-cli-kind` indicating its CLI invocation form:\\n- \\"keyword\\": --name <value>\\n- \\"flag\\": --name (present or absent, no value)\\n- \\"keyword-list\\": --name <value> (repeatable)\\n\\nPositional arguments are passed in order via the `$cli.positional` array (for this CLI it will always be empty).",
+      "description": "test list [--format <json|table|csv>] --limit <LIMIT> [--verbose]",
       "type": "object",
       "properties": {
         "format": {
@@ -217,7 +218,7 @@ all =
       "additionalProperties": false
     },
     {
-      "description": "test complete <task-id>\\n\\nTo invoke this command, build a JSON object matching this schema and pass it as a single argument. Alternatively, use traditional CLI flags as shown in the usage line above.\\n\\nEach property has an `x-cli-kind` indicating its CLI invocation form:\\n- \\"keyword\\": --name <value>\\n- \\"flag\\": --name (present or absent, no value)\\n- \\"keyword-list\\": --name <value> (repeatable)\\n\\nPositional arguments are passed in order via the `$cli.positional` array.",
+      "description": "test complete <task-id>",
       "type": "object",
       "properties": {
         "$cli": {
