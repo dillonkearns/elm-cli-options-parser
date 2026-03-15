@@ -743,10 +743,6 @@ parserToJsonSchemaFromTsTypes includeBoilerplate programName parser =
                     )
                 |> List.head
 
-        hasPositionalArgs : Bool
-        hasPositionalArgs =
-            not (List.isEmpty positionalSpecs) || restArgSpec /= Nothing
-
         -- Build $cli schema (only subcommand + positional)
         cliSubProperties : List ( String, Encode.Value )
         cliSubProperties =
@@ -797,6 +793,11 @@ parserToJsonSchemaFromTsTypes includeBoilerplate programName parser =
         description : String
         description =
             if includeBoilerplate then
+                let
+                    hasPositionalArgs : Bool
+                    hasPositionalArgs =
+                        not (List.isEmpty positionalSpecs) || restArgSpec /= Nothing
+                in
                 buildSchemaDescription usageSynopsis hasPositionalArgs
 
             else
@@ -982,6 +983,7 @@ toRequiredTopLevelName ( spec, ( optionName, _ ) ) =
 parserHasPositionalArgs : OptionsParser msg BuilderState.NoMoreOptions -> Bool
 parserHasPositionalArgs parser =
     let
+        specs : List UsageSpec
         specs =
             OptionsParser.getUsageSpecs parser
     in
