@@ -42,13 +42,16 @@ type CombinedParser userOptions
 try : List (OptionsParser.OptionsParser msg builderState) -> List String -> MatchResult msg
 try optionsParsers argv =
     let
+        argsWithoutNodeAndScript : List String
         argsWithoutNodeAndScript =
             argv |> List.drop 2
 
         -- Check for subcommand-specific help: "subcommand --help" or "--help subcommand"
+        hasHelpFlag : Bool
         hasHelpFlag =
             List.member "--help" argsWithoutNodeAndScript
 
+        subcommandHelpResult : Maybe (MatchResult msg)
         subcommandHelpResult =
             if hasHelpFlag then
                 case
@@ -68,6 +71,7 @@ try optionsParsers argv =
             else
                 Nothing
 
+        matchResults : List (MatchResult.MatchResult (CombinedParser msg))
         matchResults =
             (optionsParsers
                 |> List.map (OptionsParser.map UserParser)
@@ -129,6 +133,7 @@ uniqueReasons reasons =
         |> List.foldl
             (\reason ( seen, acc ) ->
                 let
+                    key : String
                     key =
                         reasonToKey reason
                 in
@@ -210,11 +215,13 @@ aggregateNoMatchReasons matchResults =
                                 []
                     )
 
+        unexpectedOptionReasons : List MatchResult.NoMatchReason
         unexpectedOptionReasons =
             commonUnexpectedOptions
                 |> Set.toList
                 |> List.map UnexpectedOption
 
+        otherReasons : List MatchResult.NoMatchReason
         otherReasons =
             allNoMatchReasons
                 |> List.filter
@@ -279,6 +286,7 @@ No lossy argv translation — each parser's jsonGrabber decodes directly from th
 tryJson : List (OptionsParser.OptionsParser msg builderState) -> Json.Decode.Value -> MatchResult msg
 tryJson optionsParsers blob =
     let
+        matchResults : List (MatchResult.MatchResult msg)
         matchResults =
             optionsParsers
                 |> List.map (OPInternal.tryMatchJson blob)

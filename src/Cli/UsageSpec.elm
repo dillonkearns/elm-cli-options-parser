@@ -199,9 +199,11 @@ name usageSpec =
 synopsis : ColorMode -> String -> { optionsParser | usageSpecs : List UsageSpec, description : Maybe String, subCommand : Maybe String } -> String
 synopsis colorMode programName { usageSpecs, description, subCommand } =
     let
+        specStrings : List String
         specStrings =
             usageSpecs |> List.map (specToSynopsis colorMode)
 
+        allParts : List String
         allParts =
             case subCommand of
                 Just sub ->
@@ -221,16 +223,19 @@ synopsis colorMode programName { usageSpecs, description, subCommand } =
 detailedHelp : ColorMode -> String -> { optionsParser | usageSpecs : List UsageSpec, description : Maybe String, subCommand : Maybe String } -> String
 detailedHelp colorMode programName ({ usageSpecs, description } as optionsParser) =
     let
+        usageLine : String
         usageLine =
             Cli.Style.applyBold (useColor colorMode) "Usage:"
                 ++ " "
                 ++ synopsisLine colorMode programName optionsParser
 
+        descriptionSection : String
         descriptionSection =
             description
                 |> Maybe.map (\doc -> "\n\n" ++ doc)
                 |> Maybe.withDefault ""
 
+        optionsWithDescriptions : List ( String, String )
         optionsWithDescriptions =
             usageSpecs
                 |> List.filterMap
@@ -264,35 +269,44 @@ detailedHelp colorMode programName ({ usageSpecs, description } as optionsParser
                                         )
                     )
 
+        optionsSection : String
         optionsSection =
             if List.isEmpty optionsWithDescriptions then
                 ""
 
             else
                 let
+                    maxOptionLength : Int
                     maxOptionLength =
                         optionsWithDescriptions
                             |> List.map (Tuple.first >> Ansi.String.width)
                             |> List.maximum
                             |> Maybe.withDefault 0
 
+                    padding : String -> String
                     padding optionStr =
                         String.repeat (maxOptionLength - Ansi.String.width optionStr + 3) " "
 
+                    descColumnStart : Int
                     descColumnStart =
                         2 + maxOptionLength + 3
 
+                    descMaxWidth : Int
                     descMaxWidth =
                         80 - descColumnStart
 
+                    continuationPad : String
                     continuationPad =
                         String.repeat descColumnStart " "
 
+                    wrapAndIndentDesc : String -> String
                     wrapAndIndentDesc desc =
                         let
+                            wrappedLines : List String
                             wrappedLines =
                                 wrapText (max 20 descMaxWidth) desc
 
+                            indentedLines : List String
                             indentedLines =
                                 case wrappedLines of
                                     [] ->
@@ -303,6 +317,7 @@ detailedHelp colorMode programName ({ usageSpecs, description } as optionsParser
                         in
                         String.join "\n" indentedLines
 
+                    formatOption : ( String, String ) -> String
                     formatOption ( optionStr, desc ) =
                         "  " ++ optionStr ++ padding optionStr ++ wrapAndIndentDesc desc
                 in
@@ -322,9 +337,11 @@ detailedHelp colorMode programName ({ usageSpecs, description } as optionsParser
 synopsisLine : ColorMode -> String -> { optionsParser | usageSpecs : List UsageSpec, description : Maybe String, subCommand : Maybe String } -> String
 synopsisLine colorMode programName { usageSpecs, subCommand } =
     let
+        specStrings : List String
         specStrings =
             usageSpecs |> List.map (specToSynopsis colorMode)
 
+        allParts : List String
         allParts =
             case subCommand of
                 Just sub ->
@@ -333,6 +350,7 @@ synopsisLine colorMode programName { usageSpecs, subCommand } =
                 Nothing ->
                     specStrings
 
+        prefix : String
         prefix =
             Cli.Style.applyBold (useColor colorMode) programName
     in
@@ -366,6 +384,7 @@ specToSynopsis colorMode spec =
 
         Operand operandName mutuallyExclusiveValues occurences _ ->
             let
+                positionalArgSummary : String
                 positionalArgSummary =
                     mutuallyExclusiveValues
                         |> Maybe.map mutuallyExclusiveSynopsis
@@ -395,6 +414,7 @@ mutuallyExclusiveSynopsis (MutuallyExclusiveValues values) =
 optionSynopsisStyled : ColorMode -> Occurences -> FlagOrKeywordArg -> Maybe MutuallyExclusiveValues -> String
 optionSynopsisStyled colorMode occurences option maybeMutuallyExclusiveValues =
     let
+        styledOption : String
         styledOption =
             case option of
                 Flag flagName ->
@@ -508,6 +528,7 @@ wrapParts maxWidth indent prefix parts =
 
         first :: rest ->
             let
+                firstLine : String
                 firstLine =
                     prefix ++ " " ++ first
             in
@@ -523,6 +544,7 @@ wrapPartsHelper maxWidth indent parts currentLine accLines =
 
         part :: rest ->
             let
+                candidate : String
                 candidate =
                     currentLine ++ " " ++ part
             in
@@ -553,6 +575,7 @@ wrapParagraph maxWidth paragraph =
 
     else
         let
+            words : List String
             words =
                 String.words paragraph
         in
@@ -573,6 +596,7 @@ wrapWordsHelper maxWidth words currentLine accLines =
 
         word :: rest ->
             let
+                candidate : String
                 candidate =
                     currentLine ++ " " ++ word
             in

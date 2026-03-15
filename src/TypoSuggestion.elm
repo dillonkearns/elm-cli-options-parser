@@ -63,6 +63,7 @@ name typoSuggestion =
 getSuggestions : List OptionsParser -> String -> List TypoSuggestion
 getSuggestions optionsParsers unexpectedOption =
     let
+        something : String -> String -> Int
         something needle hay =
             Fuzzy.match [] [] needle hay |> .score
     in

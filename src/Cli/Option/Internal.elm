@@ -240,6 +240,7 @@ requiredPositionalArgGrabber operandDescription { operands, operandsSoFar } =
 optionalPositionalArgGrabber : DataGrabber (Maybe String)
 optionalPositionalArgGrabber flagsAndOperands =
     let
+        operandsSoFar : Int
         operandsSoFar =
             UsageSpec.operandCount flagsAndOperands.usageSpecs - 1
     in

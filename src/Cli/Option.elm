@@ -169,6 +169,7 @@ in the [`examples`](https://github.com/dillonkearns/elm-cli-options-parser/tree/
 validate : (to -> Validate.ValidationResult) -> Option from to builderState -> Option from to builderState
 validate validateFunction (Option option) =
     let
+        optionName : String
         optionName =
             UsageSpec.name option.usageSpec
 
@@ -604,6 +605,7 @@ in the [`examples`](https://github.com/dillonkearns/elm-cli-options-parser/tree/
 validateMap : (to -> Result String toMapped) -> Option from to builderState -> Option from toMapped builderState
 validateMap mapFn ((Option optionRecord) as option) =
     let
+        optionName : String
         optionName =
             UsageSpec.name optionRecord.usageSpec
     in

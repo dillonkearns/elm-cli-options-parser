@@ -79,6 +79,7 @@ mapProcessingError mapFunction (Decoder function) =
 mapValidationErrors : (to -> Maybe ValidationError) -> Decoder from to -> Decoder from to
 mapValidationErrors addValidationErrors (Decoder function) =
     let
+        something : to -> List ValidationError
         something value =
             case addValidationErrors value of
                 Just validationError ->

@@ -364,6 +364,7 @@ init options flags =
         matchResult =
             run options.config flags.argv flags.versionMessage (parseColorMode flags.colorMode)
 
+        cmd : Cmd msg
         cmd =
             case matchResult of
                 SystemMessage exitStatus message ->
@@ -434,6 +435,7 @@ run : Config msg -> List String -> String -> ColorMode -> RunResult msg
 run (Config { optionsParsers }) argv versionMessage colorMode =
     let
         -- Check for JSON input mode: a single arg that's JSON with $cli as an object
+        maybeJsonBlob : Maybe Json.Decode.Value
         maybeJsonBlob =
             case argv |> List.drop 2 of
                 [ singleArg ] ->
@@ -455,9 +457,11 @@ run (Config { optionsParsers }) argv versionMessage colorMode =
 
         Nothing ->
             let
+                errorMessage : String
                 errorMessage =
                     "TODO - show error message explaining that user needs to pass unmodified `process.argv` from node here."
 
+                programName : String
                 programName =
                     case argv of
                         _ :: programPath :: _ ->
@@ -478,12 +482,14 @@ run (Config { optionsParsers }) argv versionMessage colorMode =
 runCliMode : List (OptionsParser msg BuilderState.NoMoreOptions) -> List String -> String -> String -> ColorMode -> RunResult msg
 runCliMode optionsParsers argv programName versionMessage colorMode =
     let
+        matchResult : Cli.LowLevel.MatchResult msg
         matchResult =
             Cli.LowLevel.try optionsParsers argv
     in
     case matchResult of
         Cli.LowLevel.NoMatch reasons ->
             let
+                parserInfo : List TypoSuggestion.OptionsParser
                 parserInfo =
                     optionsParsers
                         |> List.map
@@ -493,6 +499,7 @@ runCliMode optionsParsers argv programName versionMessage colorMode =
                                 }
                             )
 
+                availableSubCommands : List String
                 availableSubCommands =
                     optionsParsers
                         |> List.filterMap OptionsParser.getSubCommand
@@ -637,6 +644,7 @@ for JSON input mode.
 toJsonSchema : String -> Config msg -> Encode.Value
 toJsonSchema programName (Config { optionsParsers }) =
     let
+        baseSchema : Encode.Value
         baseSchema =
             case optionsParsers of
                 [ singleParser ] ->
@@ -655,28 +663,35 @@ toJsonSchema programName (Config { optionsParsers }) =
 parserToJsonSchemaFromTsTypes : String -> OptionsParser msg BuilderState.NoMoreOptions -> Encode.Value
 parserToJsonSchemaFromTsTypes programName parser =
     let
+        specs : List UsageSpec
         specs =
             OptionsParser.getUsageSpecs parser
 
+        tsTypes : List ( String, TsJson.Type.Type )
         tsTypes =
             OPInternal.getTsTypes parser
 
+        specsWithTypes : List ( UsageSpec, ( String, TsJson.Type.Type ) )
         specsWithTypes =
             List.map2 Tuple.pair specs tsTypes
 
+        usageSynopsis : String
         usageSynopsis =
             OptionsParser.synopsis False programName parser
                 |> String.trim
 
         -- Top-level properties: keyword args, keyword lists, flags (with x-cli-kind)
+        topLevelProperties : List ( String, Encode.Value )
         topLevelProperties =
             specsWithTypes |> List.filterMap toFlatProperty
 
         -- Required top-level property names
+        requiredTopLevel : List String
         requiredTopLevel =
             specsWithTypes |> List.filterMap toRequiredTopLevelName
 
         -- Subcommand → $cli.subcommand
+        subCommandProp : List ( String, Encode.Value )
         subCommandProp =
             case OptionsParser.getSubCommand parser of
                 Just subName ->
@@ -692,6 +707,7 @@ parserToJsonSchemaFromTsTypes programName parser =
                     []
 
         -- Positional args → $cli.positional
+        positionalSpecs : List ( UsageSpec, TsJson.Type.Type, Occurences )
         positionalSpecs =
             specsWithTypes
                 |> List.filterMap
@@ -705,6 +721,7 @@ parserToJsonSchemaFromTsTypes programName parser =
                     )
 
         -- Rest args → $cli.positional.items
+        restArgSpec : Maybe ( UsageSpec, TsJson.Type.Type )
         restArgSpec =
             specsWithTypes
                 |> List.filterMap
@@ -718,17 +735,21 @@ parserToJsonSchemaFromTsTypes programName parser =
                     )
                 |> List.head
 
+        hasPositionalArgs : Bool
         hasPositionalArgs =
             not (List.isEmpty positionalSpecs) || restArgSpec /= Nothing
 
         -- Build $cli schema (only subcommand + positional)
+        cliSubProperties : List ( String, Encode.Value )
         cliSubProperties =
             subCommandProp ++ positionalSchemaProperty positionalSpecs restArgSpec
 
+        hasRequiredPositionalArgs : Bool
         hasRequiredPositionalArgs =
             positionalSpecs
                 |> List.any (\( _, _, occurences ) -> occurences == Required)
 
+        cliRequired : List String
         cliRequired =
             (case OptionsParser.getSubCommand parser of
                 Just _ ->
@@ -744,6 +765,7 @@ parserToJsonSchemaFromTsTypes programName parser =
                         []
                    )
 
+        cliSchema : Encode.Value
         cliSchema =
             Encode.object
                 ([ ( "type", Encode.string "object" )
@@ -764,13 +786,16 @@ parserToJsonSchemaFromTsTypes programName parser =
                 )
 
         -- Build description with invocation instructions
+        description : String
         description =
             buildSchemaDescription usageSynopsis hasPositionalArgs
 
         -- Assemble full schema
+        allProperties : List ( String, Encode.Value )
         allProperties =
             topLevelProperties ++ [ ( "$cli", cliSchema ) ]
 
+        allRequired : List String
         allRequired =
             requiredTopLevel ++ [ "$cli" ]
     in
@@ -792,14 +817,17 @@ positionalSchemaProperty positionalArgs maybeRestArgs =
 
     else
         let
+            fixedItemSchemas : List Encode.Value
             fixedItemSchemas =
                 positionalArgs
                     |> List.map
                         (\( spec, tsType, _ ) ->
                             let
+                                baseSchema : Encode.Value
                                 baseSchema =
                                     stripSchemaKey (TsJson.Type.toJsonSchema tsType)
 
+                                desc : String
                                 desc =
                                     case usageSpecDescription spec of
                                         Just d ->
@@ -811,16 +839,19 @@ positionalSchemaProperty positionalArgs maybeRestArgs =
                             appendJsonFields [ ( "description", Encode.string desc ) ] baseSchema
                         )
 
+            requiredCount : Int
             requiredCount =
                 positionalArgs
                     |> List.filter (\( _, _, occ ) -> occ == Required)
                     |> List.length
 
+            restItemSchema : Maybe Encode.Value
             restItemSchema =
                 maybeRestArgs
                     |> Maybe.andThen
                         (\( spec, tsType ) ->
                             let
+                                arraySchema : Encode.Value
                                 arraySchema =
                                     stripSchemaKey (TsJson.Type.toJsonSchema tsType)
                             in
@@ -837,6 +868,7 @@ positionalSchemaProperty positionalArgs maybeRestArgs =
                                     Nothing
                         )
 
+            itemsField : List ( String, Encode.Value )
             itemsField =
                 if List.isEmpty fixedItemSchemas then
                     restItemSchema
@@ -846,6 +878,7 @@ positionalSchemaProperty positionalArgs maybeRestArgs =
                 else
                     [ ( "items", Encode.list identity fixedItemSchemas ) ]
 
+            additionalItemsField : List ( String, Encode.Value )
             additionalItemsField =
                 if List.isEmpty fixedItemSchemas then
                     []
@@ -858,6 +891,7 @@ positionalSchemaProperty positionalArgs maybeRestArgs =
                         Nothing ->
                             [ ( "additionalItems", Encode.bool False ) ]
 
+            schemaFields : List ( String, Encode.Value )
             schemaFields =
                 [ ( "type", Encode.string "array" )
                 , ( "description", Encode.string "Positional arguments, passed in order (e.g., mytool <source> <dest>)" )
@@ -880,6 +914,7 @@ Returns Nothing for positional args and rest args (those go in $cli).
 toFlatProperty : ( UsageSpec, ( String, TsJson.Type.Type ) ) -> Maybe ( String, Encode.Value )
 toFlatProperty ( spec, ( optionName, tsType ) ) =
     let
+        maybeCliKind : Maybe String
         maybeCliKind =
             case spec of
                 UsageSpec.FlagOrKeywordArg (UsageSpec.KeywordArg _ _) _ ZeroOrMore _ ->
@@ -897,9 +932,11 @@ toFlatProperty ( spec, ( optionName, tsType ) ) =
     case maybeCliKind of
         Just kind ->
             let
+                strippedSchema : Encode.Value
                 strippedSchema =
                     stripSchemaKey (TsJson.Type.toJsonSchema tsType)
 
+                extraFields : List ( String, Encode.Value )
                 extraFields =
                     ( "x-cli-kind", Encode.string kind )
                         :: (case usageSpecDescription spec of
@@ -933,6 +970,7 @@ toRequiredTopLevelName ( spec, ( optionName, _ ) ) =
 buildSchemaDescription : String -> Bool -> String
 buildSchemaDescription usageSynopsis hasPositionalArgs =
     let
+        positionalNote : String
         positionalNote =
             if hasPositionalArgs then
                 "Positional arguments are passed in order via the `$cli.positional` array."
@@ -1023,6 +1061,7 @@ formatNoMatchReasons :
 formatNoMatchReasons colorMode programName parserInfo availableSubCommands optionsParsers reasons =
     let
         -- Separate unexpected options from other reasons
+        unexpectedOptions : List String
         unexpectedOptions =
             reasons
                 |> List.filterMap
@@ -1043,6 +1082,7 @@ formatNoMatchReasons colorMode programName parserInfo availableSubCommands optio
 
     else
         let
+            otherReasons : List NoMatchReason
             otherReasons =
                 reasons
                     |> List.filter
@@ -1060,6 +1100,7 @@ formatNoMatchReasons colorMode programName parserInfo availableSubCommands optio
             -- These should take priority over "subcommand not found" errors
             -- Note: ExtraOperand is NOT included here because it's often from
             -- system parsers (help/version) and isn't specific enough
+            missingArgErrors : List NoMatchReason
             missingArgErrors =
                 otherReasons
                     |> List.filter
@@ -1082,6 +1123,7 @@ formatNoMatchReasons colorMode programName parserInfo availableSubCommands optio
 
             [] ->
                 let
+                    wrongSubCommandReasons : List String
                     wrongSubCommandReasons =
                         otherReasons
                             |> List.filterMap
@@ -1099,6 +1141,7 @@ formatNoMatchReasons colorMode programName parserInfo availableSubCommands optio
                     -- But first check: is the "wrong" command actually a valid subcommand?
                     -- If so, the error is something else (like ExtraOperand)
                     let
+                        unknownCommands : List String
                         unknownCommands =
                             wrongSubCommandReasons
                                 |> List.filter (\cmd -> not (List.member cmd availableSubCommands))
@@ -1116,6 +1159,7 @@ formatNoMatchReasons colorMode programName parserInfo availableSubCommands optio
                         Nothing ->
                             let
                                 -- ExtraOperand is only relevant if there are no subcommand-related issues
+                                extraOperandErrors : List NoMatchReason
                                 extraOperandErrors =
                                     otherReasons
                                         |> List.filter
@@ -1139,9 +1183,11 @@ formatNoMatchReasons colorMode programName parserInfo availableSubCommands optio
                 else
                     let
                         -- Check for subcommand-related errors
+                        hasSubCommandParsers : Bool
                         hasSubCommandParsers =
                             not (List.isEmpty availableSubCommands)
 
+                        missingSubCommandReasons : List NoMatchReason
                         missingSubCommandReasons =
                             otherReasons
                                 |> List.filterMap
@@ -1246,6 +1292,7 @@ formatFallbackMessage colorMode programName optionsParsers =
 formatJsonNoMatchReasons : List NoMatchReason -> String
 formatJsonNoMatchReasons reasons =
     let
+        unexpectedFieldReasons : List String
         unexpectedFieldReasons =
             reasons
                 |> List.filterMap
@@ -1268,6 +1315,7 @@ formatJsonNoMatchReasons reasons =
 
             else
                 let
+                    missingFieldReasons : List String
                     missingFieldReasons =
                         reasons
                             |> List.filterMap

@@ -164,6 +164,7 @@ getUsageSpecs (OPInternal.OptionsParser { usageSpecs }) =
 synopsis : Bool -> String -> OptionsParser decodesTo builderState -> String
 synopsis useColor programName optionsParser =
     let
+        colorMode : Cli.ColorMode.ColorMode
         colorMode =
             if useColor then
                 Cli.ColorMode.WithColor
@@ -182,6 +183,7 @@ Generate detailed help text with Usage line and Options section.
 detailedHelp : Bool -> String -> OptionsParser decodesTo builderState -> String
 detailedHelp useColor programName optionsParser =
     let
+        colorMode : Cli.ColorMode.ColorMode
         colorMode =
             if useColor then
                 Cli.ColorMode.WithColor
@@ -206,6 +208,7 @@ getSubCommand (OPInternal.OptionsParser { subCommand }) =
 tryMatch : List String -> OptionsParser cliOptions builderState -> Cli.OptionsParser.MatchResult.MatchResult cliOptions
 tryMatch argv ((OPInternal.OptionsParser { usageSpecs, subCommand }) as optionsParser) =
     let
+        flagsAndOperands : Result { subCommandError : Cli.Decode.MatchErrorDetail, options : List ParsedOption } { options : List ParsedOption, operands : List String, usageSpecs : List UsageSpec }
         flagsAndOperands =
             Tokenizer.flagsAndOperands usageSpecs argv
                 |> (\record ->
@@ -276,6 +279,7 @@ tryMatch argv ((OPInternal.OptionsParser { usageSpecs, subCommand }) as optionsP
         Err { subCommandError, options } ->
             -- Include both the subcommand error AND any unexpected options
             let
+                unexpectedOptionReasons : List Cli.OptionsParser.MatchResult.NoMatchReason
                 unexpectedOptionReasons =
                     unexpectedOptions_ optionsParser options
                         |> List.map Cli.OptionsParser.MatchResult.UnexpectedOption
@@ -355,6 +359,7 @@ failIfUnexpectedOptions ((OPInternal.OptionsParser ({ decoder } as optionsParser
             | decoder =
                 \flagsAndOperands ->
                     let
+                        unexpectedOptions : List String
                         unexpectedOptions =
                             unexpectedOptions_ fullOptionsParser flagsAndOperands.options
                     in

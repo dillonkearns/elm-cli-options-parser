@@ -48,13 +48,16 @@ Normalizes the `$cli` object into flat fields before passing to jsonGrabber.
 tryMatchJson : Json.Decode.Value -> OptionsParser cliOptions builderState -> Cli.OptionsParser.MatchResult.MatchResult cliOptions
 tryMatchJson blob (OptionsParser { jsonGrabber, usageSpecs, subCommand }) =
     let
+        normalizedBlob : Json.Decode.Value
         normalizedBlob =
             normalizeCliJson usageSpecs blob
 
+        baseMatchResult : Cli.OptionsParser.MatchResult.MatchResult cliOptions
         baseMatchResult =
             jsonGrabber normalizedBlob
                 |> jsonGrabberResultToMatchResult
 
+        structuralTypeValidationErrors : List Cli.Decode.ValidationError
         structuralTypeValidationErrors =
             subcommandJsonTypeValidationErrors subCommand blob
                 ++ positionalJsonTypeValidationErrors usageSpecs blob baseMatchResult
@@ -65,9 +68,11 @@ tryMatchJson blob (OptionsParser { jsonGrabber, usageSpecs, subCommand }) =
 
         [] ->
             let
+                unexpectedShapeErrors : List Cli.OptionsParser.MatchResult.NoMatchReason
                 unexpectedShapeErrors =
                     rawJsonShapeErrors subCommand usageSpecs blob
 
+                positionalCountErrors : List Cli.OptionsParser.MatchResult.NoMatchReason
                 positionalCountErrors =
                     extraJsonPositionalErrors usageSpecs blob baseMatchResult
             in
@@ -142,6 +147,7 @@ matchErrorDetailToNoMatchReason detail =
 normalizeCliJson : List UsageSpec -> Json.Decode.Value -> Json.Decode.Value
 normalizeCliJson usageSpecs blob =
     let
+        topLevelFields : List ( String, Json.Decode.Value )
         topLevelFields =
             case Json.Decode.decodeValue (Json.Decode.keyValuePairs Json.Decode.value) blob of
                 Ok pairs ->
@@ -150,12 +156,15 @@ normalizeCliJson usageSpecs blob =
                 Err _ ->
                     []
 
+        topLevelFieldNames : List String
         topLevelFieldNames =
             List.map Tuple.first topLevelFields
 
+        maybeCli : Result Json.Decode.Error Json.Decode.Value
         maybeCli =
             Json.Decode.decodeValue (Json.Decode.field "$cli" Json.Decode.value) blob
 
+        subcommandField : List ( String, Encode.Value )
         subcommandField =
             case maybeCli of
                 Ok cliValue ->
@@ -169,22 +178,26 @@ normalizeCliJson usageSpecs blob =
                 Err _ ->
                     []
 
+        positionalFields : List ( String, Json.Decode.Value )
         positionalFields =
             case maybeCli of
                 Ok cliValue ->
                     case Json.Decode.decodeValue (Json.Decode.field "positional" (Json.Decode.list Json.Decode.value)) cliValue of
                         Ok positionalValues ->
                             let
+                                operandSpecs : List UsageSpec
                                 operandSpecs =
                                     usageSpecs
                                         |> List.filter UsageSpec.isOperand
 
+                                fixedFields : List ( String, Json.Decode.Value )
                                 fixedFields =
                                     List.map2
                                         (\spec val -> ( UsageSpec.name spec, val ))
                                         operandSpecs
                                         positionalValues
 
+                                restArgsName : Maybe String
                                 restArgsName =
                                     usageSpecs
                                         |> List.filterMap
@@ -198,6 +211,7 @@ normalizeCliJson usageSpecs blob =
                                             )
                                         |> List.head
 
+                                restFields : List ( String, Encode.Value )
                                 restFields =
                                     case restArgsName of
                                         Just rName ->
@@ -218,6 +232,7 @@ normalizeCliJson usageSpecs blob =
                 Err _ ->
                     []
 
+        flagDefaults : List ( String, Encode.Value )
         flagDefaults =
             usageSpecs
                 |> List.filterMap
@@ -240,19 +255,23 @@ normalizeCliJson usageSpecs blob =
 rawJsonShapeErrors : Maybe String -> List UsageSpec -> Json.Decode.Value -> List Cli.OptionsParser.MatchResult.NoMatchReason
 rawJsonShapeErrors subCommand usageSpecs blob =
     let
+        topLevelFields : List ( String, Json.Decode.Value )
         topLevelFields =
             jsonObjectFields blob
 
+        cliValue : Maybe Json.Decode.Value
         cliValue =
             Json.Decode.decodeValue (Json.Decode.field "$cli" Json.Decode.value) blob
                 |> Result.toMaybe
 
+        unexpectedTopLevelFields : List Cli.OptionsParser.MatchResult.NoMatchReason
         unexpectedTopLevelFields =
             topLevelFields
                 |> List.map Tuple.first
                 |> List.filter (\fieldName -> not (List.member fieldName (allowedTopLevelFieldNames usageSpecs)))
                 |> List.map Cli.OptionsParser.MatchResult.UnexpectedOption
 
+        unexpectedCliFields : List Cli.OptionsParser.MatchResult.NoMatchReason
         unexpectedCliFields =
             case cliValue of
                 Just actualCliValue ->
