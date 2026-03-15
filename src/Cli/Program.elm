@@ -93,6 +93,7 @@ import Cli.OptionsParser.BuilderState as BuilderState
 import Cli.OptionsParser.MatchResult exposing (NoMatchReason(..))
 import Cli.Style
 import Cli.UsageSpec as UsageSpec exposing (UsageSpec)
+import Internal.OptionsParser as OPInternal
 import Json.Decode
 import Json.Encode as Encode
 import List.Extra
@@ -658,7 +659,7 @@ parserToJsonSchemaFromTsTypes programName parser =
             OptionsParser.getUsageSpecs parser
 
         tsTypes =
-            OptionsParser.getTsTypes parser
+            OPInternal.getTsTypes parser
 
         specsWithTypes =
             List.map2 Tuple.pair specs tsTypes

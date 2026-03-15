@@ -5,6 +5,7 @@ import Cli.Decode
 import Cli.OptionsParser as OptionsParser exposing (OptionsParser)
 import Cli.OptionsParser.BuilderState as BuilderState
 import Cli.OptionsParser.MatchResult as MatchResult exposing (NoMatchReason(..))
+import Internal.OptionsParser as OPInternal
 import Json.Decode
 import List.Extra
 import Set exposing (Set)
@@ -280,7 +281,7 @@ tryJson optionsParsers blob =
     let
         matchResults =
             optionsParsers
-                |> List.map (OptionsParser.tryMatchJson blob)
+                |> List.map (OPInternal.tryMatchJson blob)
     in
     matchResults
         |> List.map MatchResult.matchResultToMaybe
