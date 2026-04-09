@@ -170,11 +170,14 @@ distance config needle hay =
         mPenalty =
             Tuple.first sorted * config.movePenalty
 
+        accumulatedLength =
+            accumulated |> List.length
+
         hPenalty =
-            (String.length hay - (accumulated |> List.length)) * config.addPenalty
+            (String.length hay - accumulatedLength) * config.addPenalty
 
         nPenalty =
-            (String.length needle - (accumulated |> List.length)) * config.removePenalty
+            (String.length needle - accumulatedLength) * config.removePenalty
 
         accumulateInsertPenalty elem result =
             case result of
