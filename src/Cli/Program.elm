@@ -732,7 +732,7 @@ parserToJsonSchemaFromTsTypes includeBoilerplate programName parser =
         restArgSpec : Maybe ( UsageSpec, TsJson.Type.Type )
         restArgSpec =
             specsWithTypes
-                |> List.filterMap
+                |> List.Extra.findMap
                     (\( spec, ( _, tsType ) ) ->
                         case spec of
                             UsageSpec.RestArgs _ _ ->
@@ -741,7 +741,6 @@ parserToJsonSchemaFromTsTypes includeBoilerplate programName parser =
                             _ ->
                                 Nothing
                     )
-                |> List.head
 
         -- Build $cli schema (only subcommand + positional)
         cliSubProperties : List ( String, Encode.Value )
@@ -855,8 +854,7 @@ positionalSchemaProperty positionalArgs maybeRestArgs =
             requiredCount : Int
             requiredCount =
                 positionalArgs
-                    |> List.filter (\( _, _, occ ) -> occ == Required)
-                    |> List.length
+                    |> List.Extra.count (\( _, _, occ ) -> occ == Required)
 
             restItemSchema : Maybe Encode.Value
             restItemSchema =
@@ -1143,10 +1141,10 @@ formatNoMatchReasons colorMode programName parserInfo availableSubCommands optio
             -- These should take priority over "subcommand not found" errors
             -- Note: ExtraOperand is NOT included here because it's often from
             -- system parsers (help/version) and isn't specific enough
-            missingArgErrors : List NoMatchReason
-            missingArgErrors =
+            missingArgError : Maybe NoMatchReason
+            missingArgError =
                 otherReasons
-                    |> List.filter
+                    |> List.Extra.find
                         (\reason ->
                             case reason of
                                 MissingRequiredPositionalArg _ ->
@@ -1159,12 +1157,12 @@ formatNoMatchReasons colorMode programName parserInfo availableSubCommands optio
                                     False
                         )
         in
-        case missingArgErrors of
-            reason :: _ ->
+        case missingArgError of
+            Just reason ->
                 -- A parser matched the structure but is missing a required argument
                 formatSingleReason colorMode reason programName optionsParsers
 
-            [] ->
+            Nothing ->
                 let
                     wrongSubCommandReasons : List String
                     wrongSubCommandReasons =
@@ -1184,12 +1182,12 @@ formatNoMatchReasons colorMode programName parserInfo availableSubCommands optio
                     -- But first check: is the "wrong" command actually a valid subcommand?
                     -- If so, the error is something else (like ExtraOperand)
                     let
-                        unknownCommands : List String
-                        unknownCommands =
+                        maybeUnknownCommand : Maybe String
+                        maybeUnknownCommand =
                             wrongSubCommandReasons
-                                |> List.filter (\cmd -> not (List.member cmd availableSubCommands))
+                                |> List.Extra.find (\cmd -> not (List.member cmd availableSubCommands))
                     in
-                    case List.head unknownCommands of
+                    case maybeUnknownCommand of
                         Just unknownCommand ->
                             applyRed colorMode "Unknown command: "
                                 ++ "`"
@@ -1202,10 +1200,10 @@ formatNoMatchReasons colorMode programName parserInfo availableSubCommands optio
                         Nothing ->
                             let
                                 -- ExtraOperand is only relevant if there are no subcommand-related issues
-                                extraOperandErrors : List NoMatchReason
-                                extraOperandErrors =
+                                hasExtraOperandErrors : Bool
+                                hasExtraOperandErrors =
                                     otherReasons
-                                        |> List.filter
+                                        |> List.any
                                             (\reason ->
                                                 case reason of
                                                     ExtraOperand ->
@@ -1217,7 +1215,7 @@ formatNoMatchReasons colorMode programName parserInfo availableSubCommands optio
                             in
                             -- The command was valid but something else went wrong
                             -- Check for ExtraOperand
-                            if not (List.isEmpty extraOperandErrors) then
+                            if hasExtraOperandErrors then
                                 formatSingleReason colorMode ExtraOperand programName optionsParsers
 
                             else
@@ -1335,10 +1333,10 @@ formatFallbackMessage colorMode programName optionsParsers =
 formatJsonNoMatchReasons : List NoMatchReason -> String
 formatJsonNoMatchReasons reasons =
     let
-        unexpectedFieldReasons : List String
-        unexpectedFieldReasons =
+        unexpectedFieldReason : Maybe String
+        unexpectedFieldReason =
             reasons
-                |> List.filterMap
+                |> List.Extra.findMap
                     (\reason ->
                         case reason of
                             UnexpectedOption name ->
@@ -1348,38 +1346,29 @@ formatJsonNoMatchReasons reasons =
                                 Nothing
                     )
     in
-    case unexpectedFieldReasons of
-        first :: _ ->
+    case unexpectedFieldReason of
+        Just first ->
             first
 
-        [] ->
+        Nothing ->
             if List.member ExtraOperand reasons then
                 "Too many positional arguments in \"$cli.positional\"."
 
             else
-                let
-                    missingFieldReasons : List String
-                    missingFieldReasons =
-                        reasons
-                            |> List.filterMap
-                                (\reason ->
-                                    case reason of
-                                        MissingRequiredKeywordArg { name } ->
-                                            Just ("Missing required field: \"" ++ name ++ "\"")
+                reasons
+                    |> List.Extra.findMap
+                        (\reason ->
+                            case reason of
+                                MissingRequiredKeywordArg { name } ->
+                                    Just ("Missing required field: \"" ++ name ++ "\"")
 
-                                        MissingRequiredPositionalArg { name } ->
-                                            Just ("Missing required field: \"" ++ name ++ "\"")
+                                MissingRequiredPositionalArg { name } ->
+                                    Just ("Missing required field: \"" ++ name ++ "\"")
 
-                                        MissingExpectedFlag { name } ->
-                                            Just ("Missing required field: \"" ++ name ++ "\"")
+                                MissingExpectedFlag { name } ->
+                                    Just ("Missing required field: \"" ++ name ++ "\"")
 
-                                        _ ->
-                                            Nothing
-                                )
-                in
-                case missingFieldReasons of
-                    first :: _ ->
-                        first
-
-                    [] ->
-                        "No matching command found for JSON input."
+                                _ ->
+                                    Nothing
+                        )
+                    |> Maybe.withDefault "No matching command found for JSON input."

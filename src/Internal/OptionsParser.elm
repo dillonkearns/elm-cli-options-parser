@@ -12,6 +12,7 @@ import Cli.OptionsParser.MatchResult
 import Cli.UsageSpec as UsageSpec exposing (UsageSpec)
 import Json.Decode
 import Json.Encode as Encode
+import List.Extra
 import Tokenizer exposing (ParsedOption)
 import TsJson.Type
 
@@ -200,7 +201,7 @@ normalizeCliJson usageSpecs blob =
                                 restArgsName : Maybe String
                                 restArgsName =
                                     usageSpecs
-                                        |> List.filterMap
+                                        |> List.Extra.findMap
                                             (\spec ->
                                                 case spec of
                                                     UsageSpec.RestArgs restName _ ->
@@ -209,7 +210,6 @@ normalizeCliJson usageSpecs blob =
                                                     _ ->
                                                         Nothing
                                             )
-                                        |> List.head
 
                                 restFields : List ( String, Encode.Value )
                                 restFields =
@@ -259,28 +259,25 @@ rawJsonShapeErrors subCommand usageSpecs blob =
         topLevelFields =
             jsonObjectFields blob
 
-        cliValue : Maybe Json.Decode.Value
+        cliValue : Result Json.Decode.Error Json.Decode.Value
         cliValue =
             Json.Decode.decodeValue (Json.Decode.field "$cli" Json.Decode.value) blob
-                |> Result.toMaybe
 
         unexpectedTopLevelFields : List Cli.OptionsParser.MatchResult.NoMatchReason
         unexpectedTopLevelFields =
             topLevelFields
-                |> List.map Tuple.first
-                |> List.filter (\fieldName -> not (List.member fieldName (allowedTopLevelFieldNames usageSpecs)))
-                |> List.map Cli.OptionsParser.MatchResult.UnexpectedOption
+                |> List.filter (\( fieldName, _ ) -> not (List.member fieldName (allowedTopLevelFieldNames usageSpecs)))
+                |> List.map (\( fieldName, _ ) -> Cli.OptionsParser.MatchResult.UnexpectedOption fieldName)
 
         unexpectedCliFields : List Cli.OptionsParser.MatchResult.NoMatchReason
         unexpectedCliFields =
             case cliValue of
-                Just actualCliValue ->
+                Ok actualCliValue ->
                     jsonObjectFields actualCliValue
-                        |> List.map Tuple.first
-                        |> List.filter (\fieldName -> not (List.member fieldName (allowedCliFieldNames subCommand usageSpecs)))
-                        |> List.map (\fieldName -> Cli.OptionsParser.MatchResult.UnexpectedOption ("$cli." ++ fieldName))
+                        |> List.filter (\( fieldName, _ ) -> not (List.member fieldName (allowedCliFieldNames subCommand usageSpecs)))
+                        |> List.map (\( fieldName, _ ) -> Cli.OptionsParser.MatchResult.UnexpectedOption ("$cli." ++ fieldName))
 
-                Nothing ->
+                Err _ ->
                     []
     in
     unexpectedTopLevelFields ++ unexpectedCliFields
@@ -353,9 +350,9 @@ extraJsonPositionalErrors usageSpecs blob baseMatchResult =
         []
 
     else
-        case Json.Decode.decodeValue (Json.Decode.field "$cli" (Json.Decode.field "positional" (Json.Decode.list Json.Decode.value))) blob of
-            Ok positionalValues ->
-                if List.length positionalValues > List.length (List.filter UsageSpec.isOperand usageSpecs) then
+        case Json.Decode.decodeValue (Json.Decode.field "$cli" (Json.Decode.field "positional" (Json.Decode.field "length" Json.Decode.int))) blob of
+            Ok positionalValuesCount ->
+                if positionalValuesCount > List.Extra.count UsageSpec.isOperand usageSpecs then
                     [ Cli.OptionsParser.MatchResult.ExtraOperand ]
 
                 else

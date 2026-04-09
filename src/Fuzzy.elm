@@ -17,6 +17,7 @@ module Fuzzy exposing
 
 -}
 
+import List.Extra
 import String
 
 
@@ -151,8 +152,7 @@ distance config needle hay =
                     String.indexes (String.fromChar c) hay
 
                 hayIndex =
-                    List.filter (\e -> not (List.member e indexList)) indexes
-                        |> List.head
+                    List.Extra.find (\e -> not (List.member e indexList)) indexes
             in
             case hayIndex of
                 Just v ->
@@ -170,11 +170,14 @@ distance config needle hay =
         mPenalty =
             Tuple.first sorted * config.movePenalty
 
+        accumulatedLength =
+            accumulated |> List.length
+
         hPenalty =
-            (String.length hay - (accumulated |> List.length)) * config.addPenalty
+            (String.length hay - accumulatedLength) * config.addPenalty
 
         nPenalty =
-            (String.length needle - (accumulated |> List.length)) * config.removePenalty
+            (String.length needle - accumulatedLength) * config.removePenalty
 
         accumulateInsertPenalty elem result =
             case result of

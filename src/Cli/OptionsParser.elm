@@ -147,6 +147,7 @@ import Cli.OptionsParser.MatchResult
 import Cli.UsageSpec as UsageSpec exposing (UsageSpec)
 import Internal.OptionsParser as OPInternal
 import Json.Decode
+import List.Extra
 import Occurences exposing (Occurences(..))
 import Tokenizer exposing (ParsedOption)
 import TsJson.Decode as TsDecode
@@ -324,11 +325,7 @@ expectedPositionalArgCountOrFail (OPInternal.OptionsParser ({ decoder, usageSpec
                 \({ operands } as stuff) ->
                     if
                         not (UsageSpec.hasRestArgs usageSpecs)
-                            && (operands |> List.length)
-                            > (usageSpecs
-                                |> List.filter UsageSpec.isOperand
-                                |> List.length
-                              )
+                            && (List.length operands > List.Extra.count UsageSpec.isOperand usageSpecs)
                     then
                         Cli.Decode.MatchError Cli.Decode.ExtraOperand |> Err
 
