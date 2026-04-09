@@ -1182,12 +1182,12 @@ formatNoMatchReasons colorMode programName parserInfo availableSubCommands optio
                     -- But first check: is the "wrong" command actually a valid subcommand?
                     -- If so, the error is something else (like ExtraOperand)
                     let
-                        unknownCommands : List String
-                        unknownCommands =
+                        maybeUnknownCommand : Maybe String
+                        maybeUnknownCommand =
                             wrongSubCommandReasons
-                                |> List.filter (\cmd -> not (List.member cmd availableSubCommands))
+                                |> List.Extra.find (\cmd -> not (List.member cmd availableSubCommands))
                     in
-                    case List.head unknownCommands of
+                    case maybeUnknownCommand of
                         Just unknownCommand ->
                             applyRed colorMode "Unknown command: "
                                 ++ "`"
