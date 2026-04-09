@@ -17,6 +17,7 @@ module Fuzzy exposing
 
 -}
 
+import List.Extra
 import String
 
 
@@ -151,8 +152,7 @@ distance config needle hay =
                     String.indexes (String.fromChar c) hay
 
                 hayIndex =
-                    List.filter (\e -> not (List.member e indexList)) indexes
-                        |> List.head
+                    List.Extra.find (\e -> not (List.member e indexList)) indexes
             in
             case hayIndex of
                 Just v ->
