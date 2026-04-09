@@ -1141,10 +1141,10 @@ formatNoMatchReasons colorMode programName parserInfo availableSubCommands optio
             -- These should take priority over "subcommand not found" errors
             -- Note: ExtraOperand is NOT included here because it's often from
             -- system parsers (help/version) and isn't specific enough
-            missingArgErrors : List NoMatchReason
-            missingArgErrors =
+            missingArgError : Maybe NoMatchReason
+            missingArgError =
                 otherReasons
-                    |> List.filter
+                    |> List.Extra.find
                         (\reason ->
                             case reason of
                                 MissingRequiredPositionalArg _ ->
@@ -1157,12 +1157,12 @@ formatNoMatchReasons colorMode programName parserInfo availableSubCommands optio
                                     False
                         )
         in
-        case missingArgErrors of
-            reason :: _ ->
+        case missingArgError of
+            Just reason ->
                 -- A parser matched the structure but is missing a required argument
                 formatSingleReason colorMode reason programName optionsParsers
 
-            [] ->
+            Nothing ->
                 let
                     wrongSubCommandReasons : List String
                     wrongSubCommandReasons =
