@@ -115,19 +115,18 @@ changeUsageSpec possibleValues usageSpec =
 operandCount : List UsageSpec -> Int
 operandCount usageSpecs =
     usageSpecs
-        |> List.filterMap
+        |> List.Extra.count
             (\spec ->
                 case spec of
                     FlagOrKeywordArg _ _ _ _ ->
-                        Nothing
+                        False
 
-                    Operand operandName _ _ _ ->
-                        Just operandName
+                    Operand _ _ _ _ ->
+                        True
 
                     RestArgs _ _ ->
-                        Nothing
+                        False
             )
-        |> List.length
 
 
 optionExists : List UsageSpec -> String -> Maybe FlagOrKeywordArg

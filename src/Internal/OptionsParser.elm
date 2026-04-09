@@ -12,6 +12,7 @@ import Cli.OptionsParser.MatchResult
 import Cli.UsageSpec as UsageSpec exposing (UsageSpec)
 import Json.Decode
 import Json.Encode as Encode
+import List.Extra
 import Tokenizer exposing (ParsedOption)
 import TsJson.Type
 
@@ -355,7 +356,7 @@ extraJsonPositionalErrors usageSpecs blob baseMatchResult =
     else
         case Json.Decode.decodeValue (Json.Decode.field "$cli" (Json.Decode.field "positional" (Json.Decode.list Json.Decode.value))) blob of
             Ok positionalValues ->
-                if List.length positionalValues > List.length (List.filter UsageSpec.isOperand usageSpecs) then
+                if List.length positionalValues > List.Extra.count UsageSpec.isOperand usageSpecs then
                     [ Cli.OptionsParser.MatchResult.ExtraOperand ]
 
                 else

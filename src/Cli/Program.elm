@@ -855,8 +855,7 @@ positionalSchemaProperty positionalArgs maybeRestArgs =
             requiredCount : Int
             requiredCount =
                 positionalArgs
-                    |> List.filter (\( _, _, occ ) -> occ == Required)
-                    |> List.length
+                    |> List.Extra.count (\( _, _, occ ) -> occ == Required)
 
             restItemSchema : Maybe Encode.Value
             restItemSchema =
