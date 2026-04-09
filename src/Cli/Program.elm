@@ -1355,29 +1355,20 @@ formatJsonNoMatchReasons reasons =
                 "Too many positional arguments in \"$cli.positional\"."
 
             else
-                let
-                    missingFieldReasons : List String
-                    missingFieldReasons =
-                        reasons
-                            |> List.filterMap
-                                (\reason ->
-                                    case reason of
-                                        MissingRequiredKeywordArg { name } ->
-                                            Just ("Missing required field: \"" ++ name ++ "\"")
+                reasons
+                    |> List.Extra.findMap
+                        (\reason ->
+                            case reason of
+                                MissingRequiredKeywordArg { name } ->
+                                    Just ("Missing required field: \"" ++ name ++ "\"")
 
-                                        MissingRequiredPositionalArg { name } ->
-                                            Just ("Missing required field: \"" ++ name ++ "\"")
+                                MissingRequiredPositionalArg { name } ->
+                                    Just ("Missing required field: \"" ++ name ++ "\"")
 
-                                        MissingExpectedFlag { name } ->
-                                            Just ("Missing required field: \"" ++ name ++ "\"")
+                                MissingExpectedFlag { name } ->
+                                    Just ("Missing required field: \"" ++ name ++ "\"")
 
-                                        _ ->
-                                            Nothing
-                                )
-                in
-                case missingFieldReasons of
-                    first :: _ ->
-                        first
-
-                    [] ->
-                        "No matching command found for JSON input."
+                                _ ->
+                                    Nothing
+                        )
+                    |> Maybe.withDefault "No matching command found for JSON input."
