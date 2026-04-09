@@ -267,18 +267,16 @@ rawJsonShapeErrors subCommand usageSpecs blob =
         unexpectedTopLevelFields : List Cli.OptionsParser.MatchResult.NoMatchReason
         unexpectedTopLevelFields =
             topLevelFields
-                |> List.map Tuple.first
-                |> List.filter (\fieldName -> not (List.member fieldName (allowedTopLevelFieldNames usageSpecs)))
-                |> List.map Cli.OptionsParser.MatchResult.UnexpectedOption
+                |> List.filter (\( fieldName, _ ) -> not (List.member fieldName (allowedTopLevelFieldNames usageSpecs)))
+                |> List.map (\( fieldName, _ ) -> Cli.OptionsParser.MatchResult.UnexpectedOption fieldName)
 
         unexpectedCliFields : List Cli.OptionsParser.MatchResult.NoMatchReason
         unexpectedCliFields =
             case cliValue of
                 Just actualCliValue ->
                     jsonObjectFields actualCliValue
-                        |> List.map Tuple.first
-                        |> List.filter (\fieldName -> not (List.member fieldName (allowedCliFieldNames subCommand usageSpecs)))
-                        |> List.map (\fieldName -> Cli.OptionsParser.MatchResult.UnexpectedOption ("$cli." ++ fieldName))
+                        |> List.filter (\( fieldName, _ ) -> not (List.member fieldName (allowedCliFieldNames subCommand usageSpecs)))
+                        |> List.map (\( fieldName, _ ) -> Cli.OptionsParser.MatchResult.UnexpectedOption ("$cli." ++ fieldName))
 
                 Nothing ->
                     []
