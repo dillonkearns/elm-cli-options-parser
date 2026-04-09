@@ -259,10 +259,9 @@ rawJsonShapeErrors subCommand usageSpecs blob =
         topLevelFields =
             jsonObjectFields blob
 
-        cliValue : Maybe Json.Decode.Value
+        cliValue : Result Json.Decode.Error Json.Decode.Value
         cliValue =
             Json.Decode.decodeValue (Json.Decode.field "$cli" Json.Decode.value) blob
-                |> Result.toMaybe
 
         unexpectedTopLevelFields : List Cli.OptionsParser.MatchResult.NoMatchReason
         unexpectedTopLevelFields =
@@ -273,12 +272,12 @@ rawJsonShapeErrors subCommand usageSpecs blob =
         unexpectedCliFields : List Cli.OptionsParser.MatchResult.NoMatchReason
         unexpectedCliFields =
             case cliValue of
-                Just actualCliValue ->
+                Ok actualCliValue ->
                     jsonObjectFields actualCliValue
                         |> List.filter (\( fieldName, _ ) -> not (List.member fieldName (allowedCliFieldNames subCommand usageSpecs)))
                         |> List.map (\( fieldName, _ ) -> Cli.OptionsParser.MatchResult.UnexpectedOption ("$cli." ++ fieldName))
 
-                Nothing ->
+                Err _ ->
                     []
     in
     unexpectedTopLevelFields ++ unexpectedCliFields
