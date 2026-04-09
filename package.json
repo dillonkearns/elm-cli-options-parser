@@ -1,7 +1,7 @@
 {
   "scripts": {
     "postinstall": "elm-tooling install",
-    "test": "elm make && elm-test",
+    "test": "elm make && elm-test && elm-review",
     "build-examples": "cd examples && elm make src/ElmTest.elm src/Git.elm src/Graphqelm.elm src/Simple.elm src/Validation.elm src/Curl.elm src/Grep.elm --output ./elm.js"
   },
   "devDependencies": {
