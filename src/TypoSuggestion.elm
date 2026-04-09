@@ -84,5 +84,4 @@ optionSuggestions optionsParsers =
     optionsParsers
         |> List.concatMap .usageSpecs
         |> List.Extra.uniqueBy UsageSpec.name
-        |> List.map UsageSpec.name
-        |> List.map Flag
+        |> List.map (\usageSpec -> Flag (UsageSpec.name usageSpec))
