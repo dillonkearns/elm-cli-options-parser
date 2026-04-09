@@ -32,16 +32,16 @@ take a look at
 {-| A state where you can add any options (beginning, middle, or terminal)
 -}
 type AnyOptions
-    = AnyOptions
+    = AnyOptions Never
 
 
 {-| A state where you can add anything but beginning options (i.e. middle or terminal)
 -}
 type NoBeginningOptions
-    = NoBeginningOptions
+    = NoBeginningOptions Never
 
 
 {-| A state where you can no longer add any options
 -}
 type NoMoreOptions
-    = NoMoreOptions
+    = NoMoreOptions Never
