@@ -201,7 +201,7 @@ normalizeCliJson usageSpecs blob =
                                 restArgsName : Maybe String
                                 restArgsName =
                                     usageSpecs
-                                        |> List.filterMap
+                                        |> List.Extra.findMap
                                             (\spec ->
                                                 case spec of
                                                     UsageSpec.RestArgs restName _ ->
@@ -210,7 +210,6 @@ normalizeCliJson usageSpecs blob =
                                                     _ ->
                                                         Nothing
                                             )
-                                        |> List.head
 
                                 restFields : List ( String, Encode.Value )
                                 restFields =

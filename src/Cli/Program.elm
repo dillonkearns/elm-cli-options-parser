@@ -732,7 +732,7 @@ parserToJsonSchemaFromTsTypes includeBoilerplate programName parser =
         restArgSpec : Maybe ( UsageSpec, TsJson.Type.Type )
         restArgSpec =
             specsWithTypes
-                |> List.filterMap
+                |> List.Extra.findMap
                     (\( spec, ( _, tsType ) ) ->
                         case spec of
                             UsageSpec.RestArgs _ _ ->
@@ -741,7 +741,6 @@ parserToJsonSchemaFromTsTypes includeBoilerplate programName parser =
                             _ ->
                                 Nothing
                     )
-                |> List.head
 
         -- Build $cli schema (only subcommand + positional)
         cliSubProperties : List ( String, Encode.Value )
