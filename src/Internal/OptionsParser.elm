@@ -354,9 +354,9 @@ extraJsonPositionalErrors usageSpecs blob baseMatchResult =
         []
 
     else
-        case Json.Decode.decodeValue (Json.Decode.field "$cli" (Json.Decode.field "positional" (Json.Decode.list Json.Decode.value))) blob of
-            Ok positionalValues ->
-                if List.length positionalValues > List.Extra.count UsageSpec.isOperand usageSpecs then
+        case Json.Decode.decodeValue (Json.Decode.field "$cli" (Json.Decode.field "positional" (Json.Decode.field "length" Json.Decode.int))) blob of
+            Ok positionalValuesCount ->
+                if positionalValuesCount > List.Extra.count UsageSpec.isOperand usageSpecs then
                     [ Cli.OptionsParser.MatchResult.ExtraOperand ]
 
                 else
