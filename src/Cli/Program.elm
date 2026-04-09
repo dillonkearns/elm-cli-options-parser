@@ -1333,10 +1333,10 @@ formatFallbackMessage colorMode programName optionsParsers =
 formatJsonNoMatchReasons : List NoMatchReason -> String
 formatJsonNoMatchReasons reasons =
     let
-        unexpectedFieldReasons : List String
-        unexpectedFieldReasons =
+        unexpectedFieldReason : Maybe String
+        unexpectedFieldReason =
             reasons
-                |> List.filterMap
+                |> List.Extra.findMap
                     (\reason ->
                         case reason of
                             UnexpectedOption name ->
@@ -1346,11 +1346,11 @@ formatJsonNoMatchReasons reasons =
                                 Nothing
                     )
     in
-    case unexpectedFieldReasons of
-        first :: _ ->
+    case unexpectedFieldReason of
+        Just first ->
             first
 
-        [] ->
+        Nothing ->
             if List.member ExtraOperand reasons then
                 "Too many positional arguments in \"$cli.positional\"."
 
