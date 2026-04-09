@@ -76,8 +76,7 @@ getSuggestions optionsParsers unexpectedOption =
 buildSubCommandSuggestions : List OptionsParser -> List TypoSuggestion
 buildSubCommandSuggestions optionsParsers =
     optionsParsers
-        |> List.filterMap .subCommand
-        |> List.map SubCommand
+        |> List.filterMap (\{ subCommand } -> Maybe.map SubCommand subCommand)
 
 
 optionSuggestions : List OptionsParser -> List TypoSuggestion
