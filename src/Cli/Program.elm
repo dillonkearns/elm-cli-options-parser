@@ -1200,10 +1200,10 @@ formatNoMatchReasons colorMode programName parserInfo availableSubCommands optio
                         Nothing ->
                             let
                                 -- ExtraOperand is only relevant if there are no subcommand-related issues
-                                extraOperandErrors : List NoMatchReason
-                                extraOperandErrors =
+                                hasExtraOperandErrors : Bool
+                                hasExtraOperandErrors =
                                     otherReasons
-                                        |> List.filter
+                                        |> List.any
                                             (\reason ->
                                                 case reason of
                                                     ExtraOperand ->
@@ -1215,7 +1215,7 @@ formatNoMatchReasons colorMode programName parserInfo availableSubCommands optio
                             in
                             -- The command was valid but something else went wrong
                             -- Check for ExtraOperand
-                            if not (List.isEmpty extraOperandErrors) then
+                            if hasExtraOperandErrors then
                                 formatSingleReason colorMode ExtraOperand programName optionsParsers
 
                             else
